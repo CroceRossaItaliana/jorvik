@@ -43,7 +43,6 @@
         <thead>
         <tr>
             <th>Attivit&agrave;</th>
-            <th>Area</th>
             <th>Informazioni</th>
             <th>Azioni</th>
         </tr>
@@ -51,7 +50,6 @@
 
         <tbody>
         {% for a in attivita %}
-
             <tr>
                 <td class="piu-piccolo" style="width: 40%;">
                     <span class="piu-grande">{{ a.link|safe }}</span><br />
@@ -63,23 +61,14 @@
 
                     <i class="fa fa-fw fa-info-circle text-muted"></i>
                     {{ a.delegati_attuali|join:", "|default:"(Nessun referente selezionato)" }}
-
-                </td>
-
-                <td class="piu-piccolo">
-                    Ob. {{ a.area.obiettivo }}: <strong>{{ a.area.nome }}</strong><br />
-                    {{ a.area.sede.link|safe }}
-
                 </td>
 
                 <td>
                     <i class="fa fa-fw fa-calendar text-muted"></i> {{ a.num_turni }} turni <br />
                     <i class="fa fa-fw fa-clock-o text-muted"></i> {{ a.creazione|date:"SHORT_DATETIME_FORMAT" }}<br />
-
                 </td>
 
                 <td>
-
                     {% if a in attivita_referenti_modificabili and a.cancellabile %}
                         <a href="{{ a.url_cancella }}" class="text-danger">
                             <i class="fa fa-fw fa-trash"></i> cancella attivit&agrave;

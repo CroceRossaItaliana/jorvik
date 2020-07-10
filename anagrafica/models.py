@@ -549,7 +549,7 @@ class Persona(ModelloSemplice, ConMarcaTemporale, ConAllegati, ConVecchioID):
             [('/presidente/', 'Sedi', 'fa-home'), self.ha_permesso(GESTIONE_SEDE)],
             [('/us/', 'Soci', 'fa-users'), self.ha_permesso(GESTIONE_SOCI)],
             [('/veicoli/', "Veicoli", "fa-car"), self.ha_permesso(GESTIONE_AUTOPARCHI_SEDE)],
-            [('/so/', "SO", "fa-compass"), True if not self.ha_aspirante else False],
+            [(reverse('so:index'), "SO", "fa-compass"), True if not self.ha_aspirante else False],
             [('/centrale-operativa/', "CO", "fa-compass"), self.ha_permesso(GESTIONE_CENTRALE_OPERATIVA_SEDE)],
             [('/formazione/', 'Formazione', 'fa-graduation-cap'), self.ha_permesso(GESTIONE_CORSO) or self.ha_permesso(GESTIONE_CORSI_SEDE)],
             [('/articoli/', 'Articoli', 'fa-newspaper'), True],

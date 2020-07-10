@@ -1,12 +1,13 @@
-from autocomplete_light import shortcuts as autocomplete_light
 from django import forms
 from django.core.exceptions import ValidationError
 from django.forms import ModelForm
 from django.forms.extras import SelectDateWidget
 
+from autocomplete_light import shortcuts as autocomplete_light
+
 from anagrafica.models import Sede
 from base.wysiwyg import WYSIWYGSemplice
-from .models import ServizioSO, TurnoSO, AreaSO, ReperibilitaSO
+from .models import ServizioSO, TurnoSO, ReperibilitaSO
 
 
 class VolontarioReperibilitaForm(ModelForm):
@@ -78,21 +79,13 @@ class AggiungiPartecipantiForm(forms.Form):
                                                                           "aggiungere come partecipanti.")
 
 
-class CreazioneAreaForm(ModelForm):
-    class Meta:
-        model = AreaSO
-        fields = ['nome', 'obiettivo',]
-
-
-class OrganizzaAttivitaForm(ModelForm):
-    gruppo = forms.BooleanField(required=False, initial=False, label="Vuoi creare un gruppo di lavoro per quest'attività?")
-
+class OrganizzaServizioForm(ModelForm):
     class Meta:
         model = ServizioSO
-        fields = ['nome', 'area', ]
+        fields = ['nome', 'sede', 'inizio', 'fine', ]
 
 
-class OrganizzaAttivitaReferenteForm(forms.Form):
+class OrganizzaServizioReferenteForm(forms.Form):
     SONO_IO = "IO"
     SCEGLI_REFERENTI = "SC"
     SCELTA = (
