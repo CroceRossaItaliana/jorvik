@@ -41,6 +41,7 @@ class Messaggio(ModelloSemplice, ConMarcaTemporale, ConGiudizio, ConAllegati):
 
     SUPPORTO_NOME = 'Supporto Gaia'
     SUPPORTO_EMAIL = 'supporto@gaia.cri.it'
+    SERVIZIO_CIVILE_EMAIL = 'servizio.civile@cri.it'
     NOREPLY_EMAIL = 'noreply@gaia.cri.it'
 
     LUNGHEZZA_MASSIMA_OGGETTO = 256
@@ -72,6 +73,8 @@ class Messaggio(ModelloSemplice, ConMarcaTemporale, ConGiudizio, ConAllegati):
                                                           "entrambe")
     task_id = models.CharField(max_length=36, blank=True, null=True, default=None,
            help_text="ID del task Celery per lo smistamento di questo messaggio.")
+
+    azione = ""
 
     @property
     def destinatari(self):
@@ -223,19 +226,33 @@ class Messaggio(ModelloSemplice, ConMarcaTemporale, ConGiudizio, ConAllegati):
 
         # Se questo messaggio non ha oggetti destinatario
         if self.oggetti_destinatario.count() == 0:
+            from anagrafica.models import Appartenenza
+            if self.azione == Appartenenza.SEVIZIO_CIVILE_UNIVERSALE:
+                # Questo e' un messaggio per il supporto al servizio civile.
+                email = EmailMultiAlternatives(subject=self.oggetto,
+                                               body=corpo_plain,
+                                               from_email=mittente,
+                                               reply_to=[rispondi_a],
+                                               to=[Messaggio.SERVIZIO_CIVILE_EMAIL],
+                                               attachments=self.allegati_pronti(),
+                                               connection=connessione)
+                email.attach_alternative(self.corpo, "text/html")
 
-            # Questo e' un messaggio per il supporto di Gaia.
-            email = EmailMultiAlternatives(subject=self.oggetto,
-                                           body=corpo_plain,
-                                           from_email=mittente,
-                                           reply_to=[rispondi_a],
-                                           to=[Messaggio.SUPPORTO_EMAIL],
-                                           attachments=self.allegati_pronti(),
-                                           connection=connessione)
-            email.attach_alternative(self.corpo, "text/html")
+                # Ritorna questo oggetto
+                yield None, email
+            else:
+                # Questo e' un messaggio per il supporto di Gaia.
+                email = EmailMultiAlternatives(subject=self.oggetto,
+                                               body=corpo_plain,
+                                               from_email=mittente,
+                                               reply_to=[rispondi_a],
+                                               to=[Messaggio.SUPPORTO_EMAIL],
+                                               attachments=self.allegati_pronti(),
+                                               connection=connessione)
+                email.attach_alternative(self.corpo, "text/html")
 
-            # Ritorna questo oggetto
-            yield None, email
+                # Ritorna questo oggetto
+                yield None, email
 
     def invia(self, connessione=None, forced=False):
         """
@@ -388,6 +405,8 @@ class Messaggio(ModelloSemplice, ConMarcaTemporale, ConGiudizio, ConAllegati):
             m = Messaggio(oggetto=oggetto,
                           mittente=mittente,
                           **kwargs)
+
+            m.azione = kwargs.get('azione') if 'azione' in kwargs else ''
 
             allegati_objects = list()
             for a in allegati:

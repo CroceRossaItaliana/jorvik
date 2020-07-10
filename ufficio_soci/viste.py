@@ -314,6 +314,18 @@ def us_reclama_persona(request, me, persona_pk):
                             "persona": persona.nome_completo
                         }
                     )
+                    if membro == Appartenenza.SEVIZIO_CIVILE_UNIVERSALE:
+                        Messaggio.costruisci_e_accoda(
+                            oggetto=oggetto,
+                            modello="email_reclama_servizio_civile.html",
+                            mittente=me,
+                            destinatari=None,
+                            corpo={
+                                "persona": persona.nome_completo,
+                                "codice_fiscale": persona.genere_codice_fiscale
+                            },
+                            azione=Appartenenza.SEVIZIO_CIVILE_UNIVERSALE
+                        )
 
                 return redirect(persona.url)
 
@@ -352,6 +364,23 @@ def us_dimissioni(request, me, pk):
             messaggio = "Le dimissioni sono state registrate con successo"
 
         dim.save()
+
+        if modulo.cleaned_data['appartenenza'] == Appartenenza.SEVIZIO_CIVILE_UNIVERSALE:
+            Messaggio.costruisci_e_accoda(
+                oggetto="Dimmisioni Servizio Civile",
+                modello="email_dimissioni_servizio_civile.html",
+                mittente=me,
+                destinatari=None,
+                corpo={
+                    "persona": persona.nome_completo,
+                    "codice_fiscale": persona.genere_codice_fiscale,
+                    "comitato": dim.appartenenza.sede,
+                    "presidente": dim.appartenenza.sede.presidente.persona.nome_completo
+                },
+                azione=Appartenenza.SEVIZIO_CIVILE_UNIVERSALE
+            )
+
+
 
         if persona.appartenenze_attuali().exclude(id=dim.appartenenza.id).exists():
             presidenti_da_contattare = set()
