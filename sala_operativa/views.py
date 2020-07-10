@@ -485,7 +485,8 @@ def so_scheda_cancella(request, me, pk):
     # todo: reverse url
     return messaggio_generico(request, me, titolo=titolo_messaggio,
                               messaggio=testo_messaggio,
-                              torna_titolo="Gestione attività", torna_url="/attivita/gestisci/")
+                              torna_titolo="Gestione attività",
+                              torna_url=reverse('so:gestisci'),)
 
 
 @pagina_pubblica
@@ -510,7 +511,7 @@ def so_scheda_turni(request, me=None, pk=None, pagina=None):
     attivita = get_object_or_404(ServizioSO, pk=pk)
 
     if pagina is None:
-        pagina = "/attivita/scheda/%d/turni/%d/" % (attivita.pk, attivita.pagina_turni_oggi())
+        pagina = reverse('so:so_scheda_turni_pagina', args=[attivita.pk, attivita.pagina_turni_oggi()])
         return redirect(pagina)
 
     turni = attivita.turni.all()
@@ -651,7 +652,7 @@ def so_scheda_turni_partecipa(request, me, pk=None, turno_pk=None):
                                         "tua richiesta. Puoi sempre controllare lo stato delle tue"
                                         "richieste di partecipazione da 'Attivita' > 'I miei turni'. ",
                               torna_titolo="Vai a 'I miei turni'",
-                              torna_url="/attivita/storico/")
+                              torna_url=reverse('so:storico'),)
 
 
 @pagina_privata
@@ -717,7 +718,8 @@ def so_scheda_turni_rimuovi(request, me, pk=None, turno_pk=None, partecipante_pk
     stato = turno.persona(me)
 
     if stato != turno.TURNO_PRENOTATO_PUOI_RITIRARTI:
-        return errore_generico(request, me, titolo="Non puoi ritirare la tua partecipazione",
+        return errore_generico(request, me,
+                               titolo="Non puoi ritirare la tua partecipazione",
                                messaggio="Una volta che la tua partecipazione è stata confermata, "
                                          "non puoi più ritirarla da Gaia. Se non puoi presentarti, "
                                          "scrivi a un referente dell'attività, che potrà valutare "
@@ -725,11 +727,9 @@ def so_scheda_turni_rimuovi(request, me, pk=None, turno_pk=None, partecipante_pk
                                torna_titolo="Torna al turno",
                                torna_url=turno.url)
 
-    partecipazione = PartecipazioneSO.con_esito_pending(turno=turno,
-                                                       persona=me).first()
+    partecipazione = PartecipazioneSO.con_esito_pending(turno=turno, persona=me).first()
     if not partecipazione:
-        raise ValueError("TURNO_PRENOTATO_PUOI_RITIRARTI assegnato, ma nessuna partecipazione"
-                         "trovata. ")
+        raise ValueError("TURNO_PRENOTATO_PUOI_RITIRARTI assegnato, ma nessuna partecipazione trovata.")
 
     partecipazione.autorizzazioni_ritira()
     return messaggio_generico(request, me, titolo="Richiesta ritirata.",
@@ -745,10 +745,8 @@ def so_scheda_turni_link_permanente(request, me, pk=None, turno_pk=None):
     attivita = turno.attivita
     pagina = turno.elenco_pagina()
 
-    # todo: reverse url
-    return redirect("/attivita/scheda/%d/turni/%d/?evidenzia_turno=%d#turno-%d" % (
-        attivita.pk, pagina, turno.pk, turno.pk,
-    ))
+    return redirect(reverse('so:so_scheda_turni_pagina',
+                            args=[attivita.pk, pagina, turno.pk, turno.pk,]))
 
 
 @pagina_privata
@@ -757,10 +755,8 @@ def so_scheda_turni_modifica_link_permanente(request, me, pk=None, turno_pk=None
     attivita = turno.attivita
     pagina = turno.elenco_pagina()
 
-    # todo: reverse url
-    return redirect("/attivita/scheda/%d/turni/modifica/%d/?evidenzia_turno=%d#turno-%d" % (
-        attivita.pk, pagina, turno.pk, turno.pk
-    ))
+    return redirect(reverse('so:scheda_turni_modifica_pagina',
+                            args=[attivita.pk, pagina, turno.pk, turno.pk,]))
 
 
 @pagina_privata(permessi=(GESTIONE_ATTIVITA,))
@@ -837,8 +833,8 @@ def so_scheda_turni_modifica(request, me, pk=None, pagina=None):
         return redirect(ERRORE_PERMESSI)
 
     if pagina is None:
-        pagina = "/attivita/scheda/%d/turni/modifica/%d/" % (attivita.pk, attivita.pagina_turni_oggi())
-        return redirect(pagina)
+        return redirect(reverse('so:scheda_turni_modifica_pagina',
+                                args=[attivita.pk, attivita.pagina_turni_oggi(),]))
 
     turni = attivita.turni.all()
 
