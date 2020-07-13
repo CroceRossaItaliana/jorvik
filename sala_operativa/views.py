@@ -22,13 +22,13 @@ from anagrafica.permessi.costanti import (MODIFICA, GESTIONE_ATTIVITA,
 from autenticazione.funzioni import pagina_privata, pagina_pubblica
 from base.errori import ci_siamo_quasi, errore_generico, messaggio_generico, errore_no_volontario
 from base.utils import poco_fa, timedelta_ore
-from .models import PartecipazioneSO, ServizioSO, TurnoSO, ReperibilitaSO
+from .models import PartecipazioneSO, ServizioSO, TurnoSO, ReperibilitaSO, MezzoSO
 from .elenchi import ElencoPartecipantiTurno, ElencoPartecipantiAttivita
 from .forms import (AttivitaInformazioniForm, ModificaTurnoForm,
     AggiungiPartecipantiForm, CreazioneTurnoForm, RipetiTurnoForm,
     StatisticheAttivitaForm, StatisticheAttivitaPersonaForm,
     VolontarioReperibilitaForm, AggiungiReperibilitaPerVolontarioForm,
-    OrganizzaServizioReferenteForm, OrganizzaServizioForm, )
+    OrganizzaServizioReferenteForm, OrganizzaServizioForm, CreazioneMezzoSO, )
 
 
 INITIAL_INIZIO_FINE_PARAMS = {
@@ -191,7 +191,7 @@ def so_organizza(request, me):
 
         elif form_referente_cd['scelta'] == form_referente.SCEGLI_REFERENTI:
             # Il referente è qualcun altro.
-            return redirect(reverse('so:organizza_referenti', args=[servizio.pk,]))
+            return redirect(reverse('so:organizza_referenti', args=[servizio.pk, ]))
 
         else:
             persona = Persona.objects.get(pk=form_referente_cd['scelta'])
@@ -536,7 +536,7 @@ def so_scheda_turni_partecipa(request, me, pk=None, turno_pk=None):
                                         "tua richiesta. Puoi sempre controllare lo stato delle tue"
                                         "richieste di partecipazione da 'Attivita' > 'I miei turni'. ",
                               torna_titolo="Vai a 'I miei turni'",
-                              torna_url=reverse('so:storico'),)
+                              torna_url=reverse('so:storico'), )
 
 
 @pagina_privata
@@ -806,7 +806,7 @@ def so_scheda_report(request, me, pk=None):
 def so_statistiche(request, me):
     sedi = me.oggetti_permesso(GESTIONE_ATTIVITA_SEDE)
 
-    form = StatisticheAttivitaForm(request.POST or None, initial={"sedi":sedi})
+    form = StatisticheAttivitaForm(request.POST or None, initial={"sedi": sedi})
     form.fields['sedi'].queryset = sedi
 
     statistiche = []
@@ -831,8 +831,8 @@ def so_statistiche(request, me):
 
             dati = {}
 
-            fine = oggi - timedelta(days=(giorni*periodo))
-            inizio = fine - timedelta(days=giorni-1)
+            fine = oggi - timedelta(days=(giorni * periodo))
+            inizio = fine - timedelta(days=giorni - 1)
 
             fine = datetime.combine(fine, time(23, 59, 59))
             inizio = datetime.combine(inizio, time(0, 0, 0))
@@ -842,13 +842,16 @@ def so_statistiche(request, me):
 
             # Prima, ottiene tutti i queryset.
             qs_attivita = ServizioSO.objects.filter(stato=ServizioSO.VISIBILE,
-                                                   sede__in=sedi)
+                                                    sede__in=sedi)
             qs_turni = TurnoSO.objects.filter(attivita__in=qs_attivita,
-                                             inizio__lte=fine, fine__gte=inizio)
+                                              inizio__lte=fine, fine__gte=inizio)
             qs_part = PartecipazioneSO.con_esito_ok(turno__in=qs_turni)
 
-            ore_di_servizio = qs_turni.annotate(durata=F('fine') - F('inizio')).aggregate(totale_ore=Sum('durata'))['totale_ore'] or timedelta()
-            ore_uomo_di_servizio = qs_part.annotate(durata=F('turno__fine') - F('turno__inizio')).aggregate(totale_ore=Sum('durata'))['totale_ore'] or timedelta()
+            ore_di_servizio = qs_turni.annotate(durata=F('fine') - F('inizio')).aggregate(totale_ore=Sum('durata'))[
+                                  'totale_ore'] or timedelta()
+            ore_uomo_di_servizio = \
+            qs_part.annotate(durata=F('turno__fine') - F('turno__inizio')).aggregate(totale_ore=Sum('durata'))[
+                'totale_ore'] or timedelta()
 
             # Poi, associa al dizionario statistiche.
             dati['etichetta'] = "%d %s fa" % (periodo, etichetta,)
@@ -876,17 +879,53 @@ def so_statistiche(request, me):
     return 'so_statistiche.html', context
 
 
-def so_mezzi():
-    return None
+@pagina_privata
+def so_mezzi(request, me):
+    form = CreazioneMezzoSO(request.POST or None)
+
+    if form.is_valid():
+        mm = form.save(commit=False)
+        mm.creato_da = me
+        mm.save()
+
+    mezzi_materiali = MezzoSO.objects.filter(creato_da=me)
+
+    context = {
+        'mezzi_materiali': mezzi_materiali,
+        'form': form
+    }
+
+    return 'sala_operativa_mm.html', context
 
 
 def so_mezzi_aggiungi():
     return None
 
 
-def so_mezzo_cancella():
-    return None
+@pagina_privata
+def so_mezzo_cancella(request, me, pk):
+    # todo: permessi
+    mm = get_object_or_404(MezzoSO, pk=pk)
+    mm.delete()
+    messages.success(request, 'Il mezzo/materiale selezionato è stato rimosso.')
+    return redirect(reverse('so:mezzi'))
 
 
-def so_mezzo_modifica():
-    return None
+@pagina_privata
+def so_mezzo_modifica(request, me, pk):
+    # todo: permessi
+    mm = get_object_or_404(MezzoSO, pk=pk)
+    if mm.creato_da != me:
+        return redirect(ERRORE_PERMESSI)
+
+    form = CreazioneMezzoSO(request.POST or None, instance=mm)
+    if request.method == 'POST':
+        if form.is_valid():
+            form.save()
+            return redirect(reverse('so:mezzi'))
+
+    context = {
+        'form': form,
+        'mm': mm,
+    }
+    return 'sala_operativa_mm_edit.html', context
