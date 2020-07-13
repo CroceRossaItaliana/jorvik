@@ -99,22 +99,14 @@
                     {% if sede.nominativi_rdc  %}
                         {% for revisore in sede.nominativi_rdc %}
                             <dt>Revisore dei Conti  <i class="fa fa-fw fa-user"></i></dt>
-                            <dd>
-                                <span style="display:block;">E-mail: <a href="mailto:{{ revisore.email }}">{{ revisore.email }}</a></span>
-                                <span style="display:block;">PEC: <a href="mailto:{{ revisore.PEC }}">{{ revisore.PEC }}</a></span>
-                                <span style="display:block;">Telefono: <strong>{{ revisore.telefono }}</strong></span>
-                            </dd>
+                            <dd>{{ revisore.nome }} {{ revisore.cognome }}</dd>
                         {% endfor %}
                     {% endif %}
 
                     {% if sede.nominativi_odc %}
                         {% for organo_di_controllo in sede.nominativi_odc %}
                             <dt>Organo di Controllo  <i class="fa fa-fw fa-user"></i></dt>
-                            <dd>
-                                <span style="display:block;">E-mail: <a href="mailto:{{ organo_di_controllo.email }}">{{ organo_di_controllo.email }}</a></span>
-                                <span style="display:block;">PEC: <a href="mailto:{{ organo_di_controllo.PEC }}">{{ organo_di_controllo.PEC }}</a></span>
-                                <span style="display:block;">Telefono: <strong>{{ organo_di_controllo.telefono }}</strong></span>
-                            </dd>
+                            <dd>{{ organo_di_controllo.nome }} {{ organo_di_controllo.cognome }}</dd>
                         {% endfor %}
                     {% endif %}
 
