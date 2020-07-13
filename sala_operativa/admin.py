@@ -13,11 +13,11 @@ class ReperibilitaSOAdmin(admin.ModelAdmin):
 
 @admin.register(ServizioSO)
 class ServizioSOAdmin(admin.ModelAdmin):
-    search_fields = ['nome', 'sede__nome', 'estensione__nome', 'area__nome', ]
-    list_display = ['nome', 'inizio', 'fine', 'sede', 'area', 'estensione',
+    search_fields = ['nome', 'sede__nome', 'estensione__nome', ]
+    list_display = ['nome', 'inizio', 'fine', 'sede', 'estensione',
                     'stato', 'apertura', 'creazione', ]
     list_filter = ['creazione', 'stato', 'apertura', ]
-    raw_id_fields = ['locazione', 'sede', 'estensione', 'area', ]
+    raw_id_fields = ['locazione', 'sede', 'estensione', ]
 
 
 @admin.register(MezzoSO)

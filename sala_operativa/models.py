@@ -6,10 +6,11 @@ from django.db.models import Q, F, Sum
 from django.core.urlresolvers import reverse
 from django.utils import timezone
 
+from anagrafica.permessi.costanti import GESTIONE_SERVIZI
 from jorvik import settings
-from anagrafica.models import Persona, Appartenenza
-from anagrafica.permessi.applicazioni import REFERENTE, OBIETTIVI
-from anagrafica.costanti import ESTENSIONE
+from anagrafica.models import Persona, Appartenenza, Sede
+from anagrafica.permessi.applicazioni import OBIETTIVI, REFERENTE_SO
+from anagrafica.costanti import (LOCALE, PROVINCIALE, REGIONALE, NAZIONALE, )
 from attivita.models import AttivitaAbstract, PartecipazioneAbstract, TurnoAbstract
 from attivita.utils import valida_numero_obiettivo
 from base.models import ModelloSemplice
@@ -17,17 +18,6 @@ from base.tratti import ConMarcaTemporale, ConStorico, ConDelegati
 
 
 class ServizioSO(AttivitaAbstract, ConStorico):
-    ESTENSIONE_CHOICES = ESTENSIONE
-
-
-    # # stato di approvazione
-    # APPROVATO = 'a'
-    # IN_APPROVAZIONE = 'n'
-    # STATO_APPROVAZIONE_CHOICES = (
-    #     (APPROVATO, "Approvato"),
-    #     (IN_APPROVAZIONE, "In approvazione"),
-    # )
-
     BOZZA = 'B'
     VISIBILE = 'V'
     STATO = (
@@ -42,15 +32,10 @@ class ServizioSO(AttivitaAbstract, ConStorico):
         (APERTA, 'Aperta')
     )
 
-    # Numero di giorni che devono passare per chiudere
-    #  automaticamente questa attivita' in mancanza di nuovi turni
-    CHIUDI_AUTOMATICAMENTE_DOPO_GG = 60
-
-    nome = models.CharField(max_length=255, default="Nuova attività", db_index=True, help_text="es. Aggiungi un posto a tavola")
+    nome = models.CharField(max_length=255, default="Nuovo servizio", db_index=True)
     sede = models.ForeignKey('anagrafica.Sede', related_name='servizio', on_delete=models.PROTECT)
-    area = models.ForeignKey("AreaSO", related_name='servizio', on_delete=models.SET_NULL, null=True)
     estensione = models.ForeignKey('anagrafica.Sede', null=True, default=None,
-                                   related_name='servizio_estensione', on_delete=models.PROTECT)
+        related_name='servizio_estensione', on_delete=models.PROTECT)
     stato = models.CharField(choices=STATO, default=BOZZA, max_length=1, db_index=True)
     apertura = models.CharField(choices=APERTURA, default=APERTA, max_length=1, db_index=True)
     descrizione = models.TextField(blank=True)
@@ -68,8 +53,7 @@ class ServizioSO(AttivitaAbstract, ConStorico):
         return reverse('so:cancella_gruppo', args=[self.pk, ])
 
     def referenti_attuali(self, al_giorno=None):
-        # todo: delega...
-        return self.delegati_attuali(tipo=REFERENTE, al_giorno=al_giorno)
+        return self.delegati_attuali(tipo=REFERENTE_SO, al_giorno=al_giorno)
 
     def invia_ordine_di_partenza(self):
         pass
@@ -102,7 +86,7 @@ class ServizioSO(AttivitaAbstract, ConStorico):
         return TurnoSO.query_passati(*args, attivita=self, **kwargs)
 
     def __str__(self):
-        return str(self.name)
+        return str(self.nome)
 
     class Meta:
         verbose_name = 'Servizio'
@@ -110,7 +94,12 @@ class ServizioSO(AttivitaAbstract, ConStorico):
 
 
 class ReperibilitaSO(ModelloSemplice, ConMarcaTemporale, ConStorico):
-    ESTENSIONE_CHOICES = ESTENSIONE
+    ESTENSIONE_CHOICES = (
+        (LOCALE, 'Sede Locale'),
+        (PROVINCIALE, 'Sede Provinciale'),
+        (REGIONALE, 'Sede Regionale'),
+        (NAZIONALE, 'Sede Nazionale')
+    )
 
     attivazione = models.TimeField("Tempo di attivazione", default="00:15",
         help_text="Tempo necessario all'attivazione, in formato HH:mm.",)
@@ -147,6 +136,7 @@ class ReperibilitaSO(ModelloSemplice, ConMarcaTemporale, ConStorico):
 
 
 class TurnoSO(TurnoAbstract):
+    # todo: rename attivita field
     attivita = models.ForeignKey(ServizioSO, related_name='turni_so', on_delete=models.CASCADE)
     nome = models.CharField(max_length=128, default="Nuovo turno", db_index=True)
     inizio = models.DateTimeField("Data e ora di inizio", db_index=True, null=False)
@@ -188,8 +178,31 @@ class TurnoSO(TurnoAbstract):
         TURNO_PRENOTATO_NON_PUOI_RITIRARTI,
     )
 
+    @classmethod
+    def calendario_di(cls, persona, inizio, fine):
+        """
+        Ritorna il QuerySet per i turni da mostrare in calendario alla Persona.
+        :param inizio: datetime.date per il giorno di inizio (incl.)
+        :param fine: datetime.date per il giorno di fine (incl.)
+        :return: QuerySet per Turno
+        """
+        sedi = persona.sedi_attuali(membro__in=Appartenenza.MEMBRO_ATTIVITA)
+
+        return TurnoSO.objects.filter(
+            # Attivtia organizzate dai miei comitati
+            Q(attivita__sede__in=sedi)
+            # Attivita aperte ai miei comitati
+            | Q(attivita__estensione__in=Sede.objects.get_queryset_ancestors(
+                sedi, include_self=True))
+            # Attivita che gesticsco
+            | Q(attivita__in=persona.oggetti_permesso(GESTIONE_SERVIZI))
+            , inizio__gte=inizio, fine__lt=(fine + timedelta(1)),
+            attivita__stato=ServizioSO.VISIBILE,
+        ).order_by('inizio')
+
     class Meta:
-        verbose_name_plural = "Turni"
+        verbose_name = "Turno di Servizio"
+        verbose_name_plural = "Turni dei Servizi"
         ordering = ['inizio', 'fine', 'id',]
         index_together = [
             ['inizio', 'fine',],
@@ -219,12 +232,9 @@ class PartecipazioneSO(PartecipazioneAbstract):
     turno = models.ForeignKey(TurnoSO, related_name='partecipazioni_so', on_delete=models.CASCADE)
     stato = models.CharField(choices=STATO, default=RICHIESTA, max_length=1,  db_index=True)
 
-    # Utilizzato dal modulo CO - viene impostato dal delegato CO
-    # centrale_operativa = models.BooleanField(default=False, db_index=True)
-
     class Meta:
-        verbose_name = "Richiesta di partecipazione"
-        verbose_name_plural = "Richieste di partecipazione"
+        verbose_name = "Richiesta di partecipazione al Servizio SO"
+        verbose_name_plural = "Richieste di partecipazione ai Servizi SO"
         ordering = ('stato', 'persona__cognome', 'persona__nome')
         index_together = [
             ['persona', 'turno'],
@@ -237,32 +247,6 @@ class PartecipazioneSO(PartecipazioneAbstract):
 
     def __str__(self):
         return "%s a %s" % (self.persona.codice_fiscale, str(self.turno))
-
-
-class AreaSO(ModelloSemplice, ConMarcaTemporale, ConDelegati):
-    sede = models.ForeignKey('anagrafica.Sede', related_name='aree_so', on_delete=models.PROTECT)
-    nome = models.CharField(max_length=256, db_index=True, default='Generale', blank=False)
-    obiettivo = models.SmallIntegerField(null=False, blank=False, default=1, db_index=True, validators=[valida_numero_obiettivo])
-
-    @property
-    def codice_obiettivo(self):
-        return OBIETTIVI[self.obiettivo]
-
-    class Meta:
-        verbose_name_plural = "Aree"
-        ordering = ['sede', 'obiettivo', 'nome',]
-        index_together = [
-            ['sede', 'obiettivo'],
-        ]
-        permissions = (
-            ("view_area", "Can view area"),
-        )
-
-    def __str__(self):
-        return "%s, Ob. %d: %s" % (
-            self.sede.nome_completo, self.obiettivo,
-            self.nome,
-        )
 
 
 class MezzoSO(ModelloSemplice, ConMarcaTemporale, ConStorico):

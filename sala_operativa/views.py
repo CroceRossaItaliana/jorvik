@@ -1,37 +1,37 @@
 import json
 from datetime import date, timedelta, datetime, time
 
+from django.db.models import Count, F, Sum
+from django.utils import timezone
 from django.contrib import messages
+from django.core.urlresolvers import reverse
 from django.core.paginator import Paginator, PageNotAnInteger, EmptyPage
 from django.core.urlresolvers import reverse
 from django.db.models import Count, F, Sum
 from django.shortcuts import redirect, get_object_or_404
 from django.utils import timezone
 
-from anagrafica.costanti import NAZIONALE
-from anagrafica.forms import ModuloProfiloModificaAnagraficaDatoreLavoro
-from anagrafica.models import Sede
-from anagrafica.permessi.applicazioni import DELEGATO_AREA, REFERENTE, REFERENTE_GRUPPO
-from anagrafica.permessi.costanti import MODIFICA, GESTIONE_ATTIVITA, ERRORE_PERMESSI, GESTIONE_AREE_SEDE, COMPLETO, \
-    GESTIONE_ATTIVITA_AREA, GESTIONE_REFERENTI_ATTIVITA, GESTIONE_ATTIVITA_SEDE, \
-    GESTIONE_POTERI_CENTRALE_OPERATIVA_SEDE, GESTIONE_SALA_OPERATIVA_SEDE
-from attivita.elenchi import ElencoPartecipantiTurno, ElencoPartecipantiAttivita
 # todo: da integrare in questa app
 from attivita.stats import statistiche_attivita_persona
+from attivita.elenchi import ElencoPartecipantiTurno, ElencoPartecipantiAttivita
 from attivita.utils import turni_raggruppa_giorno
+# todo:
+
+from anagrafica.costanti import NAZIONALE
+from anagrafica.forms import ModuloProfiloModificaAnagraficaDatoreLavoro
+from anagrafica.permessi.applicazioni import REFERENTE_SO
+from anagrafica.permessi.costanti import (MODIFICA, GESTIONE_ATTIVITA,
+    ERRORE_PERMESSI, COMPLETO, GESTIONE_ATTIVITA_SEDE,
+    GESTIONE_SO_SEDE, GESTIONE_SERVIZI, GESTIONE_REFERENTI_SO, )
 from autenticazione.funzioni import pagina_privata, pagina_pubblica
 from base.errori import ci_siamo_quasi, errore_generico, messaggio_generico, errore_no_volontario
 from base.utils import poco_fa, timedelta_ore
-from gruppi.models import Gruppo
-from .forms import (AttivitaInformazioniForm, OrganizzaAttivitaForm,
-                    ModificaTurnoForm, AggiungiPartecipantiForm, CreazioneTurnoForm,
-                    RipetiTurnoForm, CreazioneAreaForm, StatisticheAttivitaForm,
-                    OrganizzaAttivitaReferenteForm, StatisticheAttivitaPersonaForm,
-                    VolontarioReperibilitaForm, AggiungiReperibilitaPerVolontarioForm, )
-from .models import PartecipazioneSO, ServizioSO, TurnoSO, AreaSO
-from .models import ReperibilitaSO
-from sala_operativa.models import MezzoSO
-from sala_operativa.forms import CreazioneMezzoSO
+from .models import PartecipazioneSO, ServizioSO, TurnoSO, ReperibilitaSO
+from .forms import (AttivitaInformazioniForm, ModificaTurnoForm,
+    AggiungiPartecipantiForm, CreazioneTurnoForm, RipetiTurnoForm,
+    StatisticheAttivitaForm, StatisticheAttivitaPersonaForm,
+    VolontarioReperibilitaForm, AggiungiReperibilitaPerVolontarioForm,
+    OrganizzaServizioReferenteForm, OrganizzaServizioForm, )
 
 
 # todo:
@@ -44,10 +44,8 @@ INITIAL_INIZIO_FINE_PARAMS = {
 
 def get_reverse(id, sede_pk=None, area_pk=None, attivita_pk=None):
     REVERSE_MAP = {
-        1: reverse('so:aree_sede', args=[sede_pk, ]),
-        2: reverse('so:sede_area_responsabili', args=[sede_pk, area_pk, ]),
         3: reverse('so:gestisci'),
-        4: reverse('so:organizza_referenti_fatto', args=[attivita_pk, ]),
+        4: reverse('so:organizza_referenti_fatto', args=[attivita_pk,]),
     }
     return REVERSE_MAP[id]
 
@@ -57,7 +55,7 @@ def so_index(request, me):
     if not me.volontario:
         return redirect('/')
 
-    sedi = me.oggetti_permesso(GESTIONE_SALA_OPERATIVA_SEDE)
+    sedi = me.oggetti_permesso(GESTIONE_SO_SEDE)
     if not sedi:
         return redirect(reverse('so:reperibilita'))
 
@@ -150,104 +148,29 @@ def so_reperibilita_backup(request, me):
 
 
 @pagina_privata
-def so_aree(request, me):
-    sedi = me.oggetti_permesso(GESTIONE_AREE_SEDE)
-    context = {
-        "sedi": sedi,
-    }
-    return 'so_aree.html', context
-
-
-@pagina_privata
-def so_aree_sede(request, me, sede_pk=None):
-    sede = get_object_or_404(Sede, pk=sede_pk)
-
-    if not sede in me.oggetti_permesso(GESTIONE_AREE_SEDE):
-        return redirect(ERRORE_PERMESSI)
-
-    aree = sede.servizio.all()
-    form = CreazioneAreaForm(request.POST or None)
-    if form.is_valid():
-        area = form.save(commit=False)
-        area.sede = sede
-        area.save()
-        return redirect(get_reverse(2, sede_pk=sede.pk, area_pk=area.pk))
-
-    context = {
-        "sede": sede,
-        "aree": aree,
-        "modulo": form,
-    }
-    return 'so_aree_sede.html', context
-
-
-@pagina_privata
-def so_aree_sede_area_responsabili(request, me, sede_pk=None, area_pk=None):
-    area = get_object_or_404(AreaSO, pk=area_pk)
-
-    if not me.permessi_almeno(area, COMPLETO):
-        return redirect(ERRORE_PERMESSI)
-
-    delega = DELEGATO_AREA
-    sede = area.sede
-
-    context = {
-        "area": area,
-        "delega": delega,
-        "continua_url": get_reverse(1, sede_pk=sede.pk),
-    }
-    return 'so_aree_sede_area_responsabili.html', context
-
-
-@pagina_privata
-def so_aree_sede_area_cancella(request, me, sede_pk=None, area_pk=None):
-    area = get_object_or_404(AreaSO, pk=area_pk)
-    if not me.permessi_almeno(area, COMPLETO):
-        return redirect(ERRORE_PERMESSI)
-    sede = area.sede
-    if area.attivita.exists():
-        return errore_generico(request, me, titolo="L'area ha dei servizi associati",
-                               messaggio="Non è possibile cancellare delle aree che hanno deservizi associati.",
-                               torna_titolo="Torna indietro",
-                               torna_url=get_reverse(1, sede_pk=sede.pk))
-    area.delete()
-    return redirect(get_reverse(1, sede_pk=sede.pk))
-
-
-@pagina_privata
 def so_gestisci(request, me, stato="aperte"):
-    # todo: renaming in view, template
+    servizi_tutti = me.oggetti_permesso(GESTIONE_SERVIZI, solo_deleghe_attive=False)
+    servizi_aperti = servizi_tutti.filter(apertura=ServizioSO.APERTA)
+    servizi_chiusi = servizi_tutti.filter(apertura=ServizioSO.CHIUSA)
 
-    # stato = "aperte" | "chiuse"
-
-    attivita_tutte = me.oggetti_permesso(GESTIONE_ATTIVITA, solo_deleghe_attive=False)
-    attivita_aperte = attivita_tutte.filter(apertura=ServizioSO.APERTA)
-    attivita_chiuse = attivita_tutte.filter(apertura=ServizioSO.CHIUSA)
-
-    if stato == "aperte":
-        attivita = attivita_aperte
-    else:  # stato == "chiuse"
-        attivita = attivita_chiuse
-
-    attivita_referenti_modificabili = me.oggetti_permesso(GESTIONE_REFERENTI_ATTIVITA)
-
-    attivita = attivita.annotate(num_turni=Count('turni'))
-    attivita = Paginator(attivita, 30)
-    pagina = request.GET.get('pagina')
+    servizi = servizi_aperti if stato == "aperte" else servizi_chiusi
+    servizi_referenti_modificabili = me.oggetti_permesso(GESTIONE_REFERENTI_SO)
+    servizi = servizi.annotate(num_turni=Count('turni_so'))
+    servizi = Paginator(servizi, 30)
 
     try:
-        attivita = attivita.page(pagina)
+        servizi = servizi.page(request.GET.get('pagina'))
     except PageNotAnInteger:
-        attivita = attivita.page(1)
+        servizi = servizi.page(1)
     except EmptyPage:
-        attivita = attivita.page(attivita.num_pages)
+        servizi = servizi.page(servizi.num_pages)
 
     context = {
         "stato": stato,
-        "attivita": attivita,
-        "attivita_aperte": attivita_aperte,
-        "attivita_chiuse": attivita_chiuse,
-        "attivita_referenti_modificabili": attivita_referenti_modificabili,
+        "attivita": servizi,
+        "attivita_aperte": servizi_aperti,
+        "attivita_chiuse": servizi_chiusi,
+        "attivita_referenti_modificabili": servizi_referenti_modificabili,
     }
     return 'so_gestisci.html', context
 
@@ -256,55 +179,41 @@ def so_gestisci(request, me, stato="aperte"):
 def so_organizza(request, me):
     from anagrafica.models import Persona
 
-    aree = me.oggetti_permesso(GESTIONE_ATTIVITA_AREA)
+    sedi = me.oggetti_permesso(GESTIONE_SO_SEDE)
+    if not sedi:
+        messages.error(request, 'Non hai sedi con la delega SO.')
+        return redirect(reverse('so:index'))
 
-    if not aree:
-        return messaggio_generico(request, me, titolo="Crea un'area di intervento, prima!",
-                                  messaggio="Le aree di intervento fungono da 'contenitori' per le "
-                                            "attività. Per organizzare un'attività, è necessario creare "
-                                            "almeno un'area di intervento. ",
-                                  torna_titolo="Gestisci le Aree di intervento",
-                                  torna_url=reverse('so:aree'))
+    form_referente = OrganizzaServizioReferenteForm(request.POST or None)
+    form = OrganizzaServizioForm(request.POST or None)
+    form.fields['sede'].queryset = sedi
 
-    modulo_referente = OrganizzaAttivitaReferenteForm(request.POST or None)
+    if form.is_valid() and form_referente.is_valid():
+        cd = form.cleaned_data
+        form_referente_cd = form_referente.cleaned_data
 
-    form = OrganizzaAttivitaForm(request.POST or None)
-    form.fields['area'].queryset = me.oggetti_permesso(GESTIONE_ATTIVITA_AREA)
+        servizio = form.save(commit=False)
+        servizio.sede = cd['sede']
+        servizio.estensione = cd['sede'].comitato
+        servizio.save()
 
-    if modulo_referente.is_valid() and form.is_valid():
-        attivita = form.save(commit=False)
-        attivita.sede = attivita.area.sede
-        attivita.estensione = attivita.sede.comitato
-        attivita.save()
-
-        # Crea gruppo per questa specifica attività se la casella viene selezionata.
-        crea_gruppo = form.cleaned_data['gruppo']
-        if crea_gruppo:
-            area = attivita.area
-            gruppo = Gruppo.objects.create(nome=attivita.nome,
-                                           sede=attivita.sede,
-                                           obiettivo=area.obiettivo,
-                                           attivita=attivita,
-                                           estensione=attivita.estensione.estensione,
-                                           area=area)
-
-            gruppo.aggiungi_delegato(REFERENTE_GRUPPO, me)
-
-        if modulo_referente.cleaned_data['scelta'] == modulo_referente.SONO_IO:
+        if form_referente_cd['scelta'] == form_referente.SONO_IO:
             # Io sono il referente.
-            attivita.aggiungi_delegato(REFERENTE, me, firmatario=me, inizio=poco_fa())
-            return redirect(attivita.url_modifica)
-        elif modulo_referente.cleaned_data[
-            'scelta'] == modulo_referente.SCEGLI_REFERENTI:  # Il referente e' qualcun altro.
-            return redirect(reverse('so:organizza_referenti', args=[attivita.pk, ]))
+            servizio.aggiungi_delegato(REFERENTE_SO, me, firmatario=me, inizio=poco_fa())
+            return redirect(servizio.url_modifica)
+
+        elif form_referente_cd['scelta'] == form_referente.SCEGLI_REFERENTI:
+            # Il referente è qualcun altro.
+            return redirect(reverse('so:organizza_referenti', args=[servizio.pk,]))
+
         else:
-            persona = Persona.objects.get(pk=modulo_referente.cleaned_data['scelta'])
-            attivita.aggiungi_delegato(REFERENTE, persona, firmatario=me, inizio=poco_fa())
-            return redirect(attivita.url_modifica)
+            persona = Persona.objects.get(pk=form_referente_cd['scelta'])
+            servizio.aggiungi_delegato(REFERENTE_SO, persona, firmatario=me, inizio=poco_fa())
+            return redirect(servizio.url_modifica)
 
     context = {
         "modulo": form,
-        "modulo_referente": modulo_referente,
+        "modulo_referente": form_referente,
     }
     return 'so_organizza.html', context
 
@@ -347,8 +256,6 @@ def so_referenti(request, me, pk=None, nuova=False):
 
 @pagina_privata
 def so_calendario(request, me=None, inizio=None, fine=None, vista="calendario"):
-    # todo: urls reverse
-
     """Mostra il calendario delle attivita' personalizzato."""
     if not me.volontario:
         return errore_no_volontario(request, me)
@@ -382,7 +289,7 @@ def so_calendario(request, me=None, inizio=None, fine=None, vista="calendario"):
     successivo_fine_stringa = successivo_fine.strftime(FORMATO)
 
     successivo_url = reverse('so:calendario_con_range', args=[successivo_inizio_stringa,
-                                                              successivo_fine_stringa, ])
+                                                              successivo_fine_stringa,])
 
     # Oggi
     oggi_url = reverse('so:calendario')
@@ -394,10 +301,10 @@ def so_calendario(request, me=None, inizio=None, fine=None, vista="calendario"):
     precedente_fine_stringa = precedente_fine.strftime(FORMATO)
 
     precedente_url = reverse('so:calendario_con_range', args=[precedente_inizio_stringa,
-                                                              precedente_fine_stringa, ])
+                                                              precedente_fine_stringa,])
 
     # Elenco
-    turni = me.calendario_turni(inizio, fine)
+    turni = TurnoSO.calendario_di(me, inizio, fine)
     raggruppati = turni_raggruppa_giorno(turni)
 
     context = {
@@ -417,7 +324,6 @@ def so_calendario(request, me=None, inizio=None, fine=None, vista="calendario"):
         "turni": turni,
         "raggruppati": raggruppati,
     }
-
     return 'so_calendario.html', context
 
 
@@ -447,10 +353,10 @@ def so_storico_excel(request, me):
 
 @pagina_pubblica
 def so_scheda_informazioni(request, me=None, pk=None):
-    """Mostra la scheda "Informazioni" di un servizio"""
-
     servizio = get_object_or_404(ServizioSO, pk=pk)
     puo_modificare = me and me.permessi_almeno(servizio, MODIFICA)
+
+    print(me.permessi_almeno(servizio, MODIFICA))
 
     context = {
         "attivita": servizio,
@@ -462,31 +368,25 @@ def so_scheda_informazioni(request, me=None, pk=None):
 
 @pagina_privata
 def so_scheda_cancella(request, me, pk):
-    # todo: Gruppo WTF?! cosa fare cosa fare
-    attivita = get_object_or_404(ServizioSO, pk=pk)
-    if not me.permessi_almeno(attivita, COMPLETO):
+    servizio = get_object_or_404(ServizioSO, pk=pk)
+    if not me.permessi_almeno(servizio, COMPLETO):
         return redirect(ERRORE_PERMESSI)
 
-    if not attivita.cancellabile:
-        return errore_generico(request, me, titolo="Attività non cancellabile",
-                               messaggio="Questa attività non può essere cancellata.")
+    if not servizio.cancellabile:
+        return errore_generico(request, me,
+                               titolo="Servizio non cancellabile",
+                               messaggio="Questa servizio non può essere cancellato")
 
-    titolo_messaggio = "Attività cancellata"
-    testo_messaggio = "L'attività è stata cancellata con successo."
-    if 'cancella-gruppo' in request.path.split('/'):
-        try:
-            gruppo = Gruppo.objects.get(attivita=attivita)
-            gruppo.delete()
-            titolo_messaggio = "Attività e gruppo cancellati"
-            testo_messaggio = "L'attività e il gruppo associato sono stati cancellati con successo."
-        except Gruppo.DoesNotExist:
-            testo_messaggio = "L'attività è stata cancellata con successo (non esisteva un gruppo associato a quest'attività)."
-    attivita.delete()
+    titolo_messaggio = "Servizio cancellato"
+    testo_messaggio = "Il Servizio è stato cancellato con successo."
 
-    # todo: reverse url
-    return messaggio_generico(request, me, titolo=titolo_messaggio,
+    servizio.delete()
+
+    return messaggio_generico(request, me,
+                              titolo=titolo_messaggio,
                               messaggio=testo_messaggio,
-                              torna_titolo="Gestione attività", torna_url="/attivita/gestisci/")
+                              torna_titolo="Gestione servizio",
+                              torna_url=reverse('so:gestisci'),)
 
 
 @pagina_pubblica
@@ -511,7 +411,7 @@ def so_scheda_turni(request, me=None, pk=None, pagina=None):
     attivita = get_object_or_404(ServizioSO, pk=pk)
 
     if pagina is None:
-        pagina = "/attivita/scheda/%d/turni/%d/" % (attivita.pk, attivita.pagina_turni_oggi())
+        pagina = reverse('so:so_scheda_turni_pagina', args=[attivita.pk, attivita.pagina_turni_oggi()])
         return redirect(pagina)
 
     turni = attivita.turni.all()
@@ -535,8 +435,8 @@ def so_scheda_turni(request, me=None, pk=None, pagina=None):
         'turni': pg.object_list,
         'ha_precedente': pg.has_previous(),
         'ha_successivo': pg.has_next(),
-        'pagina_precedente': pagina - 1,
-        'pagina_successiva': pagina + 1,
+        'pagina_precedente': pagina-1,
+        'pagina_successiva': pagina+1,
         "attivita": attivita,
         "puo_modificare": puo_modificare,
         "evidenzia_turno": evidenzia_turno,
@@ -556,7 +456,7 @@ def so_scheda_turni_nuovo(request, me=None, pk=None):
     tra_una_settimana_e_una_ora = tra_una_settimana + timedelta(hours=1)
 
     form = CreazioneTurnoForm(request.POST or None, initial={
-        "inizio": tra_una_settimana, "fine": tra_una_settimana_e_una_ora,
+      "inizio": tra_una_settimana, "fine": tra_una_settimana_e_una_ora,
     })
     modulo_ripeti = RipetiTurnoForm(request.POST or None, prefix="ripeti")
 
@@ -593,6 +493,7 @@ def so_scheda_turni_nuovo(request, me=None, pk=None):
             pass
 
         return redirect(turno.url)
+
 
     context = {
         "modulo": form,
@@ -651,7 +552,7 @@ def so_scheda_turni_partecipa(request, me, pk=None, turno_pk=None):
                                         "tua richiesta. Puoi sempre controllare lo stato delle tue"
                                         "richieste di partecipazione da 'Attivita' > 'I miei turni'. ",
                               torna_titolo="Vai a 'I miei turni'",
-                              torna_url="/attivita/storico/")
+                              torna_url=reverse('so:storico'),)
 
 
 @pagina_privata
@@ -717,7 +618,8 @@ def so_scheda_turni_rimuovi(request, me, pk=None, turno_pk=None, partecipante_pk
     stato = turno.persona(me)
 
     if stato != turno.TURNO_PRENOTATO_PUOI_RITIRARTI:
-        return errore_generico(request, me, titolo="Non puoi ritirare la tua partecipazione",
+        return errore_generico(request, me,
+                               titolo="Non puoi ritirare la tua partecipazione",
                                messaggio="Una volta che la tua partecipazione è stata confermata, "
                                          "non puoi più ritirarla da Gaia. Se non puoi presentarti, "
                                          "scrivi a un referente dell'attività, che potrà valutare "
@@ -725,11 +627,9 @@ def so_scheda_turni_rimuovi(request, me, pk=None, turno_pk=None, partecipante_pk
                                torna_titolo="Torna al turno",
                                torna_url=turno.url)
 
-    partecipazione = PartecipazioneSO.con_esito_pending(turno=turno,
-                                                        persona=me).first()
+    partecipazione = PartecipazioneSO.con_esito_pending(turno=turno, persona=me).first()
     if not partecipazione:
-        raise ValueError("TURNO_PRENOTATO_PUOI_RITIRARTI assegnato, ma nessuna partecipazione"
-                         "trovata. ")
+        raise ValueError("TURNO_PRENOTATO_PUOI_RITIRARTI assegnato, ma nessuna partecipazione trovata.")
 
     partecipazione.autorizzazioni_ritira()
     return messaggio_generico(request, me, titolo="Richiesta ritirata.",
@@ -745,10 +645,8 @@ def so_scheda_turni_link_permanente(request, me, pk=None, turno_pk=None):
     attivita = turno.attivita
     pagina = turno.elenco_pagina()
 
-    # todo: reverse url
-    return redirect("/attivita/scheda/%d/turni/%d/?evidenzia_turno=%d#turno-%d" % (
-        attivita.pk, pagina, turno.pk, turno.pk,
-    ))
+    return redirect(reverse('so:so_scheda_turni_pagina',
+                            args=[attivita.pk, pagina, turno.pk, turno.pk,]))
 
 
 @pagina_privata
@@ -757,54 +655,41 @@ def so_scheda_turni_modifica_link_permanente(request, me, pk=None, turno_pk=None
     attivita = turno.attivita
     pagina = turno.elenco_pagina()
 
-    # todo: reverse url
-    return redirect("/attivita/scheda/%d/turni/modifica/%d/?evidenzia_turno=%d#turno-%d" % (
-        attivita.pk, pagina, turno.pk, turno.pk
-    ))
+    return redirect(reverse('so:scheda_turni_modifica_pagina',
+                            args=[attivita.pk, pagina, turno.pk, turno.pk,]))
 
 
-@pagina_privata(permessi=(GESTIONE_ATTIVITA,))
+@pagina_privata(permessi=(GESTIONE_SERVIZI,))
 def so_scheda_informazioni_modifica(request, me, pk=None):
-    attivita = get_object_or_404(ServizioSO, pk=pk)
-    apertura_precedente = attivita.apertura
+    servizio = get_object_or_404(ServizioSO, pk=pk)
 
-    if not me.permessi_almeno(attivita, MODIFICA):
-        if me.permessi_almeno(attivita, MODIFICA, solo_deleghe_attive=False):
-            # Se la mia delega e' sospesa per l'attivita', vai in prima pagina
-            #  per riattivarla.
-            return redirect(attivita.url)
+    apertura_precedente = servizio.apertura
 
+    if not me.permessi_almeno(servizio, MODIFICA):
+        if me.permessi_almeno(servizio, MODIFICA, solo_deleghe_attive=False):
+            # Se la mia delega e' sospesa per l'attivita', vai in prima pagina per riattivarla.
+            return redirect(servizio.url)
         return redirect(ERRORE_PERMESSI)
 
-    if request.POST and not me.ha_permesso(GESTIONE_POTERI_CENTRALE_OPERATIVA_SEDE):
-        request.POST = request.POST.copy()
-        request.POST['centrale_operativa'] = attivita.centrale_operativa
-
-    form = AttivitaInformazioniForm(request.POST or None, instance=attivita)
-    form.fields['estensione'].queryset = attivita.sede.get_ancestors(include_self=True).exclude(estensione=NAZIONALE)
-
-    if not me.ha_permesso(GESTIONE_POTERI_CENTRALE_OPERATIVA_SEDE):
-        form.fields['centrale_operativa'].widget.attrs['disabled'] = True
+    form = AttivitaInformazioniForm(request.POST or None, instance=servizio)
+    form.fields['estensione'].queryset = servizio.sede.get_ancestors(include_self=True).exclude(estensione=NAZIONALE)
 
     if form.is_valid():
         form.save()
 
         # Se e' stato cambiato lo stato dell'attivita'
-        attivita.refresh_from_db()
-        if attivita.apertura != apertura_precedente:
-
-            if attivita.apertura == attivita.APERTA:
-                attivita.riapri()
-
+        servizio.refresh_from_db()
+        if servizio.apertura != apertura_precedente:
+            if servizio.apertura == servizio.APERTA:
+                servizio.riapri()
             else:
-                attivita.chiudi(autore=me)
+                servizio.chiudi(autore=me)
 
     context = {
-        "attivita": attivita,
+        "attivita": servizio,
         "puo_modificare": True,
         "modulo": form,
     }
-
     return 'so_scheda_informazioni_modifica.html', context
 
 
@@ -837,8 +722,8 @@ def so_scheda_turni_modifica(request, me, pk=None, pagina=None):
         return redirect(ERRORE_PERMESSI)
 
     if pagina is None:
-        pagina = "/attivita/scheda/%d/turni/modifica/%d/" % (attivita.pk, attivita.pagina_turni_oggi())
-        return redirect(pagina)
+        return redirect(reverse('so:scheda_turni_modifica_pagina',
+                                args=[attivita.pk, attivita.pagina_turni_oggi(),]))
 
     turni = attivita.turni.all()
 
@@ -854,13 +739,13 @@ def so_scheda_turni_modifica(request, me, pk=None, pagina=None):
     turni = pg.object_list
     for turno in turni:
         modulo = ModificaTurnoForm(request.POST or None,
-                                   instance=turno,
-                                   prefix="turno_%d" % (turno.pk,))
+                                     instance=turno,
+                                     prefix="turno_%d" % (turno.pk,))
         moduli += [modulo]
 
         modulo_aggiungi_partecipanti = AggiungiPartecipantiForm(request.POST or
-                                                                None,
-                                                                prefix="turno_agg_%d" % (turno.pk,))
+                                                            None,
+                                                                  prefix="turno_agg_%d" % (turno.pk,))
         moduli_aggiungi_partecipanti += [modulo_aggiungi_partecipanti]
 
         if modulo.is_valid():
@@ -896,8 +781,8 @@ def so_scheda_turni_modifica(request, me, pk=None, pagina=None):
         'turni': turni_e_moduli,
         'ha_precedente': pg.has_previous(),
         'ha_successivo': pg.has_next(),
-        'pagina_precedente': pagina - 1,
-        'pagina_successiva': pagina + 1,
+        'pagina_precedente': pagina-1,
+        'pagina_successiva': pagina+1,
         "attivita": attivita,
         "puo_modificare": True,
         "url_modifica": '/modifica',
@@ -943,7 +828,7 @@ def so_scheda_report(request, me, pk=None):
 def so_statistiche(request, me):
     sedi = me.oggetti_permesso(GESTIONE_ATTIVITA_SEDE)
 
-    form = StatisticheAttivitaForm(request.POST or None, initial={"sedi": sedi})
+    form = StatisticheAttivitaForm(request.POST or None, initial={"sedi":sedi})
     form.fields['sedi'].queryset = sedi
 
     statistiche = []
@@ -968,8 +853,8 @@ def so_statistiche(request, me):
 
             dati = {}
 
-            fine = oggi - timedelta(days=(giorni * periodo))
-            inizio = fine - timedelta(days=giorni - 1)
+            fine = oggi - timedelta(days=(giorni*periodo))
+            inizio = fine - timedelta(days=giorni-1)
 
             fine = datetime.combine(fine, time(23, 59, 59))
             inizio = datetime.combine(inizio, time(0, 0, 0))
@@ -979,16 +864,13 @@ def so_statistiche(request, me):
 
             # Prima, ottiene tutti i queryset.
             qs_attivita = ServizioSO.objects.filter(stato=ServizioSO.VISIBILE,
-                                                    sede__in=sedi)
+                                                   sede__in=sedi)
             qs_turni = TurnoSO.objects.filter(attivita__in=qs_attivita,
-                                              inizio__lte=fine, fine__gte=inizio)
+                                             inizio__lte=fine, fine__gte=inizio)
             qs_part = PartecipazioneSO.con_esito_ok(turno__in=qs_turni)
 
-            ore_di_servizio = qs_turni.annotate(durata=F('fine') - F('inizio')).aggregate(totale_ore=Sum('durata'))[
-                                  'totale_ore'] or timedelta()
-            ore_uomo_di_servizio = \
-            qs_part.annotate(durata=F('turno__fine') - F('turno__inizio')).aggregate(totale_ore=Sum('durata'))[
-                'totale_ore'] or timedelta()
+            ore_di_servizio = qs_turni.annotate(durata=F('fine') - F('inizio')).aggregate(totale_ore=Sum('durata'))['totale_ore'] or timedelta()
+            ore_uomo_di_servizio = qs_part.annotate(durata=F('turno__fine') - F('turno__inizio')).aggregate(totale_ore=Sum('durata'))['totale_ore'] or timedelta()
 
             # Poi, associa al dizionario statistiche.
             dati['etichetta'] = "%d %s fa" % (periodo, etichetta,)
@@ -1034,6 +916,8 @@ def so_mezzi(request, me):
 
     return 'sala_operativa_mm.html', context
 
+def so_mezzi_aggiungi():
+    return None
 
 @pagina_privata
 def so_mezzo_cancella(request, me, pk):

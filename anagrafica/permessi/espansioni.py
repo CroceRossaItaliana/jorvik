@@ -2,18 +2,43 @@ from datetime import date
 
 from django.db.models import Q
 
-from anagrafica.permessi.costanti import (GESTIONE_SOCI, ELENCHI_SOCI, GESTIONE_ATTIVITA_SEDE,
-    GESTIONE_CORSI_SEDE, GESTIONE_SEDE, GESTIONE_ATTIVITA_AREA, GESTIONE_ATTIVITA,
-    GESTIONE_CORSO, MODIFICA, LETTURA, COMPLETO, GESTIONE_AUTOPARCHI_SEDE,
-    GESTIONE_GRUPPO, GESTIONE_GRUPPI, GESTIONE_GRUPPI_SEDE, GESTIONE, GESTIONE_AREE_SEDE,
-    GESTIONE_REFERENTI_ATTIVITA, GESTIONE_SALA_OPERATIVA_SEDE, GESTIONE_CENTRALE_OPERATIVA_SEDE, EMISSIONE_TESSERINI,
-    GESTIONE_POTERI_CENTRALE_OPERATIVA_SEDE, GESTIONE_POTERI_SALA_OPERATIVA_SEDE, RUBRICA_UFFICIO_SOCI, RUBRICA_UFFICIO_SOCI_UNITA,
-    RUBRICA_PRESIDENTI, RUBRICA_DELEGATI_AREA, RUBRICA_DELEGATI_OBIETTIVO_1, RUBRICA_DELEGATI_OBIETTIVO_2,
-    RUBRICA_DELEGATI_OBIETTIVO_3, RUBRICA_DELEGATI_OBIETTIVO_4, RUBRICA_DELEGATI_OBIETTIVO_6,
-    RUBRICA_DELEGATI_GIOVANI, RUBRICA_RESPONSABILI_AREA, RUBRICA_REFERENTI_ATTIVITA,
-    RUBRICA_REFERENTI_GRUPPI, RUBRICA_CENTRALI_OPERATIVE, RUBRICA_RESPONSABILI_FORMAZIONE,
-    RUBRICA_DIRETTORI_CORSI, RUBRICA_RESPONSABILI_AUTOPARCO, RUBRICA_COMMISSARI,
-    RUBRICA_CONSIGLIERE_GIOVANE, RUBRICA_SALE_OPERATIVE)
+from anagrafica.permessi.costanti import (GESTIONE_SOCI, ELENCHI_SOCI,
+                                          GESTIONE_ATTIVITA_SEDE,
+                                          GESTIONE_CORSI_SEDE, GESTIONE_SEDE,
+                                          GESTIONE_ATTIVITA_AREA,
+                                          GESTIONE_ATTIVITA,
+                                          GESTIONE_CORSO, MODIFICA, LETTURA,
+                                          COMPLETO, GESTIONE_AUTOPARCHI_SEDE,
+                                          GESTIONE_GRUPPO, GESTIONE_GRUPPI,
+                                          GESTIONE_GRUPPI_SEDE, GESTIONE,
+                                          GESTIONE_AREE_SEDE,
+                                          GESTIONE_REFERENTI_ATTIVITA,
+                                          GESTIONE_SO_SEDE,
+                                          GESTIONE_CENTRALE_OPERATIVA_SEDE,
+                                          EMISSIONE_TESSERINI,
+                                          GESTIONE_POTERI_CENTRALE_OPERATIVA_SEDE,
+                                          GESTIONE_POTERI_SALA_OPERATIVA_SEDE,
+                                          RUBRICA_UFFICIO_SOCI,
+                                          RUBRICA_UFFICIO_SOCI_UNITA,
+                                          RUBRICA_PRESIDENTI,
+                                          RUBRICA_DELEGATI_AREA,
+                                          RUBRICA_DELEGATI_OBIETTIVO_1,
+                                          RUBRICA_DELEGATI_OBIETTIVO_2,
+                                          RUBRICA_DELEGATI_OBIETTIVO_3,
+                                          RUBRICA_DELEGATI_OBIETTIVO_4,
+                                          RUBRICA_DELEGATI_OBIETTIVO_6,
+                                          RUBRICA_DELEGATI_GIOVANI,
+                                          RUBRICA_RESPONSABILI_AREA,
+                                          RUBRICA_REFERENTI_ATTIVITA,
+                                          RUBRICA_REFERENTI_GRUPPI,
+                                          RUBRICA_CENTRALI_OPERATIVE,
+                                          RUBRICA_RESPONSABILI_FORMAZIONE,
+                                          RUBRICA_DIRETTORI_CORSI,
+                                          RUBRICA_RESPONSABILI_AUTOPARCO,
+                                          RUBRICA_COMMISSARI,
+                                          RUBRICA_CONSIGLIERE_GIOVANE,
+                                          RUBRICA_SALE_OPERATIVE,
+                                          GESTIONE_SERVIZI)
 
 
 
@@ -353,6 +378,18 @@ def espandi_gestione_gruppi_sede(qs_sedi, al_giorno=None):
         return []
 
 
+def espandi_gestione_servizi(qs_servizi, al_giorno=None):
+    from anagrafica.models import Persona
+    try:
+        return [
+            (MODIFICA, qs_servizi),
+            # todo: QS
+            (LETTURA, Persona.objects.filter(partecipazioni__turno__attivita__in=qs_servizi))
+        ]
+    except (AttributeError, ValueError, KeyError, TypeError):
+        return []
+
+
 ESPANDI_PERMESSI = {
     # SOCI
     GESTIONE_SOCI: espandi_gestione_soci,
@@ -384,8 +421,9 @@ ESPANDI_PERMESSI = {
     GESTIONE_POTERI_CENTRALE_OPERATIVA_SEDE: espandi_gestione_poteri_centrale_operativa_sede,
 
     # SO
-    GESTIONE_SALA_OPERATIVA_SEDE: espandi_gestione_poteri_sala_operativa_sede,
+    GESTIONE_SO_SEDE: espandi_gestione_poteri_sala_operativa_sede,
     GESTIONE_POTERI_SALA_OPERATIVA_SEDE: espandi_gestione_poteri_sala_operativa_sede,
+    GESTIONE_SERVIZI: espandi_gestione_servizi,
 
     # RUBRICA
     RUBRICA_UFFICIO_SOCI: espandi_rubrica_ufficio_soci,
@@ -409,4 +447,3 @@ ESPANDI_PERMESSI = {
     RUBRICA_DIRETTORI_CORSI: espandi_rubrica_direttori_corsi,
     RUBRICA_RESPONSABILI_AUTOPARCO: espandi_rubrica_responsabili_autoparco,
 }
-

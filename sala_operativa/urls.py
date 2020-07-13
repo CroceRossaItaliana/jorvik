@@ -9,12 +9,6 @@ app_label = 'so'
 urlpatterns = [
     url(r'^$', views.so_index, name='index'),
 
-    # Aree
-    url(r'^aree/$', views.so_aree, name='aree'),
-    url(r'^aree/(?P<sede_pk>[0-9\-]+)/$', views.so_aree_sede, name='aree_sede'),
-    url(r'^aree/(?P<sede_pk>[0-9\-]+)/(?P<area_pk>[0-9\-]+)/responsabili/$', views.so_aree_sede_area_responsabili, name='sede_area_responsabili'),
-    url(r'^aree/(?P<sede_pk>[0-9\-]+)/(?P<area_pk>[0-9\-]+)/cancella/$', views.so_aree_sede_area_cancella, name='sede_area_cancella'),
-
     # Organizza
     url(r'^organizza/$', views.so_organizza, name='organizza'),
     url(r'^organizza/(?P<pk>[0-9\-]+)/referenti/$', views.so_referenti, {"nuova": True}, name='organizza_referenti'),
