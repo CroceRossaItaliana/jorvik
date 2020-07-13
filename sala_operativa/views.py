@@ -1,38 +1,34 @@
 import json
 from datetime import date, timedelta, datetime, time
 
-from django.db.models import Count, F, Sum
-from django.utils import timezone
 from django.contrib import messages
-from django.core.urlresolvers import reverse
 from django.core.paginator import Paginator, PageNotAnInteger, EmptyPage
 from django.core.urlresolvers import reverse
 from django.db.models import Count, F, Sum
 from django.shortcuts import redirect, get_object_or_404
 from django.utils import timezone
 
-# todo: da integrare in questa app
-from attivita.stats import statistiche_attivita_persona
-from attivita.elenchi import ElencoPartecipantiTurno, ElencoPartecipantiAttivita
-from attivita.utils import turni_raggruppa_giorno
-# todo:
-
 from anagrafica.costanti import NAZIONALE
 from anagrafica.forms import ModuloProfiloModificaAnagraficaDatoreLavoro
-from anagrafica.permessi.applicazioni import REFERENTE_SO
+from anagrafica.permessi.applicazioni import REFERENTE_SO, REFERENTE
 from anagrafica.permessi.costanti import (MODIFICA, GESTIONE_ATTIVITA,
-    ERRORE_PERMESSI, COMPLETO, GESTIONE_ATTIVITA_SEDE,
-    GESTIONE_SO_SEDE, GESTIONE_SERVIZI, GESTIONE_REFERENTI_SO, )
+                                          ERRORE_PERMESSI, COMPLETO, GESTIONE_ATTIVITA_SEDE,
+                                          GESTIONE_SO_SEDE, GESTIONE_SERVIZI, GESTIONE_REFERENTI_SO, )
+from attivita.elenchi import ElencoPartecipantiTurno, ElencoPartecipantiAttivita
+# todo: da integrare in questa app
+from attivita.stats import statistiche_attivita_persona
+from attivita.utils import turni_raggruppa_giorno
 from autenticazione.funzioni import pagina_privata, pagina_pubblica
 from base.errori import ci_siamo_quasi, errore_generico, messaggio_generico, errore_no_volontario
 from base.utils import poco_fa, timedelta_ore
-from .models import PartecipazioneSO, ServizioSO, TurnoSO, ReperibilitaSO
 from .forms import (AttivitaInformazioniForm, ModificaTurnoForm,
-    AggiungiPartecipantiForm, CreazioneTurnoForm, RipetiTurnoForm,
-    StatisticheAttivitaForm, StatisticheAttivitaPersonaForm,
-    VolontarioReperibilitaForm, AggiungiReperibilitaPerVolontarioForm,
-    OrganizzaServizioReferenteForm, OrganizzaServizioForm, )
+                    AggiungiPartecipantiForm, CreazioneTurnoForm, RipetiTurnoForm,
+                    StatisticheAttivitaForm, StatisticheAttivitaPersonaForm,
+                    VolontarioReperibilitaForm, AggiungiReperibilitaPerVolontarioForm,
+                    OrganizzaServizioReferenteForm, OrganizzaServizioForm, CreazioneMezzoSO)
+from .models import PartecipazioneSO, ServizioSO, TurnoSO, ReperibilitaSO, MezzoSO
 
+# todo:
 
 # todo:
 
@@ -45,7 +41,7 @@ INITIAL_INIZIO_FINE_PARAMS = {
 def get_reverse(id, sede_pk=None, area_pk=None, attivita_pk=None):
     REVERSE_MAP = {
         3: reverse('so:gestisci'),
-        4: reverse('so:organizza_referenti_fatto', args=[attivita_pk,]),
+        4: reverse('so:organizza_referenti_fatto', args=[attivita_pk, ]),
     }
     return REVERSE_MAP[id]
 
@@ -204,7 +200,7 @@ def so_organizza(request, me):
 
         elif form_referente_cd['scelta'] == form_referente.SCEGLI_REFERENTI:
             # Il referente è qualcun altro.
-            return redirect(reverse('so:organizza_referenti', args=[servizio.pk,]))
+            return redirect(reverse('so:organizza_referenti', args=[servizio.pk, ]))
 
         else:
             persona = Persona.objects.get(pk=form_referente_cd['scelta'])
@@ -289,7 +285,7 @@ def so_calendario(request, me=None, inizio=None, fine=None, vista="calendario"):
     successivo_fine_stringa = successivo_fine.strftime(FORMATO)
 
     successivo_url = reverse('so:calendario_con_range', args=[successivo_inizio_stringa,
-                                                              successivo_fine_stringa,])
+                                                              successivo_fine_stringa, ])
 
     # Oggi
     oggi_url = reverse('so:calendario')
@@ -301,7 +297,7 @@ def so_calendario(request, me=None, inizio=None, fine=None, vista="calendario"):
     precedente_fine_stringa = precedente_fine.strftime(FORMATO)
 
     precedente_url = reverse('so:calendario_con_range', args=[precedente_inizio_stringa,
-                                                              precedente_fine_stringa,])
+                                                              precedente_fine_stringa, ])
 
     # Elenco
     turni = TurnoSO.calendario_di(me, inizio, fine)
@@ -386,7 +382,7 @@ def so_scheda_cancella(request, me, pk):
                               titolo=titolo_messaggio,
                               messaggio=testo_messaggio,
                               torna_titolo="Gestione servizio",
-                              torna_url=reverse('so:gestisci'),)
+                              torna_url=reverse('so:gestisci'), )
 
 
 @pagina_pubblica
@@ -435,8 +431,8 @@ def so_scheda_turni(request, me=None, pk=None, pagina=None):
         'turni': pg.object_list,
         'ha_precedente': pg.has_previous(),
         'ha_successivo': pg.has_next(),
-        'pagina_precedente': pagina-1,
-        'pagina_successiva': pagina+1,
+        'pagina_precedente': pagina - 1,
+        'pagina_successiva': pagina + 1,
         "attivita": attivita,
         "puo_modificare": puo_modificare,
         "evidenzia_turno": evidenzia_turno,
@@ -456,7 +452,7 @@ def so_scheda_turni_nuovo(request, me=None, pk=None):
     tra_una_settimana_e_una_ora = tra_una_settimana + timedelta(hours=1)
 
     form = CreazioneTurnoForm(request.POST or None, initial={
-      "inizio": tra_una_settimana, "fine": tra_una_settimana_e_una_ora,
+        "inizio": tra_una_settimana, "fine": tra_una_settimana_e_una_ora,
     })
     modulo_ripeti = RipetiTurnoForm(request.POST or None, prefix="ripeti")
 
@@ -493,7 +489,6 @@ def so_scheda_turni_nuovo(request, me=None, pk=None):
             pass
 
         return redirect(turno.url)
-
 
     context = {
         "modulo": form,
@@ -552,7 +547,7 @@ def so_scheda_turni_partecipa(request, me, pk=None, turno_pk=None):
                                         "tua richiesta. Puoi sempre controllare lo stato delle tue"
                                         "richieste di partecipazione da 'Attivita' > 'I miei turni'. ",
                               torna_titolo="Vai a 'I miei turni'",
-                              torna_url=reverse('so:storico'),)
+                              torna_url=reverse('so:storico'), )
 
 
 @pagina_privata
@@ -646,7 +641,7 @@ def so_scheda_turni_link_permanente(request, me, pk=None, turno_pk=None):
     pagina = turno.elenco_pagina()
 
     return redirect(reverse('so:so_scheda_turni_pagina',
-                            args=[attivita.pk, pagina, turno.pk, turno.pk,]))
+                            args=[attivita.pk, pagina, turno.pk, turno.pk, ]))
 
 
 @pagina_privata
@@ -656,7 +651,7 @@ def so_scheda_turni_modifica_link_permanente(request, me, pk=None, turno_pk=None
     pagina = turno.elenco_pagina()
 
     return redirect(reverse('so:scheda_turni_modifica_pagina',
-                            args=[attivita.pk, pagina, turno.pk, turno.pk,]))
+                            args=[attivita.pk, pagina, turno.pk, turno.pk, ]))
 
 
 @pagina_privata(permessi=(GESTIONE_SERVIZI,))
@@ -723,7 +718,7 @@ def so_scheda_turni_modifica(request, me, pk=None, pagina=None):
 
     if pagina is None:
         return redirect(reverse('so:scheda_turni_modifica_pagina',
-                                args=[attivita.pk, attivita.pagina_turni_oggi(),]))
+                                args=[attivita.pk, attivita.pagina_turni_oggi(), ]))
 
     turni = attivita.turni.all()
 
@@ -739,13 +734,13 @@ def so_scheda_turni_modifica(request, me, pk=None, pagina=None):
     turni = pg.object_list
     for turno in turni:
         modulo = ModificaTurnoForm(request.POST or None,
-                                     instance=turno,
-                                     prefix="turno_%d" % (turno.pk,))
+                                   instance=turno,
+                                   prefix="turno_%d" % (turno.pk,))
         moduli += [modulo]
 
         modulo_aggiungi_partecipanti = AggiungiPartecipantiForm(request.POST or
-                                                            None,
-                                                                  prefix="turno_agg_%d" % (turno.pk,))
+                                                                None,
+                                                                prefix="turno_agg_%d" % (turno.pk,))
         moduli_aggiungi_partecipanti += [modulo_aggiungi_partecipanti]
 
         if modulo.is_valid():
@@ -781,8 +776,8 @@ def so_scheda_turni_modifica(request, me, pk=None, pagina=None):
         'turni': turni_e_moduli,
         'ha_precedente': pg.has_previous(),
         'ha_successivo': pg.has_next(),
-        'pagina_precedente': pagina-1,
-        'pagina_successiva': pagina+1,
+        'pagina_precedente': pagina - 1,
+        'pagina_successiva': pagina + 1,
         "attivita": attivita,
         "puo_modificare": True,
         "url_modifica": '/modifica',
@@ -828,7 +823,7 @@ def so_scheda_report(request, me, pk=None):
 def so_statistiche(request, me):
     sedi = me.oggetti_permesso(GESTIONE_ATTIVITA_SEDE)
 
-    form = StatisticheAttivitaForm(request.POST or None, initial={"sedi":sedi})
+    form = StatisticheAttivitaForm(request.POST or None, initial={"sedi": sedi})
     form.fields['sedi'].queryset = sedi
 
     statistiche = []
@@ -853,8 +848,8 @@ def so_statistiche(request, me):
 
             dati = {}
 
-            fine = oggi - timedelta(days=(giorni*periodo))
-            inizio = fine - timedelta(days=giorni-1)
+            fine = oggi - timedelta(days=(giorni * periodo))
+            inizio = fine - timedelta(days=giorni - 1)
 
             fine = datetime.combine(fine, time(23, 59, 59))
             inizio = datetime.combine(inizio, time(0, 0, 0))
@@ -864,13 +859,16 @@ def so_statistiche(request, me):
 
             # Prima, ottiene tutti i queryset.
             qs_attivita = ServizioSO.objects.filter(stato=ServizioSO.VISIBILE,
-                                                   sede__in=sedi)
+                                                    sede__in=sedi)
             qs_turni = TurnoSO.objects.filter(attivita__in=qs_attivita,
-                                             inizio__lte=fine, fine__gte=inizio)
+                                              inizio__lte=fine, fine__gte=inizio)
             qs_part = PartecipazioneSO.con_esito_ok(turno__in=qs_turni)
 
-            ore_di_servizio = qs_turni.annotate(durata=F('fine') - F('inizio')).aggregate(totale_ore=Sum('durata'))['totale_ore'] or timedelta()
-            ore_uomo_di_servizio = qs_part.annotate(durata=F('turno__fine') - F('turno__inizio')).aggregate(totale_ore=Sum('durata'))['totale_ore'] or timedelta()
+            ore_di_servizio = qs_turni.annotate(durata=F('fine') - F('inizio')).aggregate(totale_ore=Sum('durata'))[
+                                  'totale_ore'] or timedelta()
+            ore_uomo_di_servizio = \
+            qs_part.annotate(durata=F('turno__fine') - F('turno__inizio')).aggregate(totale_ore=Sum('durata'))[
+                'totale_ore'] or timedelta()
 
             # Poi, associa al dizionario statistiche.
             dati['etichetta'] = "%d %s fa" % (periodo, etichetta,)
@@ -916,8 +914,10 @@ def so_mezzi(request, me):
 
     return 'sala_operativa_mm.html', context
 
+
 def so_mezzi_aggiungi():
     return None
+
 
 @pagina_privata
 def so_mezzo_cancella(request, me, pk):
