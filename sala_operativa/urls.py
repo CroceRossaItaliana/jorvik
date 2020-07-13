@@ -78,7 +78,6 @@ urlpatterns = [
 
     # Mezzi e materiali
     url(r'^mm/$', views.so_mezzi, name='mezzi'),
-    url(r'^mm/add/$', views.so_mezzi_aggiungi, name='mezzi_aggiungi'),
     url(r'^mm/%s/edit/$' % pk, views.so_mezzo_modifica, name='mezzo_modifica'),
     url(r'^mm/%s/delete/$' % pk, views.so_mezzo_cancella, name='mezzo_cancella'),
 ]

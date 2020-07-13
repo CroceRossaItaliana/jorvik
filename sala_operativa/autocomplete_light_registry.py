@@ -20,4 +20,19 @@ class AggiungiReperibilitaPerVolontario(AutocompletamentoBase):
         return super().choices_for_request()
 
 
+class PersonaMaterialiServizi(AutocompletamentoBase):
+
+    search_fields = ['nome', 'cognome', 'codice_fiscale', ]
+    model = Persona
+
+    # def choices_for_request(self):
+    #     persona = self.request.user.persona
+    #     mie_sedi_so = persona.oggetti_permesso(GESTIONE_SALA_OPERATIVA_SEDE)
+    #     self.choices = self.choices.filter(Q(Appartenenza.query_attuale(
+    #         membro=Appartenenza.VOLONTARIO).via("appartenenze")
+    #     )).filter(sede__in=mie_sedi_so)
+    #     return super().choices_for_request()
+
+
 autocomplete_light.register(AggiungiReperibilitaPerVolontario)
+autocomplete_light.register(PersonaMaterialiServizi)

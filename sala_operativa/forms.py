@@ -6,7 +6,7 @@ from django.forms.extras import SelectDateWidget
 
 from anagrafica.models import Sede
 from base.wysiwyg import WYSIWYGSemplice
-from .models import ServizioSO, TurnoSO, AreaSO, ReperibilitaSO
+from .models import ServizioSO, TurnoSO, AreaSO, ReperibilitaSO, MezzoSO
 
 
 class VolontarioReperibilitaForm(ModelForm):
@@ -167,3 +167,10 @@ class RipetiTurnoForm(forms.Form):
 
     numero_ripetizioni = forms.IntegerField(min_value=1, max_value=60, initial=3,
                                             help_text="Per quanti giorni vuoi ripetere questo turno? ")
+
+
+class CreazioneMezzoSO(ModelForm):
+
+    class Meta:
+        model = MezzoSO
+        fields = ['tipo', 'nome', 'mezzo_tipo', 'inizio', 'fine']

@@ -286,7 +286,7 @@ class MezzoSO(ModelloSemplice, ConMarcaTemporale, ConStorico):
     creato_da = models.ForeignKey('anagrafica.Persona', null=True, blank=True)
 
     def __str__(self):
-        return str(self.name)
+        return str(self.nome)
 
     class Meta:
         verbose_name = 'Mezzo o materiale'
