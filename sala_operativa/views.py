@@ -10,7 +10,6 @@ from django.shortcuts import redirect, get_object_or_404
 
 # todo: da integrare in questa app
 from attivita.stats import statistiche_attivita_persona
-from attivita.elenchi import ElencoPartecipantiTurno, ElencoPartecipantiAttivita
 from attivita.utils import turni_raggruppa_giorno
 # todo:
 
@@ -24,6 +23,7 @@ from autenticazione.funzioni import pagina_privata, pagina_pubblica
 from base.errori import ci_siamo_quasi, errore_generico, messaggio_generico, errore_no_volontario
 from base.utils import poco_fa, timedelta_ore
 from .models import PartecipazioneSO, ServizioSO, TurnoSO, ReperibilitaSO
+from .elenchi import ElencoPartecipantiTurno, ElencoPartecipantiAttivita
 from .forms import (AttivitaInformazioniForm, ModificaTurnoForm,
     AggiungiPartecipantiForm, CreazioneTurnoForm, RipetiTurnoForm,
     StatisticheAttivitaForm, StatisticheAttivitaPersonaForm,
@@ -35,14 +35,6 @@ INITIAL_INIZIO_FINE_PARAMS = {
     "inizio": poco_fa() + timedelta(hours=1),
     "fine": poco_fa() + timedelta(hours=2),
 }
-
-
-def get_reverse(id, sede_pk=None, area_pk=None, attivita_pk=None):
-    REVERSE_MAP = {
-        3: reverse('so:gestisci'),
-        4: reverse('so:organizza_referenti_fatto', args=[attivita_pk,]),
-    }
-    return REVERSE_MAP[id]
 
 
 @pagina_privata
@@ -234,12 +226,12 @@ def so_referenti(request, me, pk=None, nuova=False):
     if not me.permessi_almeno(attivita, MODIFICA):
         return redirect(ERRORE_PERMESSI)
 
-    delega = REFERENTE
+    delega = REFERENTE_SO
 
     if nuova:
-        continua_url = get_reverse(4, attivita_pk=attivita.pk)
+        continua_url = reverse('so:organizza_referenti_fatto', args=[attivita.pk,])
     else:
-        continua_url = get_reverse(3)
+        continua_url = reverse('so:gestisci')
 
     context = {
         "delega": delega,
@@ -351,8 +343,6 @@ def so_scheda_informazioni(request, me=None, pk=None):
     servizio = get_object_or_404(ServizioSO, pk=pk)
     puo_modificare = me and me.permessi_almeno(servizio, MODIFICA)
 
-    print(me.permessi_almeno(servizio, MODIFICA))
-
     context = {
         "attivita": servizio,
         "puo_modificare": puo_modificare,
@@ -403,15 +393,15 @@ def so_scheda_turni(request, me=None, pk=None, pagina=None):
     if False:
         return ci_siamo_quasi(request, me)
 
-    attivita = get_object_or_404(ServizioSO, pk=pk)
+    servizio = get_object_or_404(ServizioSO, pk=pk)
 
     if pagina is None:
-        pagina = reverse('so:so_scheda_turni_pagina', args=[attivita.pk, attivita.pagina_turni_oggi()])
+        pagina = reverse('so:scheda_turni_pagina', args=[servizio.pk, servizio.pagina_turni_oggi()])
         return redirect(pagina)
 
-    turni = attivita.turni.all()
+    turni = servizio.turni_so.all()
 
-    puo_modificare = me and me.permessi_almeno(attivita, MODIFICA)
+    puo_modificare = me and me.permessi_almeno(servizio, MODIFICA)
 
     evidenzia_turno = TurnoSO.objects.get(pk=request.GET['evidenzia_turno']) \
         if 'evidenzia_turno' in request.GET else None
@@ -432,7 +422,7 @@ def so_scheda_turni(request, me=None, pk=None, pagina=None):
         'ha_successivo': pg.has_next(),
         'pagina_precedente': pagina-1,
         'pagina_successiva': pagina+1,
-        "attivita": attivita,
+        "attivita": servizio,
         "puo_modificare": puo_modificare,
         "evidenzia_turno": evidenzia_turno,
     }
@@ -488,7 +478,6 @@ def so_scheda_turni_nuovo(request, me=None, pk=None):
             pass
 
         return redirect(turno.url)
-
 
     context = {
         "modulo": form,
@@ -637,21 +626,21 @@ def so_scheda_turni_rimuovi(request, me, pk=None, turno_pk=None, partecipante_pk
 @pagina_privata
 def so_scheda_turni_link_permanente(request, me, pk=None, turno_pk=None):
     turno = get_object_or_404(TurnoSO, pk=turno_pk)
-    attivita = turno.attivita
+    servizio = turno.attivita
     pagina = turno.elenco_pagina()
 
-    return redirect(reverse('so:so_scheda_turni_pagina',
-                            args=[attivita.pk, pagina, turno.pk, turno.pk,]))
+    return redirect(reverse('so:scheda_turni_pagina', args=[servizio.pk, pagina, ]) +
+                            "?evidenzia_turno=%d#turno-%d" % (turno.pk, turno.pk))
 
 
 @pagina_privata
 def so_scheda_turni_modifica_link_permanente(request, me, pk=None, turno_pk=None):
     turno = get_object_or_404(TurnoSO, pk=turno_pk)
-    attivita = turno.attivita
+    servizio = turno.attivita
     pagina = turno.elenco_pagina()
 
-    return redirect(reverse('so:scheda_turni_modifica_pagina',
-                            args=[attivita.pk, pagina, turno.pk, turno.pk,]))
+    return redirect(reverse('so:scheda_turni_modifica_pagina', args=[servizio.pk, pagina, ]) +
+                            "?evidenzia_turno=%d#turno-%d" % (turno.pk, turno.pk))
 
 
 @pagina_privata(permessi=(GESTIONE_SERVIZI,))
@@ -702,25 +691,21 @@ def so_riapri(request, me, pk=None):
 
 @pagina_privata(permessi=(GESTIONE_ATTIVITA,))
 def so_scheda_turni_modifica(request, me, pk=None, pagina=None):
-    """
-    Mostra la pagina di modifica di una attivita'.
-    """
+    """ Mostra la pagina di modifica di un servizio """
 
-    attivita = get_object_or_404(ServizioSO, pk=pk)
-    if not me.permessi_almeno(attivita, MODIFICA):
-
-        if me.permessi_almeno(attivita, MODIFICA, solo_deleghe_attive=False):
-            # Se la mia delega e' sospesa per l'attivita', vai in prima pagina
-            #  per riattivarla.
-            return redirect(attivita.url)
+    servizio = get_object_or_404(ServizioSO, pk=pk)
+    if not me.permessi_almeno(servizio, MODIFICA):
+        if me.permessi_almeno(servizio, MODIFICA, solo_deleghe_attive=False):
+            # Se la mia delega è sospesa per il servizio, vai in prima pagina per riattivarlo
+            return redirect(servizio.url)
 
         return redirect(ERRORE_PERMESSI)
 
     if pagina is None:
         return redirect(reverse('so:scheda_turni_modifica_pagina',
-                                args=[attivita.pk, attivita.pagina_turni_oggi(),]))
+                                args=[servizio.pk, servizio.pagina_turni_oggi(),]))
 
-    turni = attivita.turni.all()
+    turni = servizio.turni_so.all()
 
     pagina = int(pagina)
     if pagina < 0:
@@ -729,22 +714,20 @@ def so_scheda_turni_modifica(request, me, pk=None, pagina=None):
     p = Paginator(turni, TurnoSO.PER_PAGINA)
     pg = p.page(pagina)
 
-    moduli = []
+    forms = []
     moduli_aggiungi_partecipanti = []
     turni = pg.object_list
     for turno in turni:
-        modulo = ModificaTurnoForm(request.POST or None,
-                                     instance=turno,
-                                     prefix="turno_%d" % (turno.pk,))
-        moduli += [modulo]
+        form = ModificaTurnoForm(request.POST or None, instance=turno,
+                                   prefix="turno_%d" % (turno.pk,))
+        forms += [form]
 
-        modulo_aggiungi_partecipanti = AggiungiPartecipantiForm(request.POST or
-                                                            None,
-                                                                  prefix="turno_agg_%d" % (turno.pk,))
+        modulo_aggiungi_partecipanti = AggiungiPartecipantiForm(request.POST or None,
+                                                                prefix="turno_agg_%d" % (turno.pk,))
         moduli_aggiungi_partecipanti += [modulo_aggiungi_partecipanti]
 
-        if modulo.is_valid():
-            modulo.save()
+        if form.is_valid():
+            form.save()
 
         if modulo_aggiungi_partecipanti.is_valid():
 
@@ -764,7 +747,7 @@ def so_scheda_turni_modifica(request, me, pk=None, pagina=None):
                 PartecipazioneSO.NON_PRESENTATO
             pa.save()
 
-    turni_e_moduli = zip(turni, moduli, moduli_aggiungi_partecipanti)
+    turni_e_moduli = zip(turni, forms, moduli_aggiungi_partecipanti)
 
     evidenzia_turno = TurnoSO.objects.get(pk=request.GET['evidenzia_turno']) \
         if 'evidenzia_turno' in request.GET else None
@@ -778,7 +761,7 @@ def so_scheda_turni_modifica(request, me, pk=None, pagina=None):
         'ha_successivo': pg.has_next(),
         'pagina_precedente': pagina-1,
         'pagina_successiva': pagina+1,
-        "attivita": attivita,
+        "attivita": servizio,
         "puo_modificare": True,
         "url_modifica": '/modifica',
         "evidenzia_turno": evidenzia_turno,

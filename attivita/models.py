@@ -188,195 +188,6 @@ class AttivitaAbstract(ModelloSemplice, ConGeolocalizzazione, ConMarcaTemporale,
         self.attiva_deleghe()
 
 
-class TurnoAbstract(ModelloSemplice, ConMarcaTemporale, ConGiudizio):
-    class Meta:
-        abstract = True
-
-    def persona(self, persona):
-        """
-        Ritorna uno stato TURNO_ per la persona.
-        :return:
-        """
-        from anagrafica.models import Appartenenza
-
-        # Cerca la ultima richiesta di partecipazione al turno
-        partecipazione = Partecipazione.objects.filter(persona=persona, turno=self).order_by('-creazione').first()
-
-        # Se esiste una richiesta di partecipazione
-        if partecipazione:
-
-            esito = partecipazione.esito
-
-            if esito == partecipazione.ESITO_OK:
-                return self.TURNO_PRENOTATO_NON_PUOI_RITIRARTI
-
-            elif esito == partecipazione.ESITO_PENDING:
-                return self.TURNO_PRENOTATO_PUOI_RITIRARTI
-
-            elif esito == partecipazione.ESITO_RITIRATA:
-                return self.TURNO_PUOI_PARTECIPARE_PRENOTA
-
-            else:  # esito == partecipazione.ESITO_NO
-                return self.TURNO_NON_PUOI_PARTECIPARE_NEGATO
-
-        # Altrimenti, se non esiste, controlla i requisiti di partecipazione
-
-        ## Turno passato, puoi solo essere inserito
-        if not self.futuro:
-            return self.TURNO_NON_PUOI_PARTECIPARE_PASSATO
-
-        if self.troppo_tardi:
-            return self.TURNO_NON_PUOI_PARTECIPARE_TROPPO_TARDI
-
-        ## Attivita chiusa
-        if not self.attivita.apertura == self.attivita.APERTA:
-            return self.TURNO_NON_PUOI_PARTECIPARE_ATTIVITA_CHIUSA
-
-        ## Sede valida
-        if not self.attivita.estensione.ottieni_discendenti(includimi=True).filter(
-                pk__in=persona.sedi_attuali(membro__in=Appartenenza.MEMBRO_ATTIVITA).values_list('id', flat=True)
-        ).exists():
-            return self.TURNO_NON_PUOI_PARTECIPARE_FUORI_SEDE
-
-        ## In riserva
-        if persona.in_riserva:
-            return self.TURNO_NON_PUOI_PARTECIPARE_RISERVA
-
-        # Se tutti i requisiti sono passati, puoi partecipare.
-
-        ## Turno pieno? Allora dai disponibilita'.
-        if self.pieno:
-            return self.TURNO_PUOI_PARTECIPARE_DISPONIBILITA
-
-        ## In tutti gli altri casi.
-        return self.TURNO_PUOI_PARTECIPARE_PRENOTA
-
-    @property
-    def scoperto(self):
-        return self.partecipazioni_confermate().count() < self.minimo
-
-    @property
-    def pieno(self):
-        return self.massimo and self.partecipazioni_confermate().count() >= self.massimo
-
-    @property
-    def futuro(self):
-        return self.fine > timezone.now()
-
-    @property
-    def troppo_tardi(self):
-        return self.prenotazione and timezone.now() > self.prenotazione
-
-    @property
-    def url(self):
-        return "%sturni/link-permanente/%d/" % (self.attivita.url, self.pk)
-
-    @property
-    def url_modifica(self):
-        return "%sturni/modifica/link-permanente/%d/" % (self.attivita.url, self.pk)
-
-    @property
-    def url_cancella(self):
-        return "%sturni/cancella/%d/" % (self.attivita.url, self.pk)
-
-    @property
-    def url_partecipa(self):
-        return "%sturni/%d/partecipa/" % (self.attivita.url, self.pk)
-
-    @property
-    def url_ritirati(self):
-        return "%sturni/%d/ritirati/" % (self.attivita.url, self.pk)
-
-    @property
-    def url_partecipanti(self):
-        return "%sturni/%d/partecipanti/" % (self.attivita.url, self.pk)
-
-    @property
-    def link(self):
-        return "<a href='%s'>%s</a>" % (
-            self.url, self.nome
-        )
-
-    @classmethod
-    @concept
-    def query_futuri(cls, *args, ora=None, **kwargs):
-        ora = ora or timezone.now()
-        return Q(
-            *args,
-            fine__gt=ora,
-            **kwargs
-        )
-
-    @classmethod
-    @concept
-    def query_passati(cls, *args, ora=None, **kwargs):
-        ora = ora or timezone.now()
-        return Q(
-            *args,
-            fine__lt=ora,
-            **kwargs
-        )
-
-    def elenco_posizione(self):
-        """
-        :return: Ottiene la posizione approssimativa di questo turno in elenco (5=quinto).
-        """
-        return Turno.objects.filter(
-            attivita=self.attivita,
-            inizio__lte=self.inizio,
-            fine__lte=self.fine,
-        ).exclude(pk=self.pk).count() + 1
-
-    def elenco_pagina(self):
-        return floor(((self.elenco_posizione() - 1) / self.PER_PAGINA)) + 1
-
-    def partecipazioni_in_attesa(self):
-        return Partecipazione.con_esito_pending().filter(turno=self)
-
-    def partecipazioni_confermate(self):
-        return Partecipazione.con_esito_ok().filter(turno=self)
-
-    def partecipazioni_negate(self):
-        return Partecipazione.con_esito_no().filter(turno=self)
-
-    def partecipazioni_ritirate(self):
-        return Partecipazione.con_esito_ritirata().filter(turno=self)
-
-    def aggiungi_partecipante(self, persona, richiedente=None):
-        """
-        Aggiunge di ufficio una persona.
-        :return: Oggetto Partecipazione.
-        """
-
-        ## Persona gia' partecipante?
-        p = Partecipazione.con_esito_ok().filter(turno=self, persona=persona).first()
-        if p:
-            return p
-
-        ## Elimina eventuali vecchie partecipazioni in attesa
-        Partecipazione.con_esito_pending().filter(turno=self, persona=persona).delete()
-
-        p = Partecipazione(
-            turno=self,
-            persona=persona,
-        )
-        p.save()
-
-        if richiedente:
-            a = Autorizzazione(
-                destinatario_ruolo=INCARICO_GESTIONE_ATTIVITA_PARTECIPANTI,
-                destinatario_oggetto=self.attivita,
-                oggetto=p,
-                richiedente=persona,
-                firmatario=richiedente,
-                concessa=True,
-                necessaria=False,
-            )
-            a.save()
-
-        return p
-
-
 class PartecipazioneAbstract(ModelloSemplice, ConMarcaTemporale, ConAutorizzazioni):
     class Meta:
         abstract = True
@@ -594,7 +405,7 @@ class Attivita(AttivitaAbstract):
         )
 
 
-class Turno(TurnoAbstract):
+class Turno(ModelloSemplice, ConMarcaTemporale, ConGiudizio):
     attivita = models.ForeignKey(Attivita, related_name='turni', on_delete=models.CASCADE)
 
     nome = models.CharField(max_length=128, default="Nuovo turno", db_index=True)
@@ -638,6 +449,190 @@ class Turno(TurnoAbstract):
         TURNO_PRENOTATO_PUOI_RITIRARTI,
         TURNO_PRENOTATO_NON_PUOI_RITIRARTI,
     )
+
+    @property
+    def url(self):
+        return "%sturni/link-permanente/%d/" % (self.attivita.url, self.pk)
+
+    @property
+    def url_modifica(self):
+        return "%sturni/modifica/link-permanente/%d/" % (self.attivita.url, self.pk)
+
+    @property
+    def url_cancella(self):
+        return "%sturni/cancella/%d/" % (self.attivita.url, self.pk)
+
+    @property
+    def url_partecipa(self):
+        return "%sturni/%d/partecipa/" % (self.attivita.url, self.pk)
+
+    @property
+    def url_ritirati(self):
+        return "%sturni/%d/ritirati/" % (self.attivita.url, self.pk)
+
+    @property
+    def url_partecipanti(self):
+        return "%sturni/%d/partecipanti/" % (self.attivita.url, self.pk)
+
+    @property
+    def link(self):
+        return "<a href='%s'>%s</a>" % (
+            self.url, self.nome
+        )
+
+    @classmethod
+    @concept
+    def query_futuri(cls, *args, ora=None, **kwargs):
+        ora = ora or timezone.now()
+        return Q(
+            *args,
+            fine__gt=ora,
+            **kwargs
+        )
+
+    @classmethod
+    @concept
+    def query_passati(cls, *args, ora=None, **kwargs):
+        ora = ora or timezone.now()
+        return Q(
+            *args,
+            fine__lt=ora,
+            **kwargs
+        )
+
+    def elenco_pagina(self):
+        return floor(((self.elenco_posizione() - 1) / self.PER_PAGINA)) + 1
+
+    def persona(self, persona):
+        """
+        Ritorna uno stato TURNO_ per la persona.
+        :return:
+        """
+        from anagrafica.models import Appartenenza
+
+        # Cerca la ultima richiesta di partecipazione al turno
+        partecipazione = Partecipazione.objects.filter(persona=persona, turno=self).order_by('-creazione').first()
+
+        # Se esiste una richiesta di partecipazione
+        if partecipazione:
+
+            esito = partecipazione.esito
+
+            if esito == partecipazione.ESITO_OK:
+                return self.TURNO_PRENOTATO_NON_PUOI_RITIRARTI
+
+            elif esito == partecipazione.ESITO_PENDING:
+                return self.TURNO_PRENOTATO_PUOI_RITIRARTI
+
+            elif esito == partecipazione.ESITO_RITIRATA:
+                return self.TURNO_PUOI_PARTECIPARE_PRENOTA
+
+            else:  # esito == partecipazione.ESITO_NO
+                return self.TURNO_NON_PUOI_PARTECIPARE_NEGATO
+
+        # Altrimenti, se non esiste, controlla i requisiti di partecipazione
+
+        ## Turno passato, puoi solo essere inserito
+        if not self.futuro:
+            return self.TURNO_NON_PUOI_PARTECIPARE_PASSATO
+
+        if self.troppo_tardi:
+            return self.TURNO_NON_PUOI_PARTECIPARE_TROPPO_TARDI
+
+        ## Attivita chiusa
+        if not self.attivita.apertura == self.attivita.APERTA:
+            return self.TURNO_NON_PUOI_PARTECIPARE_ATTIVITA_CHIUSA
+
+        ## Sede valida
+        if not self.attivita.estensione.ottieni_discendenti(includimi=True).filter(
+                pk__in=persona.sedi_attuali(membro__in=Appartenenza.MEMBRO_ATTIVITA).values_list('id', flat=True)
+        ).exists():
+            return self.TURNO_NON_PUOI_PARTECIPARE_FUORI_SEDE
+
+        ## In riserva
+        if persona.in_riserva:
+            return self.TURNO_NON_PUOI_PARTECIPARE_RISERVA
+
+        # Se tutti i requisiti sono passati, puoi partecipare.
+
+        ## Turno pieno? Allora dai disponibilita'.
+        if self.pieno:
+            return self.TURNO_PUOI_PARTECIPARE_DISPONIBILITA
+
+        ## In tutti gli altri casi.
+        return self.TURNO_PUOI_PARTECIPARE_PRENOTA
+
+    def partecipazioni_in_attesa(self):
+        return Partecipazione.con_esito_pending().filter(turno=self)
+
+    def partecipazioni_confermate(self):
+        return Partecipazione.con_esito_ok().filter(turno=self)
+
+    def partecipazioni_negate(self):
+        return Partecipazione.con_esito_no().filter(turno=self)
+
+    def partecipazioni_ritirate(self):
+        return Partecipazione.con_esito_ritirata().filter(turno=self)
+
+    def aggiungi_partecipante(self, persona, richiedente=None):
+        """
+        Aggiunge di ufficio una persona.
+        :return: Oggetto Partecipazione.
+        """
+
+        ## Persona gia' partecipante?
+        p = Partecipazione.con_esito_ok().filter(turno=self, persona=persona).first()
+        if p:
+            return p
+
+        ## Elimina eventuali vecchie partecipazioni in attesa
+        Partecipazione.con_esito_pending().filter(turno=self, persona=persona).delete()
+
+        p = Partecipazione(
+            turno=self,
+            persona=persona,
+        )
+        p.save()
+
+        if richiedente:
+            a = Autorizzazione(
+                destinatario_ruolo=INCARICO_GESTIONE_ATTIVITA_PARTECIPANTI,
+                destinatario_oggetto=self.attivita,
+                oggetto=p,
+                richiedente=persona,
+                firmatario=richiedente,
+                concessa=True,
+                necessaria=False,
+            )
+            a.save()
+
+        return p
+
+    @property
+    def pieno(self):
+        return self.massimo and self.partecipazioni_confermate().count() >= self.massimo
+
+    @property
+    def futuro(self):
+        return self.fine > timezone.now()
+
+    @property
+    def troppo_tardi(self):
+        return self.prenotazione and timezone.now() > self.prenotazione
+
+    @property
+    def scoperto(self):
+        return self.partecipazioni_confermate().count() < self.minimo
+
+    def elenco_posizione(self):
+        """
+        :return: Ottiene la posizione approssimativa di questo turno in elenco (5=quinto).
+        """
+        return Turno.objects.filter(
+            attivita=self.attivita,
+            inizio__lte=self.inizio,
+            fine__lte=self.fine,
+        ).exclude(pk=self.pk).count() + 1
 
     def __str__(self):
         return "%s (%s)" % (self.nome, self.attivita.nome if self.attivita else "Nessuna attività")

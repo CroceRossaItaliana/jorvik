@@ -102,6 +102,18 @@ PERMESSI_OGGETTI = (
     (GESTIONE_ATTIVITA,         ('attivita',   'Attivita')),
     (GESTIONE_AREE_SEDE,        ('anagrafica', 'Sede')),
 
+    # SALA OPERATIVA
+    (RUBRICA_SALE_OPERATIVE,    ('anagrafica', 'Sede')),
+    (RUBRICA_REFERENTI_SO,      ('sala_operativa', 'ServizioSO')),
+    (GESTIONE_REFERENTI_SO,     ('sala_operativa', 'ServizioSO')),
+    (GESTIONE_SERVIZI,          ('sala_operativa', 'ServizioSO')),
+    (GESTIONE_SO_SEDE,          ('anagrafica', 'Sede')),
+    (GESTIONE_POTERI_SALA_OPERATIVA_SEDE, ('anagrafica', 'Sede')),
+
+    # CENTRALE OPERATIVA
+    (GESTIONE_CENTRALE_OPERATIVA_SEDE, ('anagrafica', 'Sede')),
+    (GESTIONE_POTERI_CENTRALE_OPERATIVA_SEDE, ('anagrafica', 'Sede')),
+
     # FORMAZIONE
     (GESTIONE_CORSI_SEDE,       ('anagrafica', 'Sede')),
     (GESTIONE_CORSO,            ('formazione', 'CorsoBase')),
@@ -114,18 +126,6 @@ PERMESSI_OGGETTI = (
     (GESTIONE_GRUPPI_SEDE,      ('anagrafica', 'Sede')),
     (GESTIONE_GRUPPO,           ('gruppi',     'Gruppo')),
     (GESTIONE_GRUPPI,           ('gruppi',     'Gruppo')),
-
-    # CENTRALE OPERATIVA
-    (GESTIONE_CENTRALE_OPERATIVA_SEDE,  ('anagrafica', 'Sede')),
-    (GESTIONE_POTERI_CENTRALE_OPERATIVA_SEDE,  ('anagrafica', 'Sede')),
-
-    # SALA OPERATIVA
-    (RUBRICA_SALE_OPERATIVE,    ('anagrafica', 'Sede')),
-    (RUBRICA_REFERENTI_SO,      ('sala_operativa', 'ServizioSO')),
-    (GESTIONE_REFERENTI_SO,     ('sala_operativa',   'ServizioSO')),
-    (GESTIONE_SERVIZI,          ('sala_operativa', 'ServizioSO')),
-    (GESTIONE_SO_SEDE,          ('anagrafica', 'Sede')),
-    (GESTIONE_POTERI_SALA_OPERATIVA_SEDE,   ('anagrafica', 'Sede')),
 
     # todo: da togliere area
     (GESTIONE_SO_AREA,          ('sala_operativa', 'AreaSO')),

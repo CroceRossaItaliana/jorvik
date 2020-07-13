@@ -11,3 +11,12 @@ def posso_vedere(servizio, persona):
         persona=persona,
         confermata=True
     ).exists()
+
+@register.assignment_tag(takes_context=True)
+def partecipazione(context, turno):
+    """ Controlla lo stato di partecipazione tra turno e il servizio """
+
+    if not hasattr(context.request, 'me'):
+        return turno.TURNO_NON_PUOI_PARTECIPARE_ACCEDI
+
+    return turno.persona(context.request.me)

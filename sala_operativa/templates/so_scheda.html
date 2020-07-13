@@ -22,13 +22,11 @@
         {% permessi_almeno attivita "modifica" deleghe="tutte" as puo_riabilitare %}
         {% if puo_riabilitare %}
             <div class="alert alert-info">
-                <h4><i class="fa fa-fw fa-warning"></i> Attivita chiusa</h4>
-                <p>L'attivit&agrave; &egrave; stata chiusa. Questo vuol dire che non puoi gestire i partecipanti,
-                    e i volontari non possono chiedere di parteciparvi. Puoi riaprire l'attivit&agrave; in qualunque
-                    momento usando il pulsante seguente.</p>
-                <p>
-                    <a href="{{ attivita.url_riapri }}" class="btn btn-info">Riapri attivit&agrave;</a>
-                </p>
+                <h4><i class="fa fa-fw fa-warning"></i> Servizio chiuso</h4>
+                <p>Il servizio è stato chiusa. Questo vuol dire che non puoi gestire i partecipanti,
+                    e i volontari non possono chiedere di parteciparvi.
+                    Puoi riaprire il servizio in qualunque momento usando il pulsante seguente.</p>
+                <p><a href="{{ attivita.url_riapri }}" class="btn btn-info">Riapri servizio</a></p>
             </div>
         {% endif %}
     {% endif %}
@@ -56,7 +54,7 @@
         {% if puo_modificare %}
             <li role="presentation" {% if request.path == attivita.url_modifica %}class="active"{% endif %}>
                 <a href="{{ attivita.url_modifica }}" class="text-danger">
-                    <i class="fa fa-fw fa-pencil"></i> Gestione attivit&agrave;
+                    <i class="fas fa-pencil-alt"></i> Gestione servizi
                 </a>
             </li>
             <li role="presentation" {% if attivita.url_turni_modifica in request.path %}class="active"{% endif %}>
@@ -66,7 +64,7 @@
             </li>
             <li role="presentation" {% if attivita.url_report in request.path %}class="active"{% endif %}>
                 <a href="{{ attivita.url_report }}" class="text-danger">
-                    <i class="fa fa-fw fa-bar-chart-o"></i> Statistiche e report
+                    <i class="far fa-chart-bar"></i> Statistiche e report
                 </a>
             </li>
         {% endif %}

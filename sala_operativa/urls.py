@@ -27,16 +27,6 @@ urlpatterns = [
     url(r'^storico/excel/$', views.so_storico_excel, name='storico_excel'),
     url(r'^statistiche/$', views.so_statistiche, name='statistiche'),
 
-    # Gruppi
-    # url(r'^gruppo/$', gruppi_views.attivita_gruppo, name='gruppo'),
-    # url(r'^gruppi/$', gruppi_views.attivita_gruppi, name='gruppi'),
-    # url(r'^gruppi/(?P<pk>[0-9]+)/$', gruppi_views.attivita_gruppi_gruppo, name='gruppi_gruppo'),
-    # url(r'^gruppi/(?P<pk>[0-9]+)/iscriviti/$', gruppi_views.attivita_gruppi_gruppo_iscriviti),
-    # url(r'^gruppi/(?P<pk>[0-9]+)/espelli/(?P<persona_pk>[0-9]+)/$', gruppi_views.attivita_gruppi_gruppo_espelli),
-    # url(r'^gruppi/(?P<pk>[0-9]+)/abbandona/$', gruppi_views.attivita_gruppi_gruppo_abbandona),
-    # url(r'^gruppi/(?P<pk>[0-9]+)/elimina/$', gruppi_views.attivita_gruppi_gruppo_elimina),
-    # url(r'^gruppi/(?P<pk>[0-9]+)/elimina_conferma/$', gruppi_views.attivita_gruppi_gruppo_elimina_conferma),
-
     # Reperibilita
     url(r'^r/$', views.so_reperibilita, name='reperibilita'),
     url(r'^r/backup/$', views.so_reperibilita_backup, name='reperibilita_backup'),
@@ -57,7 +47,7 @@ urlpatterns = [
     # Turni
     url(r'^scheda/(?P<pk>[0-9]+)/turni/$', views.so_scheda_turni, name='so_scheda_turni'),
     url(r'^scheda/(?P<pk>[0-9]+)/turni/nuovo/$', views.so_scheda_turni_nuovo, name='so_scheda_turni_nuovo'),
-    url(r'^scheda/(?P<pk>[0-9]+)/turni/(?P<pagina>[0-9]+)/$', views.so_scheda_turni, name='so_scheda_turni_pagina'),
+    url(r'^scheda/(?P<pk>[0-9]+)/turni/(?P<pagina>[0-9]+)/$', views.so_scheda_turni, name='scheda_turni_pagina'),
     url(r'^scheda/(?P<pk>[0-9]+)/turni/(?P<turno_pk>[0-9]+)/partecipa/$', views.so_scheda_turni_partecipa, name='scheda_turni_partecipa'),
     url(r'^scheda/(?P<pk>[0-9]+)/turni/(?P<turno_pk>[0-9]+)/ritirati/$', views.so_scheda_turni_ritirati, name='scheda_turni_ritirati'),
     url(r'^scheda/(?P<pk>[0-9]+)/turni/(?P<turno_pk>[0-9]+)/partecipanti/$', views.so_scheda_turni_partecipanti, name='scheda_turni_partecipanti'),

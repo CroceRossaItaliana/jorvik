@@ -383,8 +383,7 @@ def espandi_gestione_servizi(qs_servizi, al_giorno=None):
     try:
         return [
             (MODIFICA, qs_servizi),
-            # todo: QS
-            (LETTURA, Persona.objects.filter(partecipazioni__turno__attivita__in=qs_servizi))
+            (LETTURA, Persona.objects.filter(partecipazioni_so__turno__attivita__in=qs_servizi))
         ]
     except (AttributeError, ValueError, KeyError, TypeError):
         return []
@@ -406,6 +405,11 @@ ESPANDI_PERMESSI = {
     GESTIONE_REFERENTI_ATTIVITA: espandi_gestione_referenti_attivita,
     GESTIONE_ATTIVITA: espandi_gestione_attivita,
 
+    # SO
+    GESTIONE_SO_SEDE: espandi_gestione_poteri_sala_operativa_sede,
+    GESTIONE_POTERI_SALA_OPERATIVA_SEDE: espandi_gestione_poteri_sala_operativa_sede,
+    GESTIONE_SERVIZI: espandi_gestione_servizi,
+
     # FORMAZIONE
     GESTIONE_CORSI_SEDE: espandi_gestione_corsi_sede,
     GESTIONE_CORSO: espandi_gestione_corso,
@@ -419,11 +423,6 @@ ESPANDI_PERMESSI = {
     # CO
     GESTIONE_CENTRALE_OPERATIVA_SEDE: espandi_gestione_centrale_operativa_sede,
     GESTIONE_POTERI_CENTRALE_OPERATIVA_SEDE: espandi_gestione_poteri_centrale_operativa_sede,
-
-    # SO
-    GESTIONE_SO_SEDE: espandi_gestione_poteri_sala_operativa_sede,
-    GESTIONE_POTERI_SALA_OPERATIVA_SEDE: espandi_gestione_poteri_sala_operativa_sede,
-    GESTIONE_SERVIZI: espandi_gestione_servizi,
 
     # RUBRICA
     RUBRICA_UFFICIO_SOCI: espandi_rubrica_ufficio_soci,

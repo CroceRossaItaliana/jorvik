@@ -1,4 +1,4 @@
-{% extends 'so_vuota.html' %}
+{% extends 'so_scheda.html' %}
 
 {% load humanize %}
 {% load gravatar %}
@@ -14,7 +14,7 @@
             <thead>
             <tr class="piu-grande">
                 <th>
-                    <i class="fa fa-fw fa-pencil"></i> Modifica turno
+                    <i class="fas fa-pencil-alt"></i> Modifica turno
                 </th>
                 <th>
                     <i class="fa fa-fw fa-users"></i> Richieste di partecipazione
@@ -41,7 +41,7 @@
                                 <td>
                                     <h4 class="text-success">
                                         <i class="fa fa-fw fa-check"></i>
-                                        Partecipazioni confermate:{{ turno.partecipazioni_confermate.count }}
+                                        Partecipazioni confermate   1:{{ turno.partecipazioni_confermate.count }}
                                     </h4>
                                     <table class="table table-condensed piu-piccolo">
                                         <thead>

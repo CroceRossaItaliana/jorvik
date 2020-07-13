@@ -41,26 +41,19 @@ class AttivitaInformazioniForm(ModelForm):
 class ModificaTurnoForm(ModelForm):
     class Meta:
         model = TurnoSO
-        fields = ['nome', 'inizio', 'fine', 'minimo', 'massimo', 'prenotazione']
+        fields = ['nome', 'inizio', 'fine', 'minimo', 'massimo', ]
 
     def clean(self):
         try:
-            fine = self.cleaned_data['fine']
-            inizio = self.cleaned_data['inizio']
-            minimo = self.cleaned_data['minimo']
-            massimo = self.cleaned_data['massimo']
-            prenotazione = self.cleaned_data['prenotazione']
-
-        except KeyError:
+            cd = self.cleaned_data
+            fine, inizio = cd['fine'], cd['inizio']
+            minimo, massimo = cd['minimo'], cd['massimo']
+        except KeyError as e:
+            print(e)
             raise ValidationError("Compila correttamente tutti i campi.")
 
         if fine <= inizio:
-            self.add_error("fine", "L'orario di fine turno deve essere successivo "
-                                   "all'orario di inzio.")
-
-        if prenotazione > fine:
-            self.add_error("prenotazione",  "L'orario entro il quale prenotarsi deve essere "
-                                            "precedente alla fine del turno. ")
+            self.add_error("fine", "L'orario di fine turno deve essere successivo all'orario di inzio.")
 
         if minimo < 0:
             self.add_error("minimo", "Inserisci un numero positivo.")
