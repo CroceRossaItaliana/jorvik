@@ -3,46 +3,42 @@
 {% load utils %}
 {% load bootstrap3 %}
 
-{% block pagina_titolo %}Gestisci Servizio{% endblock %}
+{% block pagina_titolo %}Gestisci Servizi{% endblock %}
 
 {% block app_contenuto %}
 
 <div class="alert alert-block alert-info">
     <p>
-        <i class="fa fa-fw fa-info-circle"></i>
-        Da questa pagina puoi accedere a tutte le attivit&agrave; che puoi gestire.
+        <i class="fa fa-fw fa-info-circle"></i> Da questa pagina puoi accedere a tutti i servizi che puoi gestire.
     </p>
 </div>
 
-
 <div class="panel panel-info">
     <div class="panel-heading">
-        <h2 class="panel-title"><i class="fa fa-fw fa-list"></i> Elenco attivit&agrave; gestite</h2>
+        <h2 class="panel-title"><i class="fa fa-fw fa-list"></i> Elenco servizi gestiti</h2>
     </div>
     <div class="panel-body">
         <p>
             <ul class="nav nav-pills">
               <li role="presentation" {% if stato == "aperte" %}class="active"{% endif %}>
-                  <a href="/attivita/gestisci/">
-                      <i class="fa fa-fw fa-check-circle"></i> Aperte
-                      <span class="badge">{{ attivita_aperte.count }}</span>
+                  <a href="{% url 'so:gestisci' %}">
+                      <i class="fa fa-fw fa-check-circle"></i> Aperti <span class="badge">{{ attivita_aperte.count }}</span>
                   </a>
               </li>
               <li role="presentation" {% if stato == "chiuse" %}class="active"{% endif %}>
-                  <a href="/attivita/gestisci/chiuse/">
-                      <i class="fa fa-fw fa-folder-o"></i> Chiuse
-                      <span class="badge">{{ attivita_chiuse.count }}</span>
+                  <a href="{% url 'so:gestisci_chiuse' %}">
+                      <i class="fa fa-fw fa-folder"></i> Chiusi <span class="badge">{{ attivita_chiuse.count }}</span>
                   </a>
               </li>
             </ul>
         </p>
-        {% include "attivita_gestisci_inc_paginazione.html" %}
+        {% include "so_gestisci_inc_paginazione.html" %}
     </div>
 
     <table class="table table-responsive table-striped">
         <thead>
         <tr>
-            <th>Attivit&agrave;</th>
+            <th>Servizio</th>
             <th>Informazioni</th>
             <th>Azioni</th>
         </tr>
@@ -53,43 +49,27 @@
             <tr>
                 <td class="piu-piccolo" style="width: 40%;">
                     <span class="piu-grande">{{ a.link|safe }}</span><br />
-
-                    <i class="fa fa-fw fa-map-marker text-muted"></i>
-                    <a href="{{ a.url_mappa }}">
-                        {{ a.locazione|default:"Nessuna posizione" }}
-                    </a><br />
-
-                    <i class="fa fa-fw fa-info-circle text-muted"></i>
-                    {{ a.delegati_attuali|join:", "|default:"(Nessun referente selezionato)" }}
+                    <i class="fa fa-fw fa-map-marker text-muted"></i> <a href="{{ a.url_mappa }}">{{ a.locazione|default:"Nessuna posizione" }}</a><br />
+                    <i class="fa fa-fw fa-info-circle text-muted"></i> {{ a.delegati_attuali|join:", "|default:"(Nessun referente selezionato)" }}
                 </td>
 
                 <td>
                     <i class="fa fa-fw fa-calendar text-muted"></i> {{ a.num_turni }} turni <br />
-                    <i class="fa fa-fw fa-clock-o text-muted"></i> {{ a.creazione|date:"SHORT_DATETIME_FORMAT" }}<br />
+                    <i class="fa fa-fw fa-clock text-muted"></i> {{ a.creazione|date:"SHORT_DATETIME_FORMAT" }}<br />
                 </td>
 
                 <td>
                     {% if a in attivita_referenti_modificabili and a.cancellabile %}
-                        <a href="{{ a.url_cancella }}" class="text-danger">
-                            <i class="fa fa-fw fa-trash"></i> cancella attivit&agrave;
-                        </a><br />
-                        <a href="{{ a.url_cancella_gruppo }}" class="text-danger">
-                            <i class="fa fa-fw fa-trash"></i> cancella attivit&agrave; e gruppo
-                        </a><br />
+                        <a href="{{ a.url_cancella }}" class="text-danger"><i class="far fa-trash-alt"></i> cancella servizio</a><br />
                     {% endif %}
 
-                    <a href="{{ a.url_modifica }}">
-                        <i class="fa fa-fw fa-pencil"></i> modifica info
-                    </a><br />
+                    <a href="{{ a.url_modifica }}"><i class="fas fa-pencil-alt"></i> modifica info</a><br />
 
                     {% if a in attivita_referenti_modificabili %}
-                        <a href="{{ a.url_referenti }}">
-                            <i class="fa fa-fw fa-pencil"></i> modifica referenti
-                        </a><br />
+                        <a href="{{ a.url_referenti }}"><i class="fas fa-pencil-alt"></i> modifica referenti</a><br />
                     {% endif %}
-                    <a href="{{ a.url_turni_modifica }}">
-                        <i class="fa fa-fw fa-pencil"></i> modifica turni
-                    </a>
+
+                    <a href="{{ a.url_turni_modifica }}"><i class="fas fa-pencil-alt"></i> modifica turni</a>
                 </td>
             </tr>
         {% empty %}

@@ -1,4 +1,3 @@
-from autocomplete_light import shortcuts as autocomplete_light
 from django import forms
 from django.core.exceptions import ValidationError
 from django.forms import ModelForm
@@ -8,7 +7,7 @@ from autocomplete_light import shortcuts as autocomplete_light
 
 from anagrafica.models import Sede
 from base.wysiwyg import WYSIWYGSemplice
-from .models import ServizioSO, TurnoSO, AreaSO, ReperibilitaSO, MezzoSO
+from .models import ServizioSO, TurnoSO, ReperibilitaSO, MezzoSO
 
 
 class VolontarioReperibilitaForm(ModelForm):

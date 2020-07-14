@@ -436,6 +436,10 @@ class MezzoSO(ModelloSemplice, ConMarcaTemporale, ConStorico):
     )
 
     tipo = models.CharField(choices=MEZZI_E_MATERIALI_CHOICES, max_length=3)
+    estensione = models.ForeignKey('anagrafica.Sede', null=True, default=None,
+                                   verbose_name='Collocazione',
+                                   related_name='mezzo_materiale_estensione',
+                                   on_delete=models.PROTECT)
     nome = models.CharField("Nome", max_length=255)
     mezzo_tipo = models.CharField(choices=MEZZO_TIPO_CHOICES, max_length=3, null=True, blank=True)
     creato_da = models.ForeignKey('anagrafica.Persona', null=True, blank=True)

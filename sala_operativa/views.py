@@ -222,20 +222,20 @@ def so_organizza_fatto(request, me, pk=None):
 
 @pagina_privata
 def so_referenti(request, me, pk=None, nuova=False):
-    attivita = get_object_or_404(ServizioSO, pk=pk)
-    if not me.permessi_almeno(attivita, MODIFICA):
+    servizio = get_object_or_404(ServizioSO, pk=pk)
+    if not me.permessi_almeno(servizio, MODIFICA):
         return redirect(ERRORE_PERMESSI)
 
     delega = REFERENTE_SO
 
     if nuova:
-        continua_url = reverse('so:organizza_referenti_fatto', args=[attivita.pk,])
+        continua_url = reverse('so:organizza_referenti_fatto', args=[servizio.pk,])
     else:
         continua_url = reverse('so:gestisci')
 
     context = {
         "delega": delega,
-        "attivita": attivita,
+        "servizio": servizio,
         "continua_url": continua_url
     }
     return 'so_referenti.html', context
