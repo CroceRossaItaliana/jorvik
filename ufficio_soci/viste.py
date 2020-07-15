@@ -318,7 +318,6 @@ def us_reclama_persona(request, me, persona_pk):
                         oggetto=oggetto,
                         modello="email_reclama_servizio_civile.html",
                         mittente=me,
-                        destinatari=None,
                         corpo={
                             "persona": persona.nome_completo,
                             "codice_fiscale": persona.genere_codice_fiscale
