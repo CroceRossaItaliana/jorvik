@@ -1,0 +1,60 @@
+{% extends 'so_scheda.html' %}
+
+{% block scheda_titolo %}Informazioni{% endblock %}
+
+{% load utils %}
+{% load social %}
+{% load bootstrap3 %}
+{% load so_templatetags %}
+
+{% block scheda_contenuto %}
+    <form>
+        <a href="{% url 'so:scheda_mm_abbina' servizio.pk %}" class="btn btn-block btn-primary">Abbina
+            Mezzi/materiali</a>
+    </form>
+    <div class="row">
+        <div class="col-md-12">
+            <div class="panel panel-info">
+                <div class="panel-heading">
+                    <h2 class="panel-title">
+                        <i class="fa fa-fw fa-list"></i> Materiali e servizi
+                    </h2>
+                </div>
+                <div class="panel-body">
+                    <table class="table table-striped">
+                        <thead>
+                        <tr>
+                            <th>Tipo</th>
+                            <th>Nome</th>
+                            <th>Mezzo tipo</th>
+                            <th>Creato da</th>
+                            <th>Azioni</th>
+                        </tr>
+                        </thead>
+                        <tbody>
+                        {% for mm in mezzi_materiali %}
+                            <tr>
+                                <td>{{ mm.tipo }}</td>
+                                <td>{{ mm.nome }}</td>
+                                <td>{{ mm.mezzo_tipo }}</td>
+                                <td>{{ mm.creato_da.link|safe }}</td>
+                                <td>
+                                    <a href="{% url 'so:scheda_mm_cancella' servizio.pk mm.pk %}" class="text-danger">
+                                        <i class="fas fa-ambulance"></i> Elimina
+                                    </a>
+                                </td>
+                            </tr>
+                        {% empty %}
+                            <tr class="alert alert-warning">
+                                <td colspan="7">
+                                    <i class="fa fa-fw fa-warning"></i> Ancora non ci sono mezzi e materiali abbinati
+                                </td>
+                            </tr>
+                        {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </div>
+{% endblock %}

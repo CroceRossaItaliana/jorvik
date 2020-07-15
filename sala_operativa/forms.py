@@ -1,11 +1,11 @@
+from autocomplete_light import shortcuts as autocomplete_light
 from django import forms
 from django.core.exceptions import ValidationError
 from django.forms import ModelForm
 from django.forms.extras import SelectDateWidget
 
-from autocomplete_light import shortcuts as autocomplete_light
-
 from anagrafica.models import Sede
+from anagrafica.permessi.costanti import GESTIONE_SO_SEDE
 from base.wysiwyg import WYSIWYGSemplice
 from .models import ServizioSO, TurnoSO, ReperibilitaSO, MezzoSO
 
@@ -13,15 +13,15 @@ from .models import ServizioSO, TurnoSO, ReperibilitaSO, MezzoSO
 class VolontarioReperibilitaForm(ModelForm):
     class Meta:
         model = ReperibilitaSO
-        fields = ['estensione', 'inizio', 'fine', 'attivazione',]
+        fields = ['estensione', 'inizio', 'fine', 'attivazione', ]
 
 
 class AggiungiReperibilitaPerVolontarioForm(ModelForm):
-    persona = autocomplete_light.ModelChoiceField("AggiungiReperibilitaPerVolontario",)
+    persona = autocomplete_light.ModelChoiceField("AggiungiReperibilitaPerVolontario", )
 
     class Meta:
         model = ReperibilitaSO
-        fields = ['persona', 'estensione', 'inizio', 'fine', 'attivazione',]
+        fields = ['persona', 'estensione', 'inizio', 'fine', 'attivazione', ]
 
 
 class StoricoTurniForm(forms.Form):
@@ -68,8 +68,8 @@ class CreazioneTurnoForm(ModificaTurnoForm):
 
 class AggiungiPartecipantiForm(forms.Form):
     persone = autocomplete_light.ModelMultipleChoiceField("PersonaAutocompletamento",
-                                                                help_text="Seleziona uno o più persone da "
-                                                                          "aggiungere come partecipanti.")
+                                                          help_text="Seleziona uno o più persone da "
+                                                                    "aggiungere come partecipanti.")
 
 
 class OrganizzaServizioForm(ModelForm):
@@ -82,7 +82,7 @@ class OrganizzaServizioReferenteForm(forms.Form):
     SONO_IO = "IO"
     SCEGLI_REFERENTI = "SC"
     SCELTA = (
-        (None,  "-- Scegli un'opzione --"),
+        (None, "-- Scegli un'opzione --"),
         (SONO_IO, "Sarò io il referente per questa attività"),
         (SCEGLI_REFERENTI, "Fammi scegliere uno o più referenti che gestiranno "
                            "quest'attività")
@@ -124,7 +124,6 @@ class StatisticheAttivitaPersonaForm(forms.Form):
 
 
 class RipetiTurnoForm(forms.Form):
-
     # Giorni della settimana numerici, come
     #  da datetime.weekday()
     LUNEDI = 0
@@ -156,7 +155,28 @@ class RipetiTurnoForm(forms.Form):
 
 
 class CreazioneMezzoSO(ModelForm):
-
     class Meta:
         model = MezzoSO
-        fields = ['tipo', 'nome', 'mezzo_tipo', 'inizio', 'fine']
+        fields = ['tipo', 'nome', 'estensione', 'mezzo_tipo', 'inizio', 'fine']
+
+
+class AbbinaMezzoMaterialeForm(forms.Form):
+
+    @staticmethod
+    def popola_scelta(persona):
+        from datetime import timedelta, datetime
+        from django.db.models import Q
+        choices = [(None, "-- Scegli un'opzione --"), ]
+
+        choices.extend([
+            (str(mezzo.pk), mezzo.descrizione_mezzo)
+            for mezzo in MezzoSO.objects.filter(
+                Q(estensione__in=persona.oggetti_permesso(GESTIONE_SO_SEDE)),
+                ~Q(occupato_a__lt=datetime.now(), occupato_da__gt=datetime.now()) | Q(occupato_a=None))
+        ])
+        return choices
+
+    mezzo_materiale = forms.ChoiceField(choices=[], required=True)
+
+    occupato_da = forms.DateTimeField(required=True)
+    occupato_a = forms.DateTimeField(required=True)

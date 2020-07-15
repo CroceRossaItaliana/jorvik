@@ -59,6 +59,10 @@ class ServizioSO(AttivitaAbstract, ConStorico):
     def url_cancella_gruppo(self):
         return reverse('so:cancella_gruppo', args=[self.pk, ])
 
+    @property
+    def url_mezzi_materiali(self):
+        return reverse('so:scheda_mm', args=[self.pk, ])
+
     def referenti_attuali(self, al_giorno=None):
         return self.delegati_attuali(tipo=REFERENTE_SO, al_giorno=al_giorno)
 
@@ -207,6 +211,7 @@ class TurnoSO(ModelloSemplice, ConMarcaTemporale, ConGiudizio):
     @property
     def url_partecipanti(self):
         return "%sturni/%d/partecipanti/" % (self.attivita.url, self.pk)
+
 
     @property
     def link(self):
@@ -444,8 +449,17 @@ class MezzoSO(ModelloSemplice, ConMarcaTemporale, ConStorico):
     mezzo_tipo = models.CharField(choices=MEZZO_TIPO_CHOICES, max_length=3, null=True, blank=True)
     creato_da = models.ForeignKey('anagrafica.Persona', null=True, blank=True)
 
+    occupato_da = models.DateTimeField(null=True, blank=True)
+    occupato_a = models.DateTimeField(null=True, blank=True)
+
+    servizio = models.ManyToManyField(ServizioSO, blank=True)
+
     def __str__(self):
         return str(self.nome)
+
+    @property
+    def descrizione_mezzo(self):
+        return "{}-{} {}".format(self.nome, self.estensione, 'Libero tra {} ore'.format('3') if True else False)
 
     class Meta:
         verbose_name = 'Mezzo o materiale'

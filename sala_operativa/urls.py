@@ -44,6 +44,11 @@ urlpatterns = [
     url(r'^scheda/(?P<pk>[0-9]+)/referenti/$', views.so_referenti, name='scheda_referenti'),
     url(r'^scheda/(?P<pk>[0-9]+)/report/$', views.so_scheda_report, name='report'),
 
+    # Scheda Mezzi e Materiali
+    url(r'^scheda/(?P<pk>[0-9]+)/mm/$', views.so_scheda_mm, name='scheda_mm'),
+    url(r'^scheda/(?P<pk>[0-9]+)/mm/abbina$', views.so_scheda_mm_abbina, name='scheda_mm_abbina'),
+    url(r'^scheda/(?P<pk>[0-9]+)/mm/(?P<mm>[0-9]+)/cancella$', views.so_scheda_mm_cancella, name='scheda_mm_cancella'),
+
     # Turni
     url(r'^scheda/(?P<pk>[0-9]+)/turni/$', views.so_scheda_turni, name='so_scheda_turni'),
     url(r'^scheda/(?P<pk>[0-9]+)/turni/nuovo/$', views.so_scheda_turni_nuovo, name='so_scheda_turni_nuovo'),
