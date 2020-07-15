@@ -226,32 +226,32 @@ class Messaggio(ModelloSemplice, ConMarcaTemporale, ConGiudizio, ConAllegati):
         if self.oggetti_destinatario.count() == 0:
             from anagrafica.models import Appartenenza
 
-            if Appartenenza.MENBRO_DICT[Appartenenza.SEVIZIO_CIVILE_UNIVERSALE] in self.oggetto:
-                # Questo e' un messaggio per il supporto al servizio civile.
-                email = EmailMultiAlternatives(subject=self.oggetto,
-                                               body=corpo_plain,
-                                               from_email=mittente,
-                                               reply_to=[rispondi_a],
-                                               to=[Messaggio.SERVIZIO_CIVILE_EMAIL],
-                                               attachments=self.allegati_pronti(),
-                                               connection=connessione)
-                email.attach_alternative(self.corpo, "text/html")
+            # if Appartenenza.MENBRO_DICT[Appartenenza.SEVIZIO_CIVILE_UNIVERSALE] in self.oggetto:
+            #     # Questo e' un messaggio per il supporto al servizio civile.
+            #     email = EmailMultiAlternatives(subject=self.oggetto,
+            #                                    body=corpo_plain,
+            #                                    from_email=mittente,
+            #                                    reply_to=[rispondi_a],
+            #                                    to=[Messaggio.SERVIZIO_CIVILE_EMAIL],
+            #                                    attachments=self.allegati_pronti(),
+            #                                    connection=connessione)
+            #     email.attach_alternative(self.corpo, "text/html")
+            #
+            #     # Ritorna questo oggetto
+            #     yield None, email
+            # else:
+            # Questo e' un messaggio per il supporto di Gaia.
+            email = EmailMultiAlternatives(subject=self.oggetto,
+                                           body=corpo_plain,
+                                           from_email=mittente,
+                                           reply_to=[rispondi_a],
+                                           to=[Messaggio.SUPPORTO_EMAIL],
+                                           attachments=self.allegati_pronti(),
+                                           connection=connessione)
+            email.attach_alternative(self.corpo, "text/html")
 
-                # Ritorna questo oggetto
-                yield None, email
-            else:
-                # Questo e' un messaggio per il supporto di Gaia.
-                email = EmailMultiAlternatives(subject=self.oggetto,
-                                               body=corpo_plain,
-                                               from_email=mittente,
-                                               reply_to=[rispondi_a],
-                                               to=[Messaggio.SUPPORTO_EMAIL],
-                                               attachments=self.allegati_pronti(),
-                                               connection=connessione)
-                email.attach_alternative(self.corpo, "text/html")
-
-                # Ritorna questo oggetto
-                yield None, email
+            # Ritorna questo oggetto
+            yield None, email
 
     def invia(self, connessione=None, forced=False):
         """
