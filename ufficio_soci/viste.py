@@ -300,11 +300,10 @@ def us_reclama_persona(request, me, persona_pk):
                     )
 
                 m = modulo_appartenenza.cleaned_data.get('membro')
+                oggetto = 'Inserimento come {}'.format(
+                    Appartenenza.MENBRO_DICT[m]
+                )
                 if m == Appartenenza.DIPENDENTE:
-                    oggetto = 'Inserimento come {}'.format(
-                        Appartenenza.MENBRO_DICT[modulo_appartenenza.cleaned_data.get('membro')]
-                    )
-
                     Messaggio.costruisci_e_accoda(
                         oggetto=oggetto,
                         modello="email_reclama.html",
@@ -314,18 +313,17 @@ def us_reclama_persona(request, me, persona_pk):
                             "persona": persona.nome_completo
                         }
                     )
-                    if membro == Appartenenza.SEVIZIO_CIVILE_UNIVERSALE:
-                        Messaggio.costruisci_e_accoda(
-                            oggetto=oggetto,
-                            modello="email_reclama_servizio_civile.html",
-                            mittente=me,
-                            destinatari=None,
-                            corpo={
-                                "persona": persona.nome_completo,
-                                "codice_fiscale": persona.genere_codice_fiscale
-                            },
-                            azione=Appartenenza.SEVIZIO_CIVILE_UNIVERSALE
-                        )
+                if m == Appartenenza.SEVIZIO_CIVILE_UNIVERSALE:
+                    Messaggio.costruisci_e_accoda(
+                        oggetto=oggetto,
+                        modello="email_reclama_servizio_civile.html",
+                        mittente=me,
+                        destinatari=None,
+                        corpo={
+                            "persona": persona.nome_completo,
+                            "codice_fiscale": persona.genere_codice_fiscale
+                        }
+                    )
 
                 return redirect(persona.url)
 

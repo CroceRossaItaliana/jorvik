@@ -74,8 +74,6 @@ class Messaggio(ModelloSemplice, ConMarcaTemporale, ConGiudizio, ConAllegati):
     task_id = models.CharField(max_length=36, blank=True, null=True, default=None,
            help_text="ID del task Celery per lo smistamento di questo messaggio.")
 
-    azione = ""
-
     @property
     def destinatari(self):
         """
@@ -227,7 +225,8 @@ class Messaggio(ModelloSemplice, ConMarcaTemporale, ConGiudizio, ConAllegati):
         # Se questo messaggio non ha oggetti destinatario
         if self.oggetti_destinatario.count() == 0:
             from anagrafica.models import Appartenenza
-            if self.azione == Appartenenza.SEVIZIO_CIVILE_UNIVERSALE:
+
+            if Appartenenza.MENBRO_DICT[Appartenenza.SEVIZIO_CIVILE_UNIVERSALE] in self.oggetto:
                 # Questo e' un messaggio per il supporto al servizio civile.
                 email = EmailMultiAlternatives(subject=self.oggetto,
                                                body=corpo_plain,
@@ -405,8 +404,6 @@ class Messaggio(ModelloSemplice, ConMarcaTemporale, ConGiudizio, ConAllegati):
             m = Messaggio(oggetto=oggetto,
                           mittente=mittente,
                           **kwargs)
-
-            m.azione = kwargs.get('azione') if 'azione' in kwargs else ''
 
             allegati_objects = list()
             for a in allegati:
