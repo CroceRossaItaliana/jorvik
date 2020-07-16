@@ -21,79 +21,11 @@ from .reports import AttivitaReport
 from .utils import valida_numero_obiettivo
 
 
-class PartecipazioneAbstract(ModelloSemplice, ConMarcaTemporale, ConAutorizzazioni):
+class PartecipazioneAbstract():
     class Meta:
         abstract = True
 
-    @property
-    def url_cancella(self):
-        return "/attivita/scheda/%d/partecipazione/%d/cancella/" % (
-            self.turno.attivita.pk, self.pk,
-        )
 
-    def richiedi(self, notifiche_attive=True):
-        """
-        Richiede autorizzazione di partecipazione all'attività.
-        :return:
-        """
-
-        from anagrafica.models import Appartenenza
-
-        self.autorizzazione_richiedi(
-            self.persona,
-            (
-                (INCARICO_GESTIONE_ATTIVITA_PARTECIPANTI, self.turno.attivita)
-            ),
-
-            invia_notifiche=self.turno.attivita.referenti_attuali(),
-            auto=Autorizzazione.NG_AUTO,
-            scadenza=self.APPROVAZIONE_AUTOMATICA,
-            notifiche_attive=notifiche_attive
-        )
-
-        # Se fuori sede, chiede autorizzazione al Presidente del mio Comitato.
-        if not self.turno.attivita.sede.comitato.espandi(
-                includi_me=True).filter(
-                pk__in=self.persona.sedi_attuali(
-                    membro__in=Appartenenza.MEMBRO_ATTIVITA).values_list('id',
-                                                                         flat=True)
-        ).exists():
-            self.autorizzazione_richiedi(
-                self.persona,
-                (
-                    (INCARICO_PRESIDENZA, self.persona.sede_riferimento())
-                ),
-                invia_notifiche=self.persona.sede_riferimento().presidente(),
-                auto=Autorizzazione.NG_AUTO,
-                scadenza=self.APPROVAZIONE_AUTOMATICA,
-                notifiche_attive=notifiche_attive
-            )
-
-    def autorizzazione_concessa(self, modulo, auto=False, notifiche_attive=True,
-                                data=None):
-        """
-        (Automatico)
-        Invia notifica di autorizzazione concessa.
-        """
-        # TODO
-        pass
-
-    def autorizzazione_negata(self, modulo=None, auto=False,
-                              notifiche_attive=True, data=None):
-        """
-        (Automatico)
-        Invia notifica di autorizzazione negata.
-        :param motivo: Motivazione, se presente.
-        """
-        # TODO
-        pass
-
-    def coturno(self):
-        from centrale_operativa.models import Turno as Coturno
-        if not (self.esito == self.ESITO_OK):
-            return None
-        return Coturno.objects.filter(persona=self.persona,
-                                      turno=self.turno).first()
 
 
 class Attivita(ModelloSemplice, ConGeolocalizzazione, ConMarcaTemporale,
@@ -640,7 +572,7 @@ class Turno(ModelloSemplice, ConMarcaTemporale, ConGiudizio):
         )
 
 
-class Partecipazione(PartecipazioneAbstract):
+class Partecipazione(ModelloSemplice, ConMarcaTemporale, ConAutorizzazioni):
     RICHIESTA = 'K'
     NON_PRESENTATO = 'N'
     STATO = (
@@ -658,6 +590,74 @@ class Partecipazione(PartecipazioneAbstract):
 
     # Utilizzato dal modulo CO - viene impostato dal delegato CO
     centrale_operativa = models.BooleanField(default=False, db_index=True)
+
+    @property
+    def url_cancella(self):
+        return "/attivita/scheda/%d/partecipazione/%d/cancella/" % (
+            self.turno.attivita.pk, self.pk,
+        )
+
+    def richiedi(self, notifiche_attive=True):
+        """
+        Richiede autorizzazione di partecipazione all'attività.
+        :return:
+        """
+
+        from anagrafica.models import Appartenenza
+
+        self.autorizzazione_richiedi(
+            self.persona,
+            (
+                (INCARICO_GESTIONE_ATTIVITA_PARTECIPANTI, self.turno.attivita)
+            ),
+
+            invia_notifiche=self.turno.attivita.referenti_attuali(),
+            auto=Autorizzazione.NG_AUTO,
+            scadenza=self.APPROVAZIONE_AUTOMATICA,
+            notifiche_attive=notifiche_attive
+        )
+
+        # Se fuori sede, chiede autorizzazione al Presidente del mio Comitato.
+        if not self.turno.attivita.sede.comitato.espandi(
+                includi_me=True).filter(
+            pk__in=self.persona.sedi_attuali(
+                membro__in=Appartenenza.MEMBRO_ATTIVITA).values_list('id', flat=True)
+        ).exists():
+            self.autorizzazione_richiedi(
+                self.persona,
+                (
+                    (INCARICO_PRESIDENZA, self.persona.sede_riferimento())
+                ),
+                invia_notifiche=self.persona.sede_riferimento().presidente(),
+                auto=Autorizzazione.NG_AUTO,
+                scadenza=self.APPROVAZIONE_AUTOMATICA,
+                notifiche_attive=notifiche_attive
+            )
+
+    def autorizzazione_concessa(self, modulo, auto=False, notifiche_attive=True,
+                                data=None):
+        """
+        (Automatico)
+        Invia notifica di autorizzazione concessa.
+        """
+        # TODO
+        pass
+
+    def autorizzazione_negata(self, modulo=None, auto=False,
+                              notifiche_attive=True, data=None):
+        """
+        (Automatico)
+        Invia notifica di autorizzazione negata.
+        :param motivo: Motivazione, se presente.
+        """
+        # TODO
+        pass
+
+    def coturno(self):
+        from centrale_operativa.models import Turno as Coturno
+        if not (self.esito == self.ESITO_OK):
+            return None
+        return Coturno.objects.filter(persona=self.persona, turno=self.turno).first()
 
     class Meta:
         verbose_name = "Richiesta di partecipazione"

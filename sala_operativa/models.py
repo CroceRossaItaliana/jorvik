@@ -16,7 +16,6 @@ from jorvik import settings
 from anagrafica.models import Persona, Appartenenza, Sede
 from anagrafica.permessi.applicazioni import REFERENTE_SO
 from anagrafica.costanti import (LOCALE, PROVINCIALE, REGIONALE, NAZIONALE, )
-from attivita.models import PartecipazioneAbstract
 from base.models import ModelloSemplice, Autorizzazione, ConAllegati
 from base.tratti import ConMarcaTemporale, ConStorico, ConDelegati
 from social.models import ConGiudizio
@@ -34,8 +33,8 @@ class ServizioSO(ModelloSemplice, ConGeolocalizzazione, ConMarcaTemporale,
     CHIUSA = 'C'
     APERTA = 'A'
     APERTURA = (
-        (CHIUSA, 'Chiusa'),
-        (APERTA, 'Aperta')
+        (CHIUSA, 'Chiuso'),
+        (APERTA, 'Aperto')
     )
 
     nome = models.CharField(max_length=255, default="Nuovo servizio", db_index=True)
@@ -522,7 +521,7 @@ class TurnoSO(ModelloSemplice, ConMarcaTemporale, ConGiudizio):
         return "%s (%s)" % (self.nome, self.attivita.nome if self.attivita else "Nessuna attività")
 
 
-class PartecipazioneSO(PartecipazioneAbstract):
+class PartecipazioneSO(ModelloSemplice, ConMarcaTemporale):
     RICHIESTA = 'K'
     NON_PRESENTATO = 'N'
     STATO = (
@@ -533,9 +532,15 @@ class PartecipazioneSO(PartecipazioneAbstract):
     RICHIESTA_NOME = "partecipazione servizio"
 
     APPROVAZIONE_AUTOMATICA = timedelta(days=settings.SCADENZA_AUTORIZZAZIONE_AUTOMATICA)
+
     persona = models.ForeignKey("anagrafica.Persona", related_name='partecipazioni_so', on_delete=models.CASCADE)
     turno = models.ForeignKey(TurnoSO, related_name='partecipazioni_so', on_delete=models.CASCADE)
     stato = models.CharField(choices=STATO, default=RICHIESTA, max_length=1,  db_index=True)
+
+    @property
+    def url_cancella(self):
+        return reverse('so:servizio_partecipazione_cancella',
+                       args=[self.turno.attivita.pk, self.pk, ])
 
     class Meta:
         verbose_name = "Richiesta di partecipazione al Servizio SO"

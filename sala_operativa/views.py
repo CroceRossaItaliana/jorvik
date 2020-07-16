@@ -528,7 +528,6 @@ def so_scheda_turni_partecipa(request, me, pk=None, turno_pk=None):
         persona=me,
     )
     p.save()
-    p.richiedi()
 
     return messaggio_generico(request, me, titolo="Ottimo! Richiesta inoltrata.",
                               messaggio="La tua richiesta è stata inoltrata ai referenti di "
