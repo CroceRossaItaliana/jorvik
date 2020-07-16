@@ -224,30 +224,24 @@ class Messaggio(ModelloSemplice, ConMarcaTemporale, ConGiudizio, ConAllegati):
         # Se questo messaggio non ha oggetti destinatario
         if self.oggetti_destinatario.count() == 0:
             from anagrafica.models import Appartenenza
+
+            to = []
+
             if Appartenenza.MENBRO_DICT[Appartenenza.SEVIZIO_CIVILE_UNIVERSALE] in self.oggetto:
-                # Questo e' un messaggio per il supporto al servizio civile.
-                email = EmailMultiAlternatives(subject=self.oggetto,
-                                               body=corpo_plain,
-                                               from_email=mittente,
-                                               reply_to=[rispondi_a],
-                                               to=[Messaggio.SERVIZIO_CIVILE_EMAIL],
-                                               attachments=self.allegati_pronti(),
-                                               connection=connessione)
-                email.attach_alternative(self.corpo, "text/html")
-                logger.debug("{} {} {} {}".format(email.subject, email.from_email, email.to, email.body))
-                # Ritorna questo oggetto
-                yield None, email
+                to = [Messaggio.SERVIZIO_CIVILE_EMAIL]
             else:
-                # Questo e' un messaggio per il supporto di Gaia.
-                email = EmailMultiAlternatives(subject=self.oggetto,
-                                               body=corpo_plain,
-                                               from_email=mittente,
-                                               reply_to=[rispondi_a],
-                                               to=[Messaggio.SUPPORTO_EMAIL],
-                                               attachments=self.allegati_pronti(),
-                                               connection=connessione)
-                email.attach_alternative(self.corpo, "text/html")
-                logger.debug("{} {} {} {}".format(email.subject, email.from_email, email.to, email.body))
+                to = [Messaggio.SUPPORTO_EMAIL]
+
+            # Questo e' un messaggio per il supporto di Gaia.
+            email = EmailMultiAlternatives(subject=self.oggetto,
+                                           body=corpo_plain,
+                                           from_email=mittente,
+                                           reply_to=[rispondi_a],
+                                           to=to,
+                                           attachments=self.allegati_pronti(),
+                                           connection=connessione)
+            email.attach_alternative(self.corpo, "text/html")
+            logger.debug("{} {} {} {}".format(email.subject, email.from_email, email.to, email.body))
             # Ritorna questo oggetto
             yield None, email
 
