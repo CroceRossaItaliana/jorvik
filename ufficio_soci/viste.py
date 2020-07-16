@@ -363,11 +363,13 @@ def us_dimissioni(request, me, pk):
         dim.save()
 
         if modulo.cleaned_data['appartenenza'] == Appartenenza.SEVIZIO_CIVILE_UNIVERSALE:
+            oggetto = 'Inserimento come {}'.format(
+                Appartenenza.MENBRO_DICT[Appartenenza.SEVIZIO_CIVILE_UNIVERSALE]
+            )
             Messaggio.costruisci_e_accoda(
-                oggetto="Dimmisioni Servizio Civile",
+                oggetto=oggetto,
                 modello="email_dimissioni_servizio_civile.html",
                 mittente=me,
-                destinatari=None,
                 corpo={
                     "persona": persona.nome_completo,
                     "codice_fiscale": persona.genere_codice_fiscale,
