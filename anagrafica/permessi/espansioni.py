@@ -282,18 +282,6 @@ def espandi_gestione_attivita(qs_attivita, al_giorno=None):
         return []
 
 
-# def espandi_gestione_so_sede(qs_servizi, al_giorno=None):
-#     from sala_operativa.models import ServizioSO
-#     try:
-#         return [
-#                    (COMPLETO, ServizioSO.objects.filter(area__in=qs_aree)),
-#                ] \
-#                + espandi_gestione_attivita(
-#             ServizioSO.objects.filter(area__in=qs_aree))
-#     except (AttributeError, ValueError, KeyError, TypeError):
-#         return []
-
-
 def espandi_gestione_centrale_operativa_sede(qs_sedi, al_giorno=None):
     from anagrafica.models import Persona, Appartenenza
     try:
@@ -314,17 +302,7 @@ def espandi_gestione_poteri_centrale_operativa_sede(qs_sedi, al_giorno=None):
     ]
 
 
-def espandi_gestione_poteri_sala_operativa_sede(qs_sedi, al_giorno=None):
-    return [
-    ]
-
-
 def espandi_gestione_referenti_attivita(qs_attivita, al_giorno=None):
-    return [
-    ]
-
-
-def espandi_gestione_referenti_so(qs_attivita, al_giorno=None):
     return [
     ]
 
@@ -400,6 +378,22 @@ def espandi_gestione_gruppi_sede(qs_sedi, al_giorno=None):
         return []
 
 
+def espandi_gestione_so_sede(qs_servizi, al_giorno=None):
+    from sala_operativa.models import ServizioSO
+    try:
+        return [
+            (COMPLETO, ServizioSO.objects.filter(sede__in=qs_servizi.espandi())),
+        ] \
+        + espandi_gestione_servizi(ServizioSO.objects.filter(sede__in=qs_servizi.espandi()))
+    except (AttributeError, ValueError, KeyError, TypeError):
+        return []
+
+
+def espandi_gestione_referenti_so(qs_servizi, al_giorno=None):
+    return [
+    ]
+
+
 def espandi_gestione_servizi(qs_servizi, al_giorno=None):
     from anagrafica.models import Persona
     try:
@@ -428,7 +422,7 @@ ESPANDI_PERMESSI = {
     GESTIONE_ATTIVITA: espandi_gestione_attivita,
 
     # SO
-    GESTIONE_SO_SEDE: espandi_gestione_poteri_sala_operativa_sede,
+    GESTIONE_SO_SEDE: espandi_gestione_so_sede,
     GESTIONE_REFERENTI_SO: espandi_gestione_referenti_so,
     GESTIONE_SERVIZI: espandi_gestione_servizi,
 
@@ -461,7 +455,7 @@ ESPANDI_PERMESSI = {
     RUBRICA_DELEGATI_GIOVANI: espandi_rubrica_delegati_giovani,
     RUBRICA_RESPONSABILI_AREA: espandi_rubrica_responsabili_area,
     RUBRICA_REFERENTI_ATTIVITA: espandi_rubrica_referenti_attivita,
-    RUBRICA_REFERENTI_SO: espandi_rubrica_referenti_attivita,
+    RUBRICA_REFERENTI_SO: espandi_rubrica_referenti_so,
     RUBRICA_REFERENTI_GRUPPI: espandi_rubrica_referenti_gruppi,
     RUBRICA_CENTRALI_OPERATIVE: espandi_rubrica_centrali_operative,
     RUBRICA_SALE_OPERATIVE: espandi_rubrica_sale_operative,

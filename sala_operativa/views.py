@@ -145,8 +145,6 @@ def so_gestisci(request, me, stato="aperte"):
     servizi = servizi.annotate(num_turni=Count('turni_so'))
     servizi = Paginator(servizi, 30)
 
-    print(servizi_referenti_modificabili)
-
     try:
         servizi = servizi.page(request.GET.get('pagina'))
     except PageNotAnInteger:
@@ -210,8 +208,8 @@ def so_organizza(request, me):
 @pagina_privata
 def so_organizza_fatto(request, me, pk=None):
     servizio = get_object_or_404(ServizioSO, pk=pk)
-    # if not me.permessi_almeno(servizio, MODIFICA):
-    #     return redirect(ERRORE_PERMESSI)
+    if not me.permessi_almeno(servizio, MODIFICA):
+        return redirect(ERRORE_PERMESSI)
 
     return messaggio_generico(request, me,
         titolo="Servizio organizzato",
@@ -226,19 +224,13 @@ def so_organizza_fatto(request, me, pk=None):
 def so_referenti(request, me, pk=None, nuova=False):
     servizio = get_object_or_404(ServizioSO, pk=pk)
 
-    sedi = me.oggetti_permesso(GESTIONE_SO_SEDE)
-    if not sedi:
-        return redirect(reverse('so:reperibilita'))
-
-    # if not me.permessi_almeno(servizio, MODIFICA):
-    #     return redirect(ERRORE_PERMESSI)
+    if not me.permessi_almeno(servizio, MODIFICA):
+        return redirect(ERRORE_PERMESSI)
 
     delega = REFERENTE_SO
 
-    print(nuova)
-
     if nuova:
-        continua_url = reverse('so:organizza_referenti_fatto', args=[servizio.pk,])
+        continua_url = reverse('so:organizza_fatto', args=[servizio.pk,])
     else:
         continua_url = reverse('so:gestisci')
 
@@ -814,7 +806,7 @@ def so_scheda_report(request, me, pk=None):
 
 @pagina_privata
 def so_statistiche(request, me):
-    sedi = me.oggetti_permesso(GESTIONE_ATTIVITA_SEDE)
+    sedi = me.oggetti_permesso(GESTIONE_SO_SEDE)
 
     form = StatisticheAttivitaForm(request.POST or None, initial={"sedi": sedi})
     form.fields['sedi'].queryset = sedi

@@ -12,7 +12,7 @@ urlpatterns = [
     # Organizza
     url(r'^organizza/$', views.so_organizza, name='organizza'),
     url(r'^organizza/(?P<pk>[0-9\-]+)/referenti/$', views.so_referenti, {"nuova": True}, name='organizza_referenti'),
-    url(r'^organizza/(?P<pk>[0-9\-]+)/fatto/$', views.so_organizza_fatto, name='organizza_referenti_fatto'),
+    url(r'^organizza/(?P<pk>[0-9\-]+)/fatto/$', views.so_organizza_fatto, name='organizza_fatto'),
 
     # Gestisci
     url(r'^gestisci/$', views.so_gestisci, {"stato": "aperte"}, name='gestisci'),

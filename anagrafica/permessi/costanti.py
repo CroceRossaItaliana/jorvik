@@ -1,9 +1,14 @@
-from ..permessi.applicazioni import (PRESIDENTE, DELEGATO_AREA,
-                                     RESPONSABILE_AREA,
-                                     REFERENTE, DIRETTORE_CORSO,
-                                     RESPONSABILE_AUTOPARCO, REFERENTE_GRUPPO,
+from ..permessi.applicazioni import (PRESIDENTE,
+                                     CONSIGLIERE,
                                      COMMISSARIO,
-                                     CONSIGLIERE, UFFICIO_SOCI, REFERENTE_SO)
+                                     UFFICIO_SOCI,
+                                     DELEGATO_AREA,
+                                     RESPONSABILE_AREA,
+                                     REFERENTE,
+                                     REFERENTE_GRUPPO,
+                                     REFERENTE_SO,
+                                     DIRETTORE_CORSO,
+                                     RESPONSABILE_AUTOPARCO, )
 
 """
                        Questo file gestisce i permessi in Gaia.
@@ -108,11 +113,11 @@ PERMESSI_OGGETTI = (
     (GESTIONE_AREE_SEDE,        ('anagrafica', 'Sede')),
 
     # SALA OPERATIVA
+    (GESTIONE_SO_SEDE,          ('anagrafica', 'Sede')),  # accesso a SO in generale
+    (GESTIONE_SERVIZI,          ('sala_operativa', 'ServizioSO')),  # permesso per creare/gestire servizio
+    (GESTIONE_REFERENTI_SO,     ('sala_operativa', 'ServizioSO')),  # permesso per gestire referenti dei servizi
     (RUBRICA_SALE_OPERATIVE,    ('anagrafica', 'Sede')),
     (RUBRICA_REFERENTI_SO,      ('sala_operativa', 'ServizioSO')),
-    (GESTIONE_REFERENTI_SO,     ('sala_operativa', 'ServizioSO')),
-    (GESTIONE_SERVIZI,          ('sala_operativa', 'ServizioSO')),
-    (GESTIONE_SO_SEDE,          ('anagrafica', 'Sede')),
 
     # CENTRALE OPERATIVA
     (GESTIONE_CENTRALE_OPERATIVA_SEDE, ('anagrafica', 'Sede')),
