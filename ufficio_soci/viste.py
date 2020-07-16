@@ -362,8 +362,8 @@ def us_dimissioni(request, me, pk):
 
         dim.save()
 
-        if modulo.cleaned_data['appartenenza'] == Appartenenza.SEVIZIO_CIVILE_UNIVERSALE:
-            oggetto = 'Inserimento come {}'.format(
+        if modulo.cleaned_data['motivo'] == Dimissione.FINE_SERVIZIO_CIVILE:
+            oggetto = 'Dimissioni {}'.format(
                 Appartenenza.MENBRO_DICT[Appartenenza.SEVIZIO_CIVILE_UNIVERSALE]
             )
             Messaggio.costruisci_e_accoda(
@@ -373,13 +373,9 @@ def us_dimissioni(request, me, pk):
                 corpo={
                     "persona": persona.nome_completo,
                     "codice_fiscale": persona.genere_codice_fiscale,
-                    "comitato": dim.appartenenza.sede,
-                    "presidente": dim.appartenenza.sede.presidente.persona.nome_completo
-                },
-                azione=Appartenenza.SEVIZIO_CIVILE_UNIVERSALE
+                    "comitato": dim.appartenenza.sede
+                }
             )
-
-
 
         if persona.appartenenze_attuali().exclude(id=dim.appartenenza.id).exists():
             presidenti_da_contattare = set()

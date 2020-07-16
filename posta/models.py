@@ -247,7 +247,7 @@ class Messaggio(ModelloSemplice, ConMarcaTemporale, ConGiudizio, ConAllegati):
                                                attachments=self.allegati_pronti(),
                                                connection=connessione)
                 email.attach_alternative(self.corpo, "text/html")
-
+                logger.debug("{} {} {} {}".format(email.subject, email.from_email, email.to, email.body))
             # Ritorna questo oggetto
             yield None, email
 
