@@ -17,7 +17,6 @@ from anagrafica.permessi.costanti import (GESTIONE_SOCI, ELENCHI_SOCI,
                                           GESTIONE_CENTRALE_OPERATIVA_SEDE,
                                           EMISSIONE_TESSERINI,
                                           GESTIONE_POTERI_CENTRALE_OPERATIVA_SEDE,
-                                          GESTIONE_POTERI_SALA_OPERATIVA_SEDE,
                                           RUBRICA_UFFICIO_SOCI,
                                           RUBRICA_UFFICIO_SOCI_UNITA,
                                           RUBRICA_PRESIDENTI,
@@ -30,6 +29,7 @@ from anagrafica.permessi.costanti import (GESTIONE_SOCI, ELENCHI_SOCI,
                                           RUBRICA_DELEGATI_GIOVANI,
                                           RUBRICA_RESPONSABILI_AREA,
                                           RUBRICA_REFERENTI_ATTIVITA,
+                                          RUBRICA_REFERENTI_SO,
                                           RUBRICA_REFERENTI_GRUPPI,
                                           RUBRICA_CENTRALI_OPERATIVE,
                                           RUBRICA_RESPONSABILI_FORMAZIONE,
@@ -38,7 +38,8 @@ from anagrafica.permessi.costanti import (GESTIONE_SOCI, ELENCHI_SOCI,
                                           RUBRICA_COMMISSARI,
                                           RUBRICA_CONSIGLIERE_GIOVANE,
                                           RUBRICA_SALE_OPERATIVE,
-                                          GESTIONE_SERVIZI)
+                                          GESTIONE_SERVIZI,
+                                          GESTIONE_REFERENTI_SO)
 
 
 
@@ -201,6 +202,10 @@ def espandi_rubrica_referenti_attivita(qs_sedi, al_giorno=date.today()):
     return espandi_rubriche(qs_sedi, al_giorno)
 
 
+def espandi_rubrica_referenti_so(qs_sedi, al_giorno=date.today()):
+    return espandi_rubriche(qs_sedi, al_giorno)
+
+
 def espandi_rubrica_referenti_gruppi(qs_sedi, al_giorno=date.today()):
     return espandi_rubriche(qs_sedi, al_giorno)
 
@@ -297,11 +302,6 @@ def espandi_gestione_poteri_centrale_operativa_sede(qs_sedi, al_giorno=None):
     ]
 
 
-def espandi_gestione_poteri_sala_operativa_sede(qs_sedi, al_giorno=None):
-    return [
-    ]
-
-
 def espandi_gestione_referenti_attivita(qs_attivita, al_giorno=None):
     return [
     ]
@@ -378,6 +378,22 @@ def espandi_gestione_gruppi_sede(qs_sedi, al_giorno=None):
         return []
 
 
+def espandi_gestione_so_sede(qs_servizi, al_giorno=None):
+    from sala_operativa.models import ServizioSO
+    try:
+        return [
+            (COMPLETO, ServizioSO.objects.filter(sede__in=qs_servizi.espandi())),
+        ] \
+        + espandi_gestione_servizi(ServizioSO.objects.filter(sede__in=qs_servizi.espandi()))
+    except (AttributeError, ValueError, KeyError, TypeError):
+        return []
+
+
+def espandi_gestione_referenti_so(qs_servizi, al_giorno=None):
+    return [
+    ]
+
+
 def espandi_gestione_servizi(qs_servizi, al_giorno=None):
     from anagrafica.models import Persona
     try:
@@ -406,8 +422,8 @@ ESPANDI_PERMESSI = {
     GESTIONE_ATTIVITA: espandi_gestione_attivita,
 
     # SO
-    GESTIONE_SO_SEDE: espandi_gestione_poteri_sala_operativa_sede,
-    GESTIONE_POTERI_SALA_OPERATIVA_SEDE: espandi_gestione_poteri_sala_operativa_sede,
+    GESTIONE_SO_SEDE: espandi_gestione_so_sede,
+    GESTIONE_REFERENTI_SO: espandi_gestione_referenti_so,
     GESTIONE_SERVIZI: espandi_gestione_servizi,
 
     # FORMAZIONE
@@ -439,6 +455,7 @@ ESPANDI_PERMESSI = {
     RUBRICA_DELEGATI_GIOVANI: espandi_rubrica_delegati_giovani,
     RUBRICA_RESPONSABILI_AREA: espandi_rubrica_responsabili_area,
     RUBRICA_REFERENTI_ATTIVITA: espandi_rubrica_referenti_attivita,
+    RUBRICA_REFERENTI_SO: espandi_rubrica_referenti_so,
     RUBRICA_REFERENTI_GRUPPI: espandi_rubrica_referenti_gruppi,
     RUBRICA_CENTRALI_OPERATIVE: espandi_rubrica_centrali_operative,
     RUBRICA_SALE_OPERATIVE: espandi_rubrica_sale_operative,

@@ -25,7 +25,6 @@ from ..permessi.costanti import (GESTIONE_SOCI, ELENCHI_SOCI, \
                                  EMISSIONE_TESSERINI,
                                  GESTIONE_POTERI_CENTRALE_OPERATIVA_SEDE, \
                                  GESTIONE_SO_SEDE,
-                                 GESTIONE_POTERI_SALA_OPERATIVA_SEDE,
                                  RUBRICA_SALE_OPERATIVE,
                                  RUBRICA_UFFICIO_SOCI,
                                  RUBRICA_UFFICIO_SOCI_UNITA, \
@@ -37,13 +36,15 @@ from ..permessi.costanti import (GESTIONE_SOCI, ELENCHI_SOCI, \
                                  RUBRICA_DELEGATI_OBIETTIVO_6, \
                                  RUBRICA_DELEGATI_GIOVANI,
                                  RUBRICA_RESPONSABILI_AREA,
-                                 RUBRICA_REFERENTI_ATTIVITA, \
+                                 RUBRICA_REFERENTI_ATTIVITA,
+                                 RUBRICA_REFERENTI_SO,
                                  RUBRICA_REFERENTI_GRUPPI,
                                  RUBRICA_CENTRALI_OPERATIVE,
                                  RUBRICA_RESPONSABILI_FORMAZIONE, \
                                  RUBRICA_DIRETTORI_CORSI,
                                  RUBRICA_RESPONSABILI_AUTOPARCO,
-                                 RUBRICA_COMMISSARI, GESTIONE_SERVIZI)
+                                 RUBRICA_COMMISSARI, GESTIONE_SERVIZI,
+                                 GESTIONE_REFERENTI_SO, )
 
 
 """
@@ -139,6 +140,7 @@ def permessi_commissario(sede):
         + permessi_responsabile_formazione(sede) \
         + permessi_responsabile_autoparco(sede) \
         + permessi_delegato_centrale_operativa(sede) \
+        + permessi_delegato_sala_operativa(sede) \
         + _espandi(sede)
 
 
@@ -319,12 +321,17 @@ def permessi_delegato_centrale_operativa(sede):
         (GESTIONE_POTERI_CENTRALE_OPERATIVA_SEDE,   sede_espansa),
     ]
 
+
 def permessi_delegato_sala_operativa(sede):
+    from sala_operativa.models import ServizioSO
+
     sede_espansa = sede.espandi(includi_me=True)
+    servizi = ServizioSO.objects.filter(sede__in=sede_espansa)
+
     return [
         (RUBRICA_SALE_OPERATIVE, sede.espandi(includi_me=True, pubblici=True)),
         (GESTIONE_SO_SEDE, sede_espansa),
-        (GESTIONE_POTERI_SALA_OPERATIVA_SEDE,   sede_espansa),
+        (GESTIONE_REFERENTI_SO, servizi),
     ]
 
 
@@ -363,7 +370,7 @@ def permessi_referente_so(servizio):
     """
     from sala_operativa.models import ServizioSO
     return [
-        (RUBRICA_REFERENTI_ATTIVITA, servizio.sede.espandi(includi_me=True, pubblici=True)),
+        (RUBRICA_REFERENTI_SO, servizio.sede.espandi(includi_me=True, pubblici=True)),
         (GESTIONE_SERVIZI, ServizioSO.objects.filter(pk=servizio.pk))
     ]
 

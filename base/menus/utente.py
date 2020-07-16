@@ -38,7 +38,7 @@ class MenuUtente:
             ("Benvenuto", "fa-bolt", "/utente/"),
             ("Anagrafica", "fa-edit", "/utente/anagrafica/"),
             ("Datore di lavore", "fa-edit", "/utente/datore/lavoro/") if me and (me.volontario or me.dipendente) else None,
-            ("Storico", "fa-clock-o", "/utente/storico/"),
+            ("Storico", "fa-clock", "/utente/storico/"),
             ("Documenti", "fa-folder", "/utente/documenti/") if me and me.volontario else None,
             ("Contatti", "fa-envelope", "/utente/contatti/"),
             ("Fotografie", "fa-credit-card", "/utente/fotografia/"),
@@ -50,7 +50,7 @@ class MenuUtente:
             ("Patenti Civili", "fa-car", "/utente/curriculum/PP/"),
             ("Titoli di Studio", "fa-graduation-cap", "/utente/curriculum/TS/"),
             ("Patenti CRI", "fa-ambulance", "/utente/curriculum/PC/") if me and (me.volontario or me.dipendente) else None,
-            ("Titoli CRI", "fa-plus-square-o", "/utente/curriculum/TC/") if me and (me.volontario or me.dipendente) else None,
+            ("Titoli CRI", "fa-plus-square", "/utente/curriculum/TC/") if me and (me.volontario or me.dipendente) else None,
 
             # Competenze personali commentate per non visuallizarle
             # ("Competenze personali", "fa-suitcase", "/utente/curriculum/CP/"),

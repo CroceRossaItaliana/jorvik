@@ -1,7 +1,5 @@
-from anagrafica.permessi.costanti import LETTURA, PERMESSI_FUNZIONI_DICT, PERMESSI_OGGETTI_DICT
-from anagrafica.permessi.funzioni import unisci_permessi
-
-__author__ = 'alfioemanuele'
+from ..permessi.costanti import LETTURA, PERMESSI_OGGETTI_DICT
+from ..permessi.funzioni import PERMESSI_FUNZIONI_DICT  #, unisci_permessi (not found)
 
 
 def permessi_minimi_persona(persona, oggetto, minimo=LETTURA):
