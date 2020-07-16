@@ -319,7 +319,8 @@ def us_reclama_persona(request, me, persona_pk):
                         modello="email_reclama_servizio_civile.html",
                         corpo={
                             "persona": persona.nome_completo,
-                            "codice_fiscale": persona.genere_codice_fiscale
+                            "codice_fiscale": persona.genere_codice_fiscale,
+                            "comitato": sede
                         }
                     )
 
