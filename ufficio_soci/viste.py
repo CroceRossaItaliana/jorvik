@@ -314,10 +314,9 @@ def us_reclama_persona(request, me, persona_pk):
                         }
                     )
                 if m == Appartenenza.SEVIZIO_CIVILE_UNIVERSALE:
-                    Messaggio.costruisci_e_accoda(
+                    Messaggio.costruisci_e_invia(
                         oggetto=oggetto,
                         modello="email_reclama_servizio_civile.html",
-                        mittente=me,
                         corpo={
                             "persona": persona.nome_completo,
                             "codice_fiscale": persona.genere_codice_fiscale
@@ -366,10 +365,9 @@ def us_dimissioni(request, me, pk):
             oggetto = 'Dimissioni {}'.format(
                 Appartenenza.MENBRO_DICT[Appartenenza.SEVIZIO_CIVILE_UNIVERSALE]
             )
-            Messaggio.costruisci_e_accoda(
+            Messaggio.costruisci_e_invia(
                 oggetto=oggetto,
                 modello="email_dimissioni_servizio_civile.html",
-                mittente=me,
                 corpo={
                     "persona": persona.nome_completo,
                     "codice_fiscale": persona.genere_codice_fiscale,
