@@ -1,4 +1,4 @@
-from datetime import timedelta
+from datetime import timedelta, date
 from math import floor, ceil
 
 from django.db import models
@@ -8,19 +8,22 @@ from django.utils import timezone
 
 from anagrafica.permessi.costanti import GESTIONE_SERVIZI
 from anagrafica.permessi.incarichi import INCARICO_GESTIONE_SO_SERVIZI_PARTECIPANTI
+from base.files import PDF
+from base.geo import ConGeolocalizzazione
 
-from base.utils import concept
+from base.utils import concept, poco_fa
 from jorvik import settings
 from anagrafica.models import Persona, Appartenenza, Sede
 from anagrafica.permessi.applicazioni import REFERENTE_SO
 from anagrafica.costanti import (LOCALE, PROVINCIALE, REGIONALE, NAZIONALE, )
-from attivita.models import AttivitaAbstract, PartecipazioneAbstract
-from base.models import ModelloSemplice, Autorizzazione
+from attivita.models import PartecipazioneAbstract
+from base.models import ModelloSemplice, Autorizzazione, ConAllegati
 from base.tratti import ConMarcaTemporale, ConStorico, ConDelegati
 from social.models import ConGiudizio
 
 
-class ServizioSO(AttivitaAbstract, ConStorico):
+class ServizioSO(ModelloSemplice, ConGeolocalizzazione, ConMarcaTemporale,
+        ConGiudizio, ConAllegati, ConDelegati, ConStorico):
     BOZZA = 'B'
     VISIBILE = 'V'
     STATO = (
@@ -52,8 +55,48 @@ class ServizioSO(AttivitaAbstract, ConStorico):
         return reverse('so:servizio_cancella', args=[self.pk, ])
 
     @property
-    def url_cancella_gruppo(self):
-        return reverse('so:cancella_gruppo', args=[self.pk, ])
+    def url_mappa(self):
+        return reverse('so:servizio_mappa', args=[self.pk, ])
+
+    @property
+    def url_turni(self):
+        return reverse('so:servizio_turni', args=[self.pk, ])
+
+    @property
+    def url_modifica(self):
+        return reverse('so:servizio_modifica', args=[self.pk, ])
+
+    @property
+    def url_riapri(self):
+        return reverse('so:servizio_riapri', args=[self.pk, ])
+
+    @property
+    def url_partecipanti(self):
+        return reverse('so:servizio_partecipanti', args=[self.pk, ])
+
+    @property
+    def url_referenti(self):
+        return reverse('so:servizio_referenti', args=[self.pk, ])
+
+    @property
+    def url_mappa_modifica(self):
+        return self.url_modifica
+
+    @property
+    def url_turni_modifica(self):
+        return reverse('so:servizio_turni_modifica', args=[self.pk, ])
+
+    @property
+    def url_report(self):
+        return reverse('so:servizio_report', args=[self.pk,])
+
+    @property
+    def link(self):
+        return "<a href='%s'>%s</a>" % (self.url, self.nome)
+
+    @property
+    def cancellabile(self):
+        return not self.turni_so.all().exists()
 
     def referenti_attuali(self, al_giorno=None):
         return self.delegati_attuali(tipo=REFERENTE_SO, al_giorno=al_giorno)
@@ -87,6 +130,101 @@ class ServizioSO(AttivitaAbstract, ConStorico):
 
     def turni_passati(self, *args, **kwargs):
         return TurnoSO.query_passati(*args, attivita=self, **kwargs)
+
+    def chiudi(self, autore=None, invia_notifiche=True, azione_automatica=False):
+        """
+        Chiude questo servizio. Imposta il nuovo stato, sospende
+        le deleghe e, se specificato, invia la notifica ai referenti.
+        :param invia_notifiche: True per inviare le notifiche ai refernti di servizio, le cui
+                                deleghe verranno sospese.
+        :param azione_automatica: Se l'azione e' stata svolta in modo automatico (i.e. via cron) o meno.
+                                  Viene usato per modificare la notifica.
+        :return:
+        """
+        self.apertura = self.CHIUSA
+        self.save()
+
+        if invia_notifiche:
+            self._invia_notifica_chiusura(autore=autore, azione_automatica=azione_automatica)
+
+        if azione_automatica:
+            self.chiusa_automaticamente = poco_fa()
+
+        self.sospendi_deleghe()
+
+    def riapri(self, invia_notifiche=True):
+        self.apertura = self.APERTA
+        self.save()
+        self.attiva_deleghe()
+
+    def ore_di_servizio(self, solo_turni_passati=True):
+        """
+        Calcola e ritorna il numero di ore di servizio
+        :return: timedelta
+        """
+        turni = self.turni_passati() if solo_turni_passati else self.turni_so.all()
+        turni = turni.annotate(durata=F('fine') - F('inizio'))
+        a = turni.aggregate(totale_ore=Sum('durata'))
+        try:
+            return a['totale_ore']
+        except KeyError:
+            return timedelta(minutes=0)
+
+    def eta_media_partecipanti(self):
+        l = self.partecipanti_confermati().values_list('data_nascita', flat=True)
+        today = date.today()
+        try:
+            average_age = sum((today - x for x in l), timedelta(0)) / len(l)
+        except ZeroDivisionError:
+            return 0
+        return round(average_age.days / 365, 1)
+
+    def partecipanti_confermati(self):
+        """
+        Ottiene il queryset di tutti i partecipanti confermati
+        :return:
+        """
+        from anagrafica.models import Persona
+        return Persona.objects.filter(
+            PartecipazioneSO.con_esito_ok(turno__attivita=self).via("partecipazioni")
+        ).distinct('nome', 'cognome', 'codice_fiscale').order_by('nome', 'cognome', 'codice_fiscale')
+
+    REPORT_FORMAT_EXCEL = 'xls'
+    REPORT_FORMAT_PDF = 'pdf'
+
+    def _genera_report(self):
+        """
+        Genera il report in formato PDF.
+        :return:
+        """
+        from anagrafica.models import Persona
+        turni_e_partecipanti = list()
+        for turno in self.turni_passati():
+            partecipanti = Persona.objects.filter(partecipazioni_so__in=turno.partecipazioni_confermate())
+            turni_e_partecipanti.append((turno, partecipanti))
+        return turni_e_partecipanti
+
+    def genera_report(self, format=REPORT_FORMAT_PDF):
+        corpo = {
+            "attivita": self,
+            "turni_e_partecipanti": self._genera_report(),
+        }
+
+        if format == self.REPORT_FORMAT_PDF:
+            pdf = PDF(oggetto=self)
+            pdf.genera_e_salva(
+                nome="Report.pdf",
+                modello="pdf_attivita_report.html",
+                corpo=corpo,
+                orientamento=PDF.ORIENTAMENTO_ORIZZONTALE,
+            )
+            return pdf
+
+        if format == self.REPORT_FORMAT_EXCEL:
+            # todo: nuovo report adeguamento
+            from attivita.reports import AttivitaReport
+            excel = AttivitaReport(filename='Report.xls')
+            return excel.generate_and_download(data=corpo)
 
     def __str__(self):
         return str(self.nome)
