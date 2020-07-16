@@ -37,11 +37,11 @@
 
     <table class="table table-responsive table-striped">
         <thead>
-        <tr>
-            <th>Servizio</th>
-            <th>Informazioni</th>
-            <th>Azioni</th>
-        </tr>
+            <tr>
+                <th>Servizio</th>
+                <th>Informazioni</th>
+                <th>Azioni</th>
+            </tr>
         </thead>
 
         <tbody>
@@ -75,14 +75,14 @@
         {% empty %}
             <tr class="alert alert-warning">
                 <td colspan="4">
-                    <p><i class="fa fa-fw fa-info-circle"></i> Nessuna attivit&agrave; organizzata.</p>
+                    <p><i class="fa fa-fw fa-info-circle"></i> Nessun servizio organizzato.</p>
                 </td>
             </tr>
         {% endfor %}
         </tbody>
     </table>
 
-    {% include "attivita_gestisci_inc_paginazione.html" %}
+    {% include "so_gestisci_inc_paginazione.html" %}
 </div>
 
 {% endblock %}

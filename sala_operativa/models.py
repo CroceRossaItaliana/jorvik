@@ -7,11 +7,7 @@ from django.core.urlresolvers import reverse
 from django.utils import timezone
 
 from anagrafica.permessi.costanti import GESTIONE_SERVIZI
-
-
-# todo: nuovo incarico
-from anagrafica.permessi.incarichi import INCARICO_GESTIONE_ATTIVITA_PARTECIPANTI
-# todo:
+from anagrafica.permessi.incarichi import INCARICO_GESTIONE_SO_SERVIZI_PARTECIPANTI
 
 from base.utils import concept
 from jorvik import settings
@@ -49,11 +45,11 @@ class ServizioSO(AttivitaAbstract, ConStorico):
 
     @property
     def url(self):
-        return reverse('so:scheda', args=[self.pk, ])
+        return reverse('so:servizio', args=[self.pk, ])
 
     @property
     def url_cancella(self):
-        return reverse('so:scheda_cancella', args=[self.pk, ])
+        return reverse('so:servizio_cancella', args=[self.pk, ])
 
     @property
     def url_cancella_gruppo(self):
@@ -315,7 +311,7 @@ class TurnoSO(ModelloSemplice, ConMarcaTemporale, ConGiudizio):
 
         if richiedente:
             a = Autorizzazione(
-                destinatario_ruolo=INCARICO_GESTIONE_ATTIVITA_PARTECIPANTI,
+                destinatario_ruolo=INCARICO_GESTIONE_SO_SERVIZI_PARTECIPANTI,
                 destinatario_oggetto=self.attivita,
                 oggetto=p,
                 richiedente=persona,
@@ -396,7 +392,7 @@ class PartecipazioneSO(PartecipazioneAbstract):
         (NON_PRESENTATO, "Non presentato/a"),
     )
 
-    RICHIESTA_NOME = "partecipazione attività"
+    RICHIESTA_NOME = "partecipazione servizio"
 
     APPROVAZIONE_AUTOMATICA = timedelta(days=settings.SCADENZA_AUTORIZZAZIONE_AUTOMATICA)
     persona = models.ForeignKey("anagrafica.Persona", related_name='partecipazioni_so', on_delete=models.CASCADE)

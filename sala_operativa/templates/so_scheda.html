@@ -3,8 +3,7 @@
 {% load bootstrap3 %}
 
 {% block pagina_titolo %}
-    {% block scheda_titolo %}{% endblock %}
-    {{ attivita.nome }} ({{ attivita.sede.nome_completo }})&mdash; Attivit&agrave;
+    {% block scheda_titolo %}{% endblock %} {{ attivita.nome }} ({{ attivita.sede.nome_completo }})&mdash; Servizio
 {% endblock %}
 
 {% block app_contenuto %}
@@ -54,7 +53,7 @@
         {% if puo_modificare %}
             <li role="presentation" {% if request.path == attivita.url_modifica %}class="active"{% endif %}>
                 <a href="{{ attivita.url_modifica }}" class="text-danger">
-                    <i class="fas fa-pencil-alt"></i> Gestione servizi
+                    <i class="fas fa-pencil-alt"></i> Gestione servizio
                 </a>
             </li>
             <li role="presentation" {% if attivita.url_turni_modifica in request.path %}class="active"{% endif %}>
@@ -69,10 +68,11 @@
             </li>
         {% endif %}
     </ul>
+
     <p>&nbsp;</p>
-    {% block scheda_contenuto %}
-    {% endblock %}
+    {% block scheda_contenuto %}{% endblock %}
     <p>&nbsp;</p>
+
     <hr/>
     <div class="piu-piccolo allinea-centro">
         <i class="fa fa-fw fa-clock-o"></i> Ultimo aggiornamento {{ attivita.ultima_modifica }}

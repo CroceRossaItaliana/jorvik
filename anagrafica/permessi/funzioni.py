@@ -25,7 +25,6 @@ from ..permessi.costanti import (GESTIONE_SOCI, ELENCHI_SOCI, \
                                  EMISSIONE_TESSERINI,
                                  GESTIONE_POTERI_CENTRALE_OPERATIVA_SEDE, \
                                  GESTIONE_SO_SEDE,
-                                 GESTIONE_POTERI_SALA_OPERATIVA_SEDE,
                                  RUBRICA_SALE_OPERATIVE,
                                  RUBRICA_UFFICIO_SOCI,
                                  RUBRICA_UFFICIO_SOCI_UNITA, \
@@ -324,7 +323,6 @@ def permessi_delegato_sala_operativa(sede):
     return [
         (RUBRICA_SALE_OPERATIVE, sede.espandi(includi_me=True, pubblici=True)),
         (GESTIONE_SO_SEDE, sede_espansa),
-        (GESTIONE_POTERI_SALA_OPERATIVA_SEDE,   sede_espansa),
     ]
 
 

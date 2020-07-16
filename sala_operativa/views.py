@@ -145,6 +145,8 @@ def so_gestisci(request, me, stato="aperte"):
     servizi = servizi.annotate(num_turni=Count('turni_so'))
     servizi = Paginator(servizi, 30)
 
+    print(servizi_referenti_modificabili)
+
     try:
         servizi = servizi.page(request.GET.get('pagina'))
     except PageNotAnInteger:
@@ -207,26 +209,33 @@ def so_organizza(request, me):
 
 @pagina_privata
 def so_organizza_fatto(request, me, pk=None):
-    attivita = get_object_or_404(ServizioSO, pk=pk)
-    if not me.permessi_almeno(attivita, MODIFICA):
-        return redirect(ERRORE_PERMESSI)
+    servizio = get_object_or_404(ServizioSO, pk=pk)
+    # if not me.permessi_almeno(servizio, MODIFICA):
+    #     return redirect(ERRORE_PERMESSI)
 
-    return messaggio_generico(request, me, titolo="Attività organizzata",
-                              messaggio="Abbiamo inviato un messaggio ai referenti che hai "
-                                        "selezionato. Appena accederanno a Gaia, gli chiederemo "
-                                        "di darci maggiori informazioni sull'attività, come "
-                                        "gli orari dei turni e l'indirizzo.",
-                              torna_titolo="Torna a Gestione Attività",
-                              torna_url=reverse('so:gestisci'))
+    return messaggio_generico(request, me,
+        titolo="Servizio organizzato",
+        messaggio="Abbiamo inviato un messaggio ai referenti che hai selezionato. "
+                  "Appena accederanno a Gaia, gli chiederemo di darci maggiori informazioni sul servizio, "
+                  "come gli orari dei turni e l'indirizzo.",
+        torna_titolo="Torna a Gestione Servizi",
+        torna_url=reverse('so:gestisci'))
 
 
 @pagina_privata
 def so_referenti(request, me, pk=None, nuova=False):
     servizio = get_object_or_404(ServizioSO, pk=pk)
-    if not me.permessi_almeno(servizio, MODIFICA):
-        return redirect(ERRORE_PERMESSI)
+
+    sedi = me.oggetti_permesso(GESTIONE_SO_SEDE)
+    if not sedi:
+        return redirect(reverse('so:reperibilita'))
+
+    # if not me.permessi_almeno(servizio, MODIFICA):
+    #     return redirect(ERRORE_PERMESSI)
 
     delega = REFERENTE_SO
+
+    print(nuova)
 
     if nuova:
         continua_url = reverse('so:organizza_referenti_fatto', args=[servizio.pk,])
@@ -396,7 +405,7 @@ def so_scheda_turni(request, me=None, pk=None, pagina=None):
     servizio = get_object_or_404(ServizioSO, pk=pk)
 
     if pagina is None:
-        pagina = reverse('so:scheda_turni_pagina', args=[servizio.pk, servizio.pagina_turni_oggi()])
+        pagina = reverse('so:servizio_turni_pagina', args=[servizio.pk, servizio.pagina_turni_oggi()])
         return redirect(pagina)
 
     turni = servizio.turni_so.all()
@@ -624,22 +633,22 @@ def so_scheda_turni_rimuovi(request, me, pk=None, turno_pk=None, partecipante_pk
 
 
 @pagina_privata
-def so_scheda_turni_link_permanente(request, me, pk=None, turno_pk=None):
+def so_scheda_turni_permalink(request, me, pk=None, turno_pk=None):
     turno = get_object_or_404(TurnoSO, pk=turno_pk)
     servizio = turno.attivita
     pagina = turno.elenco_pagina()
 
-    return redirect(reverse('so:scheda_turni_pagina', args=[servizio.pk, pagina, ]) +
+    return redirect(reverse('so:servizio_turni_pagina', args=[servizio.pk, pagina, ]) +
                             "?evidenzia_turno=%d#turno-%d" % (turno.pk, turno.pk))
 
 
 @pagina_privata
-def so_scheda_turni_modifica_link_permanente(request, me, pk=None, turno_pk=None):
+def so_scheda_turni_modifica_permalink(request, me, pk=None, turno_pk=None):
     turno = get_object_or_404(TurnoSO, pk=turno_pk)
     servizio = turno.attivita
     pagina = turno.elenco_pagina()
 
-    return redirect(reverse('so:scheda_turni_modifica_pagina', args=[servizio.pk, pagina, ]) +
+    return redirect(reverse('so:servizio_turni_modifica_pagina', args=[servizio.pk, pagina, ]) +
                             "?evidenzia_turno=%d#turno-%d" % (turno.pk, turno.pk))
 
 
@@ -689,7 +698,8 @@ def so_riapri(request, me, pk=None):
     return redirect(servizio.url)
 
 
-@pagina_privata(permessi=(GESTIONE_ATTIVITA,))
+# @pagina_privata(permessi=(GESTIONE_ATTIVITA,))
+@pagina_privata(permessi=(GESTIONE_SERVIZI,))
 def so_scheda_turni_modifica(request, me, pk=None, pagina=None):
     """ Mostra la pagina di modifica di un servizio """
 
@@ -702,7 +712,7 @@ def so_scheda_turni_modifica(request, me, pk=None, pagina=None):
         return redirect(ERRORE_PERMESSI)
 
     if pagina is None:
-        return redirect(reverse('so:scheda_turni_modifica_pagina',
+        return redirect(reverse('so:servizio_turni_modifica_pagina',
                                 args=[servizio.pk, servizio.pagina_turni_oggi(),]))
 
     turni = servizio.turni_so.all()

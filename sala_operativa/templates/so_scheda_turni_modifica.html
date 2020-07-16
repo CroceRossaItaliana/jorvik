@@ -30,8 +30,7 @@
                     <td style="width: 25%;">
                         {% bootstrap_form modulo size='small' %}
                         <button type="submit" class="btn btn-sm btn-block btn-primary">
-                            <i class="fa fa-fw fa-save"></i>
-                            Salva modifiche
+                            <i class="fa fa-fw fa-save"></i> Salva modifiche
                         </button>
                     </td>
                     <td>
@@ -58,11 +57,9 @@
                                                 <td class="alert alert-warning">
                                                     <input type="hidden" name="presenza-{{ p.pk }}" value="0"/>
                                                     <label>
-                                                        <input
-                                                                type="checkbox" name="presenza-{{ p.pk }}" value="1"
-                                                                {% if p.stato == p.RICHIESTA %}checked="checked"{% endif %}
-                                                        />
-                                                        S&iacute;
+                                                        <input type="checkbox" name="presenza-{{ p.pk }}" value="1"
+                                                               {% if p.stato == p.RICHIESTA %}checked="checked"{% endif %}
+                                                        /> S&iacute;
                                                     </label>
                                                 </td>
                                                 <td>{{ p.persona.link|safe }}</td>
