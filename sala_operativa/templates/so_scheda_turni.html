@@ -17,44 +17,30 @@
                         <h4>{{ turno.nome }}</h4>
                         <p>
                             <span class="piu-grande">
-                                <i class="fa fa-fw fa-clock-o"></i>
-                                <strong>
-                                    {{ turno.inizio.date|naturalday:"SHORT_DATE_FORMAT" }} alle {{ turno.inizio.time }}
-                                </strong><br/>
+                                <i class="fa fa-fw fa-clock"></i>
+                                <strong>{{ turno.inizio.date|naturalday:"SHORT_DATE_FORMAT" }} alle {{ turno.inizio.time }}</strong><br/>
                             </span>
                             fino a {{ turno.fine.date|naturalday:"SHORT_DATE_FORMAT" }} alle {{ turno.fine.time }}<br/>
                         </p>
                     </div>
                     <div class="col-md-5">
                         <p>
-                            <i class="fa fa-fw fa-users"></i> <strong>{{ turno.partecipazioni_so_confermate.count }}
-                            partecipanti confermati</strong>
+                            <i class="fa fa-fw fa-users"></i> <strong>{{ turno.partecipazioni_so_confermate.count }} partecipanti confermati</strong>
                             <span class="">(minimo {{ turno.minimo }}, massimo {{ turno.massimo }})</span>
                         </p>
-                        {% if turno.scoperto %}
-                            <p class="text-danger">
-                                <i class="fa fa-fw fa-warning"></i> Scoperto!
-                            </p>
-                        {% endif %}
-                        {% if turno.pieno %}
-                            <p class="text-danger">
-                                <i class="fa fa-fw fa-warning"></i> Pieno!
-                            </p>
-                        {% endif %}
+                        <p class="text-danger">
+                            <i class="fas fa-exclamation"></i> {% if turno.scoperto %}Scoperto!{% endif %} {% if turno.pieno %}Pieno!{% endif %}
+                        </p>
                         <p>
                             {% for p in turno.partecipazioni_so_confermate %}
                                 {% if p.persona.avatar %}
                                     {% thumbnail p.persona.avatar "50x50" crop as im %}
                                     <a href="{{ p.persona.url }}" title="{{ p.persona.nome_completo }}">
-                                        <img src="{{ im.url }}" class="img-rounded"
-                                             alt="{{ p.persona.nome_completo }}"
-                                             title="{{ p.persona.nome_completo }} "/>
+                                        <img src="{{ im.url }}" class="img-rounded" alt="{{ p.persona.nome_completo }}" title="{{ p.persona.nome_completo }} "/>
                                     </a>
                                 {% else %}
                                     <a href="{{ p.persona.url }}" title="{{ p.persona.nome_completo }}">
-                                        <img src="{% gravatar_url p.persona.email 50 %}" class="img-rounded"
-                                             alt="{{ p.persona.nome_completo }}"
-                                             title="{{ p.persona.nome_completo }} "/>
+                                        <img src="{% gravatar_url p.persona.email 50 %}" class="img-rounded" alt="{{ p.persona.nome_completo }}" title="{{ p.persona.nome_completo }} "/>
                                     </a>
                                 {% endif %}
                             {% endfor %}
@@ -63,11 +49,13 @@
                     <div class="col-md-4">
                         {% include 'so_turno_inc_azioni.html' %}
                     </div>
+                </td>
             </tr>
         {% empty %}
         {% endfor %}
         </tbody>
     </table>
+
     {% include 'so_scheda_turni_inc_paginazione.html' %}
     {% if evidenzia_turno %}
         <!-- Salta al turno evidenziato -->
@@ -78,4 +66,5 @@
             });
         </script>
     {% endif %}
+
 {% endblock %}

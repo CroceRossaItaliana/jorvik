@@ -21,13 +21,6 @@ from .reports import AttivitaReport
 from .utils import valida_numero_obiettivo
 
 
-class PartecipazioneAbstract():
-    class Meta:
-        abstract = True
-
-
-
-
 class Attivita(ModelloSemplice, ConGeolocalizzazione, ConMarcaTemporale,
         ConGiudizio, ConCommenti, ConAllegati, ConDelegati, ConVecchioID):
     BOZZA = 'B'

@@ -7,7 +7,6 @@
 {% block scheda_titolo %}Turni{% endblock %}
 
 {% block scheda_contenuto %}
-
     <form method="POST">
         {% csrf_token %}
 
@@ -34,14 +33,12 @@
                 <div class="panel panel-warning">
                     <div class="panel-heading">
                         <h2 class="panel-title">
-                            <i class="fa fa-fw fa-repeat"></i> Ripeti il turno
+                            <i class="fas fa-redo"></i> Ripeti il turno
                         </h2>
                     </div>
                     <div class="panel-body">
                         <div class="alert alert-warning">
-                            <i class="fa fa-fw fa-info-circle"></i>
-                            Turni periodici? Completa anche questo modulo per creare rapidamente
-                            fino a 60 turni in una sola volta.
+                            <i class="fa fa-fw fa-info-circle"></i> Turni periodici? Completa anche questo modulo per creare rapidamente fino a 60 turni in una sola volta.
                         </div>
                         {% bootstrap_form modulo_ripeti %}
                         <button type="submit" name="ripeti" value="si" class="btn btn-block btn-warning">

@@ -16,7 +16,8 @@ from jorvik import settings
 from anagrafica.models import Persona, Appartenenza, Sede
 from anagrafica.permessi.applicazioni import REFERENTE_SO
 from anagrafica.costanti import (LOCALE, PROVINCIALE, REGIONALE, NAZIONALE, )
-from base.models import ModelloSemplice, Autorizzazione, ConAllegati
+from base.models import ModelloSemplice, Autorizzazione, ConAllegati, \
+    ConAutorizzazioni
 from base.tratti import ConMarcaTemporale, ConStorico, ConDelegati
 from social.models import ConGiudizio
 
@@ -245,7 +246,6 @@ class ReperibilitaSO(ModelloSemplice, ConMarcaTemporale, ConStorico):
         help_text="Tempo necessario all'attivazione, in formato HH:mm.",)
     estensione = models.CharField(choices=ESTENSIONE_CHOICES, max_length=2)
     persona = models.ForeignKey(Persona, related_name="so_reperibilita", on_delete=models.CASCADE)
-    # servizio = models.ManyToManyField(ServizioSO, blank=True)
     creato_da = models.ForeignKey(Persona, null=True, blank=True)
 
     @classmethod
@@ -276,8 +276,10 @@ class ReperibilitaSO(ModelloSemplice, ConMarcaTemporale, ConStorico):
 
 
 class TurnoSO(ModelloSemplice, ConMarcaTemporale, ConGiudizio):
+
     # todo: rename attivita field
     attivita = models.ForeignKey(ServizioSO, related_name='turni_so', on_delete=models.CASCADE)
+
     nome = models.CharField(max_length=128, default="Nuovo turno", db_index=True)
     inizio = models.DateTimeField("Data e ora di inizio", db_index=True, null=False)
     fine = models.DateTimeField("Data e ora di fine", db_index=True, null=True, blank=True, default=None)
@@ -318,28 +320,32 @@ class TurnoSO(ModelloSemplice, ConMarcaTemporale, ConGiudizio):
     )
 
     @property
+    def url_args(self):
+        return self.attivita.pk, self.pk
+
+    @property
     def url(self):
-        return "%sturni/link-permanente/%d/" % (self.attivita.url, self.pk)
+        return reverse('so:servizio_turni_link_permanente', args=self.url_args)
 
     @property
     def url_modifica(self):
-        return "%sturni/modifica/link-permanente/%d/" % (self.attivita.url, self.pk)
+        return reverse('so:servizio_turni_modifica_link_permanente', args=self.url_args)
 
     @property
     def url_cancella(self):
-        return "%sturni/cancella/%d/" % (self.attivita.url, self.pk)
+        return reverse('so:servizio_turni_cancella', args=self.url_args)
 
     @property
     def url_partecipa(self):
-        return "%sturni/%d/partecipa/" % (self.attivita.url, self.pk)
+        return reverse('so:servizio_turni_partecipa', args=self.url_args)
 
     @property
     def url_ritirati(self):
-        return "%sturni/%d/ritirati/" % (self.attivita.url, self.pk)
+        return reverse('so:servizio_turni_ritirati', args=self.url_args)
 
     @property
     def url_partecipanti(self):
-        return "%sturni/%d/partecipanti/" % (self.attivita.url, self.pk)
+        return reverse('so:servizio_turni_partecipanti', args=self.url_args)
 
     @property
     def link(self):
@@ -436,28 +442,15 @@ class TurnoSO(ModelloSemplice, ConMarcaTemporale, ConGiudizio):
         """
 
         # Persona già partecipante?
-        p = PartecipazioneSO.con_esito_ok().filter(turno=self, persona=persona).first()
-        if p:
-            return p
+        # p = PartecipazioneSO.con_esito_ok().filter(turno=self,
+        #                                            reperibilita__persona=persona).first()
+        # if p:
+        #     return p
 
-        # Elimina eventuali vecchie partecipazioni in attesa
-        PartecipazioneSO.con_esito_pending().filter(turno=self, persona=persona).delete()
-
-        p = PartecipazioneSO(turno_so=self, persona=persona,)
+        p = PartecipazioneSO(turno=self,
+                             reperibilita=self.attivita,
+                             persona=persona,)
         p.save()
-
-        if richiedente:
-            a = Autorizzazione(
-                destinatario_ruolo=INCARICO_GESTIONE_SO_SERVIZI_PARTECIPANTI,
-                destinatario_oggetto=self.attivita,
-                oggetto=p,
-                richiedente=persona,
-                firmatario=richiedente,
-                concessa=True,
-                necessaria=False,
-            )
-            a.save()
-
         return p
 
     @property
@@ -521,21 +514,25 @@ class TurnoSO(ModelloSemplice, ConMarcaTemporale, ConGiudizio):
         return "%s (%s)" % (self.nome, self.attivita.nome if self.attivita else "Nessuna attività")
 
 
-class PartecipazioneSO(ModelloSemplice, ConMarcaTemporale):
-    RICHIESTA = 'K'
-    NON_PRESENTATO = 'N'
-    STATO = (
-        (RICHIESTA, "Part. Richiesta"),
-        (NON_PRESENTATO, "Non presentato/a"),
-    )
-
+class PartecipazioneSO(ModelloSemplice, ConMarcaTemporale, ConStorico,
+                       ConAutorizzazioni):
     RICHIESTA_NOME = "partecipazione servizio"
 
-    APPROVAZIONE_AUTOMATICA = timedelta(days=settings.SCADENZA_AUTORIZZAZIONE_AUTOMATICA)
+    # todo: to delete
+    RICHIESTA = 'K'
+    NON_PRESENTATO = 'N'
+    # todo:
 
-    persona = models.ForeignKey("anagrafica.Persona", related_name='partecipazioni_so', on_delete=models.CASCADE)
+    PARTECIPA = 'p'
+    RITIRATO = 'r'
+    STATO = (
+        (PARTECIPA, "Partecipa"),
+        (RITIRATO, "Ritirato"),
+    )
+
+    reperibilita = models.ForeignKey(ReperibilitaSO)
     turno = models.ForeignKey(TurnoSO, related_name='partecipazioni_so', on_delete=models.CASCADE)
-    stato = models.CharField(choices=STATO, default=RICHIESTA, max_length=1,  db_index=True)
+    stato = models.CharField(choices=STATO, default=RICHIESTA, max_length=1, db_index=True)
 
     @property
     def url_cancella(self):
@@ -543,20 +540,19 @@ class PartecipazioneSO(ModelloSemplice, ConMarcaTemporale):
                        args=[self.turno.attivita.pk, self.pk, ])
 
     class Meta:
-        verbose_name = "Richiesta di partecipazione al Servizio SO"
-        verbose_name_plural = "Richieste di partecipazione ai Servizi SO"
-        ordering = ('stato', 'persona__cognome', 'persona__nome')
+        verbose_name = "Partecipazione al Turno di un Servizio SO"
+        verbose_name_plural = "Partecipazioni ai Turni dei Servizi SO"
         index_together = [
-            ['persona', 'turno'],
-            ['persona', 'turno', 'stato'],
-            ['turno', 'stato'],
+            ['reperibilita', 'turno', ],
+            ['reperibilita', 'turno', 'stato', ],
+            ['turno', 'stato', ],
         ]
         permissions = (
             ("view_partecipazione", "Can view partecipazione"),
         )
 
     def __str__(self):
-        return "%s a %s" % (self.persona.codice_fiscale, str(self.turno))
+        return "%s a %s" % (self.reperibilita.persona.codice_fiscale, self.turno)
 
 
 class MezzoSO(ModelloSemplice, ConMarcaTemporale, ConStorico):

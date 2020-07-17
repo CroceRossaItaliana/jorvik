@@ -1,7 +1,7 @@
 from django.contrib import admin
 
 from gruppi.readonly_admin import ReadonlyAdminMixin
-from .models import ReperibilitaSO, ServizioSO, MezzoSO, TurnoSO
+from .models import ReperibilitaSO, ServizioSO, MezzoSO, TurnoSO, PartecipazioneSO
 
 
 @admin.register(ReperibilitaSO)
@@ -27,6 +27,14 @@ class AdminTurno(ReadonlyAdminMixin, admin.ModelAdmin):
     list_display = ['nome', 'attivita', 'inizio', 'fine', 'creazione', ]
     list_filter = ['inizio', 'fine', 'creazione', ]
     raw_id_fields = ['attivita', ]
+
+
+@admin.register(PartecipazioneSO)
+class AdminPartecipazione(ReadonlyAdminMixin, admin.ModelAdmin):
+    search_fields = ['turno__nome', 'turno__attivita__nome', ]
+    list_display = ('turno', 'reperibilita', 'creazione', )
+    list_filter = ('creazione', 'stato', 'confermata',)
+    raw_id_fields = ('reperibilita', 'turno', )
 
 
 @admin.register(MezzoSO)

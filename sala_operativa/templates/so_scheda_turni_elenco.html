@@ -8,15 +8,14 @@
     <div class="panel panel-info">
         <div class="panel-heading">
             <h2 class="panel-title">
-                <i class="fa fa-fw fa-list"></i>
-                Partecipanti a "{{ turno.nome }}":
-                {{ turno.inizio|date:"SHORT_DATETIME_FORMAT" }}&mdash;{{ turno.inizio|date:"SHORT_DATETIME_FORMAT" }}
+                <i class="fa fa-fw fa-list"></i> Partecipanti a "{{ turno.nome }}":
+                    {{ turno.inizio|date:"SHORT_DATETIME_FORMAT" }}&mdash;{{ turno.inizio|date:"SHORT_DATETIME_FORMAT" }}
             </h2>
         </div>
         <div class="panel-body">
             <p>
                 <a href="{{ turno.url_modifica }}" class="btn btn-default btn-block">
-                    <i class="fa fa-fw fa-mail-reply"></i>Torna alla modifica del turno e dei partecipanti
+                    <i class="fa fa-fw fa-mail-reply"></i> Torna alla modifica del turno e dei partecipanti
                 </a>
             </p>
         </div>

@@ -396,10 +396,14 @@ def espandi_gestione_referenti_so(qs_servizi, al_giorno=None):
 
 def espandi_gestione_servizi(qs_servizi, al_giorno=None):
     from anagrafica.models import Persona
+    from sala_operativa.models import ReperibilitaSO
+
+    persone = ReperibilitaSO.objects.filter(partecipazioneso__turno__attivita__in=qs_servizi).values_list('persona', flat=True)
+
     try:
         return [
             (MODIFICA, qs_servizi),
-            (LETTURA, Persona.objects.filter(partecipazioni_so__turno__attivita__in=qs_servizi))
+            (LETTURA, Persona.objects.filter(pk__in=persone)),
         ]
     except (AttributeError, ValueError, KeyError, TypeError):
         return []

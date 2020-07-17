@@ -689,7 +689,6 @@ def so_riapri(request, me, pk=None):
     return redirect(servizio.url)
 
 
-# @pagina_privata(permessi=(GESTIONE_ATTIVITA,))
 @pagina_privata(permessi=(GESTIONE_SERVIZI,))
 def so_scheda_turni_modifica(request, me, pk=None, pagina=None):
     """ Mostra la pagina di modifica di un servizio """
@@ -715,38 +714,27 @@ def so_scheda_turni_modifica(request, me, pk=None, pagina=None):
     p = Paginator(turni, TurnoSO.PER_PAGINA)
     pg = p.page(pagina)
 
-    forms = []
-    moduli_aggiungi_partecipanti = []
+    forms = list()
+    moduli_aggiungi_partecipanti = list()
+
     turni = pg.object_list
     for turno in turni:
-        form = ModificaTurnoForm(request.POST or None, instance=turno,
-                                   prefix="turno_%d" % (turno.pk,))
+        form = ModificaTurnoForm(request.POST or None, instance=turno, prefix="turno_%d" % turno.pk)
         forms += [form]
 
         modulo_aggiungi_partecipanti = AggiungiPartecipantiForm(request.POST or None,
-                                                                prefix="turno_agg_%d" % (turno.pk,))
+                                                                prefix="turno_agg_%d" % turno.pk)
         moduli_aggiungi_partecipanti += [modulo_aggiungi_partecipanti]
 
         if form.is_valid():
             form.save()
 
         if modulo_aggiungi_partecipanti.is_valid():
-
-            # Aggiungi partecipante.
-            for partecipante in modulo_aggiungi_partecipanti.cleaned_data['persone']:
+            cd = modulo_aggiungi_partecipanti.cleaned_data
+            for partecipante in cd['persone']:
                 turno.aggiungi_partecipante(partecipante, richiedente=me)
 
             redirect(turno.url_modifica)
-
-    # Salva e aggiorna le presenze.
-    for chiave, valore in request.POST.items():
-        if "presenza-" in chiave:
-            p_pk = int(chiave.replace("presenza-", ""))
-            p_si = '1' in valore
-            pa = PartecipazioneSO.objects.get(pk=p_pk)
-            pa.stato = PartecipazioneSO.RICHIESTA if p_si else \
-                PartecipazioneSO.NON_PRESENTATO
-            pa.save()
 
     turni_e_moduli = zip(turni, forms, moduli_aggiungi_partecipanti)
 
