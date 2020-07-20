@@ -535,6 +535,7 @@ class Quota(ModelloSemplice, ConMarcaTemporale, ConVecchioID, ConPDF):
 class ReportElenco(ConMarcaTemporale):
     VOLONTARI = 'vol'
     VOLONTARI_GIOVANI = 'vog'
+    SERVIZIO_CIVILE = 'civ'
     IV_E_CM = 'ivcm'
     DIMESSI = 'dim'
     VOLONTARI_IN_RISERVA = 'vir'
@@ -574,6 +575,7 @@ class ReportElenco(ConMarcaTemporale):
         (TESSERINI_SENZA_FOTOTESSERA, 'Tesserini senza fototessera'),
         (TESSERINI_RIFIUTATI, 'Tesserini Rifiutati'),
         (GENERICO, 'Generico'),
+        (SERVIZIO_CIVILE, 'Volontari Serivzio Civile')
     )
 
     user = models.ForeignKey(Persona)
