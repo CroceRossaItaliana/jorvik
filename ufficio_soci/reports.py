@@ -21,6 +21,7 @@ from . import elenchi
 SOCI_TIPI_ELENCHI = {
     'volontari': (elenchi.ElencoVolontari, "Elenco dei Volontari"),
     'giovani': (elenchi.ElencoVolontariGiovani, "Elenco dei Volontari Giovani"),
+    'servizio-civile': (elenchi.ElencoServizioCivile, "Elenco Servizio Civile"),
     'ivcm': (elenchi.ElencoIVCM, "Elenco IV e CM"),
     'dimessi': (elenchi.ElencoDimessi, "Elenco Dimessi"),
     'riserva': (elenchi.ElencoInRiserva, "Elenco Volontari in Riserva"),

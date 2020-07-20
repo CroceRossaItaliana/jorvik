@@ -1,6 +1,6 @@
 from django.core.urlresolvers import reverse
 from formazione.menus import formazione_menu
-
+from anagrafica.models import Appartenenza
 
 class Menu:
     def __init__(self, request):
@@ -12,6 +12,14 @@ class Menu:
         return self.me and self.me.volontario
 
     @property
+    def is_aspirante(self):
+        return self.me and hasattr(self.me, 'aspirante') and not self.me.appartenenze_attuali(membro=Appartenenza.SEVIZIO_CIVILE_UNIVERSALE).exists()
+
+    @property
+    def is_sevizio_civile(self):
+        return self.me.appartenenze_attuali(membro=Appartenenza.SEVIZIO_CIVILE_UNIVERSALE).exists()
+
+    @property
     def gestione_corsi_sede(self):
         from anagrafica.permessi.costanti import GESTIONE_CORSI_SEDE
 
@@ -19,7 +27,7 @@ class Menu:
 
     @property
     def elementi_anagrafica(self):
-        if self.me and hasattr(self.me, 'aspirante'):
+        if self.is_aspirante:
             return self.aspirante
         else:
             return self.utente
@@ -98,7 +106,7 @@ class Menu:
 
     @property
     def aspirante(self):
-        return formazione_menu('aspirante') if self.me and hasattr(self.me, 'aspirante') else self.formazione
+        return formazione_menu('aspirante') if self.is_aspirante else self.formazione
 
     def mapping(self):
         """

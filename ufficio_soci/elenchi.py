@@ -891,3 +891,25 @@ class ElencoTesseriniRifiutati(ElencoVistaTesseriniRifiutati, ElencoTesseriniRic
 
     def template(self):
         return "us_elenchi_inc_tesserini_rifiutati.html"
+
+
+class ElencoServizioCivile(ElencoVistaSoci):
+    """ args: QuerySet<Sede>, Sedi per le quali compilare gli elenchi sostenitori"""
+
+    REPORT_TYPE = ReportElenco.SERVIZIO_CIVILE
+
+    def risultati(self):
+        qs_sedi = self.args[0]
+
+        return Persona.objects.filter(
+            Appartenenza.query_attuale(
+                sede__in=qs_sedi, membro=Appartenenza.SEVIZIO_CIVILE_UNIVERSALE,
+            ).via("appartenenze")
+        ).annotate(
+                appartenenza_tipo=F('appartenenze__membro'),
+                appartenenza_inizio=F('appartenenze__inizio'),
+                appartenenza_sede=F('appartenenze__sede'),
+        ).prefetch_related(
+            'appartenenze', 'appartenenze__sede',
+            'utenza', 'numeri_telefono'
+        ).distinct('cognome', 'nome', 'codice_fiscale')
