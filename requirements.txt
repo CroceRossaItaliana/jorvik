@@ -27,7 +27,7 @@ django-prettyjson==0.4.1
 djangorestframework==3.6
 Markdown==2.6
 phonenumbers==8.8.9
-Pillow==3.2.0
+Pillow==6.2.0
 googlemaps==2.2
 lxml==4.1.1
 psycopg2==2.7.3.2
