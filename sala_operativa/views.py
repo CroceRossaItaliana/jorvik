@@ -414,7 +414,7 @@ def so_scheda_mm_abbina(request, me=None, pk=None):
             pk__in=PrenotazioneMMSO.objects.filter(
                 inizio__lte=request.GET.get('inizio'),
                 fine__gte=request.GET.get('fine')
-            )
+            ).values_list('mezzo', flat=True)
         )
         if request.POST and form.is_valid():
             PrenotazioneMMSO(
