@@ -24,23 +24,21 @@
                     <table class="table table-striped">
                         <thead>
                         <tr>
-                            <th>Tipo</th>
-                            <th>Nome</th>
-                            <th>Mezzo tipo</th>
-                            <th>Creato da</th>
+                            <th>Mezzo</th>
+                            <th>Inizio Prenotazione</th>
+                            <th>Fine Prenotazione</th>
                             <th>Azioni</th>
                         </tr>
                         </thead>
                         <tbody>
-                        {% for mm in mezzi_materiali %}
+                        {% for prenotazione in prenotazioni %}
                             <tr>
-                                <td>{{ mm.tipo }}</td>
-                                <td>{{ mm.nome }}</td>
-                                <td>{{ mm.mezzo_tipo }}</td>
-                                <td>{{ mm.creato_da.link|safe }}</td>
+                                <td>{{ prenotazione.mezzo }}</td>
+                                <td>{{ prenotazione.inizio }}</td>
+                                <td>{{ prenotazione.fine }}</td>
                                 <td>
-                                    <a href="{% url 'so:scheda_mm_cancella' servizio.pk mm.pk %}" class="text-danger">
-                                        <i class="fas fa-ambulance"></i> Elimina
+                                    <a href="{% url 'so:scheda_mm_cancella' servizio.pk prenotazione.pk %}" class="text-danger">
+                                        Elimina
                                     </a>
                                 </td>
                             </tr>

@@ -22,14 +22,14 @@ from anagrafica.permessi.costanti import (MODIFICA, GESTIONE_ATTIVITA,
 from autenticazione.funzioni import pagina_privata, pagina_pubblica
 from base.errori import ci_siamo_quasi, errore_generico, messaggio_generico, errore_no_volontario
 from base.utils import poco_fa, timedelta_ore
-from .models import PartecipazioneSO, ServizioSO, TurnoSO, ReperibilitaSO, MezzoSO
+from .models import PartecipazioneSO, ServizioSO, TurnoSO, ReperibilitaSO, MezzoSO, PrenotazioneMMSO
 from .elenchi import ElencoPartecipantiTurno, ElencoPartecipantiAttivita
 from .forms import (AttivitaInformazioniForm, ModificaTurnoForm,
                     AggiungiPartecipantiForm, CreazioneTurnoForm, RipetiTurnoForm,
                     StatisticheAttivitaForm, StatisticheAttivitaPersonaForm,
                     VolontarioReperibilitaForm, AggiungiReperibilitaPerVolontarioForm,
                     OrganizzaServizioReferenteForm, OrganizzaServizioForm, CreazioneMezzoSO, )
-from sala_operativa.forms import AbbinaMezzoMaterialeForm
+from sala_operativa.forms import AbbinaMezzoMaterialeForm, ReperibilitaMezzi
 
 INITIAL_INIZIO_FINE_PARAMS = {
     "inizio": poco_fa() + timedelta(hours=1),
@@ -382,7 +382,7 @@ def so_scheda_mm(request, me=None, pk=None):
     puo_modificare = me and me.permessi_almeno(servizio, MODIFICA)
 
     context = {
-        "mezzi_materiali": MezzoSO.objects.filter(servizio=servizio),
+        "prenotazioni": PrenotazioneMMSO.objects.filter(servizio=servizio),
         "servizio": servizio,
         "puo_modificare": puo_modificare,
         "me": me,
@@ -396,21 +396,34 @@ def so_scheda_mm_abbina(request, me=None, pk=None):
     """Mostra la scheda di abbinamento mezzi materiali """
     servizio = get_object_or_404(ServizioSO, pk=pk)
 
-    form = AbbinaMezzoMaterialeForm(request.POST or None)
+    form = None
 
-    form.fields['mezzo_materiale'].choices = AbbinaMezzoMaterialeForm.popola_scelta(me)
-
-    if request.POST and form.is_valid():
-        mm = MezzoSO.objects.get(pk=form.cleaned_data['mezzo_materiale'])
-
-        # TODO:
-        mm.occupato_da = form.cleaned_data['occupato_da']
-        mm.occupato_a = form.cleaned_data['occupato_a']
-
-        mm.save()
-
-        mm.servizio.add(servizio)
-        return redirect(reverse('so:scheda_mm', args=[pk, ]))
+    if not request.GET.get('inizio') or not request.GET.get('fine'):
+        form = ReperibilitaMezzi(request.POST or None)
+        if request.POST and form.is_valid():
+            return redirect('{}?inizio={}&fine={}'.format(
+                reverse('so:scheda_mm_abbina', args=[pk, ]),
+                form.cleaned_data['inizio'],
+                form.cleaned_data['fine']
+            ))
+    else:
+        form = AbbinaMezzoMaterialeForm(request.POST or None)
+        form.fields['mezzo'].queryset = MezzoSO.objects.filter(
+            estensione__in=me.oggetti_permesso(GESTIONE_SO_SEDE),
+        ).exclude(
+            pk__in=PrenotazioneMMSO.objects.filter(
+                inizio__lte=request.GET.get('inizio'),
+                fine__gte=request.GET.get('fine')
+            )
+        )
+        if request.POST and form.is_valid():
+            PrenotazioneMMSO(
+                mezzo=form.cleaned_data['mezzo'],
+                servizio=servizio,
+                inizio=request.GET.get('inizio'),
+                fine=request.GET.get('fine')
+            ).save()
+            return redirect(reverse('so:scheda_mm', args=[pk, ]))
 
     context = {
         'form': form
@@ -418,12 +431,12 @@ def so_scheda_mm_abbina(request, me=None, pk=None):
 
     return 'so_scheda_mm_abbina.html', context
 
-@pagina_pubblica
-def so_scheda_mm_cancella(request, me=None, pk=None, mm=None):
-    servizio = get_object_or_404(ServizioSO, pk=pk)
-    mm = get_object_or_404(MezzoSO, pk=mm)
 
-    mm.servizio.remove(servizio)
+@pagina_pubblica
+def so_scheda_mm_cancella(request, me=None, pk=None, prenotazione=None):
+    servizio = get_object_or_404(ServizioSO, pk=pk)
+    prenotazione = get_object_or_404(PrenotazioneMMSO, pk=prenotazione)
+    prenotazione.delete()
 
     return redirect(reverse('so:scheda_mm', args=[pk, ]))
 
@@ -937,6 +950,8 @@ def so_statistiche(request, me):
 @pagina_privata
 def so_mezzi(request, me):
     form = CreazioneMezzoSO(request.POST or None)
+
+    form.fields['estensione'].queryset = me.oggetti_permesso(GESTIONE_SO_SEDE)
 
     if form.is_valid():
         mm = form.save(commit=False)

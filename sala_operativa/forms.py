@@ -7,7 +7,7 @@ from django.forms.extras import SelectDateWidget
 from anagrafica.models import Sede
 from anagrafica.permessi.costanti import GESTIONE_SO_SEDE
 from base.wysiwyg import WYSIWYGSemplice
-from .models import ServizioSO, TurnoSO, ReperibilitaSO, MezzoSO
+from .models import ServizioSO, TurnoSO, ReperibilitaSO, MezzoSO, PrenotazioneMMSO
 
 
 class VolontarioReperibilitaForm(ModelForm):
@@ -160,23 +160,14 @@ class CreazioneMezzoSO(ModelForm):
         fields = ['tipo', 'nome', 'estensione', 'mezzo_tipo', 'inizio', 'fine']
 
 
-class AbbinaMezzoMaterialeForm(forms.Form):
+class AbbinaMezzoMaterialeForm(ModelForm):
 
-    @staticmethod
-    def popola_scelta(persona):
-        from datetime import timedelta, datetime
-        from django.db.models import Q
-        choices = [(None, "-- Scegli un'opzione --"), ]
+    class Meta:
+        model = PrenotazioneMMSO
+        fields = ['mezzo']
 
-        choices.extend([
-            (str(mezzo.pk), mezzo.descrizione_mezzo)
-            for mezzo in MezzoSO.objects.filter(
-                Q(estensione__in=persona.oggetti_permesso(GESTIONE_SO_SEDE)),
-                ~Q(occupato_a__lt=datetime.now(), occupato_da__gt=datetime.now()) | Q(occupato_a=None))
-        ])
-        return choices
 
-    mezzo_materiale = forms.ChoiceField(choices=[], required=True)
+class ReperibilitaMezzi(forms.Form):
+    inizio = forms.DateTimeField(required=True)
+    fine = forms.DateTimeField(required=True)
 
-    occupato_da = forms.DateTimeField(required=True)
-    occupato_a = forms.DateTimeField(required=True)

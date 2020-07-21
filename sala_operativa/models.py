@@ -1,4 +1,4 @@
-from datetime import timedelta, date
+from datetime import timedelta, date, datetime
 from math import floor, ceil
 
 from django.db import models
@@ -588,18 +588,45 @@ class MezzoSO(ModelloSemplice, ConMarcaTemporale, ConStorico):
     mezzo_tipo = models.CharField(choices=MEZZO_TIPO_CHOICES, max_length=3, null=True, blank=True)
     creato_da = models.ForeignKey('anagrafica.Persona', null=True, blank=True)
 
-    occupato_da = models.DateTimeField(null=True, blank=True)
-    occupato_a = models.DateTimeField(null=True, blank=True)
-
-    servizio = models.ManyToManyField(ServizioSO, blank=True)
-
     def __str__(self):
         return str(self.nome)
 
-    @property
-    def descrizione_mezzo(self):
-        return "{}-{} {}".format(self.nome, self.estensione, 'Libero tra {} ore'.format('3') if True else False)
+    # @property
+    # def descrizione_mezzo(self):
+    #     return "{}-{} / {}".format(self.nome, self.estensione, '{}'.format(
+    #         '' if self.verifica_disponibilita_ora() else self.prossima_disponibilita)
+    #     )
+    #
+    # def verifica_disponibilita_ora(self, d=datetime.now()):
+    #     return self.occupato_da < d > self.occupato_a \
+    #         if self.occupato_da and self.occupato_a else True
+    #
+    # def verifica_disponibilita(self, da=None, a=None):
+    #     return self.verifica_disponibilita(da) and self.verifica_disponibilita(a)
+    #
+    #
+    # @property
+    # def prossima_disponibilita(self):
+    #     d = self.occupato_a - datetime.now()
+    #
+    #     hour = d.seconds//3600
+    #     minute = (d.seconds//60)%60
+    #
+    #     return 'Disponibile fra {}{}'.format(
+    #         "{}h:".format(hour) if hour else '',
+    #         "{}m".format(minute),
+    #     )
 
     class Meta:
         verbose_name = 'Mezzo o materiale'
         verbose_name_plural = 'Mezzi e materiali'
+
+
+class PrenotazioneMMSO(ModelloSemplice, ConMarcaTemporale, ConStorico):
+
+    mezzo = models.ForeignKey(MezzoSO, on_delete=models.CASCADE)
+    servizio = models.ForeignKey(ServizioSO, on_delete=models.CASCADE)
+
+    class Meta:
+        verbose_name = 'Prenotazione Mezzo o materiale'
+        verbose_name_plural = 'Prenotazione Mezzi e materiali'
