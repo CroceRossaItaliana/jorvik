@@ -23,8 +23,6 @@
                         <thead>
                         <tr>
                             <th>Tipo</th>
-                            <th>Nome</th>
-                            <th>Mezzo tipo</th>
                             <th>Creato da</th>
                             <th>Inizio</th>
                             <th>Fine</th>
@@ -34,12 +32,16 @@
                         <tbody>
                         {% for mm in mezzi_materiali %}
                             <tr>
-                                <td>{{ mm.tipo }}</td>
-                                <td>{{ mm.nome }}</td>
-                                <td>{{ mm.mezzo_tipo }}</td>
+                                <td>
+                                    <ul>
+                                        <li>{{ mm.get_tipo_display|default:"" }}</li>
+                                        <li>{{ mm.nome }}</li>
+                                        <li>{{ mm.get_mezzo_tipo_display|default:"" }}</li>
+                                    </ul>
+                                </td>
                                 <td>{{ mm.creato_da.link|safe }}</td>
-                                <td>{{ mm.inizio }}</td>
-                                <td>{{ mm.fine }}</td>
+                                <td>{{ mm.inizio|date:"SHORT_DATETIME_FORMAT" }}</td>
+                                <td>{{ mm.fine|date:"SHORT_DATETIME_FORMAT" }}</td>
                                 <td>
                                     <a href="{% url 'so:mezzo_cancella' mm.pk %}"
                                        data-conferma="Vuoi cancellare questo mezzo/servizio?"><i

@@ -45,7 +45,7 @@ urlpatterns = [
 
     # Scheda Mezzi e Materiali
     url(r'^scheda/(?P<pk>[0-9]+)/mm/$', views.so_scheda_mm, name='scheda_mm'),
-    url(r'^scheda/(?P<pk>[0-9]+)/mm/abbina$', views.so_scheda_mm_abbina, name='scheda_mm_abbina'),
+    url(r'^scheda/(?P<pk>[0-9]+)/mm/(?P<mm>[0-9]+)/abbina$', views.so_scheda_mm_abbina, name='scheda_mm_abbina'),
     url(r'^scheda/(?P<pk>[0-9]+)/mm/(?P<prenotazione>[0-9]+)/cancella$', views.so_scheda_mm_cancella, name='scheda_mm_cancella'),
 
     # Turni

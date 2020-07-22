@@ -1,6 +1,7 @@
 from autocomplete_light import shortcuts as autocomplete_light
 from django import forms
 from django.core.exceptions import ValidationError
+from django.db.models import Q
 from django.forms import ModelForm
 from django.forms.extras import SelectDateWidget
 
@@ -164,7 +165,22 @@ class AbbinaMezzoMaterialeForm(ModelForm):
 
     class Meta:
         model = PrenotazioneMMSO
-        fields = ['mezzo']
+        fields = ['mezzo', "inizio", "fine"]
+
+    def clean(self):
+        cd = self.cleaned_data
+
+        inizio, fine, mezzo = cd["inizio"], cd["fine"], cd["mezzo"]
+
+        if PrenotazioneMMSO.objects.filter(
+            Q(mezzo=mezzo) & (
+            Q(inizio__range=[inizio, fine])|
+            Q(inizio__range=[inizio, fine], fine__range=[inizio, fine])|
+            Q(fine__range=[inizio, fine]))
+        ).exists():
+            self.add_error("fine", "L'orario selezionato non è disponibile")
+
+        return cd
 
 
 class ReperibilitaMezzi(forms.Form):

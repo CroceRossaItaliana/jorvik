@@ -249,7 +249,6 @@ class ReperibilitaSO(ModelloSemplice, ConMarcaTemporale, ConStorico):
         help_text="Tempo necessario all'attivazione, in formato HH:mm.",)
     estensione = models.CharField(choices=ESTENSIONE_CHOICES, max_length=2)
     persona = models.ForeignKey(Persona, related_name="so_reperibilita", on_delete=models.CASCADE)
-    # servizio = models.ManyToManyField(ServizioSO, blank=True)
     creato_da = models.ForeignKey(Persona, null=True, blank=True)
 
     @classmethod

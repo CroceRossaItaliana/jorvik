@@ -383,7 +383,8 @@ def so_scheda_mm(request, me=None, pk=None):
 
     context = {
         "prenotazioni": PrenotazioneMMSO.objects.filter(servizio=servizio),
-        "servizio": servizio,
+        "mezzi": MezzoSO.objects.filter(estensione__in=me.oggetti_permesso(GESTIONE_SO_SEDE)),
+        "attivita": servizio,
         "puo_modificare": puo_modificare,
         "me": me,
     }
@@ -392,38 +393,17 @@ def so_scheda_mm(request, me=None, pk=None):
 
 
 @pagina_pubblica
-def so_scheda_mm_abbina(request, me=None, pk=None):
+def so_scheda_mm_abbina(request, me=None, pk=None, mm=None):
     """Mostra la scheda di abbinamento mezzi materiali """
     servizio = get_object_or_404(ServizioSO, pk=pk)
 
-    form = None
+    form = AbbinaMezzoMaterialeForm(request.POST or None, initial={"mezzo": MezzoSO.objects.get(pk=mm)})
 
-    if not request.GET.get('inizio') or not request.GET.get('fine'):
-        form = ReperibilitaMezzi(request.POST or None)
-        if request.POST and form.is_valid():
-            return redirect('{}?inizio={}&fine={}'.format(
-                reverse('so:scheda_mm_abbina', args=[pk, ]),
-                form.cleaned_data['inizio'],
-                form.cleaned_data['fine']
-            ))
-    else:
-        form = AbbinaMezzoMaterialeForm(request.POST or None)
-        form.fields['mezzo'].queryset = MezzoSO.objects.filter(
-            estensione__in=me.oggetti_permesso(GESTIONE_SO_SEDE),
-        ).exclude(
-            pk__in=PrenotazioneMMSO.objects.filter(
-                inizio__lte=request.GET.get('inizio'),
-                fine__gte=request.GET.get('fine')
-            ).values_list('mezzo', flat=True)
-        )
-        if request.POST and form.is_valid():
-            PrenotazioneMMSO(
-                mezzo=form.cleaned_data['mezzo'],
-                servizio=servizio,
-                inizio=request.GET.get('inizio'),
-                fine=request.GET.get('fine')
-            ).save()
-            return redirect(reverse('so:scheda_mm', args=[pk, ]))
+    if request.POST and form.is_valid():
+        form.clean()
+        cd = form.cleaned_data
+        PrenotazioneMMSO(servizio=servizio, mezzo=cd['mezzo'], inizio=cd['inizio'], fine=cd['fine']).save()
+        return redirect(reverse('so:scheda_mm', args=[pk, ]))
 
     context = {
         'form': form
@@ -951,14 +931,17 @@ def so_statistiche(request, me):
 def so_mezzi(request, me):
     form = CreazioneMezzoSO(request.POST or None)
 
-    form.fields['estensione'].queryset = me.oggetti_permesso(GESTIONE_SO_SEDE)
+    mie_sedi = me.oggetti_permesso(GESTIONE_SO_SEDE)
+
+    form.fields['estensione'].queryset = mie_sedi
 
     if form.is_valid():
         mm = form.save(commit=False)
         mm.creato_da = me
         mm.save()
+        form = CreazioneMezzoSO()
 
-    mezzi_materiali = MezzoSO.objects.filter(creato_da=me)
+    mezzi_materiali = MezzoSO.objects.filter(estensione__in=mie_sedi)
 
     context = {
         'mezzi_materiali': mezzi_materiali,
