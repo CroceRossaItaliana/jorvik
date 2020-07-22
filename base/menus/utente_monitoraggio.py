@@ -16,8 +16,8 @@ def menu_monitoraggio(me):
             link_bersaglio += '?comitato=%s&id=%s' % (last_delega_id, first_typeform)
 
     VOCE_MONITORAGGIO = ("Monitoraggio", (
-        ("Monitoraggio 2019 (dati 2018)", 'fa-user', reverse('pages:monitoraggio')),
-        ("Monitoraggio NON SONO UN BERSAGLIO", 'fa-user', link_bersaglio) if link_bersaglio else None,
+        ("Monitoraggio 2020 (dati 2019)", 'fa-user', reverse('pages:monitoraggio')),
+        # ("Monitoraggio NON SONO UN BERSAGLIO", 'fa-user', link_bersaglio) if link_bersaglio else None,
     ))
 
     return VOCE_MONITORAGGIO if me and (me.is_presidente or me.is_comissario) else None

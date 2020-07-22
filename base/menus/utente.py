@@ -74,7 +74,7 @@ class MenuUtente:
             for link in Menu.objects.filter(is_active=True).order_by('order')))
 
     def get_menu(self):
-        # from .utente_monitoraggio import menu_monitoraggio
+        from .utente_monitoraggio import menu_monitoraggio
         from .utente_rubrica import menu_rubrica_base
 
         me = self.me
@@ -94,5 +94,5 @@ class MenuUtente:
                 self.menu_donatore() if self.is_volontario else None,
                 self.menu_sicurezza(),
                 self.menu_links(),
-                # menu_monitoraggio(me),
+                menu_monitoraggio(me),
             ))
