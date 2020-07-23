@@ -33,7 +33,7 @@ urlpatterns = [
     url(r'^r/%s/delete/$' % pk, views.so_reperibilita_cancella, name='reperibilita_cancella'),
     url(r'^r/%s/edit/$' % pk, views.so_reperibilita_edit, name='reperibilita_modifica'),
 
-    # servizio
+    # Servizio
     url(r'^servizio/%s/$' % pk, views.so_scheda_informazioni, name='servizio'),
     url(r'^servizio/%s/cancella/$' % pk, views.so_scheda_cancella, name='servizio_cancella'),
     url(r'^servizio/%s/mappa/$' % pk, views.so_scheda_mappa, name='servizio_mappa'),
@@ -56,8 +56,9 @@ urlpatterns = [
     url(r'^servizio/%s/turni/modifica/(?P<pagina>[0-9]+)/$' % pk, views.so_scheda_turni_modifica, name='servizio_turni_modifica_pagina'),
     url(r'^servizio/%s/turni/modifica/permalink/(?P<turno_pk>[0-9]+)/$' % pk, views.so_scheda_turni_modifica_permalink, name='servizio_turni_modifica_link_permanente'),
 
-    # Partecipazione
-    url(r'^servizio/%s/partecipazione/(?P<partecipazione_pk>[0-9]+)/cancella/$' % pk, views.so_scheda_partecipazione_cancella, name='servizio_partecipazione_cancella'),
+    # Turno
+    url(r'^turno/(?P<turno_pk>[0-9]+)/abbina/(?P<reperibilita_pk>[0-9]+)/$', views.so_turno_abbina_volontario, name='servizio_turno_abbina_volontario'),
+    url(r'^turno/(?P<turno_pk>[0-9]+)/partecipazione/(?P<partecipazione_pk>[0-9]+)/cancella/$', views.so_scheda_partecipazione_cancella, name='servizio_partecipazione_cancella'),
 
     # Mezzi e materiali
     url(r'^mm/$', views.so_mezzi, name='mezzi'),

@@ -258,10 +258,25 @@ class ReperibilitaSO(ModelloSemplice, ConMarcaTemporale, ConStorico):
 
     @classmethod
     def reperibilita_per_sedi(cls, sedi):
+        if isinstance(sedi, Sede):
+            sedi = Sede.objects.filter(pk__in=[sedi.pk, ])
+
         q = cls.query_attuale(
             Appartenenza.query_attuale(sede__in=sedi).via("persona__appartenenze"),
         ).order_by('attivazione', '-creazione')
         return cls.objects.filter(pk__in=q.values_list('pk', flat=True))
+
+    @classmethod
+    def reperibilita_disponibili_per(cls, turno):
+        servizio = turno.attivita
+        reperibilita = cls.reperibilita_per_sedi(servizio.sede)
+        reperibilita_abbinate = PartecipazioneSO.reperibilita_del_turno(turno)
+
+        return reperibilita.filter(
+            Q(inizio__lte=turno.fine),
+        ).exclude(
+            pk__in=reperibilita_abbinate.values_list('reperibilita'),
+        )
 
     def __str__(self):
         return str(self.persona)
@@ -374,7 +389,7 @@ class TurnoSO(ModelloSemplice, ConMarcaTemporale, ConGiudizio):
         from anagrafica.models import Appartenenza
 
         # Cerca la ultima richiesta di partecipazione al turno
-        partecipazione = PartecipazioneSO.objects.filter(persona=persona,
+        partecipazione = PartecipazioneSO.objects.filter(reperibilita__persona=persona,
                                                          turno=self).order_by('-creazione').first()
 
         # Se esiste una richiesta di partecipazione
@@ -514,15 +529,7 @@ class TurnoSO(ModelloSemplice, ConMarcaTemporale, ConGiudizio):
         return "%s (%s)" % (self.nome, self.attivita.nome if self.attivita else "Nessuna attività")
 
 
-class PartecipazioneSO(ModelloSemplice, ConMarcaTemporale, ConStorico,
-                       ConAutorizzazioni):
-    RICHIESTA_NOME = "partecipazione servizio"
-
-    # todo: to delete
-    RICHIESTA = 'K'
-    NON_PRESENTATO = 'N'
-    # todo:
-
+class PartecipazioneSO(ModelloSemplice, ConMarcaTemporale, ConStorico, ConAutorizzazioni):
     PARTECIPA = 'p'
     RITIRATO = 'r'
     STATO = (
@@ -532,12 +539,15 @@ class PartecipazioneSO(ModelloSemplice, ConMarcaTemporale, ConStorico,
 
     reperibilita = models.ForeignKey(ReperibilitaSO)
     turno = models.ForeignKey(TurnoSO, related_name='partecipazioni_so', on_delete=models.CASCADE)
-    stato = models.CharField(choices=STATO, default=RICHIESTA, max_length=1, db_index=True)
+    stato = models.CharField(choices=STATO, default=PARTECIPA, max_length=1, db_index=True)
+
+    @classmethod
+    def reperibilita_del_turno(cls, turno, stato=PARTECIPA):
+        return cls.objects.filter(turno=turno, stato=stato)
 
     @property
     def url_cancella(self):
-        return reverse('so:servizio_partecipazione_cancella',
-                       args=[self.turno.attivita.pk, self.pk, ])
+        return reverse('so:servizio_partecipazione_cancella', args=[self.turno.pk, self.pk, ])
 
     class Meta:
         verbose_name = "Partecipazione al Turno di un Servizio SO"

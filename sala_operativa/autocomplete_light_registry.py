@@ -16,7 +16,7 @@ class AggiungiReperibilitaPerVolontario(AutocompletamentoBase):
         mie_sedi_so = persona.oggetti_permesso(GESTIONE_SO_SEDE)
         self.choices = self.choices.filter(Q(Appartenenza.query_attuale(
             membro=Appartenenza.VOLONTARIO).via("appartenenze")
-        )).filter(sede__in=mie_sedi_so)
+        )).filter(sede__in=mie_sedi_so).distinct('codice_fiscale', )
         return super().choices_for_request()
 
 

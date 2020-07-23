@@ -317,9 +317,9 @@ def so_calendario(request, me=None, inizio=None, fine=None, vista="calendario"):
 
 @pagina_privata
 def so_storico(request, me):
-    """Mostra uno storico dei servizi a cui ho chiesto di partecipare/partecipato"""
+    """Mostra uno storico dei servizi a cui ha partecipato"""
 
-    storico = PartecipazioneSO.objects.filter(persona=me).order_by('-turno__inizio')
+    storico = PartecipazioneSO.objects.filter(reperibilita__persona=me).order_by('-turno__inizio')
     form = StatisticheAttivitaPersonaForm(request.POST or None)
     statistiche = statistiche_attivita_persona(me, form)
 
@@ -434,8 +434,8 @@ def so_scheda_turni(request, me=None, pk=None, pagina=None):
 def so_scheda_turni_nuovo(request, me=None, pk=None):
     """Pagina di creazione di un nuovo turno"""
 
-    attivita = get_object_or_404(ServizioSO, pk=pk)
-    if not me.permessi_almeno(attivita, MODIFICA):
+    servizio = get_object_or_404(ServizioSO, pk=pk)
+    if not me.permessi_almeno(servizio, MODIFICA):
         redirect(ERRORE_PERMESSI)
 
     tra_una_settimana = timezone.now() + timedelta(days=7)
@@ -448,20 +448,20 @@ def so_scheda_turni_nuovo(request, me=None, pk=None):
 
     if form.is_valid():
         turno = form.save(commit=False)
-        turno.attivita = attivita
+        turno.attivita = servizio
         turno.save()
 
         if request.POST.get('ripeti', default="no") == 'si' and modulo_ripeti.is_valid():
-            numero_ripetizioni = modulo_ripeti.cleaned_data['numero_ripetizioni']
+            cd = modulo_ripeti.cleaned_data
+            numero_ripetizioni = cd['numero_ripetizioni']
 
             giorni = modulo_ripeti.cleaned_data['giorni']
             giorni_ripetuti = 0
             giorni_nel_futuro = 1
 
             while giorni_ripetuti < numero_ripetizioni:
-
                 ripetizione = TurnoSO(
-                    attivita=attivita,
+                    attivita=servizio,
                     inizio=turno.inizio + timedelta(days=giorni_nel_futuro),
                     fine=turno.fine + timedelta(days=giorni_nel_futuro),
                     prenotazione=turno.prenotazione + timedelta(days=giorni_nel_futuro),
@@ -476,14 +476,12 @@ def so_scheda_turni_nuovo(request, me=None, pk=None):
 
                 giorni_nel_futuro += 1
 
-            pass
-
         return redirect(turno.url)
 
     context = {
         "modulo": form,
         "modulo_ripeti": modulo_ripeti,
-        "attivita": attivita,
+        "attivita": servizio,
         "puo_modificare": True
     }
     return 'so_scheda_turni_nuovo.html', context
@@ -492,15 +490,15 @@ def so_scheda_turni_nuovo(request, me=None, pk=None):
 @pagina_privata
 def so_scheda_turni_turno_cancella(request, me, pk=None, turno_pk=None):
     turno = TurnoSO.objects.get(pk=turno_pk)
-    attivita = turno.attivita
-    if not me.permessi_almeno(attivita, MODIFICA):
+    servizio = turno.attivita
+    if not me.permessi_almeno(servizio, MODIFICA):
         redirect(ERRORE_PERMESSI)
 
-    precedente = attivita.turni.all().filter(inizio__lt=turno.inizio).order_by('inizio').last()
+    precedente = servizio.turni_so.filter(inizio__lt=turno.inizio).order_by('inizio').last()
     if precedente:
         url_torna = precedente.url_modifica
     else:
-        url_torna = attivita.url_turni_modifica
+        url_torna = servizio.url_turni_modifica
 
     turno.delete()
     return redirect(url_torna)
@@ -643,6 +641,29 @@ def so_scheda_turni_modifica_permalink(request, me, pk=None, turno_pk=None):
                             "?evidenzia_turno=%d#turno-%d" % (turno.pk, turno.pk))
 
 
+@pagina_privata
+def so_turno_abbina_volontario(request, me, turno_pk, reperibilita_pk):
+    turno = get_object_or_404(TurnoSO, pk=turno_pk)
+    servizio = turno.attivita
+    reperibilita = ReperibilitaSO.objects.get(pk=reperibilita_pk)
+
+    kwargs = dict(reperibilita=reperibilita, turno=turno,
+                  stato=PartecipazioneSO.PARTECIPA,)
+    try:
+        PartecipazioneSO.objects.get(**kwargs)
+    except PartecipazioneSO.DoesNotExist:
+        partecipazione_al_turno = PartecipazioneSO(**kwargs)
+        partecipazione_al_turno.inizio = turno.inizio
+        partecipazione_al_turno.fine = turno.fine
+        partecipazione_al_turno.save()
+
+        messages.success(request, 'Il volontario è stato abbinato al servizio.')
+        return redirect(reverse('so:servizio_turni_modifica_link_permanente',
+                                args=[servizio.pk, turno.pk,]))
+
+    return redirect(reverse('so:servizio_turni', args=[servizio.pk,]))
+
+
 @pagina_privata(permessi=(GESTIONE_SERVIZI,))
 def so_scheda_informazioni_modifica(request, me, pk=None):
     servizio = get_object_or_404(ServizioSO, pk=pk)
@@ -676,7 +697,7 @@ def so_scheda_informazioni_modifica(request, me, pk=None):
     }
     return 'so_scheda_informazioni_modifica.html', context
 
-
+# todo: permesso
 @pagina_privata(permessi=(GESTIONE_ATTIVITA,))
 def so_riapri(request, me, pk=None):
     """Riapre il servizio """
@@ -754,13 +775,14 @@ def so_scheda_turni_modifica(request, me, pk=None, pagina=None):
         "puo_modificare": True,
         "url_modifica": '/modifica',
         "evidenzia_turno": evidenzia_turno,
+        'reperibilita_disponibili_per_turno': ReperibilitaSO.reperibilita_disponibili_per(turno),
     }
 
     return 'so_scheda_turni_modifica.html', context
 
 
 @pagina_privata
-def so_scheda_partecipazione_cancella(request, me, pk, partecipazione_pk):
+def so_scheda_partecipazione_cancella(request, me, turno_pk, partecipazione_pk):
     partecipazione = get_object_or_404(PartecipazioneSO, pk=partecipazione_pk)
 
     if not me.permessi_almeno(partecipazione.turno.attivita, MODIFICA):
@@ -768,9 +790,11 @@ def so_scheda_partecipazione_cancella(request, me, pk, partecipazione_pk):
 
     turno = partecipazione.turno
     partecipazione.delete()
+
+    messages.success(request, 'La reperibilità è stata disabbinata dal turno.')
     return redirect(turno.url_modifica)
 
-
+# todo: permesso
 @pagina_privata(permessi=(GESTIONE_ATTIVITA,))
 def so_scheda_report(request, me, pk=None):
     """Mostra la pagina di modifica di un servizio"""

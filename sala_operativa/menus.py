@@ -11,7 +11,7 @@ def sala_operativa(me):
         return (
             ("Servizi", (
                 ("Miei turni", "fa-list", reverse('so:storico')),
-                ("Reperibilità", 'fa-thumbtack', reverse('so:reperibilita')),
+                ("Mie reperibilità", 'fa-thumbtack', reverse('so:reperibilita')),
                 ("Calendario", "fa-calendar", reverse('so:calendario')),
                 # ("Turni", 'fa-calendar', reverse('so:turni')),
                 # ("Poteri", 'fa-magic', reverse('so:poteri')),

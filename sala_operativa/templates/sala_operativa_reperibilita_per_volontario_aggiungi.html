@@ -34,12 +34,12 @@
                                 <td>
                                     <strong>{{ r.persona.link|safe }}</strong><br>
                                     <strong>{{ r.get_estensione_display }}</strong><br>
-                                    {{ r.inizio }} (inizio)<br>
-                                    {{ r.fine }} (fine)
+                                    <strong>Inizio:</strong> {{ r.inizio }}<br>
+                                    <strong>Fine:</strong> {{ r.fine }}
                                 </td>
                                 <td>{{ r.attivazione }}</td>
                                 <td>
-                                    {{ r.creazione|naturaltime }}<br/>
+                                    {{ r.creazione|date:"SHORT_DATETIME_FORMAT" }}<br/>
                                     <a href="{% url 'so:reperibilita_cancella' r.pk %}"
                                        data-conferma="Vuoi cancellare la reperibilità selezionata?"><i
                                             class="fa fa-fw fa-trash"></i> Cancella</a><br>

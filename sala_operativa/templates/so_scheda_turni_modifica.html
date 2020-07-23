@@ -8,8 +8,10 @@
 
 {% block scheda_contenuto %}
     {% include 'so_scheda_turni_inc_paginazione.html' %}
+
     <form class="table-responsive" method="POST">
         {% csrf_token %}
+
         <table class="table table-striped table-responsive">
             <thead>
                 <tr class="piu-grande">
@@ -46,7 +48,10 @@
                                         <tbody>
                                         {% for p in turno.partecipazioni_confermate %}
                                             <tr>
-                                                <td>{{ p.reperibilita.persona.link|safe }}</td>
+                                                <td>
+                                                    {{ p.reperibilita.persona.link|safe }}<br>
+                                                    <span style="font-size:10px;">Abbiato il {{ p.creazione|date:"SHORT_DATETIME_FORMAT" }}</span>
+                                                </td>
                                                 <td>{{ p.get_stato_display }}</td>
                                                 <td>
                                                     <a href="{{ p.url_cancella }}" data-conferma="Sei sicuro di voler rimuovere {{ p.reperibilita.persona.nome_completo }} dal turno?">
@@ -69,38 +74,39 @@
                             <tr><!--Reperibilità disponibili-->
                                 <td>
                                     <h4 class="text-success">
-                                        <i class="fa fa-fw fa-check"></i> Reperibilità disponibili: {{ turno.partecipazioni_confermate.count }}
+                                        <i class="fa fa-fw fa-check"></i> Reperibilità disponibili: {{ reperibilita_disponibili_per_turno.count }}
                                     </h4>
                                     <table class="table table-condensed piu-piccolo">
                                         <thead>
                                         <tr>
                                             <th>Persona</th>
-                                            <th>Attivazione</th>
-                                            <th>Estensione</th>
-                                            <th>Inizio</th>
-                                            <th>Fine</th>
+                                            <th>Reperibilità</th>
                                             <th>Azione</th>
                                         </tr>
                                         </thead>
                                         <tbody>
-                                        {% for p in turno.partecipazioni_confermate %}
+                                        {% for reperibilita in reperibilita_disponibili_per_turno %}
                                             <tr>
-                                                <td>{{ p.reperibilita.persona.link|safe }}</td>
-                                                <td>{{ p.reperibilita.attivazione }}</td>
-                                                <td>{{ p.reperibilita.get_estesione_display }}</td>
-                                                <td>{{ p.reperibilita.inizio }}</td>
-                                                <td>{{ p.reperibilita.fine }}</td>
                                                 <td>
-                                                    <a href="{{ p.url_cancella }}" data-conferma="Sei sicuro di voler rimuovere {{ p.reperibilita.persona.nome_completo }} dal turno?">
-                                                        <i class="fa fa-fw fa-times"></i> Abbina
+                                                    {{ reperibilita.persona.link|safe }}<br>
+                                                    {{ reperibilita.get_estensione_display }}<br>
+                                                    Attivazione in <strong>{{ reperibilita.attivazione }}</strong>
+                                                </td>
+                                                <td>
+                                                    dal {{ reperibilita.inizio|date:"SHORT_DATETIME_FORMAT" }}<br>
+                                                    al {{ reperibilita.fine|date:"SHORT_DATETIME_FORMAT" }}
+                                                </td>
+                                                <td>
+                                                    <a href="{% url 'so:servizio_turno_abbina_volontario' turno.pk reperibilita.pk %}">
+                                                        <i class="fa fa-fw fa-plus"></i> Abbina
                                                     </a>
                                                 </td>
                                             </tr>
                                         {% empty %}
                                             <tr>
-                                                <td colspan="6" style="text-align:center;">
+                                                <td colspan="3" style="text-align:center;">
                                                     <i class="fa fa-fw fa-info-circle"></i> Nessuna reperibilità disponibile. <br>
-                                                    <p>Puoi <a target="_blank" href="{% url 'so:reperibilita_backup' %}">aggiungere reperibilità </a> per un volontario dei tuoi comitati</p>
+                                                    <p>Puoi <a target="_blank" href="{% url 'so:reperibilita_backup' %}">aggiungere nuova reperibilità </a> per un volontario dei tuoi comitati</p>
                                                 </td>
                                             </tr>
                                         {% endfor %}
@@ -143,6 +149,7 @@
             </tbody>
         </table>
     </form>
+
     {% include 'so_scheda_turni_inc_paginazione.html' %}
 
     {% if evidenzia_turno %}
