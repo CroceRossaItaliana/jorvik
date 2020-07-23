@@ -17,19 +17,19 @@ from anagrafica.costanti import NAZIONALE
 from anagrafica.forms import ModuloProfiloModificaAnagraficaDatoreLavoro
 from anagrafica.permessi.applicazioni import REFERENTE_SO
 from anagrafica.permessi.costanti import (MODIFICA, GESTIONE_ATTIVITA,
-    ERRORE_PERMESSI, COMPLETO, GESTIONE_ATTIVITA_SEDE,
-    GESTIONE_SO_SEDE, GESTIONE_SERVIZI, GESTIONE_REFERENTI_SO, )
+                                          ERRORE_PERMESSI, COMPLETO, GESTIONE_ATTIVITA_SEDE,
+                                          GESTIONE_SO_SEDE, GESTIONE_SERVIZI, GESTIONE_REFERENTI_SO, )
 from autenticazione.funzioni import pagina_privata, pagina_pubblica
 from base.errori import ci_siamo_quasi, errore_generico, messaggio_generico, errore_no_volontario
 from base.utils import poco_fa, timedelta_ore
-from .models import PartecipazioneSO, ServizioSO, TurnoSO, ReperibilitaSO, MezzoSO
+from .models import PartecipazioneSO, ServizioSO, TurnoSO, ReperibilitaSO, MezzoSO, PrenotazioneMMSO
 from .elenchi import ElencoPartecipantiTurno, ElencoPartecipantiAttivita
 from .forms import (AttivitaInformazioniForm, ModificaTurnoForm,
-    AggiungiPartecipantiForm, CreazioneTurnoForm, RipetiTurnoForm,
-    StatisticheAttivitaForm, StatisticheAttivitaPersonaForm,
-    VolontarioReperibilitaForm, AggiungiReperibilitaPerVolontarioForm,
-    OrganizzaServizioReferenteForm, OrganizzaServizioForm, CreazioneMezzoSO, )
-
+                    AggiungiPartecipantiForm, CreazioneTurnoForm, RipetiTurnoForm,
+                    StatisticheAttivitaForm, StatisticheAttivitaPersonaForm,
+                    VolontarioReperibilitaForm, AggiungiReperibilitaPerVolontarioForm,
+                    OrganizzaServizioReferenteForm, OrganizzaServizioForm, CreazioneMezzoSO, )
+from sala_operativa.forms import AbbinaMezzoMaterialeForm, ReperibilitaMezzi
 
 INITIAL_INIZIO_FINE_PARAMS = {
     "inizio": poco_fa() + timedelta(hours=1),
@@ -372,7 +372,53 @@ def so_scheda_cancella(request, me, pk):
                               titolo=titolo_messaggio,
                               messaggio=testo_messaggio,
                               torna_titolo="Gestione servizio",
-                              torna_url=reverse('so:gestisci'),)
+                              torna_url=reverse('so:gestisci'), )
+
+
+@pagina_pubblica
+def so_scheda_mm(request, me=None, pk=None):
+    """Mostra la scheda "Mezzi/materiali" di un servizio"""
+    servizio = get_object_or_404(ServizioSO, pk=pk)
+    puo_modificare = me and me.permessi_almeno(servizio, MODIFICA)
+
+    context = {
+        "prenotazioni": PrenotazioneMMSO.objects.filter(servizio=servizio),
+        "mezzi": MezzoSO.objects.filter(estensione__in=me.oggetti_permesso(GESTIONE_SO_SEDE)),
+        "attivita": servizio,
+        "puo_modificare": puo_modificare,
+        "me": me,
+    }
+
+    return 'so_scheda_mm.html', context
+
+
+@pagina_pubblica
+def so_scheda_mm_abbina(request, me=None, pk=None, mm=None):
+    """Mostra la scheda di abbinamento mezzi materiali """
+    servizio = get_object_or_404(ServizioSO, pk=pk)
+
+    form = AbbinaMezzoMaterialeForm(request.POST or None, initial={"mezzo": MezzoSO.objects.get(pk=mm)})
+
+    if request.POST and form.is_valid():
+        form.clean()
+        cd = form.cleaned_data
+        PrenotazioneMMSO(servizio=servizio, mezzo=cd['mezzo'], inizio=cd['inizio'], fine=cd['fine']).save()
+        return redirect(reverse('so:scheda_mm', args=[pk, ]))
+
+    context = {
+        'form': form
+    }
+
+    return 'so_scheda_mm_abbina.html', context
+
+
+@pagina_pubblica
+def so_scheda_mm_cancella(request, me=None, pk=None, prenotazione=None):
+    servizio = get_object_or_404(ServizioSO, pk=pk)
+    prenotazione = get_object_or_404(PrenotazioneMMSO, pk=prenotazione)
+    prenotazione.delete()
+
+    return redirect(reverse('so:scheda_mm', args=[pk, ]))
 
 
 @pagina_pubblica
@@ -526,6 +572,7 @@ def so_scheda_turni_partecipa(request, me, pk=None, turno_pk=None):
         persona=me,
     )
     p.save()
+    p.richiedi()
 
     return messaggio_generico(request, me, titolo="Ottimo! Richiesta inoltrata.",
                               messaggio="La tua richiesta è stata inoltrata ai referenti di "
@@ -896,12 +943,17 @@ def so_statistiche(request, me):
 def so_mezzi(request, me):
     form = CreazioneMezzoSO(request.POST or None)
 
+    mie_sedi = me.oggetti_permesso(GESTIONE_SO_SEDE)
+
+    form.fields['estensione'].queryset = mie_sedi
+
     if form.is_valid():
         mm = form.save(commit=False)
         mm.creato_da = me
         mm.save()
+        form = CreazioneMezzoSO()
 
-    mezzi_materiali = MezzoSO.objects.filter(creato_da=me)
+    mezzi_materiali = MezzoSO.objects.filter(estensione__in=mie_sedi)
 
     context = {
         'mezzi_materiali': mezzi_materiali,

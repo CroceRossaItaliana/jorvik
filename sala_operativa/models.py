@@ -1,4 +1,4 @@
-from datetime import timedelta, date
+from datetime import timedelta, date, datetime
 from math import floor, ceil
 
 from django.db import models
@@ -97,6 +97,10 @@ class ServizioSO(ModelloSemplice, ConGeolocalizzazione, ConMarcaTemporale,
     @property
     def cancellabile(self):
         return not self.turni_so.all().exists()
+
+    @property
+    def url_mezzi_materiali(self):
+        return reverse('so:scheda_mm', args=[self.pk, ])
 
     def referenti_attuali(self, al_giorno=None):
         return self.delegati_attuali(tipo=REFERENTE_SO, al_giorno=al_giorno)
@@ -362,6 +366,7 @@ class TurnoSO(ModelloSemplice, ConMarcaTemporale, ConGiudizio):
     def url_partecipanti(self):
         return reverse('so:servizio_turni_partecipanti', args=self.url_args)
 
+
     @property
     def link(self):
         return "<a href='%s'>%s</a>" % (self.url, self.nome)
@@ -595,3 +600,13 @@ class MezzoSO(ModelloSemplice, ConMarcaTemporale, ConStorico):
     class Meta:
         verbose_name = 'Mezzo o materiale'
         verbose_name_plural = 'Mezzi e materiali'
+
+
+class PrenotazioneMMSO(ModelloSemplice, ConMarcaTemporale, ConStorico):
+
+    mezzo = models.ForeignKey(MezzoSO, on_delete=models.CASCADE)
+    servizio = models.ForeignKey(ServizioSO, on_delete=models.CASCADE)
+
+    class Meta:
+        verbose_name = 'Prenotazione Mezzo o materiale'
+        verbose_name_plural = 'Prenotazione Mezzi e materiali'

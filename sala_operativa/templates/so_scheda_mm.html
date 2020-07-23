@@ -1,0 +1,111 @@
+{% extends 'so_scheda.html' %}
+
+{% block scheda_titolo %}Informazioni{% endblock %}
+
+{% load utils %}
+{% load social %}
+{% load bootstrap3 %}
+{% load so_templatetags %}
+
+{% block scheda_contenuto %}
+    {#    <form>#}
+    {#        <a href="{% url 'so:scheda_mm_abbina' attivita.pk %}" class="btn btn-block btn-primary">Abbina#}
+    {#            Mezzi/materiali</a>#}
+    {#    </form>#}
+    <div class="row">
+        <div class="col-md-12">
+            <div class="panel panel-info">
+                <div class="panel-heading">
+                    <h2 class="panel-title">
+                        <i class="fa fa-fw fa-list"></i> Mezzi e materiali prenotati
+                    </h2>
+                </div>
+                <div class="panel-body">
+                    <table class="table table-striped">
+                        <thead>
+                        <tr>
+                            <th>Mezzo</th>
+                            <th>Inizio Prenotazione</th>
+                            <th>Fine Prenotazione</th>
+                            <th>Azioni</th>
+                        </tr>
+                        </thead>
+                        <tbody>
+                        {% for prenotazione in prenotazioni %}
+                            <tr>
+                                <td>
+                                    <ul>
+                                        <li>{{ prenotazione.mezzo.get_tipo_display|default:"" }}</li>
+                                        <li>{{ prenotazione.mezzo.nome }}</li>
+                                        <li>{{ prenotazione.mezzo.get_mezzo_tipo_display|default:"" }}</li>
+                                    </ul>
+                                </td>
+                                <td>{{ prenotazione.inizio|date:"SHORT_DATETIME_FORMAT" }}</td>
+                                <td>{{ prenotazione.fine|date:"SHORT_DATETIME_FORMAT" }}</td>
+                                <td>
+                                    <a href="{% url 'so:scheda_mm_cancella' attivita.pk prenotazione.pk %}"
+                                       class="text-danger">
+                                        Elimina
+                                    </a>
+                                </td>
+                            </tr>
+                        {% empty %}
+                            <tr class="alert alert-warning">
+                                <td colspan="7">
+                                    <i class="fa fa-fw fa-warning"></i> Ancora non ci sono mezzi e materiali abbinati
+                                </td>
+                            </tr>
+                        {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </div>
+    <div class="row">
+        <div class="col-md-12">
+            <div class="panel panel-info">
+                <div class="panel-heading">
+                    <h2 class="panel-title">
+                        <i class="fa fa-fw fa-list"></i> Mezzi e materiali disponibili
+                    </h2>
+                </div>
+                <div class="panel-body">
+                    <table class="table table-striped">
+                        <thead>
+                        <tr>
+                            <th>Mezzo</th>
+                            <th>Azioni</th>
+                        </tr>
+                        </thead>
+                        <tbody>
+                        {% for mezzo in mezzi %}
+                            <tr>
+                                <td>
+                                    <ul>
+                                        <li>{{ mezzo.get_tipo_display|default:"" }}</li>
+                                        <li>{{ mezzo.nome }}</li>
+                                        <li>{{ mezzo.get_mezzo_tipo_display|default:"" }}</li>
+                                    </ul>
+                                </td>
+                                <td>
+                                    <a href="{% url 'so:scheda_mm_abbina' attivita.pk mezzo.pk %}"
+                                       class="text-danger">
+                                        Prenota
+                                    </a>
+                                </td>
+                            </tr>
+                        {% empty %}
+                            <tr class="alert alert-warning">
+                                <td colspan="7">
+                                    <i class="fa fa-fw fa-warning"></i> Ancora non ci sono mezzi e materiali abbinati
+                                </td>
+                            </tr>
+                        {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </div>
+{% endblock %}

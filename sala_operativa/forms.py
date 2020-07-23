@@ -1,27 +1,28 @@
+from autocomplete_light import shortcuts as autocomplete_light
 from django import forms
 from django.core.exceptions import ValidationError
+from django.db.models import Q
 from django.forms import ModelForm
 from django.forms.extras import SelectDateWidget
 
-from autocomplete_light import shortcuts as autocomplete_light
-
 from anagrafica.models import Sede
+from anagrafica.permessi.costanti import GESTIONE_SO_SEDE
 from base.wysiwyg import WYSIWYGSemplice
-from .models import ServizioSO, TurnoSO, ReperibilitaSO, MezzoSO
+from .models import ServizioSO, TurnoSO, ReperibilitaSO, MezzoSO, PrenotazioneMMSO
 
 
 class VolontarioReperibilitaForm(ModelForm):
     class Meta:
         model = ReperibilitaSO
-        fields = ['estensione', 'inizio', 'fine', 'attivazione',]
+        fields = ['estensione', 'inizio', 'fine', 'attivazione', ]
 
 
 class AggiungiReperibilitaPerVolontarioForm(ModelForm):
-    persona = autocomplete_light.ModelChoiceField("AggiungiReperibilitaPerVolontario",)
+    persona = autocomplete_light.ModelChoiceField("AggiungiReperibilitaPerVolontario", )
 
     class Meta:
         model = ReperibilitaSO
-        fields = ['persona', 'estensione', 'inizio', 'fine', 'attivazione',]
+        fields = ['persona', 'estensione', 'inizio', 'fine', 'attivazione', ]
 
 
 class StoricoTurniForm(forms.Form):
@@ -68,8 +69,8 @@ class CreazioneTurnoForm(ModificaTurnoForm):
 
 class AggiungiPartecipantiForm(forms.Form):
     persone = autocomplete_light.ModelMultipleChoiceField("PersonaAutocompletamento",
-                                                                help_text="Seleziona uno o più persone da "
-                                                                          "aggiungere come partecipanti.")
+                                                          help_text="Seleziona uno o più persone da "
+                                                                    "aggiungere come partecipanti.")
 
 
 class OrganizzaServizioForm(ModelForm):
@@ -82,7 +83,7 @@ class OrganizzaServizioReferenteForm(forms.Form):
     SONO_IO = "IO"
     SCEGLI_REFERENTI = "SC"
     SCELTA = (
-        (None,  "-- Scegli un'opzione --"),
+        (None, "-- Scegli un'opzione --"),
         (SONO_IO, "Sarò io il referente per questa attività"),
         (SCEGLI_REFERENTI, "Fammi scegliere uno o più referenti che gestiranno "
                            "quest'attività")
@@ -124,7 +125,6 @@ class StatisticheAttivitaPersonaForm(forms.Form):
 
 
 class RipetiTurnoForm(forms.Form):
-
     # Giorni della settimana numerici, come
     #  da datetime.weekday()
     LUNEDI = 0
@@ -156,7 +156,34 @@ class RipetiTurnoForm(forms.Form):
 
 
 class CreazioneMezzoSO(ModelForm):
-
     class Meta:
         model = MezzoSO
-        fields = ['tipo', 'nome', 'mezzo_tipo', 'inizio', 'fine']
+        fields = ['tipo', 'nome', 'estensione', 'mezzo_tipo', 'inizio', 'fine']
+
+
+class AbbinaMezzoMaterialeForm(ModelForm):
+
+    class Meta:
+        model = PrenotazioneMMSO
+        fields = ['mezzo', "inizio", "fine"]
+
+    def clean(self):
+        cd = self.cleaned_data
+
+        inizio, fine, mezzo = cd["inizio"], cd["fine"], cd["mezzo"]
+
+        if PrenotazioneMMSO.objects.filter(
+            Q(mezzo=mezzo) & (
+            Q(inizio__range=[inizio, fine])|
+            Q(inizio__range=[inizio, fine], fine__range=[inizio, fine])|
+            Q(fine__range=[inizio, fine]))
+        ).exists():
+            self.add_error("fine", "L'orario selezionato non è disponibile")
+
+        return cd
+
+
+class ReperibilitaMezzi(forms.Form):
+    inizio = forms.DateTimeField(required=True)
+    fine = forms.DateTimeField(required=True)
+

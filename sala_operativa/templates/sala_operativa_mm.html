@@ -23,8 +23,6 @@
                         <thead>
                         <tr>
                             <th>Tipo</th>
-                            <th>Nome</th>
-                            <th>Mezzo tipo</th>
                             <th>Creato da</th>
                             <th>Inizio</th>
                             <th>Fine</th>
@@ -34,12 +32,16 @@
                         <tbody>
                         {% for mm in mezzi_materiali %}
                             <tr>
-                                <td>{{ mm.tipo }}</td>
-                                <td>{{ mm.nome }}</td>
-                                <td>{{ mm.mezzo_tipo }}</td>
+                                <td>
+                                    <ul>
+                                        <li>{{ mm.get_tipo_display|default:"" }}</li>
+                                        <li>{{ mm.nome }}</li>
+                                        <li>{{ mm.get_mezzo_tipo_display|default:"" }}</li>
+                                    </ul>
+                                </td>
                                 <td>{{ mm.creato_da.link|safe }}</td>
-                                <td>{{ mm.inizio }}</td>
-                                <td>{{ mm.fine }}</td>
+                                <td>{{ mm.inizio|date:"SHORT_DATETIME_FORMAT" }}</td>
+                                <td>{{ mm.fine|date:"SHORT_DATETIME_FORMAT" }}</td>
                                 <td>
                                     <a href="{% url 'so:mezzo_cancella' mm.pk %}"
                                        data-conferma="Vuoi cancellare questo mezzo/servizio?"><i
@@ -51,7 +53,7 @@
                         {% empty %}
                             <tr class="alert alert-warning">
                                 <td colspan="7">
-                                    <i class="fa fa-fw fa-warning"></i> Ancora non ci sono materiali e servizi
+                                    <i class="fa fa-fw fa-warning"></i> Ancora non ci sono mezzi e materiali
                                 </td>
                             </tr>
                         {% endfor %}
@@ -63,7 +65,7 @@
         <div class="col-md-3">
             <div class="panel panel-primary">
                 <div class="panel-heading">
-                    <h2 class="panel-title"><i class="fa fa-fw fa-plus-circle"></i> Aggiungi Materiali o servizi
+                    <h2 class="panel-title"><i class="fa fa-fw fa-plus-circle"></i> Aggiungi mezzi e materiali
                     </h2>
                 </div>
 
@@ -80,6 +82,5 @@
         </div>
     </div>
     </div>
-
 
 {% endblock %}
