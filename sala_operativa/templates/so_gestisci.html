@@ -22,12 +22,12 @@
             <ul class="nav nav-pills">
               <li role="presentation" {% if stato == "aperte" %}class="active"{% endif %}>
                   <a href="{% url 'so:gestisci' %}">
-                      <i class="fa fa-fw fa-check-circle"></i> Aperti <span class="badge">{{ attivita_aperte.count }}</span>
+                      <i class="fa fa-fw fa-check-circle"></i> Aperti <span class="badge">{{ servizi_aperti.count }}</span>
                   </a>
               </li>
               <li role="presentation" {% if stato == "chiuse" %}class="active"{% endif %}>
                   <a href="{% url 'so:gestisci_chiuse' %}">
-                      <i class="fa fa-fw fa-folder"></i> Chiusi <span class="badge">{{ attivita_chiuse.count }}</span>
+                      <i class="fa fa-fw fa-folder"></i> Chiusi <span class="badge">{{ servizi_chiusi.count }}</span>
                   </a>
               </li>
             </ul>
@@ -59,19 +59,19 @@
                 </td>
 
                 <td>
-                    {% if a in attivita_referenti_modificabili and a.cancellabile %}
+                    {% if a in servizio_referenti_modificabili and a.cancellabile %}
                         <a href="{{ a.url_cancella }}" class="text-danger"><i class="far fa-trash-alt"></i> cancella servizio</a><br />
                     {% endif %}
 
                     <a href="{{ a.url_modifica }}"><i class="fas fa-pencil-alt"></i> modifica info</a><br />
 
-                    {% if a in attivita_referenti_modificabili %}
+                    {% if a in servizio_referenti_modificabili %}
                         <a href="{{ a.url_referenti }}"><i class="fas fa-pencil-alt"></i> modifica referenti</a><br />
                     {% endif %}
 
                     <a href="{{ a.url_turni_modifica }}"><i class="fas fa-pencil-alt"></i> modifica turni</a><br />
 
-                    <a href="{{ a.url_mezzi_materiali }}"><i class="fas fa-pencil-alt"></i> modifica mezzi/servizi</a>
+                    <a href="{{ a.url_mezzi_materiali }}"><i class="fas fa-pencil-alt"></i> modifica mezzi e materiali</a>
 
                 </td>
             </tr>

@@ -1,9 +1,9 @@
 from autocomplete_light import shortcuts as autocomplete_light
 from django import forms
 from django.core.exceptions import ValidationError
-from django.db.models import Q
 from django.forms import ModelForm
 from django.forms.extras import SelectDateWidget
+from django.utils.timezone import now
 
 from anagrafica.models import Sede
 from anagrafica.permessi.costanti import GESTIONE_SO_SEDE
@@ -156,34 +156,60 @@ class RipetiTurnoForm(forms.Form):
 
 
 class CreazioneMezzoSO(ModelForm):
-    class Meta:
-        model = MezzoSO
-        fields = ['tipo', 'nome', 'estensione', 'mezzo_tipo', 'inizio', 'fine']
+    def clean_inizio(self):
+        inizio = self.cleaned_data['inizio']
+        if inizio < now():
+            raise ValidationError('Non puoi creare il mezzo o materiale con la data di inizio già passata.')
+        return inizio
 
-
-class AbbinaMezzoMaterialeForm(ModelForm):
-
-    class Meta:
-        model = PrenotazioneMMSO
-        fields = ['mezzo', "inizio", "fine"]
+    def clean_fine(self):
+        fine = self.cleaned_data['fine']
+        if fine < now():
+            raise ValidationError('Non puoi creare il mezzo o materiale con la data di fine già passata.')
+        return fine
 
     def clean(self):
         cd = self.cleaned_data
+        tipo = cd.get('tipo')
+        mezzo_tipo = cd.get('mezzo_tipo')
 
-        inizio, fine, mezzo = cd["inizio"], cd["fine"], cd["mezzo"]
-
-        if PrenotazioneMMSO.objects.filter(
-            Q(mezzo=mezzo) & (
-            Q(inizio__range=[inizio, fine])|
-            Q(inizio__range=[inizio, fine], fine__range=[inizio, fine])|
-            Q(fine__range=[inizio, fine]))
-        ).exists():
-            self.add_error("fine", "L'orario selezionato non è disponibile")
-
+        if tipo and mezzo_tipo and tipo != MezzoSO.MEZZO:
+            self.add_error('mezzo_tipo', 'Il tipo del mezzo è selezionabile solo con tipo "Mezzo".')
         return cd
 
+    class Meta:
+        model = MezzoSO
+        fields = ['nome', 'tipo', 'mezzo_tipo', 'estensione', 'inizio', 'fine', ]
 
-class ReperibilitaMezzi(forms.Form):
-    inizio = forms.DateTimeField(required=True)
-    fine = forms.DateTimeField(required=True)
 
+class AbbinaMezzoMaterialeForm(ModelForm):
+    class Meta:
+        model = PrenotazioneMMSO
+        fields = ["inizio", "fine", ]
+
+    def clean_inizio(self):
+        inizio = self.cleaned_data['inizio']
+        if inizio < now():
+            raise ValidationError('Non puoi abbinare il mezzo o materiale con la data di inizio già passata.')
+        return inizio
+
+    def clean_fine(self):
+        fine = self.cleaned_data['fine']
+        if fine < now():
+            raise ValidationError('Non puoi abbinare il mezzo o materiale con la data di fine già passata.')
+        return fine
+
+    def clean(self):
+        mezzo = self.instance
+
+        cd = self.cleaned_data
+        inizio, fine = cd.get("inizio"), cd.get("fine")
+
+        occupato = PrenotazioneMMSO.occupazione_nel_range(mezzo, inizio, fine)
+        if occupato:
+            message = """L'orario selezionato non è disponibile. 
+            Questo %s è stato già prenotato per uno dei servizi attivi.""" % \
+                      mezzo.get_tipo_display().lower()
+            self.add_error("fine", message)
+
+        return cd

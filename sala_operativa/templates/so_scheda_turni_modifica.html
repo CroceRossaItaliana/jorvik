@@ -21,9 +21,9 @@
                 </tr>
             </thead>
             <tbody>
-            {% for turno, modulo, modulo_aggiungi_partecipanti in turni %}
+            {% for turno, modulo, modulo_aggiungi_partecipanti, reperibilita_disponibili in turni %}
                 <tr id="turno-{{ turno.pk }}">
-                    <td style="width: 25%;">
+                    <td style="width: 25%; padding:30px 0;">
                         {% bootstrap_form modulo size='small' %}
                         <button type="submit" class="btn btn-sm btn-block btn-primary">
                             <i class="fa fa-fw fa-save"></i> Salva modifiche
@@ -74,7 +74,7 @@
                             <tr><!--Reperibilità disponibili-->
                                 <td>
                                     <h4 class="text-success">
-                                        <i class="fa fa-fw fa-check"></i> Reperibilità disponibili: {{ reperibilita_disponibili_per_turno.count }}
+                                        <i class="fa fa-fw fa-check"></i> Reperibilità disponibili: {{ reperibilita_disponibili.count }}
                                     </h4>
                                     <table class="table table-condensed piu-piccolo">
                                         <thead>
@@ -85,7 +85,7 @@
                                         </tr>
                                         </thead>
                                         <tbody>
-                                        {% for reperibilita in reperibilita_disponibili_per_turno %}
+                                        {% for reperibilita in reperibilita_disponibili %}
                                             <tr>
                                                 <td>
                                                     {{ reperibilita.persona.link|safe }}<br>

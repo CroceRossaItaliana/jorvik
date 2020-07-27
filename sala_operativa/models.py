@@ -2,9 +2,10 @@ from datetime import timedelta, date, datetime
 from math import floor, ceil
 
 from django.db import models
-from django.db.models import Q, F, Sum
+from django.db.models import Q, F, Sum, Min
 from django.core.urlresolvers import reverse
 from django.utils import timezone
+from django.utils.timezone import now
 
 from anagrafica.permessi.costanti import GESTIONE_SERVIZI
 from anagrafica.permessi.incarichi import INCARICO_GESTIONE_SO_SERVIZI_PARTECIPANTI
@@ -270,17 +271,17 @@ class ReperibilitaSO(ModelloSemplice, ConMarcaTemporale, ConStorico):
         ).order_by('attivazione', '-creazione')
         return cls.objects.filter(pk__in=q.values_list('pk', flat=True))
 
-    @classmethod
-    def reperibilita_disponibili_per(cls, turno):
-        servizio = turno.attivita
-        reperibilita = cls.reperibilita_per_sedi(servizio.sede)
-        reperibilita_abbinate = PartecipazioneSO.reperibilita_del_turno(turno)
-
-        return reperibilita.filter(
-            Q(inizio__lte=turno.fine),
-        ).exclude(
-            pk__in=reperibilita_abbinate.values_list('reperibilita'),
-        )
+    @property
+    def nel_turno(self):
+        """
+        Da migliorare. Ora restituisce gli oggetto di 2 tipi diversi.
+        In realta' TurnoSO associato non deve essere piu' di 1.
+        :return: <TurnoSO> or QuerySet<PartecipazioneSO>
+        """
+        p = self.partecipazioneso_set.all()
+        if p.count() == 1:
+            return p.last().turno
+        return p
 
     def __str__(self):
         return str(self.persona)
@@ -365,7 +366,6 @@ class TurnoSO(ModelloSemplice, ConMarcaTemporale, ConGiudizio):
     @property
     def url_partecipanti(self):
         return reverse('so:servizio_turni_partecipanti', args=self.url_args)
-
 
     @property
     def link(self):
@@ -503,7 +503,8 @@ class TurnoSO(ModelloSemplice, ConMarcaTemporale, ConGiudizio):
         :param fine: datetime.date per il giorno di fine (incl.)
         :return: QuerySet per Turno
         """
-        sedi = persona.sedi_attuali(membro__in=Appartenenza.MEMBRO_ATTIVITA)
+
+        sedi = persona.sedi_attuali(membro__in=Appartenenza.MEMBRO_SERVIZIO)
 
         return TurnoSO.objects.filter(
             # Attivtia organizzate dai miei comitati
@@ -516,6 +517,35 @@ class TurnoSO(ModelloSemplice, ConMarcaTemporale, ConGiudizio):
             , inizio__gte=inizio, fine__lt=(fine + timedelta(1)),
             attivita__stato=ServizioSO.VISIBILE,
         ).order_by('inizio')
+
+    def abbina_reperibilita(self, reperibilita):
+        kwargs = dict(turno=self,
+                      reperibilita=reperibilita,
+                      stato=PartecipazioneSO.PARTECIPA,)
+        try:
+            return PartecipazioneSO.objects.get(**kwargs), False
+        except PartecipazioneSO.DoesNotExist:
+            partecipazione_al_turno = PartecipazioneSO(**kwargs)
+            partecipazione_al_turno.inizio = self.inizio
+            partecipazione_al_turno.fine = self.fine
+            partecipazione_al_turno.save()
+            return partecipazione_al_turno, True
+
+    def reperibilita_abbinate(self):
+        return PartecipazioneSO.reperibilita_del_turno(self)
+
+    def trova_reperibilita(self):
+        servizio = self.attivita
+        reperibilita = ReperibilitaSO.reperibilita_per_sedi(servizio.sede)
+        reperibilita_abbinate = self.reperibilita_abbinate().values_list('reperibilita')
+
+        disponibili = reperibilita.exclude(pk__in=reperibilita_abbinate)
+        oldest_reperibilita = disponibili.aggregate(oldest_inizio=Min('inizio'))
+
+        return disponibili.exclude(
+            Q(fine__lte=self.inizio),
+            Q(inizio__range=[oldest_reperibilita['oldest_inizio'], self.fine])
+        )
 
     class Meta:
         verbose_name = "Turno di Servizio"
@@ -535,6 +565,12 @@ class TurnoSO(ModelloSemplice, ConMarcaTemporale, ConGiudizio):
 
 
 class PartecipazioneSO(ModelloSemplice, ConMarcaTemporale, ConStorico, ConAutorizzazioni):
+    """
+    Attenzione: questo modello ha ereditato dalla classe ConAutorizzazioni
+    per poter utulizzare dei suoi metodi,
+    ma la procedura delle autorizzazioni non fa parte delle PartecipazioneSO.
+    """
+
     PARTECIPA = 'p'
     RITIRATO = 'r'
     STATO = (
@@ -586,13 +622,33 @@ class MezzoSO(ModelloSemplice, ConMarcaTemporale, ConStorico):
     )
 
     tipo = models.CharField(choices=MEZZI_E_MATERIALI_CHOICES, max_length=3)
+    mezzo_tipo = models.CharField(choices=MEZZO_TIPO_CHOICES, max_length=3,
+                                  null=True, blank=True)
     estensione = models.ForeignKey('anagrafica.Sede', null=True, default=None,
                                    verbose_name='Collocazione',
                                    related_name='mezzo_materiale_estensione',
                                    on_delete=models.PROTECT)
     nome = models.CharField("Nome", max_length=255)
-    mezzo_tipo = models.CharField(choices=MEZZO_TIPO_CHOICES, max_length=3, null=True, blank=True)
     creato_da = models.ForeignKey('anagrafica.Persona', null=True, blank=True)
+
+    @classmethod
+    def disponibili_per_sedi(cls, sedi):
+        return cls.objects.filter(estensione__in=sedi)
+
+    def abbinato_ai_servizi(self, only_actual=True):
+        """
+        Restituisce le prenotazioni attive.
+        :return: ServizioSO<QuerySet>
+        """
+        fine_condition = 'fine__gt' if only_actual else 'fine__lt'
+        kwargs = {
+            fine_condition: now(),
+        }
+
+        prenotazioni = self.prenotazionemmso_set.filter(**kwargs)
+        return ServizioSO.objects.filter(
+            pk__in=prenotazioni.values_list('servizio', flat=True)
+        )
 
     def __str__(self):
         return str(self.nome)
@@ -603,9 +659,38 @@ class MezzoSO(ModelloSemplice, ConMarcaTemporale, ConStorico):
 
 
 class PrenotazioneMMSO(ModelloSemplice, ConMarcaTemporale, ConStorico):
-
     mezzo = models.ForeignKey(MezzoSO, on_delete=models.CASCADE)
     servizio = models.ForeignKey(ServizioSO, on_delete=models.CASCADE)
+
+    @classmethod
+    def verifica_prenotabilita(cls, mezzo, inizio, fine):
+        """
+        :param mezzo:
+        :param inizio:
+        :param fine:
+        :return: PrenotazioneMMSO<QuerySet>
+        """
+
+        return cls.objects.filter(
+            Q(mezzo=mezzo) & (
+                Q(inizio__range=[inizio, fine])
+                | Q(inizio__range=[inizio, fine], fine__range=[inizio, fine])
+                | Q(fine__range=[inizio, fine])
+            )
+        )
+
+    @classmethod
+    def occupazione_nel_range(cls, mezzo, inizio, fine):
+        exists = cls.verifica_prenotabilita(mezzo, inizio, fine).exists()
+        return exists
+
+    @classmethod
+    def del_servizio(cls, servizio):
+        return cls.objects.filter(servizio=servizio).order_by('-creazione',)
+
+    @property
+    def passata(self):
+        return True if self.fine < now() else False
 
     class Meta:
         verbose_name = 'Prenotazione Mezzo o materiale'

@@ -1527,6 +1527,9 @@ class Appartenenza(ModelloSemplice, ConStorico, ConMarcaTemporale, ConAutorizzaz
     # Quale tipo di membro puo' partecipare alle attivita'?
     MEMBRO_ATTIVITA = (VOLONTARIO, ESTESO,)
 
+    # Quale tipo di membro può partecipare al servizio?
+    MEMBRO_SERVIZIO = (VOLONTARIO, ESTESO, DIPENDENTE, )
+
     # Membri sotto il diretto controllo della Sede
     MEMBRO_DIRETTO = (VOLONTARIO, ORDINARIO, DIPENDENTE, INFERMIERA, MILITARE, DONATORE, SOSTENITORE)
 

@@ -3,11 +3,11 @@
 {% load bootstrap3 %}
 {% load humanize %}
 
-{% block pagina_titolo %}Sala Operativa - Mezzi e materiali{% endblock %}
+{% block pagina_titolo %}Mezzi e materiali{% endblock %}
 
 {% block app_contenuto %}
     <div class="alert alert-block alert-info">
-        <i class="fa fa-fw fa-info-circle"></i> Da qui puoi inserire e visulaizzare infomarmazioni sui mezze e i materiali.<br>
+        <i class="fa fa-fw fa-info-circle"></i> Da qui puoi inserire e visulaizzare infomarmazioni sui mezze e i materiali creati da te.<br>
     </div>
 
     <div class="row">
@@ -15,17 +15,16 @@
             <div class="panel panel-info">
                 <div class="panel-heading">
                     <h2 class="panel-title">
-                        <i class="fa fa-fw fa-list"></i> Materiali e servizi
+                        <i class="fa fa-fw fa-list"></i> Mezzi e materiali
                     </h2>
                 </div>
                 <div class="panel-body">
                     <table class="table table-striped">
                         <thead>
                         <tr>
-                            <th>Tipo</th>
+                            <th>Informazioni</th>
+                            <th>Inizio e fine</th>
                             <th>Creato da</th>
-                            <th>Inizio</th>
-                            <th>Fine</th>
                             <th>Azioni</th>
                         </tr>
                         </thead>
@@ -33,21 +32,23 @@
                         {% for mm in mezzi_materiali %}
                             <tr>
                                 <td>
-                                    <ul>
-                                        <li>{{ mm.get_tipo_display|default:"" }}</li>
-                                        <li>{{ mm.nome }}</li>
-                                        <li>{{ mm.get_mezzo_tipo_display|default:"" }}</li>
-                                    </ul>
+                                    <strong>{{ mm.get_tipo_display|default:"" }}</strong>
+                                    <span style="font-size:12px;">{{ mm.get_mezzo_tipo_display|default:"" }}</span><br>
+                                    <strong>{{ mm.estensione }}</strong><br>
+                                    <div style="margin-top:10px;">{{ mm.nome }}</div>
+                                    {% if mm.abbinato_ai_servizi %}
+                                        <div>Abbinato ai servizi: <a href="#">{{ mm.abbinato_ai_servizi.count }}</a></div>
+                                    {% endif %}
+                                </td>
+                                <td>
+                                    <strong>Inizio:</strong> {{ mm.inizio|date:"SHORT_DATETIME_FORMAT" }}<br>
+                                    <strong>Fine:</strong> {{ mm.fine|date:"SHORT_DATETIME_FORMAT"|default:"Non impostata" }}
                                 </td>
                                 <td>{{ mm.creato_da.link|safe }}</td>
-                                <td>{{ mm.inizio|date:"SHORT_DATETIME_FORMAT" }}</td>
-                                <td>{{ mm.fine|date:"SHORT_DATETIME_FORMAT" }}</td>
                                 <td>
-                                    <a href="{% url 'so:mezzo_cancella' mm.pk %}"
-                                       data-conferma="Vuoi cancellare questo mezzo/servizio?"><i
-                                            class="fa fa-fw fa-trash"></i> Cancella</a><br>
-                                    <a href="{% url 'so:mezzo_modifica' mm.pk %}"><i
-                                            class="fa fa-fw fa-edit"></i> Modifica</a>
+                                    <a href="{% url 'so:mezzo_cancella' mm.pk %}" data-conferma="Vuoi cancellare questo mezzo/materiale?">
+                                        <i class="fa fa-fw fa-trash"></i> Cancella</a><br>
+                                    <a href="{% url 'so:mezzo_modifica' mm.pk %}"><i class="fa fa-fw fa-edit"></i> Modifica</a>
                                 </td>
                             </tr>
                         {% empty %}
@@ -65,8 +66,7 @@
         <div class="col-md-3">
             <div class="panel panel-primary">
                 <div class="panel-heading">
-                    <h2 class="panel-title"><i class="fa fa-fw fa-plus-circle"></i> Aggiungi mezzi e materiali
-                    </h2>
+                    <h2 class="panel-title"><i class="fa fa-fw fa-plus-circle"></i> Aggiungi nuovo mezzo o materiale</h2>
                 </div>
 
                 <div class="panel-body">

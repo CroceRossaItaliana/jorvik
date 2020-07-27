@@ -7,9 +7,12 @@
 {% block scheda_titolo %}Turni{% endblock %}
 
 {% block scheda_contenuto %}
+
     {% include 'so_scheda_turni_inc_paginazione.html' %}
+
     <table class="table table-striped table-responsive">
         <tbody>
+
         {% for turno in turni %}
             <tr id="turno-{{ turno.pk }}" {% if turno.scoperto and turno.futuro %} class="alert alert-warning"{% endif %}>
                 <td class="row">
@@ -25,22 +28,20 @@
                     </div>
                     <div class="col-md-5">
                         <p>
-                            <i class="fa fa-fw fa-users"></i> <strong>{{ turno.partecipazioni_so_confermate.count }} partecipanti confermati</strong>
+                            <i class="fa fa-fw fa-users"></i> <strong>Numero partecipanti:</strong> {{ turno.partecipazioni_confermate.count }}
                             <span class="">(minimo {{ turno.minimo }}, massimo {{ turno.massimo }})</span>
                         </p>
-                        <p class="text-danger">
-                            <i class="fas fa-exclamation"></i> {% if turno.scoperto %}Scoperto!{% endif %} {% if turno.pieno %}Pieno!{% endif %}
-                        </p>
+
                         <p>
-                            {% for p in turno.partecipazioni_so_confermate %}
-                                {% if p.persona.avatar %}
-                                    {% thumbnail p.persona.avatar "50x50" crop as im %}
-                                    <a href="{{ p.persona.url }}" title="{{ p.persona.nome_completo }}">
-                                        <img src="{{ im.url }}" class="img-rounded" alt="{{ p.persona.nome_completo }}" title="{{ p.persona.nome_completo }} "/>
+                            {% for partecipazione in turno.partecipazioni_confermate %}
+                                {% if partecipazione.reperibilita.persona.avatar %}
+                                    {% thumbnail partecipazione.reperibilita.persona.avatar "50x50" crop as im %}
+                                    <a href="{{ partecipazione.reperibilita.persona.url }}">
+                                        <img src="{{ im.url }}" class="img-rounded">
                                     </a>
                                 {% else %}
-                                    <a href="{{ p.persona.url }}" title="{{ p.persona.nome_completo }}">
-                                        <img src="{% gravatar_url p.persona.email 50 %}" class="img-rounded" alt="{{ p.persona.nome_completo }}" title="{{ p.persona.nome_completo }} "/>
+                                    <a href="{{ partecipazione.reperibilita.persona.url }}">
+                                        <img src="{% gravatar_url partecipazione.reperibilita..persona.email 50 %}" class="img-rounded">
                                     </a>
                                 {% endif %}
                             {% endfor %}
@@ -52,6 +53,7 @@
                 </td>
             </tr>
         {% empty %}
+
         {% endfor %}
         </tbody>
     </table>

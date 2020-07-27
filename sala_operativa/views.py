@@ -3,6 +3,7 @@ from datetime import date, timedelta, datetime, time
 
 from django.db.models import Count, F, Sum
 from django.utils import timezone
+from django.utils.timezone import now
 from django.contrib import messages
 from django.core.urlresolvers import reverse
 from django.core.paginator import Paginator, PageNotAnInteger, EmptyPage
@@ -28,8 +29,8 @@ from .forms import (AttivitaInformazioniForm, ModificaTurnoForm,
                     AggiungiPartecipantiForm, CreazioneTurnoForm, RipetiTurnoForm,
                     StatisticheAttivitaForm, StatisticheAttivitaPersonaForm,
                     VolontarioReperibilitaForm, AggiungiReperibilitaPerVolontarioForm,
-                    OrganizzaServizioReferenteForm, OrganizzaServizioForm, CreazioneMezzoSO, )
-from sala_operativa.forms import AbbinaMezzoMaterialeForm, ReperibilitaMezzi
+                    OrganizzaServizioReferenteForm, OrganizzaServizioForm, CreazioneMezzoSO,
+                    AbbinaMezzoMaterialeForm, )
 
 INITIAL_INIZIO_FINE_PARAMS = {
     "inizio": poco_fa() + timedelta(hours=1),
@@ -141,7 +142,6 @@ def so_gestisci(request, me, stato="aperte"):
     servizi_chiusi = servizi_tutti.filter(apertura=ServizioSO.CHIUSA)
 
     servizi = servizi_aperti if stato == "aperte" else servizi_chiusi
-    servizi_referenti_modificabili = me.oggetti_permesso(GESTIONE_REFERENTI_SO)
     servizi = servizi.annotate(num_turni=Count('turni_so'))
     servizi = Paginator(servizi, 30)
 
@@ -155,9 +155,9 @@ def so_gestisci(request, me, stato="aperte"):
     context = {
         "stato": stato,
         "attivita": servizi,
-        "attivita_aperte": servizi_aperti,
-        "attivita_chiuse": servizi_chiusi,
-        "attivita_referenti_modificabili": servizi_referenti_modificabili,
+        "servizi_aperti": servizi_aperti,
+        "servizi_chiusi": servizi_chiusi,
+        "servizio_referenti_modificabili": me.oggetti_permesso(GESTIONE_REFERENTI_SO),
     }
     return 'so_gestisci.html', context
 
@@ -378,13 +378,19 @@ def so_scheda_cancella(request, me, pk):
 @pagina_pubblica
 def so_scheda_mm(request, me=None, pk=None):
     """Mostra la scheda "Mezzi/materiali" di un servizio"""
+
     servizio = get_object_or_404(ServizioSO, pk=pk)
     puo_modificare = me and me.permessi_almeno(servizio, MODIFICA)
+    mie_sedi = me.oggetti_permesso(GESTIONE_SO_SEDE)
+
+    if not puo_modificare:
+        messages.error(request, 'Non hai dei permessi necessari per modificare questo oggetto.')
+        return redirect(reverse('so:index'))
 
     context = {
-        "prenotazioni": PrenotazioneMMSO.objects.filter(servizio=servizio),
-        "mezzi": MezzoSO.objects.filter(estensione__in=me.oggetti_permesso(GESTIONE_SO_SEDE)),
         "attivita": servizio,
+        "prenotazioni": PrenotazioneMMSO.del_servizio(servizio),
+        "mezzi_disponibili": MezzoSO.disponibili_per_sedi(mie_sedi),
         "puo_modificare": puo_modificare,
         "me": me,
     }
@@ -393,20 +399,35 @@ def so_scheda_mm(request, me=None, pk=None):
 
 
 @pagina_pubblica
-def so_scheda_mm_abbina(request, me=None, pk=None, mm=None):
+def so_scheda_mm_abbina(request, me=None, pk=None, mm_pk=None):
     """Mostra la scheda di abbinamento mezzi materiali """
+
     servizio = get_object_or_404(ServizioSO, pk=pk)
+    mezzo = get_object_or_404(MezzoSO, pk=mm_pk)
 
-    form = AbbinaMezzoMaterialeForm(request.POST or None, initial={"mezzo": MezzoSO.objects.get(pk=mm)})
+    form = AbbinaMezzoMaterialeForm(request.POST or None,
+                                    instance=mezzo,
+                                    initial={'inizio': now()})
 
-    if request.POST and form.is_valid():
-        form.clean()
-        cd = form.cleaned_data
-        PrenotazioneMMSO(servizio=servizio, mezzo=cd['mezzo'], inizio=cd['inizio'], fine=cd['fine']).save()
-        return redirect(reverse('so:scheda_mm', args=[pk, ]))
+    if request.method == 'POST':
+        if form.is_valid():
+            cd = form.cleaned_data
+            nuova_prenotazione = PrenotazioneMMSO(servizio=servizio,
+                                                  mezzo=mezzo,
+                                                  inizio=cd['inizio'],
+                                                  fine=cd['fine'],)
+            nuova_prenotazione.save()
+
+            tipo = nuova_prenotazione.mezzo.get_tipo_display().lower()
+            messages.success(request, 'Il %s è stato prenotato con successo.' % tipo)
+
+            return redirect(reverse('so:scheda_mm', args=[pk, ]))
 
     context = {
-        'form': form
+        'form': form,
+        'attivita': servizio,
+        'mezzo': mezzo,
+        'puo_modificare': True,
     }
 
     return 'so_scheda_mm_abbina.html', context
@@ -435,20 +456,15 @@ def so_scheda_mappa(request, me=None, pk=None):
 
 @pagina_privata
 def so_scheda_turni(request, me=None, pk=None, pagina=None):
-    """Mostra la scheda "Informazioni" di un servizio"""
-
-    if False:
-        return ci_siamo_quasi(request, me)
-
+    """ Mostra la scheda "Informazioni" di un servizio. """
     servizio = get_object_or_404(ServizioSO, pk=pk)
+    turni = servizio.turni_so.all()
+
+    puo_modificare = me and me.permessi_almeno(servizio, MODIFICA)
 
     if pagina is None:
         pagina = reverse('so:servizio_turni_pagina', args=[servizio.pk, servizio.pagina_turni_oggi()])
         return redirect(pagina)
-
-    turni = servizio.turni_so.all()
-
-    puo_modificare = me and me.permessi_almeno(servizio, MODIFICA)
 
     evidenzia_turno = TurnoSO.objects.get(pk=request.GET['evidenzia_turno']) \
         if 'evidenzia_turno' in request.GET else None
@@ -693,22 +709,13 @@ def so_turno_abbina_volontario(request, me, turno_pk, reperibilita_pk):
     turno = get_object_or_404(TurnoSO, pk=turno_pk)
     servizio = turno.attivita
     reperibilita = ReperibilitaSO.objects.get(pk=reperibilita_pk)
-
-    kwargs = dict(reperibilita=reperibilita, turno=turno,
-                  stato=PartecipazioneSO.PARTECIPA,)
-    try:
-        PartecipazioneSO.objects.get(**kwargs)
-    except PartecipazioneSO.DoesNotExist:
-        partecipazione_al_turno = PartecipazioneSO(**kwargs)
-        partecipazione_al_turno.inizio = turno.inizio
-        partecipazione_al_turno.fine = turno.fine
-        partecipazione_al_turno.save()
-
-        messages.success(request, 'Il volontario è stato abbinato al servizio.')
+    partecipazione, created = turno.abbina_reperibilita(reperibilita)
+    if created:
+        messages.success(request, 'Il volontario è stato abbinato al turno.')
         return redirect(reverse('so:servizio_turni_modifica_link_permanente',
-                                args=[servizio.pk, turno.pk,]))
+                                    args=[servizio.pk, turno.pk,]))
 
-    return redirect(reverse('so:servizio_turni', args=[servizio.pk,]))
+    return redirect(reverse('so:servizio_turni_modifica', args=[servizio.pk, ]))
 
 
 @pagina_privata(permessi=(GESTIONE_SERVIZI,))
@@ -745,7 +752,7 @@ def so_scheda_informazioni_modifica(request, me, pk=None):
     return 'so_scheda_informazioni_modifica.html', context
 
 # todo: permesso
-@pagina_privata(permessi=(GESTIONE_ATTIVITA,))
+@pagina_privata(permessi=(GESTIONE_SERVIZI,))
 def so_riapri(request, me, pk=None):
     """Riapre il servizio """
     servizio = get_object_or_404(ServizioSO, pk=pk)
@@ -784,6 +791,7 @@ def so_scheda_turni_modifica(request, me, pk=None, pagina=None):
 
     forms = list()
     moduli_aggiungi_partecipanti = list()
+    reperibilita_disponibili = list()
 
     turni = pg.object_list
     for turno in turni:
@@ -793,6 +801,8 @@ def so_scheda_turni_modifica(request, me, pk=None, pagina=None):
         modulo_aggiungi_partecipanti = AggiungiPartecipantiForm(request.POST or None,
                                                                 prefix="turno_agg_%d" % turno.pk)
         moduli_aggiungi_partecipanti += [modulo_aggiungi_partecipanti]
+
+        reperibilita_disponibili.append(turno.trova_reperibilita())
 
         if form.is_valid():
             form.save()
@@ -804,7 +814,12 @@ def so_scheda_turni_modifica(request, me, pk=None, pagina=None):
 
             redirect(turno.url_modifica)
 
-    turni_e_moduli = zip(turni, forms, moduli_aggiungi_partecipanti)
+    turni_e_moduli = zip(
+        turni,
+        forms,
+        moduli_aggiungi_partecipanti,
+        reperibilita_disponibili
+    )
 
     evidenzia_turno = TurnoSO.objects.get(pk=request.GET['evidenzia_turno']) \
         if 'evidenzia_turno' in request.GET else None
@@ -822,7 +837,6 @@ def so_scheda_turni_modifica(request, me, pk=None, pagina=None):
         "puo_modificare": True,
         "url_modifica": '/modifica',
         "evidenzia_turno": evidenzia_turno,
-        'reperibilita_disponibili_per_turno': ReperibilitaSO.reperibilita_disponibili_per(turno),
     }
 
     return 'so_scheda_turni_modifica.html', context
@@ -842,7 +856,7 @@ def so_scheda_partecipazione_cancella(request, me, turno_pk, partecipazione_pk):
     return redirect(turno.url_modifica)
 
 # todo: permesso
-@pagina_privata(permessi=(GESTIONE_ATTIVITA,))
+@pagina_privata(permessi=(GESTIONE_SERVIZI,))
 def so_scheda_report(request, me, pk=None):
     """Mostra la pagina di modifica di un servizio"""
     if False:
@@ -941,26 +955,29 @@ def so_statistiche(request, me):
 
 @pagina_privata
 def so_mezzi(request, me):
-    form = CreazioneMezzoSO(request.POST or None)
-
     mie_sedi = me.oggetti_permesso(GESTIONE_SO_SEDE)
 
+    if not mie_sedi:
+        messages.error(request, 'Non hai sedi SO da gestire.')
+        return redirect(reverse('so:index'))
+
+    form = CreazioneMezzoSO(request.POST or None)
     form.fields['estensione'].queryset = mie_sedi
 
-    if form.is_valid():
-        mm = form.save(commit=False)
-        mm.creato_da = me
-        mm.save()
-        form = CreazioneMezzoSO()
+    if request.method == 'POST':
+        if form.is_valid():
+            mezzo = form.save(commit=False)
+            mezzo.creato_da = me
+            mezzo.save()
 
-    mezzi_materiali = MezzoSO.objects.filter(estensione__in=mie_sedi)
+            messages.success(request, 'Il %s è stato creato con successo.' % mezzo.get_tipo_display())
+            return redirect('so:mezzi')
 
     context = {
-        'mezzi_materiali': mezzi_materiali,
+        'mezzi_materiali': MezzoSO.disponibili_per_sedi(mie_sedi),
         'form': form
     }
-
-    return 'sala_operativa_mm.html', context
+    return 'so_mezzi_e_materiali.html', context
 
 
 def so_mezzi_aggiungi():
@@ -979,11 +996,15 @@ def so_mezzo_cancella(request, me, pk):
 @pagina_privata
 def so_mezzo_modifica(request, me, pk):
     # todo: permessi
-    mm = get_object_or_404(MezzoSO, pk=pk)
-    if mm.creato_da != me:
+    mie_sedi = me.oggetti_permesso(GESTIONE_SO_SEDE)
+
+    mezzo = get_object_or_404(MezzoSO, pk=pk)
+    if mezzo.creato_da != me:
         return redirect(ERRORE_PERMESSI)
 
-    form = CreazioneMezzoSO(request.POST or None, instance=mm)
+    form = CreazioneMezzoSO(request.POST or None, instance=mezzo)
+    form.fields['estensione'].queryset = mie_sedi
+
     if request.method == 'POST':
         if form.is_valid():
             form.save()
@@ -991,6 +1012,6 @@ def so_mezzo_modifica(request, me, pk):
 
     context = {
         'form': form,
-        'mm': mm,
+        'mezzo': mezzo,
     }
-    return 'sala_operativa_mm_edit.html', context
+    return 'so_mezzi_e_materiali_edit.html', context

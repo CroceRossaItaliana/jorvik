@@ -4,10 +4,7 @@
 
 <div class="btn-group-vertical btn-block" style="text-align:center;">
     {% if part in turno.TURNO_PUOI_PARTECIPARE %}
-        {% if part == turno.TURNO_PUOI_PARTECIPARE_PRENOTA %}
-            <i class="fas fa-info"></i> Posti disponibili
-
-        {% elif part == turno.TURNO_PUOI_PARTECIPARE_DISPONIBILITA %}
+        {% if part == turno.TURNO_PUOI_PARTECIPARE_DISPONIBILITA %}
             <i class="fas fa-info"></i> Il turno &egrave; pieno
         {% endif %}
 
