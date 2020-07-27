@@ -95,35 +95,6 @@ class OrganizzaServizioReferenteForm(forms.Form):
     )
 
 
-class StatisticheAttivitaForm(forms.Form):
-    SETTIMANA = 7
-    QUINDICI_GIORNI = 15
-    MESE = 30
-    SCELTE = (
-        (SETTIMANA, "Per settimana"),
-        (QUINDICI_GIORNI, "Per 15 giorni"),
-        (MESE, "Per mese"),
-    )
-
-    sedi = forms.ModelMultipleChoiceField(queryset=Sede.objects.filter(attiva=True))
-    periodo = forms.ChoiceField(choices=SCELTE, initial=SETTIMANA)
-
-
-class StatisticheAttivitaPersonaForm(forms.Form):
-    SETTIMANA = 7
-    QUINDICI_GIORNI = 15
-    MESE = 30
-    ANNO = 365
-    SCELTE = (
-        (SETTIMANA, "Per settimana"),
-        (QUINDICI_GIORNI, "Per 15 giorni"),
-        (MESE, "Per mese"),
-        (ANNO, "Per anno"),
-    )
-
-    periodo = forms.ChoiceField(choices=SCELTE, initial=SETTIMANA)
-
-
 class RipetiTurnoForm(forms.Form):
     # Giorni della settimana numerici, come
     #  da datetime.weekday()

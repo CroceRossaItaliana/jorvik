@@ -10,7 +10,6 @@ from django.core.paginator import Paginator, PageNotAnInteger, EmptyPage
 from django.shortcuts import redirect, get_object_or_404
 
 # todo: da integrare in questa app
-from attivita.stats import statistiche_attivita_persona
 from attivita.utils import turni_raggruppa_giorno
 # todo:
 
@@ -27,7 +26,6 @@ from .models import PartecipazioneSO, ServizioSO, TurnoSO, ReperibilitaSO, Mezzo
 from .elenchi import ElencoPartecipantiTurno, ElencoPartecipantiAttivita
 from .forms import (AttivitaInformazioniForm, ModificaTurnoForm,
                     AggiungiPartecipantiForm, CreazioneTurnoForm, RipetiTurnoForm,
-                    StatisticheAttivitaForm, StatisticheAttivitaPersonaForm,
                     VolontarioReperibilitaForm, AggiungiReperibilitaPerVolontarioForm,
                     OrganizzaServizioReferenteForm, OrganizzaServizioForm, CreazioneMezzoSO,
                     AbbinaMezzoMaterialeForm, )
@@ -320,13 +318,9 @@ def so_storico(request, me):
     """Mostra uno storico dei servizi a cui ha partecipato"""
 
     storico = PartecipazioneSO.objects.filter(reperibilita__persona=me).order_by('-turno__inizio')
-    form = StatisticheAttivitaPersonaForm(request.POST or None)
-    statistiche = statistiche_attivita_persona(me, form)
 
     context = {
         "storico": storico,
-        "statistiche": statistiche,
-        "statistiche_modulo": form,
     }
 
     return 'so_storico.html', context
