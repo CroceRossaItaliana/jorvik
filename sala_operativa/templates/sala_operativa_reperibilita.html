@@ -35,13 +35,15 @@
                                 <strong>Inizio:</strong> {{ r.inizio }}<br>
                                 <strong>Fine:</strong> {{ r.fine }}<br>
                                 {% if r.nel_turno %}
-                                    <div style="margin-top:15px;">
-                                        <i class="fas fa-thumbs-up"></i> Già abbinata al turno
-                                        <a href=""><i class="far fa-minus-square"></i> Ritirati</a><br>
-                                        <strong><a href="{{ r.nel_turno.url }}">{{ r.nel_turno.nome }}</a></strong><br>
-                                        dal <strong>{{ r.nel_turno.inizio|date:"SHORT_DATETIME_FORMAT" }}</strong><br>
-                                        al <strong>{{ r.nel_turno.fine|date:"SHORT_DATETIME_FORMAT" }}</strong>
-                                    </div>
+                                    <i class="fas fa-thumbs-up"></i> Già abbinata al turno
+                                    {% for partecipazione in r.nel_turno%}
+                                        <div style="margin-top:15px;">
+                                            <strong><a href="{{ partecipazione.turno.url }}">{{ partecipazione.turno.nome }}</a></strong>
+                                            <a href="{{ partecipazione.turno.url_ritirati }}"><i class="far fa-minus-square"></i> Ritirati</a><br>
+                                            <span style="font-size:12px;">dal {{ partecipazione.inizio|date:"SHORT_DATETIME_FORMAT" }}
+                                                <strong style="padding:0 10px;">al</strong> {{ partecipazione.fine|date:"SHORT_DATETIME_FORMAT" }}</span>
+                                        </div>
+                                    {% endfor %}
                                 {% endif %}
                             </td>
                             <td>{{ r.attivazione }}</td>

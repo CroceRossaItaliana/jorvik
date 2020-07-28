@@ -563,40 +563,6 @@ def so_scheda_turni_turno_cancella(request, me, pk=None, turno_pk=None):
 
 
 @pagina_privata
-def so_scheda_turni_partecipa(request, me, pk=None, turno_pk=None):
-    """ Mostra la scheda "Informazioni" di un servizio"""
-
-    turno = get_object_or_404(TurnoSO, pk=turno_pk)
-    stato = turno.persona(me)
-
-    if stato not in turno.TURNO_PUOI_PARTECIPARE:
-        return errore_generico(request, me, titolo="Non puoi partecipare a questo turno",
-                               messaggio="Siamo spiacenti, ma ci risulta che tu non possa "
-                                         "richiedere partecipazione a questo turno. Vai "
-                                         "all'elenco dei turni per maggiori informazioni "
-                                         "sulla motivazione. ",
-                               torna_titolo="Turni dell'attività",
-                               torna_url=turno.url,
-                               )
-
-    p = PartecipazioneSO(
-        turno=turno,
-        persona=me,
-    )
-    p.save()
-    p.richiedi()
-
-    return messaggio_generico(request, me, titolo="Ottimo! Richiesta inoltrata.",
-                              messaggio="La tua richiesta è stata inoltrata ai referenti di "
-                                        "questa attività, che potranno confermarla o negarla. "
-                                        "Ti manderemo una e-mail non appena risponderanno alla "
-                                        "tua richiesta. Puoi sempre controllare lo stato delle tue"
-                                        "richieste di partecipazione da 'Attivita' > 'I miei turni'. ",
-                              torna_titolo="Vai a 'I miei turni'",
-                              torna_url=reverse('so:storico'), )
-
-
-@pagina_privata
 def so_scheda_turni_ritirati(request, me, pk=None, turno_pk=None):
     turno = get_object_or_404(TurnoSO, pk=turno_pk)
     stato = turno.persona(me)
@@ -605,7 +571,7 @@ def so_scheda_turni_ritirati(request, me, pk=None, turno_pk=None):
         return errore_generico(request, me, titolo="Non puoi ritirare la tua partecipazione",
                                messaggio="Una volta che la tua partecipazione è stata confermata, "
                                          "non puoi più ritirarla da Gaia. Se non puoi presentarti, "
-                                         "scrivi a un referente dell'attività, che potrà valutare "
+                                         "scrivi a un referente del servizio, che potrà valutare "
                                          "la situazione e rimuoverti dai partecipanti.",
                                torna_titolo="Torna al turno",
                                torna_url=turno.url)

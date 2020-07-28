@@ -53,7 +53,6 @@ urlpatterns = [
     url(r'^servizio/%s/turni/nuovo/$' % pk, views.so_scheda_turni_nuovo, name='servizio_turni_nuovo'),
     url(r'^servizio/%s/turni/(?P<pagina>[0-9]+)/$' % pk, views.so_scheda_turni, name='servizio_turni_pagina'),
     url(r'^servizio/%s/turni/(?P<turno_pk>[0-9]+)/partecipanti/$' % pk, views.so_scheda_turni_partecipanti, name='servizio_turni_partecipanti'),
-    url(r'^servizio/%s/turni/(?P<turno_pk>[0-9]+)/partecipa/$' % pk, views.so_scheda_turni_partecipa, name='servizio_turni_partecipa'),
     url(r'^servizio/%s/turni/(?P<turno_pk>[0-9]+)/ritirati/$' % pk, views.so_scheda_turni_ritirati, name='servizio_turni_ritirati'),
     url(r'^servizio/%s/turni/permalink/(?P<turno_pk>[0-9]+)/$' % pk, views.so_scheda_turni_permalink, name='servizio_turni_link_permanente'),
     url(r'^servizio/%s/turni/cancella/(?P<turno_pk>[0-9]+)/$' % pk, views.so_scheda_turni_turno_cancella, name='servizio_turni_cancella'),
