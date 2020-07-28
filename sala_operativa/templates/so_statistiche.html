@@ -3,7 +3,7 @@
 {% load bootstrap3 %}
 {% load utils %}
 
-{% block pagina_titolo %}Statistiche Attivit&agrave;{% endblock %}
+{% block pagina_titolo %}Statistiche Servizi{% endblock %}
 
 {% block app_contenuto %}
     <div class="row">
@@ -11,12 +11,12 @@
             <div class="panel panel-primary">
                 <div class="panel-heading">
                     <h2 class="panel-title">
-                        <i class="fa fa-fw fa-search"></i> Statistiche attivit&agrave;
+                        <i class="fa fa-fw fa-search"></i> Statistiche serivzi
                     </h2>
                 </div>
                 <form method="POST" class="panel-body">
                     {% csrf_token %}
-                    <p>Seleziona le Sedi per le quali generare le statistiche relative alle attivit&agrave;</p>
+                    <p>Seleziona le Sedi per le quali generare le statistiche relativi ai servizi</p>
                     {% bootstrap_form modulo %}
                     <button type="submit" class="btn btn-block btn-primary">
                         <i class="fa fa-fw fa-cogs"></i> Elabora dati
@@ -30,7 +30,7 @@
                     </h2>
                 </div>
                 <div class="panel-body">
-                    <p><strong>(A)</strong> &egrave; il numero di ore di attivit&agrave; organizzate nella settimana;
+                    <p><strong>(A)</strong> &egrave; il numero di ore dei servizi organizzati nella settimana;
                     </p>
                     <p><strong>(B)</strong> &egrave; il numero di ore-uomo di servizio dei volontari nella settimana;
                     </p>
@@ -43,7 +43,7 @@
             <div class="panel panel-info">
                 <div class="panel-heading">
                     <h2 class="panel-title">
-                        <i class="fa fa-fw fa-bar-chart-o"></i> Risultati elaborazione
+                        <i class="far fa-chart-bar"></i> Risultati elaborazione
                     </h2>
                 </div>
                 <div class="panel-body">
@@ -103,7 +103,7 @@
                     {% else %}
                         <div class="alert alert-warning">
                             <p>
-                                <i class="fa fa-fw fa-warning"></i>
+                                <i class="fas fa-exclamation-circle"></i>
                                 Compila il modulo e avvia l'elaborazione per mostrare dei risultati.
                             </p>
                         </div>

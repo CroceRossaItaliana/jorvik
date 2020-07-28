@@ -9,22 +9,18 @@ from django.core.urlresolvers import reverse
 from django.core.paginator import Paginator, PageNotAnInteger, EmptyPage
 from django.shortcuts import redirect, get_object_or_404
 
-# todo: da integrare in questa app
-from attivita.utils import turni_raggruppa_giorno
-# todo:
-
 from anagrafica.costanti import NAZIONALE
 from anagrafica.forms import ModuloProfiloModificaAnagraficaDatoreLavoro
 from anagrafica.permessi.applicazioni import REFERENTE_SO
-from anagrafica.permessi.costanti import (MODIFICA, GESTIONE_ATTIVITA,
-                                          ERRORE_PERMESSI, COMPLETO, GESTIONE_ATTIVITA_SEDE,
-                                          GESTIONE_SO_SEDE, GESTIONE_SERVIZI, GESTIONE_REFERENTI_SO, )
+from anagrafica.permessi.costanti import (MODIFICA, COMPLETO, ERRORE_PERMESSI,
+      GESTIONE_SO_SEDE, GESTIONE_SERVIZI, GESTIONE_REFERENTI_SO, )
 from autenticazione.funzioni import pagina_privata, pagina_pubblica
 from base.errori import ci_siamo_quasi, errore_generico, messaggio_generico, errore_no_volontario
 from base.utils import poco_fa, timedelta_ore
+from .utils import turni_raggruppa_giorno
 from .models import PartecipazioneSO, ServizioSO, TurnoSO, ReperibilitaSO, MezzoSO, PrenotazioneMMSO
 from .elenchi import ElencoPartecipantiTurno, ElencoPartecipantiAttivita
-from .forms import (AttivitaInformazioniForm, ModificaTurnoForm,
+from .forms import (AttivitaInformazioniForm, ModificaTurnoForm, StatisticheServiziForm,
                     AggiungiPartecipantiForm, CreazioneTurnoForm, RipetiTurnoForm,
                     VolontarioReperibilitaForm, AggiungiReperibilitaPerVolontarioForm,
                     OrganizzaServizioReferenteForm, OrganizzaServizioForm, CreazioneMezzoSO,
@@ -41,15 +37,21 @@ def so_index(request, me):
     if not me.volontario:
         return redirect('/')
 
-    sedi = me.oggetti_permesso(GESTIONE_SO_SEDE)
-    if not sedi:
-        return redirect(reverse('so:reperibilita'))
-
     context = {
         'ora': poco_fa(),
-        'sedi': sedi,
-        'reperibilita': ReperibilitaSO.reperibilita_per_sedi(sedi),
     }
+
+    sedi = me.oggetti_permesso(GESTIONE_SO_SEDE)
+    servizi_dove_referente = me.oggetti_permesso(GESTIONE_SERVIZI)
+
+    if sedi or servizi_dove_referente:
+        context.update({
+            'ora': poco_fa(),
+            'sedi': sedi,
+            'reperibilita': ReperibilitaSO.reperibilita_per_sedi(sedi),
+        })
+    else:
+        return redirect(reverse('so:reperibilita'))
     return 'sala_operativa_index.html', context
 
 
@@ -801,12 +803,14 @@ def so_scheda_turni_modifica(request, me, pk=None, pagina=None):
         if form.is_valid():
             form.save()
 
+        # Aggiungi partecipante (dal modal-box)
         if modulo_aggiungi_partecipanti.is_valid():
             cd = modulo_aggiungi_partecipanti.cleaned_data
-            for partecipante in cd['persone']:
-                turno.aggiungi_partecipante(partecipante, richiedente=me)
+            for reperibilita_trovata in cd['persone']:
+                turno.aggiungi_partecipante(reperibilita_trovata)
 
-            redirect(turno.url_modifica)
+            messages.success(request, 'I partecipanti selezionati sono stati abbinati al turno con successo.')
+            return redirect(turno.url_modifica)
 
     turni_e_moduli = zip(
         turni,
@@ -850,12 +854,10 @@ def so_scheda_partecipazione_cancella(request, me, turno_pk, partecipazione_pk):
     return redirect(turno.url_modifica)
 
 # todo: permesso
+# todo: adeguamento report
 @pagina_privata(permessi=(GESTIONE_SERVIZI,))
 def so_scheda_report(request, me, pk=None):
     """Mostra la pagina di modifica di un servizio"""
-    if False:
-        return ci_siamo_quasi(request, me)
-
     servizio = get_object_or_404(ServizioSO, pk=pk)
     if not me.permessi_almeno(servizio, MODIFICA):
         return redirect(ERRORE_PERMESSI)
@@ -874,7 +876,7 @@ def so_scheda_report(request, me, pk=None):
 def so_statistiche(request, me):
     sedi = me.oggetti_permesso(GESTIONE_SO_SEDE)
 
-    form = StatisticheAttivitaForm(request.POST or None, initial={"sedi": sedi})
+    form = StatisticheServiziForm(request.POST or None, initial={"sedi": sedi})
     form.fields['sedi'].queryset = sedi
 
     statistiche = []

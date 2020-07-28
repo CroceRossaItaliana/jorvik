@@ -68,9 +68,8 @@ class CreazioneTurnoForm(ModificaTurnoForm):
 
 
 class AggiungiPartecipantiForm(forms.Form):
-    persone = autocomplete_light.ModelMultipleChoiceField("PersonaAutocompletamento",
-                                                          help_text="Seleziona uno o più persone da "
-                                                                    "aggiungere come partecipanti.")
+    persone = autocomplete_light.ModelMultipleChoiceField('TrovaReperibilitaPerTurno',
+        help_text="Seleziona uno o più persone da aggiungere come partecipanti.")
 
 
 class OrganizzaServizioForm(ModelForm):
@@ -184,3 +183,17 @@ class AbbinaMezzoMaterialeForm(ModelForm):
             self.add_error("fine", message)
 
         return cd
+
+
+class StatisticheServiziForm(forms.Form):
+    SETTIMANA = 7
+    QUINDICI_GIORNI = 15
+    MESE = 30
+    SCELTE = (
+        (SETTIMANA, "Per settimana"),
+        (QUINDICI_GIORNI, "Per 15 giorni"),
+        (MESE, "Per mese"),
+    )
+
+    sedi = forms.ModelMultipleChoiceField(queryset=Sede.objects.filter(attiva=True))
+    periodo = forms.ChoiceField(choices=SCELTE, initial=SETTIMANA)

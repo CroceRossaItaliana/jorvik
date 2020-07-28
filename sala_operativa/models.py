@@ -455,24 +455,6 @@ class TurnoSO(ModelloSemplice, ConMarcaTemporale, ConGiudizio):
     def partecipazioni_ritirate(self):
         return PartecipazioneSO.con_esito_ritirata().filter(turno=self)
 
-    def aggiungi_partecipante(self, persona, richiedente=None):
-        """
-        Aggiunge di ufficio una persona.
-        :return: Oggetto Partecipazione.
-        """
-
-        # Persona già partecipante?
-        # p = PartecipazioneSO.con_esito_ok().filter(turno=self,
-        #                                            reperibilita__persona=persona).first()
-        # if p:
-        #     return p
-
-        p = PartecipazioneSO(turno=self,
-                             reperibilita=self.attivita,
-                             persona=persona,)
-        p.save()
-        return p
-
     @property
     def scoperto(self):
         return self.partecipazioni_confermate().count() < self.minimo
@@ -518,7 +500,14 @@ class TurnoSO(ModelloSemplice, ConMarcaTemporale, ConGiudizio):
             attivita__stato=ServizioSO.VISIBILE,
         ).order_by('inizio')
 
+    def aggiungi_partecipante(self, reperibilita_trovata, richiedente=None):
+        return self.abbina_reperibilita(reperibilita_trovata)
+
     def abbina_reperibilita(self, reperibilita):
+        """
+        :param reperibilita:
+        :return: PartecipazioneSO object
+        """
         kwargs = dict(turno=self,
                       reperibilita=reperibilita,
                       stato=PartecipazioneSO.PARTECIPA,)
@@ -532,9 +521,17 @@ class TurnoSO(ModelloSemplice, ConMarcaTemporale, ConGiudizio):
             return partecipazione_al_turno, True
 
     def reperibilita_abbinate(self):
+        """
+
+        :return: PartecipazioneSO<QuerySet>
+        """
         return PartecipazioneSO.reperibilita_del_turno(self)
 
     def trova_reperibilita(self):
+        """
+
+        :return: PartecipazioneSO<QuerySet>
+        """
         servizio = self.attivita
         reperibilita = ReperibilitaSO.reperibilita_per_sedi(servizio.sede)
         reperibilita_abbinate = self.reperibilita_abbinate().values_list('reperibilita')
