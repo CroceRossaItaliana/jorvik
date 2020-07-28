@@ -9,7 +9,7 @@ from collections import OrderedDict
 
 from django.db import transaction, IntegrityError
 from django.db.models import Sum, Q
-from django.core.urlresolvers import reverse
+from django.core.cache import cache
 from django.core.paginator import Paginator
 from django.shortcuts import redirect, get_object_or_404
 from django.core.urlresolvers import reverse
@@ -38,25 +38,42 @@ from .forms import (ModuloCreazioneEstensione, ModuloAggiungiPersona,
     ModuloNuovaRicevuta, ModuloFiltraEmissioneTesserini, ModuloLavoraTesserini,
     ModuloScaricaTesserini, ModuloDimissioniSostenitore)
 
+from anagrafica.tasks import prefetch_onlogin
 
-@pagina_privata(permessi=(GESTIONE_SOCI,))
-def us(request, me):
-    """ Ritorna la home page per la gestione dei soci. """
+
+def prepare_us(me):
 
     sedi = me.oggetti_permesso(GESTIONE_SOCI)
-
     persone = Persona.objects.filter(
         Appartenenza.query_attuale(sede__in=sedi).via("appartenenze")
-    ).distinct('cognome', 'nome', 'codice_fiscale')
+    ).distinct('cognome', 'nome', 'codice_fiscale').count()
     attivi = Persona.objects.filter(
         Appartenenza.query_attuale(sede__in=sedi, membro=Appartenenza.VOLONTARIO).via("appartenenze")
-    ).distinct('cognome', 'nome', 'codice_fiscale')
+    ).distinct('cognome', 'nome', 'codice_fiscale').count()
 
     contesto = {
         "sedi": sedi,
         "persone": persone,
         "attivi": attivi,
+        "trasferimenti_automatici": me.trasferimenti_automatici.count(),
+        "trasferimenti_manuali": me.trasferimenti_manuali.count(),
+        "estensioni_da_autorizzare": me.estensioni_da_autorizzare.count()
     }
+
+    return contesto
+
+
+@pagina_privata(permessi=(GESTIONE_SOCI,))
+def us(request, me):
+    """ Ritorna la home page per la gestione dei soci. """
+
+    if cache.get('{}_us_sedi'.format(me.id)):
+        contesto = dict()
+        contesto['sedi'] = Sede.objects.filter(id__in=cache.get('{}_us_sedi'.format(me.id)))
+        contesto['persone'] = cache.get('{}_us_persone'.format(me.id))
+        contesto['attivi'] = cache.get('{}_us_attivi'.format(me.id))
+    else:
+        contesto = prepare_us(me)
 
     return 'us.html', contesto
 
@@ -487,6 +504,8 @@ def us_estensione(request, me):
         "modulo": modulo,
     }
 
+    prefetch_onlogin.apply_async((me.id,))
+
     return 'us_estensione.html', contesto
 
 
@@ -560,6 +579,8 @@ def us_trasferimento(request, me):
         "sedi": sedi,
         "modulo": modulo,
     }
+
+    prefetch_onlogin.apply_async((me.id,))
 
     return 'us_trasferimento.html', contesto
 

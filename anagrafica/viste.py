@@ -324,6 +324,10 @@ def registrati_conferma(request, tipo):
 
 @pagina_privata
 def utente(request, me):
+    from anagrafica.tasks import prefetch_onlogin
+
+    prefetch_onlogin.apply_async((me.id,))
+
     articoli = get_articoli(me)
     contesto = {
         "articoli": articoli[:5],
