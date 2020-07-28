@@ -1,5 +1,7 @@
 from collections import OrderedDict
 
+from anagrafica.permessi.costanti import GESTIONE_SO_SEDE, GESTIONE_SERVIZI
+
 
 def unique(items):
     found = set([])
@@ -26,3 +28,15 @@ def turni_raggruppa_giorno(qs_turni):
             if i.inizio.date() == d:
                 risultato[d].append(i)
     return risultato
+
+
+def visibilita_menu_top(persona):
+    if persona.volontario and not persona.ha_aspirante:
+        if persona.ha_permesso(GESTIONE_SO_SEDE):
+            return True
+        elif persona.ha_permesso(GESTIONE_SERVIZI):
+            return True
+        else:
+            # todo:
+            return True
+    return False
