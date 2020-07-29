@@ -401,9 +401,11 @@ def so_scheda_mm_abbina(request, me=None, pk=None, mm_pk=None):
     servizio = get_object_or_404(ServizioSO, pk=pk)
     mezzo = get_object_or_404(MezzoSO, pk=mm_pk)
 
+    tra_un_ora = now()# + timedelta(hours=1)
+
     form = AbbinaMezzoMaterialeForm(request.POST or None,
                                     instance=mezzo,
-                                    initial={'inizio': now()})
+                                    initial={'inizio': tra_un_ora})
 
     if request.method == 'POST':
         if form.is_valid():

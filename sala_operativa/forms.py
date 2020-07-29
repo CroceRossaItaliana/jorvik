@@ -3,6 +3,7 @@ from django import forms
 from django.core.exceptions import ValidationError
 from django.forms import ModelForm
 from django.forms.extras import SelectDateWidget
+from django.utils import timezone
 from django.utils.timezone import now
 
 from anagrafica.models import Sede
@@ -102,6 +103,7 @@ class OrganizzaServizioForm(ModelForm):
         self.fields['nome'].required = False
         self.fields['nome'].widget = forms.TextInput(attrs={})  # to override required attr
 
+
 class OrganizzaServizioReferenteForm(forms.Form):
     SONO_IO = "IO"
     SCEGLI_REFERENTI = "SC"
@@ -152,7 +154,7 @@ class RipetiTurnoForm(forms.Form):
 class CreazioneMezzoSO(ModelForm):
     def clean_inizio(self):
         inizio = self.cleaned_data['inizio']
-        if inizio < now():
+        if inizio < now() - timezone.timedelta(minutes=5):
             raise ValidationError('Non puoi creare il mezzo o materiale con la data di inizio già passata.')
         return inizio
 
@@ -183,7 +185,7 @@ class AbbinaMezzoMaterialeForm(ModelForm):
 
     def clean_inizio(self):
         inizio = self.cleaned_data['inizio']
-        if inizio < now():
+        if inizio < now() - timezone.timedelta(minutes=5):
             raise ValidationError('Non puoi abbinare il mezzo o materiale con la data di inizio già passata.')
         return inizio
 
