@@ -19,7 +19,8 @@ urlpatterns = [
     url(r'^gestisci/chiuse/$', views.so_gestisci, {"stato": "chiuse"}, name='gestisci_chiuse'),
 
     # Calendario
-    url(r'^calendario/$', views.so_calendario, name='calendario'),
+    url(r'^calendar/$', views.so_calendar, name='calendario'),
+    url(r'^calendario/$', views.so_calendario, name='calendar'),
     url(r'^calendario/(?P<inizio>[0-9\-]+)/(?P<fine>[0-9\-]+)/$', views.so_calendario, name='calendario_con_range'),
 
     # Storico

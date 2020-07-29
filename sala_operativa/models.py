@@ -520,16 +520,18 @@ class TurnoSO(ModelloSemplice, ConMarcaTemporale, ConGiudizio):
         sedi = persona.sedi_attuali(membro__in=Appartenenza.MEMBRO_SERVIZIO)
 
         return TurnoSO.objects.filter(
-            # Attivtia organizzate dai miei comitati
+            # Servizi organizzati dai miei comitati
             Q(attivita__sede__in=sedi)
-            # Attivita aperte ai miei comitati
-            | Q(attivita__estensione__in=Sede.objects.get_queryset_ancestors(
-                sedi, include_self=True))
-            # Attivita che gesticsco
-            | Q(attivita__in=persona.oggetti_permesso(GESTIONE_SERVIZI))
-            , inizio__gte=inizio, fine__lt=(fine + timedelta(1)),
+
+            # Servizi aperti ai miei comitati
+            | Q(attivita__estensione__in=Sede.objects.get_queryset_ancestors(sedi, include_self=True))
+
+            # Servizi che gesticsco
+            | Q(attivita__in=persona.oggetti_permesso(GESTIONE_SERVIZI)),
+
+            inizio__gte=inizio, fine__lt=(fine + timedelta(1)),
             attivita__stato=ServizioSO.VISIBILE,
-        ).order_by('inizio')
+        ).order_by('inizio', )
 
     def aggiungi_partecipante(self, reperibilita_trovata, richiedente=None):
         return self.abbina_reperibilita(reperibilita_trovata)
