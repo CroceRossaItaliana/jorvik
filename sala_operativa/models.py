@@ -47,6 +47,35 @@ class ServizioSO(ModelloSemplice, ConGeolocalizzazione, ConMarcaTemporale,
     apertura = models.CharField(choices=APERTURA, default=APERTA, max_length=1, db_index=True)
     descrizione = models.TextField(blank=True)
 
+    @staticmethod
+    def servizi_standart():
+        choices = (
+            "Coordinamento Funzione Operazioni di Soccorso e Sanitarie",
+            "Coordinamento Funzione Operazioni Socio-Assistenziali",
+            "Soccorso Sanitario Urgente (118)",
+            "Gestione ambulatori e ambulatori mobili",
+            "Servizio di Biocontenimento Sanitario",
+            "Controllo Sanitario Aeroportuale",
+            "Screening Temperatura Corporea in frontiera (non USMAF)",
+            "Screening Temperatura Corporea non aeroportuali",
+            "Supporto ai Senza Fissa Dimora",
+            "Dialisi",
+            "Trasporto Persone Vulnerabili",
+            "Attività per i Giovani",
+            "Supporto Psico-Sociale operatori",
+            "Tele-supporto alla popolazione",
+            "Montaggio PMA o Pre-Triage ospedalieri e relativa gestione",
+            "Interviste Pre-Triage",
+            "Consegna farmaci a domicilio",
+            "Consegna spesa a domicilio",
+            "Consegna pacchi viveri",
+            "Consegna / distribuzione pasti caldi",
+            "Consegna effetti personali in ospedali a pazienti COVID19+",
+            "RFL – Ricongiunzione e Legami Familiari",
+            "Gestione delle strutture contumaciali e hub",
+        )
+        return [('s_%s' % i[0], i[1]) for i in enumerate(sorted(choices), 1)]
+
     @property
     def url(self):
         return reverse('so:servizio', args=[self.pk, ])

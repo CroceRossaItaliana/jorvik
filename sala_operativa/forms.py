@@ -73,10 +73,34 @@ class AggiungiPartecipantiForm(forms.Form):
 
 
 class OrganizzaServizioForm(ModelForm):
+    SERVIZI_STANDART_CHOICES = ServizioSO.servizi_standart()
+
+    servizi_standart = forms.ChoiceField(
+        required=False,
+        choices=[(None, '--------')] + SERVIZI_STANDART_CHOICES,
+        help_text='Scegli un nome predefinito o dai il nome al servizio nel '
+                  'campo "Nome" che si trova sotto',
+    )
+
+    def clean(self):
+        cd = self.cleaned_data
+        servizi_standart, nome = cd['servizi_standart'], cd['nome']
+        if servizi_standart and nome:
+            self.add_error('nome', 'Uno dei campi "Nome" devono rimanere non valorizzati.')
+
+        if servizi_standart and not nome:
+            cd['nome'] = dict(self.SERVIZI_STANDART_CHOICES)[servizi_standart]
+
     class Meta:
         model = ServizioSO
-        fields = ['nome', 'sede', 'inizio', 'fine', ]
+        fields = ['servizi_standart', 'nome', 'sede', 'inizio', 'fine', ]
 
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+
+        self.fields['nome'].initial = ''
+        self.fields['nome'].required = False
+        self.fields['nome'].widget = forms.TextInput(attrs={})  # to override required attr
 
 class OrganizzaServizioReferenteForm(forms.Form):
     SONO_IO = "IO"
