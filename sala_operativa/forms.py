@@ -15,7 +15,8 @@ from .models import ServizioSO, TurnoSO, ReperibilitaSO, MezzoSO, PrenotazioneMM
 class VolontarioReperibilitaForm(ModelForm):
     class Meta:
         model = ReperibilitaSO
-        fields = ['estensione', 'inizio', 'fine', 'attivazione', ]
+        fields = ['estensione', 'inizio', 'fine', 'attivazione',
+                  'applicazione_bdl', ]
 
 
 class AggiungiReperibilitaPerVolontarioForm(ModelForm):
@@ -23,7 +24,11 @@ class AggiungiReperibilitaPerVolontarioForm(ModelForm):
 
     class Meta:
         model = ReperibilitaSO
-        fields = ['persona', 'estensione', 'inizio', 'fine', 'attivazione', ]
+        fields = ['persona', 'estensione', 'inizio', 'fine', 'attivazione',
+                  'applicazione_bdl', ]
+
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
 
 
 class StoricoTurniForm(forms.Form):
@@ -31,10 +36,10 @@ class StoricoTurniForm(forms.Form):
     anno = forms.DateField(widget=SelectDateWidget(years=anni))
 
 
-class AttivitaInformazioniForm(ModelForm):
+class ModificaServizioForm(ModelForm):
     class Meta:
         model = ServizioSO
-        fields = ['stato', 'apertura', 'estensione', 'descrizione', ]
+        fields = ['stato', 'apertura', 'estensione', 'impiego_bdl', 'descrizione', ]
         widgets = {
             "descrizione": WYSIWYGSemplice(),
         }
@@ -94,10 +99,13 @@ class OrganizzaServizioForm(ModelForm):
 
     class Meta:
         model = ServizioSO
-        fields = ['servizi_standart', 'nome', 'sede', 'inizio', 'fine', ]
+        fields = ['servizi_standart', 'nome', 'sede', 'inizio', 'fine',
+                  'impiego_bdl', ]
 
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
+
+        self.fields['impiego_bdl'].help_text = 'Le attività in Convenzione o non legate all’emergenza in corso non possono prevedere l’attivazione dei Benefici di Legge (art. 39 e 40 del dlgs 1/2018)"'
 
         self.fields['nome'].initial = ''
         self.fields['nome'].required = False

@@ -49,12 +49,15 @@
             <tr>
                 <td class="piu-piccolo" style="width: 40%;">
                     <span class="piu-grande">{{ a.link|safe }}</span><br />
+                    <i class="fa fa-fw fa-map-marker text-muted"></i> {{ a.estensione.get_estensione_display }}<br />
                     <i class="fa fa-fw fa-map-marker text-muted"></i> <a href="{{ a.url_mappa }}">{{ a.locazione|default:"Nessuna posizione" }}</a><br />
-                    <i class="fa fa-fw fa-info-circle text-muted"></i> {{ a.delegati_attuali|join:", "|default:"(Nessun referente selezionato)" }}
+                    <i class="fa fa-fw fa-info-circle text-muted"></i> {{ a.delegati_attuali|join:", "|default:"(Nessun referente selezionato)" }}<br>
+                    L'impiego con i Benefici di legge: <strong>{% if a.impiego_bdl %}Si{% else %}No{% endif %}</strong>
                 </td>
 
                 <td>
-                    <i class="fa fa-fw fa-calendar text-muted"></i> {{ a.num_turni }} turni <br />
+                    {{ a.get_stato_display }} ({{ a.get_apertura_display }})<br />
+                    <i class="fa fa-fw fa-calendar text-muted"></i> {{ a.num_turni }} turni<br />
                     <i class="fa fa-fw fa-clock text-muted"></i> {{ a.creazione|date:"SHORT_DATETIME_FORMAT" }}<br />
                 </td>
 
@@ -70,9 +73,7 @@
                     {% endif %}
 
                     <a href="{{ a.url_turni_modifica }}"><i class="fas fa-pencil-alt"></i> modifica turni</a><br />
-
                     <a href="{{ a.url_mezzi_materiali }}"><i class="fas fa-pencil-alt"></i> modifica mezzi e materiali</a>
-
                 </td>
             </tr>
         {% empty %}
