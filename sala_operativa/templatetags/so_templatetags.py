@@ -1,9 +1,10 @@
 from django.template import Library
 
+from anagrafica.costanti import REGIONALE, NAZIONALE
 from ..models import PartecipazioneSO, ServizioSO
 
-
 register = Library()
+
 @register.filter
 def posso_vedere(servizio, persona):
     return PartecipazioneSO.objects.filter(
@@ -11,6 +12,19 @@ def posso_vedere(servizio, persona):
         persona=persona,
         confermata=True
     ).exists()
+
+
+@register.filter
+def posso_confermare(estensione, persona):
+    if estensione.estensione in [REGIONALE, NAZIONALE]:
+        if estensione.presidente() == persona:
+            return True
+    return False
+
+
+@register.filter
+def da_confermare(attivita):
+    return False if attivita.stato == ServizioSO.VISIBILE else True
 
 
 @register.assignment_tag(takes_context=True)

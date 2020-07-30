@@ -1,30 +1,27 @@
-from datetime import timedelta, date, datetime
+from datetime import timedelta, date
 from math import floor, ceil
 
+from django.core.urlresolvers import reverse
 from django.db import models
 from django.db.models import Q, F, Sum, Min
-from django.core.urlresolvers import reverse
 from django.utils import timezone
 from django.utils.timezone import now
 
-from anagrafica.permessi.costanti import GESTIONE_SERVIZI
-from anagrafica.permessi.incarichi import INCARICO_GESTIONE_SO_SERVIZI_PARTECIPANTI
-from base.files import PDF
-from base.geo import ConGeolocalizzazione
-
-from base.utils import concept, poco_fa
-from jorvik import settings
+from anagrafica.costanti import (LOCALE, PROVINCIALE, REGIONALE, NAZIONALE, )
 from anagrafica.models import Persona, Appartenenza, Sede
 from anagrafica.permessi.applicazioni import REFERENTE_SO
-from anagrafica.costanti import (LOCALE, PROVINCIALE, REGIONALE, NAZIONALE, )
+from anagrafica.permessi.costanti import GESTIONE_SERVIZI
+from base.files import PDF
+from base.geo import ConGeolocalizzazione
 from base.models import ModelloSemplice, Autorizzazione, ConAllegati, \
     ConAutorizzazioni
 from base.tratti import ConMarcaTemporale, ConStorico, ConDelegati
+from base.utils import concept, poco_fa
 from social.models import ConGiudizio
 
 
 class ServizioSO(ModelloSemplice, ConGeolocalizzazione, ConMarcaTemporale,
-        ConGiudizio, ConAllegati, ConDelegati, ConStorico):
+                 ConGiudizio, ConAllegati, ConDelegati, ConStorico):
     BOZZA = 'B'
     VISIBILE = 'V'
     STATO = (
@@ -42,7 +39,7 @@ class ServizioSO(ModelloSemplice, ConGeolocalizzazione, ConMarcaTemporale,
     nome = models.CharField(max_length=255, default="Nuovo servizio", db_index=True)
     sede = models.ForeignKey('anagrafica.Sede', related_name='servizio', on_delete=models.PROTECT)
     estensione = models.ForeignKey('anagrafica.Sede', null=True, default=None,
-        related_name='servizio_estensione', on_delete=models.PROTECT)
+                                   related_name='servizio_estensione', on_delete=models.PROTECT)
     stato = models.CharField(choices=STATO, default=BOZZA, max_length=1, db_index=True)
     apertura = models.CharField(choices=APERTURA, default=APERTA, max_length=1, db_index=True)
     descrizione = models.TextField(blank=True)
@@ -109,6 +106,14 @@ class ServizioSO(ModelloSemplice, ConGeolocalizzazione, ConMarcaTemporale,
         return reverse('so:servizio_referenti', args=[self.pk, ])
 
     @property
+    def url_richiedi_conferma(self):
+        return None
+
+    @property
+    def url_conferma(self):
+        return reverse('so:servizio_conferma', args=[self.pk, ])
+
+    @property
     def url_mappa_modifica(self):
         return self.url_modifica
 
@@ -118,7 +123,7 @@ class ServizioSO(ModelloSemplice, ConGeolocalizzazione, ConMarcaTemporale,
 
     @property
     def url_report(self):
-        return reverse('so:servizio_report', args=[self.pk,])
+        return reverse('so:servizio_report', args=[self.pk, ])
 
     @property
     def link(self):
@@ -134,6 +139,13 @@ class ServizioSO(ModelloSemplice, ConGeolocalizzazione, ConMarcaTemporale,
 
     def referenti_attuali(self, al_giorno=None):
         return self.delegati_attuali(tipo=REFERENTE_SO, al_giorno=al_giorno)
+
+    def conferma_servizio(self):
+        self.stato = ServizioSO.VISIBILE
+        self.save()
+
+    def richiede_approvazione(self):
+        return None
 
     def invia_ordine_di_partenza(self):
         pass
@@ -277,7 +289,7 @@ class ReperibilitaSO(ModelloSemplice, ConMarcaTemporale, ConStorico):
     )
 
     attivazione = models.TimeField("Tempo di attivazione", default="00:15",
-        help_text="Tempo necessario all'attivazione, in formato HH:mm.",)
+                                   help_text="Tempo necessario all'attivazione, in formato HH:mm.", )
     estensione = models.CharField(choices=ESTENSIONE_CHOICES, max_length=2)
     persona = models.ForeignKey(Persona, related_name="so_reperibilita", on_delete=models.CASCADE)
     creato_da = models.ForeignKey(Persona, null=True, blank=True)
@@ -325,7 +337,6 @@ class ReperibilitaSO(ModelloSemplice, ConMarcaTemporale, ConStorico):
 
 
 class TurnoSO(ModelloSemplice, ConMarcaTemporale, ConGiudizio):
-
     # todo: rename attivita field
     attivita = models.ForeignKey(ServizioSO, related_name='turni_so', on_delete=models.CASCADE)
 
@@ -333,7 +344,8 @@ class TurnoSO(ModelloSemplice, ConMarcaTemporale, ConGiudizio):
     inizio = models.DateTimeField("Data e ora di inizio", db_index=True, null=False)
     fine = models.DateTimeField("Data e ora di fine", db_index=True, null=True, blank=True, default=None)
     minimo = models.SmallIntegerField(verbose_name="Num. minimo di partecipanti", db_index=True, default=1)
-    massimo = models.SmallIntegerField(verbose_name="Num. massimo di partecipanti", db_index=True, blank=True, null=True, default=None)
+    massimo = models.SmallIntegerField(verbose_name="Num. massimo di partecipanti", db_index=True, blank=True,
+                                       null=True, default=None)
 
     PER_PAGINA = 10
 
@@ -539,7 +551,7 @@ class TurnoSO(ModelloSemplice, ConMarcaTemporale, ConGiudizio):
         """
         kwargs = dict(turno=self,
                       reperibilita=reperibilita,
-                      stato=PartecipazioneSO.PARTECIPA,)
+                      stato=PartecipazioneSO.PARTECIPA, )
         try:
             return PartecipazioneSO.objects.get(**kwargs), False
         except PartecipazioneSO.DoesNotExist:
@@ -576,10 +588,10 @@ class TurnoSO(ModelloSemplice, ConMarcaTemporale, ConGiudizio):
     class Meta:
         verbose_name = "Turno di Servizio"
         verbose_name_plural = "Turni dei Servizi"
-        ordering = ['inizio', 'fine', 'id',]
+        ordering = ['inizio', 'fine', 'id', ]
         index_together = [
-            ['inizio', 'fine',],
-            ['attivita', 'inizio',],
+            ['inizio', 'fine', ],
+            ['attivita', 'inizio', ],
             ['attivita', 'inizio', 'fine'],
         ]
         permissions = (
@@ -699,9 +711,9 @@ class PrenotazioneMMSO(ModelloSemplice, ConMarcaTemporale, ConStorico):
 
         return cls.objects.filter(
             Q(mezzo=mezzo) & (
-                Q(inizio__range=[inizio, fine])
-                | Q(inizio__range=[inizio, fine], fine__range=[inizio, fine])
-                | Q(fine__range=[inizio, fine])
+                    Q(inizio__range=[inizio, fine])
+                    | Q(inizio__range=[inizio, fine], fine__range=[inizio, fine])
+                    | Q(fine__range=[inizio, fine])
             )
         )
 
@@ -712,7 +724,7 @@ class PrenotazioneMMSO(ModelloSemplice, ConMarcaTemporale, ConStorico):
 
     @classmethod
     def del_servizio(cls, servizio):
-        return cls.objects.filter(servizio=servizio).order_by('-creazione',)
+        return cls.objects.filter(servizio=servizio).order_by('-creazione', )
 
     @property
     def passata(self):

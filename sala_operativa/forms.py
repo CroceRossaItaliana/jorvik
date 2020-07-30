@@ -32,6 +32,7 @@ class StoricoTurniForm(forms.Form):
 
 
 class AttivitaInformazioniForm(ModelForm):
+
     class Meta:
         model = ServizioSO
         fields = ['stato', 'apertura', 'estensione', 'descrizione', ]

@@ -709,6 +709,7 @@ def so_scheda_informazioni_modifica(request, me, pk=None):
                 servizio.chiudi(autore=me)
 
     context = {
+        "me": me,
         "attivita": servizio,
         "puo_modificare": True,
         "modulo": form,
@@ -979,3 +980,18 @@ def so_mezzo_modifica(request, me, pk):
         'mezzo': mezzo,
     }
     return 'so_mezzi_e_materiali_edit.html', context
+
+
+@pagina_privata
+def so_scheda_conferma(request, me, pk):
+    servizio = get_object_or_404(ServizioSO, pk=pk)
+
+    servizio.conferma_servizio()
+
+    return redirect(reverse('so:servizio_modifica', args=[pk, ]))
+
+@pagina_privata
+def so_scheda_richiedi_conferma(request, me, pk):
+    servizio = get_object_or_404(ServizioSO, pk=pk)
+
+    return None
