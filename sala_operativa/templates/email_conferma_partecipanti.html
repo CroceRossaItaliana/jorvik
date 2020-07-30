@@ -1,0 +1,8 @@
+{% extends 'email.html' %}
+
+{% block corpo %}
+
+    Il servizio {{ nome_servizio }} presso il comitato {{ comitato_servizio }} è stato confermato.
+    Visualizza i dettagli del corso <a href="{{ link }}">Servizio</a>
+
+{% endblock %}
