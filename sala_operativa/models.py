@@ -13,7 +13,6 @@ from base.files import PDF
 from base.geo import ConGeolocalizzazione
 
 from base.utils import concept, poco_fa
-from jorvik import settings
 from anagrafica.models import Persona, Appartenenza, Sede
 from anagrafica.permessi.applicazioni import REFERENTE_SO
 from anagrafica.costanti import (LOCALE, PROVINCIALE, REGIONALE, NAZIONALE, )
@@ -487,6 +486,10 @@ class TurnoSO(ModelloSemplice, ConMarcaTemporale, ConGiudizio):
         return PartecipazioneSO.con_esito_ritirata().filter(turno=self)
 
     @property
+    def singolo_giorno(self):
+        return True if self.inizio.date() == self.fine.date() else False
+
+    @property
     def scoperto(self):
         return self.partecipazioni_confermate().count() < self.minimo
 
@@ -517,9 +520,11 @@ class TurnoSO(ModelloSemplice, ConMarcaTemporale, ConGiudizio):
         :return: QuerySet per Turno
         """
 
-        sedi = persona.sedi_attuali(membro__in=Appartenenza.MEMBRO_SERVIZIO)
+        inizio = inizio - timedelta(31)
+        fine = fine + timedelta(31)
 
-        return TurnoSO.objects.filter(
+        sedi = persona.sedi_attuali(membro__in=Appartenenza.MEMBRO_SERVIZIO)
+        turni = TurnoSO.objects.filter(
             # Servizi organizzati dai miei comitati
             Q(attivita__sede__in=sedi)
 
@@ -529,9 +534,11 @@ class TurnoSO(ModelloSemplice, ConMarcaTemporale, ConGiudizio):
             # Servizi che gesticsco
             | Q(attivita__in=persona.oggetti_permesso(GESTIONE_SERVIZI)),
 
-            inizio__gte=inizio, fine__lt=(fine + timedelta(1)),
+            Q(inizio__range=[inizio, fine]), Q(fine__range=[inizio, fine]),
+
             attivita__stato=ServizioSO.VISIBILE,
         ).order_by('inizio', )
+        return turni
 
     def aggiungi_partecipante(self, reperibilita_trovata, richiedente=None):
         return self.abbina_reperibilita(reperibilita_trovata)

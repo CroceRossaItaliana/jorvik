@@ -14,14 +14,12 @@ urlpatterns = [
     url(r'^organizza/(?P<pk>[0-9\-]+)/referenti/$', views.so_referenti, {"nuova": True}, name='organizza_referenti'),
     url(r'^organizza/(?P<pk>[0-9\-]+)/fatto/$', views.so_organizza_fatto, name='organizza_fatto'),
 
-    # Gestisci
-    url(r'^gestisci/$', views.so_gestisci, {"stato": "aperte"}, name='gestisci'),
-    url(r'^gestisci/chiuse/$', views.so_gestisci, {"stato": "chiuse"}, name='gestisci_chiuse'),
+    # Gestisci servizi
+    url(r'^servizi/$', views.so_gestisci, {"stato": "aperte"}, name='gestisci'),
+    url(r'^servizi/chiusi/$', views.so_gestisci, {"stato": "chiuse"}, name='gestisci_chiuse'),
 
     # Calendario
-    url(r'^calendar/$', views.so_calendar, name='calendario'),
-    url(r'^calendario/$', views.so_calendario, name='calendar'),
-    url(r'^calendario/(?P<inizio>[0-9\-]+)/(?P<fine>[0-9\-]+)/$', views.so_calendario, name='calendario_con_range'),
+    url(r'^calendario/$', views.so_calendario, name='calendario'),
 
     # Storico
     url(r'^storico/$', views.so_storico, name='storico'),

@@ -1,6 +1,8 @@
-from datetime import datetime, timedelta
+from datetime import datetime, timedelta, date
 from collections import OrderedDict
 from calendar import HTMLCalendar, monthrange
+
+from django.db.models import Q
 
 from anagrafica.permessi.costanti import GESTIONE_SO_SEDE, GESTIONE_SERVIZI
 
@@ -53,20 +55,38 @@ class CalendarTurniSO(HTMLCalendar):
         super().__init__()
 
     def formatday(self, day):
-        turni_per_giorno = self.turni.filter(inizio__day=day)
         a = ''
+
+        if day == 0:
+            return '<td></td>'
+
+        # 1: Trova turni con l'inizio questo gg, questo mese
+        turni_per_giorno = self.turni.filter(Q(inizio__day=day),
+                                             inizio__month=self.month)
+
+        # 2: Memorizza i suoi numeri
+        pk_tmp = list(turni_per_giorno.values_list('pk', flat=True))
+
+        # 3: Ulteriore ricerca dei turni che hanno inizio prima o dopo questo mese
+        for turno in self.turni:
+            d = datetime(self.year, self.month, day)
+            if turno.inizio <= d <= turno.fine:
+                # 4. Memorizza anche questi turni
+                pk_tmp.append(turno.pk)
+
+        # 5. Query tutti turni insieme
+        turni_per_giorno = self.turni.filter(pk__in=pk_tmp)
+
+        # 6. Render dei link
         for turno in turni_per_giorno:
-            a = "<a href='%s'>%s</a>" % (turno.url, turno.nome)
+            a += "<a href='%s'>%s</a>" % (turno.url, turno.nome)
 
-        if day != 0:
-            return """<td>
-            <span class='date'>%s</span> 
-                <div class='so-calendar__day-items'>
-                    %s
-                </div>
-            </td>""" % (day, a)
-
-        return '<td></td>'
+        return """<td>
+        <span class='date'>%s</span> 
+            <div class='so-calendar__day-items'>
+                %s
+            </div>
+        </td>""" % (day, a)
 
     def formatweek(self, theweek):
         week = ''

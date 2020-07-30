@@ -245,7 +245,7 @@ def so_referenti(request, me, pk=None, nuova=False):
 
 
 @pagina_privata
-def so_calendar(request, me=None):
+def so_calendario(request, me=None):
     """Mostra il calendario dei turni nei servizi"""
     from .utils import CalendarTurniSO
 
@@ -286,12 +286,11 @@ def so_calendar(request, me=None):
         'next_month': CalendarTurniSO.next_month(inizio_mese),
         'prev_month': CalendarTurniSO.prev_month(inizio_mese),
     }
-
     return 'so_calendar.html', context
 
 
 @pagina_privata
-def so_calendario(request, me=None, inizio=None, fine=None, vista="calendario"):
+def so_calendario_old(request, me=None, inizio=None, fine=None, vista="calendario"):
     """Mostra il calendario dei turni nei servizi"""
     if not me.volontario:
         return errore_no_volontario(request, me)

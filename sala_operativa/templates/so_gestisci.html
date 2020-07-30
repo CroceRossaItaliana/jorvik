@@ -63,7 +63,7 @@
 
                 <td>
                     {% if a in servizio_referenti_modificabili and a.cancellabile %}
-                        <a href="{{ a.url_cancella }}" class="text-danger"><i class="far fa-trash-alt"></i> cancella servizio</a><br />
+                        <a href="{{ a.url_cancella }}"><i class="far fa-trash-alt"></i> cancella servizio</a><br />
                     {% endif %}
 
                     <a href="{{ a.url_modifica }}"><i class="fas fa-pencil-alt"></i> modifica info</a><br />
