@@ -289,77 +289,77 @@ def so_calendario(request, me=None):
     return 'so_calendar.html', context
 
 
-@pagina_privata
-def so_calendario_old(request, me=None, inizio=None, fine=None, vista="calendario"):
-    """Mostra il calendario dei turni nei servizi"""
-    if not me.volontario:
-        return errore_no_volontario(request, me)
-
-    # Range default e massimo
-    DEFAULT_GIORNI = 6
-    MASSIMO_GIORNI = 31
-
-    # Formato date URL
-    FORMATO = "%d-%m-%Y"
-
-    if inizio is None:
-        inizio = date.today().strftime(FORMATO)
-
-    inizio = datetime.strptime(inizio, FORMATO).date()
-
-    if fine is None:
-        fine = inizio + timedelta(DEFAULT_GIORNI)
-    else:
-        fine = datetime.strptime(fine, FORMATO).date()
-
-    # Assicura che il range sia valido (non troppo breve, non troppo lungo)
-    differenza = (fine - inizio)
-    if differenza.days < 0 or differenza.days > MASSIMO_GIORNI:
-        return so_calendario(request, me, inizio=inizio, fine=None)
-
-    # Successivo
-    successivo_inizio = inizio + differenza
-    successivo_inizio_stringa = successivo_inizio.strftime(FORMATO)
-    successivo_fine = fine + differenza
-    successivo_fine_stringa = successivo_fine.strftime(FORMATO)
-
-    successivo_url = reverse('so:calendario_con_range', args=[successivo_inizio_stringa,
-                                                              successivo_fine_stringa,])
-
-    # Oggi
-    oggi_url = reverse('so:calendario')
-
-    # Precedente
-    precedente_inizio = inizio - differenza
-    precedente_inizio_stringa = precedente_inizio.strftime(FORMATO)
-    precedente_fine = fine - differenza
-    precedente_fine_stringa = precedente_fine.strftime(FORMATO)
-
-    precedente_url = reverse('so:calendario_con_range', args=[precedente_inizio_stringa,
-                                                              precedente_fine_stringa,])
-
-    # Elenco
-    turni = TurnoSO.calendario_di(me, inizio, fine)
-    raggruppati = turni_raggruppa_giorno(turni)
-
-    context = {
-        "inizio": inizio,
-        "fine": fine,
-
-        "successivo_inizio": successivo_inizio,
-        "successivo_fine": successivo_fine,
-        "successivo_url": successivo_url,
-
-        "oggi_url": oggi_url,
-
-        "precedente_inizio": precedente_inizio,
-        "precedente_fine": precedente_fine,
-        "precedente_url": precedente_url,
-
-        "turni": turni,
-        "raggruppati": raggruppati,
-    }
-    return 'so_calendario.html', context
+# @pagina_privata
+# def so_calendario_old(request, me=None, inizio=None, fine=None, vista="calendario"):
+#     """Mostra il calendario dei turni nei servizi"""
+#     if not me.volontario:
+#         return errore_no_volontario(request, me)
+#
+#     # Range default e massimo
+#     DEFAULT_GIORNI = 6
+#     MASSIMO_GIORNI = 31
+#
+#     # Formato date URL
+#     FORMATO = "%d-%m-%Y"
+#
+#     if inizio is None:
+#         inizio = date.today().strftime(FORMATO)
+#
+#     inizio = datetime.strptime(inizio, FORMATO).date()
+#
+#     if fine is None:
+#         fine = inizio + timedelta(DEFAULT_GIORNI)
+#     else:
+#         fine = datetime.strptime(fine, FORMATO).date()
+#
+#     # Assicura che il range sia valido (non troppo breve, non troppo lungo)
+#     differenza = (fine - inizio)
+#     if differenza.days < 0 or differenza.days > MASSIMO_GIORNI:
+#         return so_calendario(request, me, inizio=inizio, fine=None)
+#
+#     # Successivo
+#     successivo_inizio = inizio + differenza
+#     successivo_inizio_stringa = successivo_inizio.strftime(FORMATO)
+#     successivo_fine = fine + differenza
+#     successivo_fine_stringa = successivo_fine.strftime(FORMATO)
+#
+#     successivo_url = reverse('so:calendario_con_range', args=[successivo_inizio_stringa,
+#                                                               successivo_fine_stringa,])
+#
+#     # Oggi
+#     oggi_url = reverse('so:calendario')
+#
+#     # Precedente
+#     precedente_inizio = inizio - differenza
+#     precedente_inizio_stringa = precedente_inizio.strftime(FORMATO)
+#     precedente_fine = fine - differenza
+#     precedente_fine_stringa = precedente_fine.strftime(FORMATO)
+#
+#     precedente_url = reverse('so:calendario_con_range', args=[precedente_inizio_stringa,
+#                                                               precedente_fine_stringa,])
+#
+#     # Elenco
+#     turni = TurnoSO.calendario_di(me, inizio, fine)
+#     raggruppati = turni_raggruppa_giorno(turni)
+#
+#     context = {
+#         "inizio": inizio,
+#         "fine": fine,
+#
+#         "successivo_inizio": successivo_inizio,
+#         "successivo_fine": successivo_fine,
+#         "successivo_url": successivo_url,
+#
+#         "oggi_url": oggi_url,
+#
+#         "precedente_inizio": precedente_inizio,
+#         "precedente_fine": precedente_fine,
+#         "precedente_url": precedente_url,
+#
+#         "turni": turni,
+#         "raggruppati": raggruppati,
+#     }
+#     return 'so_calendario.html', context
 
 
 @pagina_privata
