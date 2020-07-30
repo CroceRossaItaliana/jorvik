@@ -23,8 +23,7 @@
                         <thead>
                         <tr>
                             <th>Informazioni</th>
-                            <th>Inizio e fine</th>
-                            <th>Creato da</th>
+                            <th>Creato da, inizio e fine</th>
                             <th>Azioni</th>
                         </tr>
                         </thead>
@@ -32,20 +31,20 @@
                         {% for mm in mezzi_materiali %}
                             <tr>
                                 <td>
+                                    <div style="margin-bottom:15px;"><i class="fa fas fa-ambulance fa-fw"></i> {{ mm.nome }}</div>
                                     <strong>{{ mm.get_tipo_display|default:"" }}</strong>
                                     <span style="font-size:12px;">{{ mm.get_mezzo_tipo_display|default:"" }}</span><br>
                                     <strong>{{ mm.estensione }}</strong><br>
-                                    <div style="margin-top:10px;">{{ mm.nome }}</div>
-                                    {% if mm.abbinato_ai_servizi %}
-                                        <div>Abbinato ai servizi: <a href="#">{{ mm.abbinato_ai_servizi.count }}</a></div>
-                                    {% endif %}
                                 </td>
-                                <td>
+                                <td style="font-size:12px;">
+                                    {{ mm.creato_da.link|safe }}<br>
                                     <strong>Inizio:</strong> {{ mm.inizio|date:"SHORT_DATETIME_FORMAT" }}<br>
                                     <strong>Fine:</strong> {{ mm.fine|date:"SHORT_DATETIME_FORMAT"|default:"Non impostata" }}
+                                    {% if mm.abbinato_ai_servizi %}
+                                        <div style="margin-top:10px;">Abbinato ai servizi: <a href="#">{{ mm.abbinato_ai_servizi.count }}</a></div>
+                                    {% endif %}
                                 </td>
-                                <td>{{ mm.creato_da.link|safe }}</td>
-                                <td>
+                                <td style="font-size:12px;">
                                     <a href="{% url 'so:mezzo_cancella' mm.pk %}" data-conferma="Vuoi cancellare questo mezzo/materiale?">
                                         <i class="fa fa-fw fa-trash"></i> Cancella</a><br>
                                     <a href="{% url 'so:mezzo_modifica' mm.pk %}"><i class="fa fa-fw fa-edit"></i> Modifica</a>
@@ -53,7 +52,7 @@
                             </tr>
                         {% empty %}
                             <tr class="alert alert-warning">
-                                <td colspan="7">
+                                <td colspan="3">
                                     <i class="fa fa-fw fa-warning"></i> Ancora non ci sono mezzi e materiali
                                 </td>
                             </tr>

@@ -29,9 +29,9 @@
                         {% for prenotazione in prenotazioni %}
                             <tr>
                                 <td>
+                                    <div style="margin-bottom:10px;"><i class="fa fas fa-ambulance fa-fw"></i> {{ prenotazione.mezzo.nome }}</div>
                                     <strong>{{ prenotazione.mezzo.get_tipo_display|default:"" }}</strong>
                                     <span style="font-size:12px;">{{ prenotazione.mezzo.get_mezzo_tipo_display|default:"" }}</span><br>
-                                    <div style="margin-top:10px;">{{ prenotazione.mezzo.nome }}</div>
                                 </td>
                                 <td><strong>{{ prenotazione.mezzo.estensione }}</strong></td>
                                 <td>
@@ -85,10 +85,9 @@
                         {% for mezzo in mezzi_disponibili %}
                             <tr>
                                 <td>
+                                    <div style="margin-bottom:10px;"><i class="fa fas fa-ambulance fa-fw"></i> {{ mezzo.nome }}</div>
                                     <strong>{{ mezzo.get_tipo_display|default:"" }}</strong>
                                     <span style="font-size:12px;">{{ mezzo.get_mezzo_tipo_display|default:"" }}</span><br>
-
-                                    <div style="margin-top:10px;">{{ mezzo.nome }}</div>
                                 </td>
                                 <td>
                                     <strong>Inizio:</strong> {{ mezzo.inizio|date:"SHORT_DATETIME_FORMAT" }}<br>

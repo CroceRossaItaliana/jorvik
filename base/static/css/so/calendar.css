@@ -1,0 +1,42 @@
+.so-calendar {
+  width: 98%;
+  margin: auto;
+  font-size: 13px;
+}
+
+.so-calendar tr, .so-calendar td {
+  border: 1px solid #ddd;
+}
+
+.so-calendar th {
+  padding: 10px;
+  text-align: center;
+  font-size: 18px;
+}
+
+.so-calendar td {
+  width: 200px;
+  height: 150px;
+  padding: 20px 0px 0px 5px;
+}
+
+.so-calendar__day-items a {
+	display: block;
+	margin: 0 0 2px;
+	background-color: #59c3c8;
+	color: #fff;
+	padding: 2px 5px;
+	font-size: 12px;
+	border-radius: 3px;
+}
+
+.so-calendar__nav {
+	width: 100%;
+	height: auto !important;
+}
+
+.so-calendar__nav-flex {
+	display:flex;
+	justify-content: space-between;
+	width: 100%;
+}

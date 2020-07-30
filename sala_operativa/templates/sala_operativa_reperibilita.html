@@ -1,4 +1,4 @@
-{% extends 'sala_operativa_base.html' %}
+{% extends 'so_vuota.html' %}
 
 {% load bootstrap3 %}
 {% load humanize %}
@@ -34,6 +34,11 @@
                                 <strong>{{ r.get_estensione_display }}</strong><br>
                                 <strong>Inizio:</strong> {{ r.inizio }}<br>
                                 <strong>Fine:</strong> {{ r.fine }}<br>
+
+                                <div style="margin:4px 0 8px; font-size:12px;">
+                                    Applicazione dei Benefici di Legge: <strong>{% if r.applicazione_bdl %}Si{% else %}No{% endif %}</strong>
+                                </div>
+
                                 {% if r.nel_turno %}
                                     <i class="fas fa-thumbs-up"></i> Già abbinata al turno
                                     {% for partecipazione in r.nel_turno%}

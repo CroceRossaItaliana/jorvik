@@ -1,3 +1,4 @@
+import calendar
 import json
 from datetime import date, timedelta, datetime, time
 
@@ -8,6 +9,7 @@ from django.contrib import messages
 from django.core.urlresolvers import reverse
 from django.core.paginator import Paginator, PageNotAnInteger, EmptyPage
 from django.shortcuts import redirect, get_object_or_404
+from django.utils.safestring import mark_safe
 
 from anagrafica.costanti import NAZIONALE
 from anagrafica.forms import ModuloProfiloModificaAnagraficaDatoreLavoro
@@ -15,12 +17,12 @@ from anagrafica.permessi.applicazioni import REFERENTE_SO
 from anagrafica.permessi.costanti import (MODIFICA, COMPLETO, ERRORE_PERMESSI,
       GESTIONE_SO_SEDE, GESTIONE_SERVIZI, GESTIONE_REFERENTI_SO, )
 from autenticazione.funzioni import pagina_privata, pagina_pubblica
-from base.errori import ci_siamo_quasi, errore_generico, messaggio_generico, errore_no_volontario
+from base.errori import errore_generico, messaggio_generico, errore_no_volontario
 from base.utils import poco_fa, timedelta_ore
 from .utils import turni_raggruppa_giorno
 from .models import PartecipazioneSO, ServizioSO, TurnoSO, ReperibilitaSO, MezzoSO, PrenotazioneMMSO
 from .elenchi import ElencoPartecipantiTurno, ElencoPartecipantiAttivita
-from .forms import (AttivitaInformazioniForm, ModificaTurnoForm, StatisticheServiziForm,
+from .forms import (ModificaServizioForm, ModificaTurnoForm, StatisticheServiziForm,
                     AggiungiPartecipantiForm, CreazioneTurnoForm, RipetiTurnoForm,
                     VolontarioReperibilitaForm, AggiungiReperibilitaPerVolontarioForm,
                     OrganizzaServizioReferenteForm, OrganizzaServizioForm, CreazioneMezzoSO,
@@ -142,7 +144,7 @@ def so_gestisci(request, me, stato="aperte"):
     servizi_chiusi = servizi_tutti.filter(apertura=ServizioSO.CHIUSA)
 
     servizi = servizi_aperti if stato == "aperte" else servizi_chiusi
-    servizi = servizi.annotate(num_turni=Count('turni_so'))
+    servizi = servizi.order_by('-inizio', ).annotate(num_turni=Count('turni_so'))
     servizi = Paginator(servizi, 30)
 
     try:
@@ -243,8 +245,54 @@ def so_referenti(request, me, pk=None, nuova=False):
 
 
 @pagina_privata
+def so_calendar(request, me=None):
+    """Mostra il calendario dei turni nei servizi"""
+    from .utils import CalendarTurniSO
+
+    if not me.volontario:
+        return errore_no_volontario(request, me)
+
+    current_month = timezone.now().today()
+    year = now().year
+    month = now().month
+
+    # Navigazione mesi
+    current_month_get = request.GET.get('m')
+    if current_month_get:
+        try:
+            year, month = [int(i) for i in current_month_get.split('-')]
+            current_month = datetime(year=year, month=month, day=1)
+        except:
+            pass
+
+    # Lavorazione date
+    _, num_days = calendar.monthrange(year, month)
+    inizio_mese = current_month.replace(day=1, hour=0, minute=0, second=0)
+    fine_mese = inizio_mese.replace(day=num_days) + timedelta(days=1)
+
+    # Estrazione dei turni
+    turni = TurnoSO.calendario_di(me, inizio_mese, fine_mese)
+
+    # Lavorazione calendario
+    calendario = CalendarTurniSO(current_month, turni)
+    malendario_mensile_html = calendario.formatmonth(withyear=True)
+
+    context = {
+        "inizio": inizio_mese,
+        "fine": fine_mese,
+        "turni": turni,
+        'calendario': mark_safe(malendario_mensile_html),
+
+        'next_month': CalendarTurniSO.next_month(inizio_mese),
+        'prev_month': CalendarTurniSO.prev_month(inizio_mese),
+    }
+
+    return 'so_calendar.html', context
+
+
+@pagina_privata
 def so_calendario(request, me=None, inizio=None, fine=None, vista="calendario"):
-    """Mostra il calendario delle attivita' personalizzato."""
+    """Mostra il calendario dei turni nei servizi"""
     if not me.volontario:
         return errore_no_volontario(request, me)
 
@@ -401,7 +449,7 @@ def so_scheda_mm_abbina(request, me=None, pk=None, mm_pk=None):
     servizio = get_object_or_404(ServizioSO, pk=pk)
     mezzo = get_object_or_404(MezzoSO, pk=mm_pk)
 
-    tra_un_ora = now()# + timedelta(hours=1)
+    tra_un_ora = now() + timedelta(hours=1)
 
     form = AbbinaMezzoMaterialeForm(request.POST or None,
                                     instance=mezzo,
@@ -694,7 +742,7 @@ def so_scheda_informazioni_modifica(request, me, pk=None):
             return redirect(servizio.url)
         return redirect(ERRORE_PERMESSI)
 
-    form = AttivitaInformazioniForm(request.POST or None, instance=servizio)
+    form = ModificaServizioForm(request.POST or None, instance=servizio)
     form.fields['estensione'].queryset = servizio.sede.get_ancestors(include_self=True).exclude(estensione=NAZIONALE)
 
     if form.is_valid():

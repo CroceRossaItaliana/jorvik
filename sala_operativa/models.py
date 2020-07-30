@@ -42,6 +42,7 @@ class ServizioSO(ModelloSemplice, ConGeolocalizzazione, ConMarcaTemporale,
                                    related_name='servizio_estensione', on_delete=models.PROTECT)
     stato = models.CharField(choices=STATO, default=BOZZA, max_length=1, db_index=True)
     apertura = models.CharField(choices=APERTURA, default=APERTA, max_length=1, db_index=True)
+    impiego_bdl = models.BooleanField("L'attività prevede l'impiego dei Benefici di Legge", default=False,)
     descrizione = models.TextField(blank=True)
 
     @staticmethod
@@ -292,6 +293,7 @@ class ReperibilitaSO(ModelloSemplice, ConMarcaTemporale, ConStorico):
                                    help_text="Tempo necessario all'attivazione, in formato HH:mm.", )
     estensione = models.CharField(choices=ESTENSIONE_CHOICES, max_length=2)
     persona = models.ForeignKey(Persona, related_name="so_reperibilita", on_delete=models.CASCADE)
+    applicazione_bdl = models.BooleanField("Applicazione dei Benefici di Legge", default=False)
     creato_da = models.ForeignKey(Persona, null=True, blank=True)
 
     @classmethod
@@ -530,16 +532,18 @@ class TurnoSO(ModelloSemplice, ConMarcaTemporale, ConGiudizio):
         sedi = persona.sedi_attuali(membro__in=Appartenenza.MEMBRO_SERVIZIO)
 
         return TurnoSO.objects.filter(
-            # Attivtia organizzate dai miei comitati
+            # Servizi organizzati dai miei comitati
             Q(attivita__sede__in=sedi)
-            # Attivita aperte ai miei comitati
-            | Q(attivita__estensione__in=Sede.objects.get_queryset_ancestors(
-                sedi, include_self=True))
-            # Attivita che gesticsco
-            | Q(attivita__in=persona.oggetti_permesso(GESTIONE_SERVIZI))
-            , inizio__gte=inizio, fine__lt=(fine + timedelta(1)),
+
+            # Servizi aperti ai miei comitati
+            | Q(attivita__estensione__in=Sede.objects.get_queryset_ancestors(sedi, include_self=True))
+
+            # Servizi che gesticsco
+            | Q(attivita__in=persona.oggetti_permesso(GESTIONE_SERVIZI)),
+
+            inizio__gte=inizio, fine__lt=(fine + timedelta(1)),
             attivita__stato=ServizioSO.VISIBILE,
-        ).order_by('inizio')
+        ).order_by('inizio', )
 
     def aggiungi_partecipante(self, reperibilita_trovata, richiedente=None):
         return self.abbina_reperibilita(reperibilita_trovata)
@@ -579,6 +583,11 @@ class TurnoSO(ModelloSemplice, ConMarcaTemporale, ConGiudizio):
 
         disponibili = reperibilita.exclude(pk__in=reperibilita_abbinate)
         oldest_reperibilita = disponibili.aggregate(oldest_inizio=Min('inizio'))
+
+        # Le attività in Convenzione o non legate all’emergenza in corso non possono
+        # prevedere l’attivazione dei Benefici di Legge (art. 39 e 40 del dlgs 1/2018)
+        applicazione_bdl = True if self.attivita.impiego_bdl else False
+        disponibili = disponibili.filter(applicazione_bdl=applicazione_bdl)
 
         return disponibili.exclude(
             Q(fine__lte=self.inizio),

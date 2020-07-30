@@ -1,4 +1,4 @@
-{% extends 'sala_operativa_base.html' %}
+{% extends 'so_vuota.html' %}
 
 {% load bootstrap3 %}
 
@@ -47,7 +47,7 @@
                     <table class="table table-striped">
                         <thead>
                         <tr>
-                            <th>Nome e cognome</th>
+                            <th>Informazioni</th>
                             <th>Reperibilit&agrave;</th>
                             <th>Attivazione</th>
                             <th>Cellulare</th>
@@ -59,7 +59,10 @@
                             <tr>
                                 <td>
                                     <span class="grassetto">{{ r.persona.link|safe }}</span><br />
-                                    {{ r.persona.sede_riferimento.link|safe }}
+                                    {{ r.persona.sede_riferimento.link|safe }}<br>
+                                    <div style="margin:8px 0 0; font-size:12px;">
+                                        Applicazione dei<br>Benefici di Legge: <strong>{% if r.applicazione_bdl %}Si{% else %}No{% endif %}</strong>
+                                    </div>
                                 </td>
                                 <td>
                                     <strong>{{ r.get_estensione_display }}</strong><br>
