@@ -119,8 +119,8 @@ class Messaggio(ModelloSemplice, ConMarcaTemporale, ConGiudizio, ConAllegati):
         for el in links:
             try:
                 url = el.attrib['href']
-                if '://' not in url:
-                    el.attrib['href'] = "https://gaia.cri.it%s" % (url,)
+                # if '://' not in url:
+                #     el.attrib['href'] = "https://gaia.cri.it%s" % (url,)
             except KeyError:
                 continue
         self.corpo = html.tostring(doc, pretty_print=True).decode('UTF-8')

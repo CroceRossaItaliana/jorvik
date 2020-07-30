@@ -11,7 +11,7 @@ from django.core.paginator import Paginator, PageNotAnInteger, EmptyPage
 from django.shortcuts import redirect, get_object_or_404
 from django.utils.safestring import mark_safe
 
-from anagrafica.costanti import NAZIONALE
+from anagrafica.costanti import NAZIONALE, REGIONALE
 from anagrafica.forms import ModuloProfiloModificaAnagraficaDatoreLavoro
 from anagrafica.permessi.applicazioni import REFERENTE_SO
 from anagrafica.permessi.costanti import (MODIFICA, COMPLETO, ERRORE_PERMESSI,
@@ -19,6 +19,7 @@ from anagrafica.permessi.costanti import (MODIFICA, COMPLETO, ERRORE_PERMESSI,
 from autenticazione.funzioni import pagina_privata, pagina_pubblica
 from base.errori import errore_generico, messaggio_generico, errore_no_volontario
 from base.utils import poco_fa, timedelta_ore
+from posta.models import Messaggio
 from .utils import turni_raggruppa_giorno
 from .models import PartecipazioneSO, ServizioSO, TurnoSO, ReperibilitaSO, MezzoSO, PrenotazioneMMSO
 from .elenchi import ElencoPartecipantiTurno, ElencoPartecipantiAttivita
@@ -1042,4 +1043,6 @@ def so_scheda_conferma(request, me, pk):
 def so_scheda_richiedi_conferma(request, me, pk):
     servizio = get_object_or_404(ServizioSO, pk=pk)
 
-    return None
+    servizio.richiede_approvazione(me)
+
+    return redirect(reverse('so:servizio_modifica', args=[pk, ]))

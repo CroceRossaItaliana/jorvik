@@ -1,6 +1,7 @@
 from datetime import timedelta, date
 from math import floor, ceil
 
+from django.contrib.postgres.fields import JSONField
 from django.core.urlresolvers import reverse
 from django.db import models
 from django.db.models import Q, F, Sum, Min
@@ -17,6 +18,7 @@ from base.models import ModelloSemplice, Autorizzazione, ConAllegati, \
     ConAutorizzazioni
 from base.tratti import ConMarcaTemporale, ConStorico, ConDelegati
 from base.utils import concept, poco_fa
+from posta.models import Messaggio
 from social.models import ConGiudizio
 
 
@@ -42,8 +44,9 @@ class ServizioSO(ModelloSemplice, ConGeolocalizzazione, ConMarcaTemporale,
                                    related_name='servizio_estensione', on_delete=models.PROTECT)
     stato = models.CharField(choices=STATO, default=BOZZA, max_length=1, db_index=True)
     apertura = models.CharField(choices=APERTURA, default=APERTA, max_length=1, db_index=True)
-    impiego_bdl = models.BooleanField("L'attività prevede l'impiego dei Benefici di Legge", default=False,)
+    impiego_bdl = models.BooleanField("L'attività prevede l'impiego dei Benefici di Legge", default=False, )
     descrizione = models.TextField(blank=True)
+    meta = JSONField(null=True, blank=True)
 
     @staticmethod
     def servizi_standart():
@@ -108,7 +111,7 @@ class ServizioSO(ModelloSemplice, ConGeolocalizzazione, ConMarcaTemporale,
 
     @property
     def url_richiedi_conferma(self):
-        return None
+        return reverse('so:servizio_richiedi_conferma', args=[self.pk, ])
 
     @property
     def url_conferma(self):
@@ -145,8 +148,57 @@ class ServizioSO(ModelloSemplice, ConGeolocalizzazione, ConMarcaTemporale,
         self.stato = ServizioSO.VISIBILE
         self.save()
 
-    def richiede_approvazione(self):
-        return None
+        Messaggio.costruisci_e_invia(
+            oggetto="Attivazione corso {}".format(self.nome),
+            modello="email_conferma_partecipanti.html",
+            corpo={
+                "nome_servizio": self.nome,
+                "comitato_servizio": self.estensione,
+                "link": self.url
+            },
+            destinatari=self.partecipanti_confermati(),
+        )
+
+        if self.estensione.estensione == LOCALE:
+            referenti = self.referenti_attuali()
+            presidente = self.estensione.presidente()
+            if presidente not in referenti:
+                referenti.append(presidente)
+
+            Messaggio.costruisci_e_invia(
+                oggetto="Attivazione corso {}".format(self.nome),
+                modello="email_conferma_referenti.html",
+                corpo={
+                    "nome_servizio": self.nome,
+                    "comitato_servizio": self.estensione,
+                    "link": self.url
+                },
+                destinatari=referenti,
+            )
+
+    def richiede_approvazione(self, persona):
+        regionale = self.estensione.ottieni_superiori().filter(estensione=REGIONALE).first()
+
+        presidente = regionale.presidente()
+
+        Messaggio.costruisci_e_invia(
+            oggetto="Richiesta conferma servizio",
+            modello="email_richiesta_conferma_servizio.html",
+            corpo={
+                "nome_servizio": self.nome,
+                "comitato_servizio": self.estensione,
+                "link_conferma": self.url_conferma
+            },
+            mittente=persona,
+            destinatari=[presidente],
+        )
+
+        self.meta = {'richiesta_inviata': True}
+        self.save()
+
+    @property
+    def email_inviata(self):
+        return True if 'richiesta_inviata' in self.meta and self.meta['richiesta_inviata'] else False
 
     def invia_ordine_di_partenza(self):
         pass
@@ -231,10 +283,13 @@ class ServizioSO(ModelloSemplice, ConGeolocalizzazione, ConMarcaTemporale,
         Ottiene il queryset di tutti i partecipanti confermati
         :return:
         """
+
         from anagrafica.models import Persona
         return Persona.objects.filter(
-            PartecipazioneSO.con_esito_ok(turno__attivita=self).via("partecipazioni")
-        ).distinct('nome', 'cognome', 'codice_fiscale').order_by('nome', 'cognome', 'codice_fiscale')
+            pk__in=PartecipazioneSO.con_esito_ok(turno__attivita=self).values_list('reperibilita__persona', flat=True)
+        ) \
+            .distinct('nome', 'cognome', 'codice_fiscale') \
+            .order_by('nome', 'cognome', 'codice_fiscale')
 
     REPORT_FORMAT_EXCEL = 'xls'
     REPORT_FORMAT_PDF = 'pdf'
@@ -720,11 +775,14 @@ class PrenotazioneMMSO(ModelloSemplice, ConMarcaTemporale, ConStorico):
 
         return cls.objects.filter(
             Q(mezzo=mezzo) & (
-                    Q(inizio__range=[inizio, fine])
-                    | Q(inizio__range=[inizio, fine], fine__range=[inizio, fine])
-                    | Q(fine__range=[inizio, fine])
+                    Q(inizio=inizio, fine=fine)
+                    | (
+                        Q(inizio__lte=inizio, fine__gte=inizio)
+                        | Q(inizio__lte=fine, fine__gte=fine)
+                    )
             )
         )
+
 
     @classmethod
     def occupazione_nel_range(cls, mezzo, inizio, fine):

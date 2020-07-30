@@ -6,6 +6,7 @@ from django.forms.extras import SelectDateWidget
 from django.utils import timezone
 from django.utils.timezone import now
 
+from anagrafica.costanti import LOCALE
 from anagrafica.models import Sede
 from anagrafica.permessi.costanti import GESTIONE_SO_SEDE
 from base.wysiwyg import WYSIWYGSemplice
@@ -37,12 +38,19 @@ class StoricoTurniForm(forms.Form):
 
 
 class ModificaServizioForm(ModelForm):
+
     class Meta:
         model = ServizioSO
         fields = ['stato', 'apertura', 'estensione', 'impiego_bdl', 'descrizione', ]
         widgets = {
-            "descrizione": WYSIWYGSemplice(),
+            "descrizione": WYSIWYGSemplice()
         }
+
+    def __init__(self, *args, **kwargs):
+        self.servizio = kwargs.get('instance')
+        super().__init__(*args, **kwargs)
+        if self.servizio.estensione.estensione == LOCALE:
+            self.fields['stato'].widget.attrs['readonly'] = True
 
 
 class ModificaTurnoForm(ModelForm):

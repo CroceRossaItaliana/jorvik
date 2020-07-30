@@ -75,11 +75,13 @@
                         </a>
                     </li>
                 {% else %}
-                    <li role="presentation">
-                        <a href="{{ attivita.url_richiedi_conferma }}" class="text-danger">
-                            <i class="fa fa-check"></i> Richiedi Conferma Servizio
-                        </a>
-                    </li>
+                    {% if not attivita.email_inviata %}
+                        <li role="presentation">
+                            <a href="{{ attivita.url_richiedi_conferma }}" class="text-danger" data-conferma="Inviare la richiesta di approvazione?">
+                                <i class="fa fa-check"></i> Richiedi Conferma Servizio
+                            </a>
+                        </li>
+                    {% endif %}
                 {% endif %}
             {% endif %}
             <!--            <li role="presentation" {% if attivita.url_report in request.path %}
