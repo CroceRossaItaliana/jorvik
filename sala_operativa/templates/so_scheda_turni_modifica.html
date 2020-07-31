@@ -25,9 +25,12 @@
                 <tr id="turno-{{ turno.pk }}">
                     <td style="width: 25%; padding:30px 0;">
                         {% bootstrap_form modulo size='small' %}
+
+                        {% if not turno.passato %}
                         <button type="submit" class="btn btn-sm btn-block btn-primary">
                             <i class="fa fa-fw fa-save"></i> Salva modifiche
                         </button>
+                        {% endif %}
                     </td>
                     <td>
                         <table class="table table-condensed table-striped">
@@ -42,7 +45,9 @@
                                         <tr>
                                             <th>Persona</th>
                                             <th>Stato</th>
-                                            <th>Azione</th>
+                                            {% if not turno.passato %}
+                                                <th>Azione</th>
+                                            {% endif %}
                                         </tr>
                                         </thead>
                                         <tbody>
@@ -50,14 +55,16 @@
                                             <tr>
                                                 <td>
                                                     {{ p.reperibilita.persona.link|safe }}<br>
-                                                    <span style="font-size:10px;">Abbiato il {{ p.creazione|date:"SHORT_DATETIME_FORMAT" }}</span>
+                                                    <span style="font-size:10px;">Abbinato il {{ p.creazione|date:"SHORT_DATETIME_FORMAT" }}</span>
                                                 </td>
                                                 <td>{{ p.get_stato_display }}</td>
-                                                <td>
-                                                    <a href="{{ p.url_cancella }}" data-conferma="Sei sicuro di voler rimuovere {{ p.reperibilita.persona.nome_completo }} dal turno?">
-                                                        <i class="fa fa-fw fa-times"></i> Rimuovi
-                                                    </a>
-                                                </td>
+                                                {% if not turno.passato %}
+                                                    <td>
+                                                        <a href="{{ p.url_cancella }}" data-conferma="Sei sicuro di voler rimuovere {{ p.reperibilita.persona.nome_completo }} dal turno?">
+                                                            <i class="fa fa-fw fa-times"></i> Rimuovi
+                                                        </a>
+                                                    </td>
+                                                {% endif %}
                                             </tr>
                                         {% empty %}
                                             <tr>
@@ -71,6 +78,7 @@
                                 </td>
                             </tr><!--./Reperibilità abbinate-->
 
+                            {% if not turno.passato %}
                             <tr><!--Reperibilità disponibili-->
                                 <td>
                                     <h4 class="text-success">
@@ -81,7 +89,9 @@
                                         <tr>
                                             <th>Persona</th>
                                             <th>Reperibilità</th>
-                                            <th>Azione</th>
+                                            {% if not turno.passato %}
+                                                <th>Azione</th>
+                                            {% endif %}
                                         </tr>
                                         </thead>
                                         <tbody>
@@ -113,12 +123,14 @@
                                         </tbody>
                                     </table>
                                 </td>
-                            </tr><!--./Reperibilità disponibili-->
+                            </tr>{% endif %}<!--./Reperibilità disponibili-->
                             </tbody>
                         </table>
                     </td>
 
                     <td>
+                        {% if not turno.passato %}
+
                         {% include 'so_scheda_turni_aggiungi_partecipante_modal_inc.html' %}
 
                         <div class="btn-group-vertical btn-block">
@@ -135,6 +147,9 @@
                                 </a>
                             </p>
                         </div>
+                        {% else %}
+                            <p style="margin:15px 0 0; text-align:center; font-size:12px;">Turno passato.<br>Non disponibili.</p>
+                        {% endif %}
                     </td>
                 </tr>
             {% empty %}

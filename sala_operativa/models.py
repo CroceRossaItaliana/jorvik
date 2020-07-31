@@ -567,6 +567,10 @@ class TurnoSO(ModelloSemplice, ConMarcaTemporale, ConGiudizio):
     def futuro(self):
         return self.fine > timezone.now()
 
+    @property
+    def passato(self):
+        return self.fine < timezone.now()
+
     def elenco_posizione(self):
         """
         :return: Ottiene la posizione approssimativa di questo turno in elenco (5=quinto).

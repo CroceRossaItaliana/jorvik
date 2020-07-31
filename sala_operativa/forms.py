@@ -74,6 +74,15 @@ class ModificaTurnoForm(ModelForm):
         if massimo and minimo > massimo:
             self.add_error("massimo", "Il massimo deve essere maggiore del minimo.")
 
+    def __init__(self, *args, **kwargs):
+        instance = kwargs.get('instance')
+        super().__init__(*args, **kwargs)
+        if instance and instance.passato:
+            keys = self.fields.keys()
+            for k in keys:
+                self.fields[k].widget.attrs['readonly'] = True
+
+
 
 class CreazioneTurnoForm(ModificaTurnoForm):
     pass
