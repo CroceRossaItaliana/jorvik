@@ -994,8 +994,13 @@ def so_mezzi(request, me):
 
 @pagina_privata
 def so_mezzo_cancella(request, me, pk):
-    # todo: permessi
     mm = get_object_or_404(MezzoSO, pk=pk)
+
+    mie_sedi = me.oggetti_permesso(GESTIONE_SO_SEDE)
+
+    if mm.estensione not in mie_sedi:
+        return redirect(ERRORE_PERMESSI)
+
     mm.delete()
     messages.success(request, 'Il mezzo/materiale selezionato è stato rimosso.')
     return redirect(reverse('so:mezzi'))
@@ -1003,10 +1008,13 @@ def so_mezzo_cancella(request, me, pk):
 
 @pagina_privata
 def so_mezzo_modifica(request, me, pk):
-    # todo: permessi
-    mie_sedi = me.oggetti_permesso(GESTIONE_SO_SEDE)
 
     mezzo = get_object_or_404(MezzoSO, pk=pk)
+    mie_sedi = me.oggetti_permesso(GESTIONE_SO_SEDE)
+
+    if mezzo.estensione not in mie_sedi:
+        return redirect(ERRORE_PERMESSI)
+
     if mezzo.creato_da != me:
         return redirect(ERRORE_PERMESSI)
 
@@ -1025,7 +1033,7 @@ def so_mezzo_modifica(request, me, pk):
     return 'so_mezzi_e_materiali_edit.html', context
 
 
-@pagina_privata
+@pagina_privata(permessi=(GESTIONE_SERVIZI,))
 def so_scheda_conferma(request, me, pk):
     servizio = get_object_or_404(ServizioSO, pk=pk)
 
@@ -1034,7 +1042,7 @@ def so_scheda_conferma(request, me, pk):
     return redirect(reverse('so:servizio_modifica', args=[pk, ]))
 
 
-@pagina_privata
+@pagina_privata(permessi=(GESTIONE_SERVIZI,))
 def so_scheda_richiedi_conferma(request, me, pk):
     servizio = get_object_or_404(ServizioSO, pk=pk)
 
