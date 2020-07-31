@@ -8,7 +8,7 @@ from django.utils.timezone import now
 from django.contrib import messages
 from django.core.urlresolvers import reverse
 from django.core.paginator import Paginator, PageNotAnInteger, EmptyPage
-from django.shortcuts import redirect, get_object_or_404
+from django.shortcuts import redirect, get_object_or_404, HttpResponse
 from django.utils.safestring import mark_safe
 
 from anagrafica.costanti import NAZIONALE
@@ -968,7 +968,6 @@ def so_statistiche(request, me):
 @pagina_privata
 def so_mezzi(request, me):
     mie_sedi = me.oggetti_permesso(GESTIONE_SO_SEDE)
-
     if not mie_sedi:
         messages.error(request, 'Non hai sedi SO da gestire.')
         return redirect(reverse('so:index'))
@@ -997,7 +996,6 @@ def so_mezzo_cancella(request, me, pk):
     mm = get_object_or_404(MezzoSO, pk=pk)
 
     mie_sedi = me.oggetti_permesso(GESTIONE_SO_SEDE)
-
     if mm.estensione not in mie_sedi:
         return redirect(ERRORE_PERMESSI)
 
@@ -1008,7 +1006,6 @@ def so_mezzo_cancella(request, me, pk):
 
 @pagina_privata
 def so_mezzo_modifica(request, me, pk):
-
     mezzo = get_object_or_404(MezzoSO, pk=pk)
     mie_sedi = me.oggetti_permesso(GESTIONE_SO_SEDE)
 
@@ -1036,7 +1033,6 @@ def so_mezzo_modifica(request, me, pk):
 @pagina_privata(permessi=(GESTIONE_SERVIZI,))
 def so_scheda_conferma(request, me, pk):
     servizio = get_object_or_404(ServizioSO, pk=pk)
-
     servizio.conferma_servizio()
 
     return redirect(reverse('so:servizio_modifica', args=[pk, ]))
@@ -1045,7 +1041,49 @@ def so_scheda_conferma(request, me, pk):
 @pagina_privata(permessi=(GESTIONE_SERVIZI,))
 def so_scheda_richiedi_conferma(request, me, pk):
     servizio = get_object_or_404(ServizioSO, pk=pk)
-
     servizio.richiede_approvazione(me)
 
     return redirect(reverse('so:servizio_modifica', args=[pk, ]))
+
+
+@pagina_privata
+def so_scheda_attestati(request, me, pk):
+    servizio = get_object_or_404(ServizioSO, pk=pk)
+    puo_modificare = me.permessi_almeno(servizio, MODIFICA)
+
+    partecipanti_confermati = servizio.partecipanti_confermati()
+    partecipazioni = None
+
+    if not puo_modificare:
+        if not me in partecipanti_confermati:
+            messages.error(request, 'Non hai accesso alla pagina attestati del Servizio.')
+            return redirect(servizio.url)
+
+    if me in partecipanti_confermati:
+        partecipazioni = PartecipazioneSO.di_persona(
+            turno__in=servizio.turni(),
+            turno__fine__lt=now(),
+        )
+
+    context = {
+        'attivita': servizio,
+        'puo_modificare': puo_modificare,
+        'partecipazioni': partecipazioni,
+    }
+
+    return 'so_scheda_scarica_attestato.html', context
+
+
+@pagina_privata
+def so_scheda_scarica_attestato(request, me, pk, partecipazione_pk):
+    partecipazione = get_object_or_404(PartecipazioneSO, pk=partecipazione_pk)
+    attestato = partecipazione.genera_attestato(request)
+
+    with open(attestato.file.path, 'rb') as f:
+        pdf = f.read()
+
+    filename = 'Attestato-turno.pdf'
+    response = HttpResponse(pdf, content_type='application/pdf')
+    response['Content-Disposition'] = 'attachment; filename=%s' % filename
+    response.write(pdf)
+    return response

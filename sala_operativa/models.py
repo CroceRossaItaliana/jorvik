@@ -14,8 +14,7 @@ from anagrafica.permessi.applicazioni import REFERENTE_SO
 from anagrafica.permessi.costanti import GESTIONE_SERVIZI
 from base.files import PDF
 from base.geo import ConGeolocalizzazione
-from base.models import ModelloSemplice, Autorizzazione, ConAllegati, \
-    ConAutorizzazioni
+from base.models import ModelloSemplice, ConAllegati, ConAutorizzazioni
 from base.tratti import ConMarcaTemporale, ConStorico, ConDelegati
 from base.utils import concept, poco_fa
 from posta.models import Messaggio
@@ -130,16 +129,20 @@ class ServizioSO(ModelloSemplice, ConGeolocalizzazione, ConMarcaTemporale,
         return reverse('so:servizio_report', args=[self.pk, ])
 
     @property
+    def url_mezzi_materiali(self):
+        return reverse('so:scheda_mm', args=[self.pk, ])
+
+    @property
+    def url_attestato(self):
+        return reverse('so:servizio_attestati', args=[self.pk, ])
+
+    @property
     def link(self):
         return "<a href='%s'>%s</a>" % (self.url, self.nome)
 
     @property
     def cancellabile(self):
         return not self.turni_so.all().exists()
-
-    @property
-    def url_mezzi_materiali(self):
-        return reverse('so:scheda_mm', args=[self.pk, ])
 
     def referenti_attuali(self, al_giorno=None):
         return self.delegati_attuali(tipo=REFERENTE_SO, al_giorno=al_giorno)
@@ -229,6 +232,9 @@ class ServizioSO(ModelloSemplice, ConGeolocalizzazione, ConMarcaTemporale,
     def turni_passati(self, *args, **kwargs):
         return TurnoSO.query_passati(*args, attivita=self, **kwargs)
 
+    def turni(self):
+        return self.turni_passati() | self.turni_futuri()
+
     def chiudi(self, autore=None, invia_notifiche=True, azione_automatica=False):
         """
         Chiude questo servizio. Imposta il nuovo stato, sospende
@@ -289,6 +295,11 @@ class ServizioSO(ModelloSemplice, ConGeolocalizzazione, ConMarcaTemporale,
         ).\
             distinct('nome', 'cognome', 'codice_fiscale').\
             order_by('nome', 'cognome', 'codice_fiscale')
+
+    @property
+    def attestato_scaricabile(self, me=None):
+        return False if 0 in [self.turni_passati().count(),
+                              self.partecipanti_confermati().count()] else True
 
     REPORT_FORMAT_EXCEL = 'xls'
     REPORT_FORMAT_PDF = 'pdf'
@@ -698,9 +709,35 @@ class PartecipazioneSO(ModelloSemplice, ConMarcaTemporale, ConStorico, ConAutori
     def reperibilita_del_turno(cls, turno, stato=PARTECIPA):
         return cls.objects.filter(turno=turno, stato=stato)
 
+    @classmethod
+    def di_persona(cls, persona=None, **kwargs):
+        if persona is None:
+            return cls.objects.filter(**kwargs)
+        return cls.objects.filter(reperibilita__persona=persona, **kwargs)
+
     @property
     def url_cancella(self):
         return reverse('so:servizio_partecipazione_cancella', args=[self.turno.pk, self.pk, ])
+
+    @property
+    def url_scarica_attestato(self):
+        return reverse('so:servizio_scarica_attestato', args=[self.turno.attivita.pk, self.pk, ])
+
+    def genera_attestato(self, request=None):
+        turno = self.turno
+
+        pdf = PDF(oggetto=self)
+        pdf.genera_e_salva_con_python(
+            nome="Attestato turno %s.pdf" % turno.nome,
+            corpo={
+                "partecipazione": self,
+                "servizio": turno.attivita,
+                "persona": self.reperibilita.persona,
+                'request': request,
+            },
+            modello='pdf_attestato_turno.html',
+        )
+        return pdf
 
     class Meta:
         verbose_name = "Partecipazione al Turno di un Servizio SO"

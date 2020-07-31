@@ -43,6 +43,8 @@ urlpatterns = [
     url(r'^servizio/%s/riapri/$' % pk, views.so_riapri, name='servizio_riapri'),
     url(r'^servizio/%s/referenti/$' % pk, views.so_referenti, name='servizio_referenti'),
     url(r'^servizio/%s/report/$' % pk, views.so_scheda_report, name='servizio_report'),
+    url(r'^servizio/%s/attestati/$' % pk, views.so_scheda_attestati, name='servizio_attestati'),
+    url(r'^servizio/%s/attestato/(?P<partecipazione_pk>[0-9]+)/$' % pk, views.so_scheda_scarica_attestato, name='servizio_scarica_attestato'),
 
     # Scheda Mezzi e Materiali
     url(r'^scheda/(?P<pk>[0-9]+)/mm/$', views.so_scheda_mm, name='scheda_mm'),

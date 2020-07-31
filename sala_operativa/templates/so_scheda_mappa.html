@@ -1,12 +1,12 @@
-{% extends 'so_vuota.html' %}
+{% extends 'so_scheda.html' %}
 
 {% block scheda_titolo %}Mappa{% endblock %}
 
 {% block scheda_contenuto %}
     {% if not attivita.locazione %}
         <div class="alert alert-warning">
-            <h4><i class="fa fa-fw fa-warning"></i> Locazione sconosciuta</h4>
-            <p>Non &egrave; stato ancora impostato alcun indirizzo per questa attivit&agrave;.</p>
+            <h4><i class="fas fa-exclamation-circle"></i> Locazione sconosciuta</h4>
+            <p>Non &egrave; stato ancora impostato alcun indirizzo per questo servizio.</p>
             <p>Vai su <a href="../">Informazioni</a> e contatta il referente per maggiori informazioni.</p>
         </div>
     {% endif %}

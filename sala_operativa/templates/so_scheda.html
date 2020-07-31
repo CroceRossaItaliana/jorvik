@@ -91,6 +91,11 @@
             <!--                </a>-->
             <!--            </li>-->
         {% endif %}
+        {% if attivita.attestato_scaricabile %}
+            <li role="presentation" {% if attivita.url_attestato in request.path %}class="active"{% endif %}>
+                <a href="{{ attivita.url_attestato }}"><i class="fas fa-scroll"></i> Scarica attestato</a>
+            </li>
+        {% endif %}
     </ul>
 
     <p>&nbsp;</p>

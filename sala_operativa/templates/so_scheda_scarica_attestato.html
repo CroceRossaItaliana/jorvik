@@ -1,0 +1,31 @@
+{% extends 'so_scheda.html' %}
+
+{% block scheda_titolo %}Attestati del Servizio{% endblock %}
+
+{% block scheda_contenuto %}
+  <h3>Attestati disponibili</h3>
+  <table class="table">
+    <tbody>
+      <tr>
+        <th>Turno</th>
+        <th>Inizio</th>
+        <th>Fine</th>
+        <th></th>
+      </tr>
+      {% for partecipazione in partecipazioni %}
+        <tr>
+          <td>{{ partecipazione.turno.nome }}</td>
+          <td>{{ partecipazione.turno.inizio }}</td>
+          <td>{{ partecipazione.turno.fine }}</td>
+          <td><a href="{{ partecipazione.url_scarica_attestato }}"><i class="fas fa-download"></i> Scarica</a></td>
+        </tr>
+      {% empty %}
+        <tr>
+          <td colspan="3">
+            <p style="text-align:center;">Attestati non trovati</p>
+          </td>
+        </tr>
+      {% endfor %}
+    </tbody>
+  </table>
+{% endblock %}
