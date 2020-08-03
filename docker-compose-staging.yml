@@ -6,6 +6,7 @@ services:
     image: mdillon/postgis
     environment:
       - POSTGRES_DB=jorvik
+    command: [ "postgres", "-c", "full_page_writes=off", "-c", "autovacuum=off" ]
 
   web:
     container_name: ${CI_MERGE_REQUEST_ID}_web
