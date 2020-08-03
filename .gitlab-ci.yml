@@ -102,8 +102,7 @@ restore_db_master:
     - sleep 30
     - docker cp /opt/gaia_dumps/smalldump "$(docker-compose ps -q db)":/tmp/smalldump
     - echo "SELECT pg_terminate_backend(pid) FROM pg_stat_activity WHERE datname = 'jorvik';" | docker-compose -f docker-compose-staging.yml exec -T db psql -U postgres
-    #- docker-compose -f docker-compose-staging.yml exec -T db pg_restore -C --clean --no-acl --no-owner -j 8 -U postgres -d postgres /tmp/smalldump
-    #- cat /opt/gaia_dumps/smalldump | docker-compose -f docker-compose-staging.yml exec -T db psql -U postgres -d jorvik
+    #- docker-compose -f docker-compose-staging.yml exec -T db pg_restore -C --clean --no-acl --no-owner -j 8 -U postgres -d postgres /tmp/smalldump    
   only:
     - master
   allow_failure: true
@@ -115,7 +114,7 @@ deploy_master:
   before_script:
     - export CI_MERGE_REQUEST_ID=master
   script:    
-    - docker-compose -f docker-compose-staging.yml down -v 
+    - docker-compose -f docker-compose-staging.yml down
     - docker-compose -f docker-compose-staging.yml up -d db
     - sleep 10  
     - docker-compose -f docker-compose-staging.yml up -d
@@ -134,9 +133,6 @@ deploy_provami:
   before_script:
     - export CI_MERGE_REQUEST_ID=master
   script:    
-    - docker-compose -f docker-compose-staging.yml -f docker-compose-provami.yml down -v
-    - docker-compose -f docker-compose-staging.yml -f docker-compose-provami.yml up -d db
-    - sleep 10
     - docker-compose -f docker-compose-staging.yml -f docker-compose-provami.yml up -d
     - sleep 30
     - docker-compose -f docker-compose-staging.yml -f docker-compose-provami.yml exec -T web python scramble.py --dati-di-esempio
