@@ -86,7 +86,28 @@ fire_pr:
   only:
     - merge_requests
 
-deploy_staging:
+restore_db_master:
+  stage: restore_db
+  tags:
+    - staging
+  before_script:
+    - chown -R gitlab-runner:gitlab-runner /home/gitlab-runner
+  script:
+    - docker-compose -f docker-compose-staging.yml stop
+    - sleep 30
+    - ls -alh /opt/gaia_dumps
+    - docker-compose -f docker-compose-staging.yml up -d db
+    - docker-compose -f docker-compose-staging.yml ps
+    - sleep 30
+    - docker cp /opt/gaia_dumps/smalldump "$(docker-compose ps -q db)":/tmp/smalldump
+    - echo "SELECT pg_terminate_backend(pid) FROM pg_stat_activity WHERE datname = 'jorvik';" | docker-compose -f docker-compose-staging.yml exec -T db psql -U postgres
+    - docker-compose -f docker-compose-staging.yml exec -T db pg_restore -C --clean --no-acl --no-owner -j 8 -U postgres -d postgres /tmp/smalldump
+    #- cat /opt/gaia_dumps/smalldump | docker-compose -f docker-compose-staging.yml exec -T db psql -U postgres -d jorvik
+  only:
+    - master
+  allow_failure: true
+ 
+deploy_master:
   stage: setup
   tags:
     - staging
