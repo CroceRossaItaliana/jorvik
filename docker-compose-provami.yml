@@ -6,3 +6,5 @@ services:
     labels:
       - "traefik.enable=true"
       - "traefik.http.routers.provami.rule=Host(`provami.gaia.cri.it`)"
+      - "traefik.http.routers.provami.entrypoints=websecure"
+      - "traefik.http.routers.provami.tls.certresolver=myresolver"   

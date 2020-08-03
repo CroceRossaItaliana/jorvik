@@ -17,6 +17,8 @@ RUN chmod +x ./config/docker-entrypoint.sh
 
 RUN pip install --upgrade -r requirements.txt
 
+RUN cp libgeos.py /usr/local/lib/python3.5/site-packages/django/contrib/gis/geos/libgeos.py
+
 ENTRYPOINT ["bash", "./config/docker-entrypoint.sh"]
 
 # Start development server

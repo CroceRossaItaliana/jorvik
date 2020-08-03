@@ -22,15 +22,9 @@ services:
     depends_on:
       - db
       - pdf
-      - selenium
     hostname: web
     environment:
       - "DJANGO_LIVE_TEST_SERVER_ADDRESS=web:8081-8181"
-
-  selenium:
-    image: selenium/standalone-firefox-debug
-    ports:
-      - "5900:5900"  # VNC (debugging)
 
   broker:
     image: redis

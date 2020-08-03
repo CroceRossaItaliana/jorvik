@@ -4,12 +4,13 @@ services:
   db:
     container_name: ${CI_MERGE_REQUEST_ID}_db
     image: mdillon/postgis
+    environment:
+      - POSTGRES_DB=jorvik
 
   web:
     container_name: ${CI_MERGE_REQUEST_ID}_web
     image: gaia:${CI_MERGE_REQUEST_ID} 
     volumes:
-      - .:/code
       - /tmp/media:/tmp/media
     links:
       - db
@@ -22,6 +23,8 @@ services:
       - WAIT_HOSTS_TIMEOUT=1200
       - WAIT_SLEEP_INTERVAL=60
       - WAIT_HOST_CONNECT_TIMEOUT=60
+      - SKIP_REQUIREMENTS_CHECK=1
+      - GOOGLE_KEY=${GOOGLE_KEY}
     networks:
       - "traefik-public"
       - "default"
@@ -34,13 +37,13 @@ services:
     container_name: ${CI_MERGE_REQUEST_ID}_celery
     image: gaia:${CI_MERGE_REQUEST_ID} 
     volumes:
-      - .:/code
       - /tmp/media:/tmp/media
     depends_on:
       - broker
     environment:
       - SKIP_DJANGO_COLLECSTATIC=1
       - SKIP_DJANGO_MIGRATE=1
+      - SKIP_REQUIREMENTS_CHECK=1
       - WAIT_HOSTS=db:5432
       - WAIT_HOSTS_TIMEOUT=1200
       - WAIT_SLEEP_INTERVAL=60
@@ -60,6 +63,8 @@ services:
     labels:
       - "traefik.enable=true"
       - "traefik.http.routers.pr${CI_MERGE_REQUEST_ID}.rule=Host(`pr${CI_MERGE_REQUEST_ID}.staging.gaia.cri.it`)"
+      - "traefik.http.routers.pr${CI_MERGE_REQUEST_ID}.entrypoints=websecure"
+      - "traefik.http.routers.pr${CI_MERGE_REQUEST_ID}.tls.certresolver=myresolver"      
     networks:
       - "traefik-public"
 
