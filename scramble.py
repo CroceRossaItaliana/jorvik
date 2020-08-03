@@ -369,8 +369,8 @@ if args.esempio:
                         from formazione.models import CorsoBase
 
                         test_direttore_corso = persona
-                        corso = CorsoBase.nuovo(sede=sede, data_inizio=poco_fa(), data_esame=poco_fa())
-                        d = Delega.objects.create(persona=persona, tipo=DIRETTORE_CORSO, oggetto=corso, inizio=poco_fa())
+                        #corso = CorsoBase.nuovo(sede=sede, data_inizio=poco_fa(), data_esame=poco_fa())
+                        #d = Delega.objects.create(persona=persona, tipo=DIRETTORE_CORSO, oggetto=corso, inizio=poco_fa())
 
     print(" - Creo utenze di accesso...")
     for idx, persona in enumerate(nuove):
