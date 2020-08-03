@@ -133,6 +133,7 @@ deploy_provami:
   before_script:
     - export CI_MERGE_REQUEST_ID=master
   script:    
+    - docker-compose -f docker-compose-staging.yml down -v  
     - docker-compose -f docker-compose-staging.yml -f docker-compose-provami.yml up -d
     - sleep 30
     - docker-compose -f docker-compose-staging.yml -f docker-compose-provami.yml exec -T web python scramble.py --dati-di-esempio
