@@ -21,6 +21,7 @@ def menu_us(me):
             ("Ordinari", "fa-list", "/us/elenchi/ordinari/") if me and me.oggetti_permesso(ELENCHI_SOCI).filter(estensione=REGIONALE).exists() else None,
             ("Elettorato", "fa-list", "/us/elenchi/elettorato/"),
             ("Tesserini", "fa-list", "/us/tesserini/"),
+            ("Servizio Civile Universale", "fa-list", "/us/elenchi/servizio-civile/"),
             ("Per Titoli", "fa-search", "/us/elenchi/titoli/"),
             ("Scarica elenchi richiesti", "fa-download", reverse('ufficio_soci:elenchi_richiesti_download'), '', True),
         )),

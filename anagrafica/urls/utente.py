@@ -30,6 +30,7 @@ urlpatterns = [
     url(r'^contatti/$', views.utente_contatti, name='contatti'),
     url(r'^rubrica/referenti/$', views.utente_rubrica_referenti),
     url(r'^rubrica/volontari/$', views.utente_rubrica_volontari),
+    url(r'^rubrica/servizio-civile/$', views.utente_rubrica_servizio_civile),
     url(r'^rubrica/(?P<rubrica>.*)/$', views.rubrica_delegati, name='rubrica'),
 
     # CV

@@ -481,8 +481,9 @@ class ModuloCreazioneDelega(autocomplete_light.ModelForm):
         if posso_dare_delega:
             vo_in_sede = sede.ha_membro(persona, membro=Appartenenza.VOLONTARIO, figli=True)
             di_in_sede = sede.ha_membro(persona, membro=Appartenenza.DIPENDENTE, figli=True)
+            sc_in_sede = sede.ha_membro(persona, membro=Appartenenza.SEVIZIO_CIVILE_UNIVERSALE, figli=True)
 
-            if vo_in_sede or di_in_sede:
+            if vo_in_sede or di_in_sede or sc_in_sede:
                 return persona
             else:
                 raise forms.ValidationError("Questa persona non può essere nominata.")
@@ -707,3 +708,4 @@ class ModuloUSModificaUtenza(ModuloUtenza):
             raise ValidationError("Puoi solo cambiare l'e-mail di accesso se questa è stata "
                                   "richiesta dall'utente, oppure hai già avvisato l'utente della "
                                   "modifica e della nuova e-mail per accedere.")
+

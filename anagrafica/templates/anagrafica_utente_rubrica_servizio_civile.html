@@ -1,0 +1,73 @@
+{% extends "anagrafica_utente_vuota.html" %}
+
+{% load bootstrap3 %}
+{% load utils %}
+{% load thumbnail %}
+
+{% block pagina_titolo %}Rubrica Volontari{% endblock %}
+
+{% block app_contenuto %}
+
+    <div class="alert bg-info">
+        <p>
+            <i class="fa fa-info-circle fa-fw"></i> Da questa pagina puoi accedere alla rubrica del Servizio civile universale delle
+            tue Sedi di appartenenza che hanno deciso di condividere i loro contatti.
+        </p>
+
+    </div>
+
+    <table class="table table-striped table-condensed table-responsive">
+        <thead>
+            <th>Foto</th>
+            <th>Nome e cognome</th>
+            <th>Contatti</th>
+        </thead>
+
+        <tbody>
+        {% for persona in servizio_civile %}
+
+            <tr>
+                <td class="allinea-centro">
+                    {% if persona.avatar %}
+                        {% thumbnail persona.avatar "100x100" crop as im %}
+                        <img src="{{ im.url }}" class="img-rounded" alt="Immagine del profilo attuale" />
+                    {% endif %}
+
+                </td>
+                <td>
+                    <p class="piu-grande">{{ persona.nome_completo }}</p>
+                    <p class="piu-piccolo">
+                        {% for a in persona.appartenenze_attuali %}
+                            <strong>Servio civile universale</strong> presso {{ a.sede.link|safe }}<br />
+                        {% endfor %}
+                    </p>
+                </td>
+
+                <td>
+                    <div class="btn-group-vertical btn-block">
+                        <a href="{{ persona.url_messaggio }}" class="btn btn-xs btn-primary">
+                            Scrivi messaggio
+                        </a>
+                        {% card persona extra_class='btn btn-xs btn-default' mute_contact=True %}
+                    </div>
+                </td>
+            </tr>
+
+
+
+        {% empty %}
+            <tr class="warning">
+                <td colspan="3">
+                    <p>
+                        <i class="fa fa-fw fa-info-circle"></i>
+                        Da qui potrai accedere alla rubrica del servizio civile della tua Sede.
+                    </p>
+
+                </td>
+            </tr>
+        {% endfor %}
+
+        </tbody>
+    </table>
+
+{% endblock %}

@@ -1,0 +1,8 @@
+version: '3'
+
+services:
+
+  proxy:
+    labels:
+      - "traefik.enable=true"
+      - "traefik.http.routers.provami.rule=Host(`provami.gaia.cri.it`)"

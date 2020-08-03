@@ -473,6 +473,13 @@ class Persona(ModelloSemplice, ConMarcaTemporale, ConAllegati, ConVecchioID):
         return self.membro(Appartenenza.VOLONTARIO, **kwargs)
 
     @property
+    def servizio_civile(self, **kwargs):
+        """
+        Controlla se membro Servizio civile universale
+        """
+        return self.membro(Appartenenza.SEVIZIO_CIVILE_UNIVERSALE, **kwargs)
+
+    @property
     def ordinario(self, **kwargs):
         """
         Controlla se membro ordinario
@@ -1190,6 +1197,14 @@ class Persona(ModelloSemplice, ConMarcaTemporale, ConAllegati, ConVecchioID):
         ).exists():
             return True
 
+        if self.appartenenze_attuali().filter(
+                membro=Appartenenza.SEVIZIO_CIVILE_UNIVERSALE
+        ).exists() and not self.appartenenze_attuali().exclude(
+            membro__in=[Appartenenza.ESTESO,Appartenenza.SEVIZIO_CIVILE_UNIVERSALE]
+        ).exists():
+            return True
+
+
         return False
 
     def genera_foglio_di_servizio(self):
@@ -1524,24 +1539,25 @@ class Appartenenza(ModelloSemplice, ConStorico, ConMarcaTemporale, ConAutorizzaz
     DONATORE = 'DO'
     SOSTENITORE = 'SO'
     OPERATORE_VILLA_MARAINI = 'VM'  # GAIA-246
+    SEVIZIO_CIVILE_UNIVERSALE = 'SC'
 
     # Quale tipo di membro puo' partecipare alle attivita'?
-    MEMBRO_ATTIVITA = (VOLONTARIO, ESTESO,)
+    MEMBRO_ATTIVITA = (VOLONTARIO, ESTESO, SEVIZIO_CIVILE_UNIVERSALE)
 
     # Quale tipo di membro può partecipare al servizio?
     MEMBRO_SERVIZIO = (VOLONTARIO, ESTESO, DIPENDENTE, )
 
     # Membri sotto il diretto controllo della Sede
-    MEMBRO_DIRETTO = (VOLONTARIO, ORDINARIO, DIPENDENTE, INFERMIERA, MILITARE, DONATORE, SOSTENITORE)
+    MEMBRO_DIRETTO = (VOLONTARIO, ORDINARIO, DIPENDENTE, INFERMIERA, MILITARE, DONATORE, SOSTENITORE, SEVIZIO_CIVILE_UNIVERSALE,)
 
     # Membro che puo' essere reclamato da una Sede
-    MEMBRO_RECLAMABILE = (VOLONTARIO, ORDINARIO, DIPENDENTE, SOSTENITORE,)
+    MEMBRO_RECLAMABILE = (VOLONTARIO, ORDINARIO, DIPENDENTE, SOSTENITORE, SEVIZIO_CIVILE_UNIVERSALE,)
 
     # Membro che puo' accedere alla rubrica di una Sede
-    MEMBRO_RUBRICA = (VOLONTARIO, ORDINARIO, ESTESO, DIPENDENTE,)
+    MEMBRO_RUBRICA = (VOLONTARIO, ORDINARIO, ESTESO, DIPENDENTE)
 
     # Membri che possono richiedere il tesserino
-    MEMBRO_TESSERINO = (VOLONTARIO,)
+    MEMBRO_TESSERINO = (VOLONTARIO, SEVIZIO_CIVILE_UNIVERSALE)
 
     # Membri soci
     MEMBRO_SOCIO = (VOLONTARIO, ORDINARIO,)
@@ -1563,6 +1579,7 @@ class Appartenenza(ModelloSemplice, ConStorico, ConMarcaTemporale, ConAutorizzaz
         (SOSTENITORE, 'Sostenitore'),
         (DIPENDENTE, 'Dipendente'),
         (OPERATORE_VILLA_MARAINI, 'Operatore Villa Maraini'),
+        (SEVIZIO_CIVILE_UNIVERSALE, 'Volontario in servizio civile universale'),
         #(INFERMIERA, 'Infermiera Volontaria'),
         #(MILITARE, 'Membro Militare'),
         #(DONATORE, 'Donatore Finanziario'),
@@ -1635,6 +1652,8 @@ class Appartenenza(ModelloSemplice, ConStorico, ConMarcaTemporale, ConAutorizzaz
             return 'Donatore, '+self.sede.nome_completo
         elif self.membro == self.SOSTENITORE:
             return 'Sostenitore, '+self.sede.nome_completo
+        elif self.membro == self.SEVIZIO_CIVILE_UNIVERSALE:
+            return 'Servizio civile universale, ' + self.sede.nome_completo
 
     def richiedi(self, notifiche_attive=True):
         """
@@ -1773,12 +1792,14 @@ class Sede(ModelloAlbero, ConMarcaTemporale, ConGeolocalizzazione, ConVecchioID,
     # GAIA-280
     sede_operativa = models.ManyToManyField(Locazione, blank=True)
     indirizzo_per_spedizioni = models.ForeignKey(Locazione, null=True, blank=True,
-                                        related_name="locazione_indirizzo_spedizioni")
-    persona_di_riferimento = models.CharField("Persona da contattare di riferimento", max_length=250, null=True, blank=True)
-    persona_di_riferimento_telefono = models.CharField("Numero telefonico della persona di riferimento", max_length=20, null=True, blank=True)
+                                                 related_name="locazione_indirizzo_spedizioni")
+    persona_di_riferimento = models.CharField("Persona da contattare di riferimento", max_length=250, null=True,
+                                              blank=True)
+    persona_di_riferimento_telefono = models.CharField("Numero telefonico della persona di riferimento", max_length=20,
+                                                       null=True, blank=True)
 
     # Dati del comitato
-    # Nota: indirizzo è già dentro per via di ConGeolocalizzazione
+    # Nota: indirizzo e' gia' dentro per via di ConGeolocalizzazione
     telefono = models.CharField("Telefono", max_length=64, blank=True)
     fax = models.CharField("FAX", max_length=64, blank=True)
     email = models.EmailField("Indirizzo e-mail", max_length=64, blank=True)
@@ -1789,10 +1810,11 @@ class Sede(ModelloAlbero, ConMarcaTemporale, ConGeolocalizzazione, ConVecchioID,
                             help_text="Coordinate bancarie internazionali del "
                                       "C/C della Sede.",
                             validators=[valida_iban])
+
     rea = models.CharField("Numero REA", max_length=20, blank=True, null=True)
     cciaa = models.CharField("Iscrizione CCIAA", max_length=20, blank=True, null=True)
     runts = models.CharField("N. Iscrizione Registro del Volontario",
-        max_length=20, blank=True, null=True)
+                             max_length=20, blank=True, null=True)
 
     codice_fiscale = models.CharField("Codice Fiscale", max_length=32, blank=True)
     partita_iva = models.CharField("Partita IVA", max_length=32, blank=True,
@@ -2848,6 +2870,7 @@ class Dimissione(ModelloSemplice, ConMarcaTemporale):
     TRASFORMAZIONE = 'TRA'
     SCADENZA = 'SCA'
     ALTRO = 'ALT'
+    FINE_SERVIZIO_CIVILE = 'FSC'
 
     MOTIVI_VOLONTARI = (
         (VOLONTARIE, 'Dimissioni Volontarie'),
@@ -2857,6 +2880,7 @@ class Dimissione(ModelloSemplice, ConMarcaTemporale):
         (RADIAZIONE, 'Radiazione da Croce Rossa Italiana'),
         (SCADENZA, 'Scadenza contratto o altro'),
         (DECEDUTO, 'Decesso'),
+        (FINE_SERVIZIO_CIVILE, 'Fine progetto/Interruzione servizio civile'),
     )
 
     MOTIVI_ALTRI = (

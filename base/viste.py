@@ -275,16 +275,14 @@ def informazioni_sedi(request, me):
 @xframe_options_exempt
 @pagina_pubblica(permetti_embed=True)
 def informazioni_sede(request, me, slug):
-    """
-    Mostra dettagli sul comitato.
-    """
+    """Mostra dettagli sul comitato."""
     vicini_km = 15
     sede = get_object_or_404(Sede, slug=slug)
     vicini = sede.vicini(queryset=Sede.objects.filter(attiva=True), km=vicini_km)\
         .exclude(pk__in=sede.unita_sottostanti().values_list('id', flat=True))\
         .exclude(pk=sede.pk)
 
-    contesto = {
+    context = {
         'sede': sede,
         'vicini': vicini,
         'da_mostrare': vicini | sede.ottieni_discendenti(includimi=True),
@@ -294,7 +292,7 @@ def informazioni_sede(request, me, slug):
         'consigliere_giovane': sede.consigliere_giovane(),
         'vicini_km': vicini_km,
     }
-    return 'base_informazioni_sede.html', contesto
+    return 'base_informazioni_sede.html', context
 
 
 def pulisci_autorizzazioni(richieste):

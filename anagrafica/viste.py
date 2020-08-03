@@ -667,6 +667,22 @@ def utente_rubrica_volontari(request, me):
     }
     return 'anagrafica_utente_rubrica_volontari.html', contesto
 
+@pagina_privata
+def utente_rubrica_servizio_civile(request, me):
+    sedi_servizio_civile = Sede.objects.filter(pk__in=me.sedi_attuali().values_list("id", flat=True))
+    servizio_civile = Persona.objects.filter(
+        Appartenenza.query_attuale(membro=Appartenenza.SEVIZIO_CIVILE_UNIVERSALE, sede__in=sedi_servizio_civile).via("appartenenze")
+    )
+
+    servizio_civile = servizio_civile \
+        .prefetch_related('appartenenze', 'fototessere') \
+        .order_by('nome', 'cognome', 'codice_fiscale') \
+        .distinct('nome', 'cognome', 'codice_fiscale')
+    contesto = {
+        "servizio_civile": servizio_civile,
+    }
+    return 'anagrafica_utente_rubrica_servizio_civile.html', contesto
+
 
 def _rubrica_delegati(me, delega, sedi_delega):
     return ElencoDelegati(sedi_delega.values_list('pk', flat=True), deleghe=[delega], me_id=me.pk)

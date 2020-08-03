@@ -41,6 +41,7 @@ class Messaggio(ModelloSemplice, ConMarcaTemporale, ConGiudizio, ConAllegati):
 
     SUPPORTO_NOME = 'Supporto Gaia'
     SUPPORTO_EMAIL = 'supporto@gaia.cri.it'
+    SERVIZIO_CIVILE_EMAIL = 'servizio.civile@cri.it'
     NOREPLY_EMAIL = 'noreply@gaia.cri.it'
 
     LUNGHEZZA_MASSIMA_OGGETTO = 256
@@ -187,7 +188,6 @@ class Messaggio(ModelloSemplice, ConMarcaTemporale, ConGiudizio, ConAllegati):
             destinatari = self.oggetti_destinatario.all().filter(inviato=False)
 
         for destinatario in destinatari:
-
             if destinatario.inviato and not forced:
                 continue
 
@@ -223,17 +223,25 @@ class Messaggio(ModelloSemplice, ConMarcaTemporale, ConGiudizio, ConAllegati):
 
         # Se questo messaggio non ha oggetti destinatario
         if self.oggetti_destinatario.count() == 0:
+            from anagrafica.models import Appartenenza
+
+            to = []
+
+            if Appartenenza.MENBRO_DICT[Appartenenza.SEVIZIO_CIVILE_UNIVERSALE] in self.oggetto:
+                to = [Messaggio.SERVIZIO_CIVILE_EMAIL]
+            else:
+                to = [Messaggio.SUPPORTO_EMAIL]
 
             # Questo e' un messaggio per il supporto di Gaia.
             email = EmailMultiAlternatives(subject=self.oggetto,
                                            body=corpo_plain,
                                            from_email=mittente,
                                            reply_to=[rispondi_a],
-                                           to=[Messaggio.SUPPORTO_EMAIL],
+                                           to=to,
                                            attachments=self.allegati_pronti(),
                                            connection=connessione)
             email.attach_alternative(self.corpo, "text/html")
-
+            logger.debug("{} {} {} {}".format(email.subject, email.from_email, email.to, email.body))
             # Ritorna questo oggetto
             yield None, email
 

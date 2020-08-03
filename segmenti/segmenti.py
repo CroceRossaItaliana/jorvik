@@ -222,6 +222,10 @@ def volontari_con_titolo(queryset):
     return volontari(queryset).filter(titoli_personali__confermata=True)
 
 
+def servizio_civile_universale(queryset):
+    return queryset.filter(appartenenze__membro=Appartenenza.SEVIZIO_CIVILE_UNIVERSALE)
+
+
 NOMI_SEGMENTI = (
     ('A', 'Tutti gli utenti di Gaia'),
     ('B', 'Volontari'),
@@ -254,6 +258,7 @@ NOMI_SEGMENTI = (
     ('Y', 'Delegati Autoparco'),
     ('Z', 'Delegati Formazione'),
     ('AA', 'Volontari aventi un dato titolo'),
+    ('SC', 'Servizio civile universale')
 )
 
 
@@ -291,4 +296,5 @@ SEGMENTI = {
     'Y':              delegati_autoparco,
     'Z':              delegati_formazione,
     'AA':             volontari_con_titolo,
+    'SC':             servizio_civile_universale
 }
