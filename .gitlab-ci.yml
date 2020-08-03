@@ -89,8 +89,9 @@ fire_pr:
 restore_db_master:
   stage: restore_db
   tags:
-    - staging
+    - staging    
   before_script:
+    - export CI_MERGE_REQUEST_ID=master
     - chown -R gitlab-runner:gitlab-runner /home/gitlab-runner
   script:
     - docker-compose -f docker-compose-staging.yml stop
