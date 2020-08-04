@@ -115,6 +115,7 @@ deploy_master:
     - export CI_MERGE_REQUEST_ID=master
   script:    
     - docker-compose -f docker-compose-staging.yml down
+    - sleep 30
     - docker-compose -f docker-compose-staging.yml up -d db
     - sleep 10  
     - docker-compose -f docker-compose-staging.yml up -d
