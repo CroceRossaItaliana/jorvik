@@ -6,11 +6,17 @@ stages:
 
 cache:
   key: ${CI_MERGE_REQUEST_ID}
+  paths:
+    - .cache/pip
+    - venv/
 
 build_containers:
   stage: build
   tags:
     - staging
+  before_script:
+    - chown -R gitlab-runner:gitlab-runner /home/gitlab-runner
+    - docker-compose -f docker-compose-staging.yml ps
   script:
     - pwd
     - docker build -t gaia:${CI_MERGE_REQUEST_ID} .
@@ -33,7 +39,8 @@ setup_pr:
     - staging
   script:
     - echo $CI_MERGE_REQUEST_ID
-    - docker-compose -f docker-compose-staging.yml down -v 
+    - docker-compose -f docker-compose-staging.yml down -v
+    - sleep 30
     - docker-compose -f docker-compose-staging.yml up -d db
   after_script:
     - docker-compose -f docker-compose-staging.yml ps
@@ -44,11 +51,19 @@ restore_db:
   stage: restore_db
   tags:
     - staging
+  before_script:
+    - chown -R gitlab-runner:gitlab-runner /home/gitlab-runner
   script:
+    - docker-compose -f docker-compose-staging.yml stop
+    - sleep 30
+    - ls -alh /opt/gaia_dumps
+    - docker-compose -f docker-compose-staging.yml up -d db
     - docker-compose -f docker-compose-staging.yml ps
-    - docker cp /opt/gaia_dumps/smalldump "$(docker-compose ps -q db)":/tmp/.
-    - docker-compose -f docker-compose-staging.yml exec -T db createdb -U postgres jorvik
-    - docker-compose -f docker-compose-staging.yml exec -T db pg_restore -C --clean --no-acl --no-owner -j 8 -U postgres -d jorvik /tmp/smalldump
+    - sleep 30
+    - docker cp /opt/gaia_dumps/smalldump "$(docker-compose ps -q db)":/tmp/smalldump
+    - echo "SELECT pg_terminate_backend(pid) FROM pg_stat_activity WHERE datname = 'jorvik';" | docker-compose -f docker-compose-staging.yml exec -T db psql -U postgres
+    - docker-compose -f docker-compose-staging.yml exec -T db pg_restore -C --clean --no-acl --no-owner -j 8 -U postgres -d postgres /tmp/smalldump
+    #- cat /opt/gaia_dumps/smalldump | docker-compose -f docker-compose-staging.yml exec -T db psql -U postgres -d jorvik
   only:
     - merge_requests
   allow_failure: true
@@ -59,33 +74,56 @@ fire_pr:
     - staging
   script:
     - echo $CI_MERGE_REQUEST_ID
+    - env
     - docker-compose -f docker-compose-staging.yml up -d
-    - sleep 10  
+    - sleep 10
     - docker-compose -f docker-compose-staging.yml restart proxy
   after_script:
     - docker-compose -f docker-compose-staging.yml ps
   environment:
     name: pr$CI_MERGE_REQUEST_ID
-    url: http://pr$CI_MERGE_REQUEST_ID.staging.gaia.cri.it
+    url: https://pr$CI_MERGE_REQUEST_ID.staging.gaia.cri.it
   only:
     - merge_requests
 
-deploy_staging:
-  stage: setup
+restore_db_master:
+  stage: restore_db
+  tags:
+    - staging    
+  before_script:
+    - export CI_MERGE_REQUEST_ID=master
+    - chown -R gitlab-runner:gitlab-runner /home/gitlab-runner
+  script:
+    - docker-compose -f docker-compose-staging.yml stop
+    - sleep 30
+    - ls -alh /opt/gaia_dumps
+    - docker-compose -f docker-compose-staging.yml up -d db
+    - docker-compose -f docker-compose-staging.yml ps
+    - sleep 30
+    - docker cp /opt/gaia_dumps/smalldump "$(docker-compose ps -q db)":/tmp/smalldump
+    - echo "SELECT pg_terminate_backend(pid) FROM pg_stat_activity WHERE datname = 'jorvik';" | docker-compose -f docker-compose-staging.yml exec -T db psql -U postgres
+    - docker-compose -f docker-compose-staging.yml exec -T db pg_restore --disable-triggers -C --clean --no-acl --no-owner -j 8 -U postgres -d postgres /tmp/smalldump    
+  only:
+    - master
+  allow_failure: true
+ 
+deploy_master:
+  stage: deploy
   tags:
     - staging
   before_script:
     - export CI_MERGE_REQUEST_ID=master
   script:    
-    - docker-compose -f docker-compose-staging.yml down -v 
+    - docker-compose -f docker-compose-staging.yml down
+    - sleep 30
     - docker-compose -f docker-compose-staging.yml up -d db
     - sleep 10  
     - docker-compose -f docker-compose-staging.yml up -d
     - sleep 30
     - docker-compose -f docker-compose-staging.yml restart proxy
   environment:
-    name: staging
-    url: http://master.staging.gaia.cri.it
+    name: master
+    url: https://master.staging.gaia.cri.it
   only:
     - master
 
@@ -96,15 +134,14 @@ deploy_provami:
   before_script:
     - export CI_MERGE_REQUEST_ID=master
   script:    
-    - docker-compose -f docker-compose-staging.yml -f docker-compose-provami.yml down -v
-    - docker-compose -f docker-compose-staging.yml -f docker-compose-provami.yml up -d db
-    - sleep 10  
+    - docker-compose -f docker-compose-staging.yml down -v  
+    - sleep 30
     - docker-compose -f docker-compose-staging.yml -f docker-compose-provami.yml up -d
     - sleep 30
+    - docker-compose -f docker-compose-staging.yml -f docker-compose-provami.yml exec -T web python scramble.py --dati-di-esempio
     - docker-compose -f docker-compose-staging.yml -f docker-compose-provami.yml restart proxy
-    - docker-compose -f docker-compose-staging.yml -f docker-compose-provami.yml exec -it python scramble.py --dati-di-esempio
   environment:
     name: provami
-    url: http://provami.gaia.cri.it
+    url: https://provami.gaia.cri.it
   only:
     - master
