@@ -27,7 +27,6 @@ services:
       - SKIP_REQUIREMENTS_CHECK=1
       - GOOGLE_KEY=${GOOGLE_KEY}
     networks:
-      - "traefik-public"
       - "default"
 
   broker:
@@ -68,6 +67,7 @@ services:
       - "traefik.http.routers.pr${CI_MERGE_REQUEST_ID}.tls.certresolver=myresolver"      
     networks:
       - "traefik-public"
+      - "default"
 
   pdf:
     container_name: ${CI_MERGE_REQUEST_ID}_pdf
