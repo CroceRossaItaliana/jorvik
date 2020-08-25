@@ -10,6 +10,9 @@ cache:
     - .cache/pip
     - venv/
 
+variables:
+    GIT_CLONE_PATH: '$CI_BUILDS_DIR/$CI_PROJECT_NAME/$CI_MERGE_REQUEST_ID'
+
 build_containers:
   stage: build
   tags:
