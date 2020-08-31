@@ -1,0 +1,25 @@
+version: '3'
+
+services:
+  db:
+    container_name: provami_db
+  web:
+    container_name: provami_web
+
+  broker:
+    container_name: provami_broker
+
+  celery:
+    container_name: provami_celery
+
+  proxy:
+    labels:
+      - "traefik.enable=true"
+      - "traefik.http.routers.provami.rule=Host(`provami.gaia.cri.it`)"
+      - "traefik.http.routers.provami.entrypoints=websecure"
+      - "traefik.http.routers.provami.tls.certresolver=myresolver"
+    container_name: provami_proxy
+
+  pdf:
+    container_name: provami_pdf
+
