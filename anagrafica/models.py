@@ -90,14 +90,6 @@ class Persona(ModelloSemplice, ConMarcaTemporale, ConAllegati, ConVecchioID):
     avatar = models.ImageField("Avatar", blank=True, null=True,
         upload_to=GeneratoreNomeFile('avatar/'), validators=[valida_dimensione_file_5mb])
 
-    # Datore di lavoro
-    datore_ragione_sociale = models.CharField(max_length=25, default="", db_index=True, blank=True, null=True)
-    datore_p_iva = models.CharField(max_length=11, default="", db_index=True, blank=True, null=True)
-    datore_telefono = models.CharField(max_length=10, default="", db_index=True, blank=True, null=True)
-    datore_referente = models.CharField(max_length=25, default="", db_index=True, blank=True, null=True)
-    datore_email = models.CharField(max_length=25, default="", db_index=True, blank=True, null=True)
-    datore_pec = models.CharField(max_length=25, default="", db_index=True, blank=True, null=True)
-
     # Privacy
     POLICY_PUBBLICO = 9
     POLICY_REGISTRATI = 7
@@ -170,15 +162,6 @@ class Persona(ModelloSemplice, ConMarcaTemporale, ConAllegati, ConVecchioID):
         :return: "Nome Cognome".
         """
         return normalizza_nome(self.cognome + " " + self.nome)
-
-    @property
-    def ha_datore_di_lavoro(self):
-        if self.datore_ragione_sociale and \
-                self.datore_p_iva and \
-                self.datore_telefono and \
-                self.datore_referente:
-            return True
-        return False
 
     # Q: Qual e' l'email di questa persona?
     # A: Una persona puo' avere da zero a due indirizzi email.
@@ -1393,6 +1376,22 @@ class Persona(ModelloSemplice, ConMarcaTemporale, ConAllegati, ConVecchioID):
             ('view_persona', "Can view persona"),
             ('transfer_persona', "Can transfer persona"),
         )
+
+
+class DatoreLavoro(ModelloSemplice, ConMarcaTemporale):
+
+    nominativo = models.CharField(max_length=25, default="", db_index=True, blank=True, null=True)
+    ragione_sociale = models.CharField(max_length=25, default="", db_index=True, blank=True, null=True)
+    partita_iva = models.CharField(max_length=11, default="", db_index=True, blank=True, null=True)
+    telefono = models.CharField(max_length=10, default="", db_index=True, blank=True, null=True)
+    referente = models.CharField(max_length=25, default="", db_index=True, blank=True, null=True)
+    email = models.CharField(max_length=25, default="", db_index=True, blank=True, null=True)
+    pec = models.CharField(max_length=25, default="", db_index=True, blank=True, null=True)
+    persona = models.ForeignKey(Persona, related_name="datore", db_index=True, on_delete=models.CASCADE, blank=True, null=True)
+
+    class Meta:
+        verbose_name = 'Datore di lavoro'
+        verbose_name_plural = 'Datori di lavoro'
 
 
 class Telefono(ConMarcaTemporale, ModelloSemplice):
@@ -3018,3 +3017,6 @@ class Nominativo(ModelloSemplice, ConStorico, ConMarcaTemporale):
 
     class Meta:
         verbose_name_plural = "Nominativi"
+
+
+

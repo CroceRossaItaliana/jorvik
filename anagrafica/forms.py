@@ -22,8 +22,8 @@ from sangue.models import Donatore, Donazione
 from formazione.models import Corso
 from .costanti import REGIONALE
 from .models import (Sede, Persona, Appartenenza, Documento, Estensione,
-    ProvvedimentoDisciplinare, Delega, Fototessera, Trasferimento, Riserva,
-    Nominativo,)
+                     ProvvedimentoDisciplinare, Delega, Fototessera, Trasferimento, Riserva,
+                     Nominativo, DatoreLavoro)
 from .validators import valida_almeno_14_anni, valida_data_nel_passato
 from .permessi.applicazioni import (PRESIDENTE, COMMISSARIO,
     CONSIGLIERE, CONSIGLIERE_GIOVANE, VICE_PRESIDENTE)
@@ -253,14 +253,10 @@ class ModuloProfiloModificaAnagrafica(ModelForm):
 
 class ModuloProfiloModificaAnagraficaDatoreLavoro(ModelForm):
     class Meta:
-        model = Persona
-        fields = ['datore_ragione_sociale', 'datore_p_iva',
-                  'datore_telefono', 'datore_referente',
-                  'datore_email', 'datore_pec']
-
-    def clean(self):
-        cd = self.cleaned_data
-        return cd
+        model = DatoreLavoro
+        fields = ['nominativo', 'ragione_sociale', 'partita_iva',
+                  'telefono', 'referente',
+                  'email', 'pec']
 
 
 class ModuloProfiloModificaAnagraficaDomicilio(ModelForm):

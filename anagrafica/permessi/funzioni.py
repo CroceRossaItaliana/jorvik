@@ -229,8 +229,10 @@ def permessi_delegato_obiettivo_3(sede):
     from attivita.models import Area
     sede_espansa = sede.espandi(includi_me=True)
     return [
-        (RUBRICA_DELEGATI_OBIETTIVO_3, sede.espandi(includi_me=True, pubblici=True)),
-           ] + permessi_delegato_area(Area.objects.filter(sede__in=sede_espansa, obiettivo=3))
+            (RUBRICA_DELEGATI_OBIETTIVO_3, sede.espandi(includi_me=True, pubblici=True)),
+    ] \
+           + permessi_delegato_area(Area.objects.filter(sede__in=sede_espansa, obiettivo=3))\
+           + permessi_delegato_sala_operativa(sede)
 
 
 def permessi_delegato_obiettivo_4(sede):

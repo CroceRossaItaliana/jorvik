@@ -9,7 +9,7 @@ from django.utils import timezone
 from django.utils.timezone import now
 
 from anagrafica.costanti import (LOCALE, PROVINCIALE, REGIONALE, NAZIONALE, )
-from anagrafica.models import Persona, Appartenenza, Sede
+from anagrafica.models import Persona, Appartenenza, Sede, DatoreLavoro
 from anagrafica.permessi.applicazioni import REFERENTE_SO
 from anagrafica.permessi.costanti import GESTIONE_SERVIZI
 from base.files import PDF
@@ -48,7 +48,7 @@ class ServizioSO(ModelloSemplice, ConGeolocalizzazione, ConMarcaTemporale,
     meta = JSONField(null=True, blank=True)
 
     @staticmethod
-    def servizi_standart():
+    def servizi_standard():
         choices = (
             "Coordinamento Funzione Operazioni di Soccorso e Sanitarie",
             "Coordinamento Funzione Operazioni Socio-Assistenziali",
@@ -360,6 +360,7 @@ class ReperibilitaSO(ModelloSemplice, ConMarcaTemporale, ConStorico):
     persona = models.ForeignKey(Persona, related_name="so_reperibilita", on_delete=models.CASCADE)
     applicazione_bdl = models.BooleanField("Applicazione dei Benefici di Legge", default=False)
     creato_da = models.ForeignKey(Persona, null=True, blank=True)
+    datore_lavoro = models.OneToOneField(DatoreLavoro, related_name="datore", null=True, on_delete=models.PROTECT)
 
     @classmethod
     def reperibilita_di(cls, persona):
@@ -755,7 +756,7 @@ class PartecipazioneSO(ModelloSemplice, ConMarcaTemporale, ConStorico, ConAutori
         return "%s a %s" % (self.reperibilita.persona.codice_fiscale, self.turno)
 
 
-class MezzoSO(ModelloSemplice, ConMarcaTemporale, ConStorico):
+class MezzoSO(ModelloSemplice, ConMarcaTemporale):
     MEZZO = 'me'
     MATERIALE = 'ma'
     MEZZI_E_MATERIALI_CHOICES = (
@@ -770,6 +771,16 @@ class MezzoSO(ModelloSemplice, ConMarcaTemporale, ConStorico):
         (MEZZO_LEASING, 'Mezzo in leasing'),
     )
 
+    IN_SERVIZIO = 'is'
+    DIMESSO = 'dm'
+    FUORI_USO = 'fu'
+    STATO_MM = (
+        (IN_SERVIZIO, 'In servizio'),
+        (DIMESSO, 'Dimesso'),
+        (FUORI_USO, 'Fuori servizio')
+    )
+
+
     tipo = models.CharField(choices=MEZZI_E_MATERIALI_CHOICES, max_length=3)
     mezzo_tipo = models.CharField(choices=MEZZO_TIPO_CHOICES, max_length=3,
                                   null=True, blank=True)
@@ -779,6 +790,8 @@ class MezzoSO(ModelloSemplice, ConMarcaTemporale, ConStorico):
                                    on_delete=models.PROTECT)
     nome = models.CharField("Nome", max_length=255)
     creato_da = models.ForeignKey('anagrafica.Persona', null=True, blank=True)
+
+    stato = models.CharField(choices=STATO_MM, max_length=2, default=IN_SERVIZIO)
 
     @classmethod
     def disponibili_per_sedi(cls, sedi):

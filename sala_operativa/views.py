@@ -12,7 +12,6 @@ from django.shortcuts import redirect, get_object_or_404, HttpResponse
 from django.utils.safestring import mark_safe
 
 from anagrafica.costanti import NAZIONALE
-from anagrafica.forms import ModuloProfiloModificaAnagraficaDatoreLavoro
 from anagrafica.permessi.applicazioni import REFERENTE_SO
 from anagrafica.permessi.costanti import (MODIFICA, COMPLETO, ERRORE_PERMESSI,
       GESTIONE_SO_SEDE, GESTIONE_SERVIZI, GESTIONE_REFERENTI_SO, )
@@ -59,23 +58,21 @@ def so_index(request, me):
 
 @pagina_privata
 def so_reperibilita(request, me):
-    if me.ha_datore_di_lavoro:
-        form = VolontarioReperibilitaForm(request.POST or None, initial=INITIAL_INIZIO_FINE_PARAMS)
-    else:
-        form = ModuloProfiloModificaAnagraficaDatoreLavoro(request.POST or None, instance=me)
+    # if me.ha_datore_di_lavoro:
+    form = VolontarioReperibilitaForm(request.POST or None, initial=INITIAL_INIZIO_FINE_PARAMS)
 
-    if request.method == 'POST':
-        if form.is_valid():
-            if me.ha_datore_di_lavoro:
-                cd = form.cleaned_data
-                reperibilita = form.save(commit=False)
-                reperibilita.persona = me
-                reperibilita.save()
-                messages.success(request, "La nuova reperibilità è stata creata.")
-            else:
-                messages.error(request, "Non hai comunicato i dati del datore di lavoro nella tua anagrafica.")
-                form.save()
-            return redirect(reverse('so:reperibilita'))
+    # if request.method == 'POST':
+    #     if form.is_valid():
+    #         if me.ha_datore_di_lavoro:
+    #             cd = form.cleaned_data
+    #             reperibilita = form.save(commit=False)
+    #             reperibilita.persona = me
+    #             reperibilita.save()
+    #             messages.success(request, "La nuova reperibilità è stata creata.")
+    #         else:
+    #             messages.error(request, "Non hai comunicato i dati del datore di lavoro nella tua anagrafica.")
+    #             form.save()
+    #         return redirect(reverse('so:reperibilita'))
 
     context = {
         'me': me,

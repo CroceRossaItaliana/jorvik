@@ -53,17 +53,18 @@ from .permessi.incarichi import (INCARICO_GESTIONE_RISERVE, INCARICO_GESTIONE_TI
     INCARICO_GESTIONE_FOTOTESSERE)
 from .importa import (VALIDAZIONE_ERRORE, VALIDAZIONE_AVVISO, VALIDAZIONE_OK, import_import_volontari)
 from .forms import (ModuloStepComitato, ModuloStepCredenziali, ModuloStepFine,
-    ModuloModificaAnagrafica, ModuloModificaAvatar, ModuloCreazioneDocumento,
-    ModuloModificaEmailAccesso, ModuloModificaEmailContatto,
-    ModuloCreazioneTelefono, ModuloCreazioneEstensione, ModuloCreazioneTrasferimento,
-    ModuloCreazioneDelega, ModuloDonatore, ModuloDonazione, ModuloNuovaFototessera,
-    ModuloCreazioneRiserva, ModuloModificaPrivacy, ModuloPresidenteSede,
-    ModuloImportVolontari, ModuloImportPresidenti, ModuloPulisciEmail,
-    ModuloReportFederazione, ModuloStepCodiceFiscale, ModuloStepAnagrafica,
-    ModuloPresidenteSedePersonaDiRiferimento, ModuloPresidenteSedeNominativo,
-    ModuloProfiloModificaAnagraficaDatoreLavoro, )
+                    ModuloModificaAnagrafica, ModuloModificaAvatar, ModuloCreazioneDocumento,
+                    ModuloModificaEmailAccesso, ModuloModificaEmailContatto,
+                    ModuloCreazioneTelefono, ModuloCreazioneEstensione, ModuloCreazioneTrasferimento,
+                    ModuloCreazioneDelega, ModuloDonatore, ModuloDonazione, ModuloNuovaFototessera,
+                    ModuloCreazioneRiserva, ModuloModificaPrivacy, ModuloPresidenteSede,
+                    ModuloImportVolontari, ModuloImportPresidenti, ModuloPulisciEmail,
+                    ModuloReportFederazione, ModuloStepCodiceFiscale, ModuloStepAnagrafica,
+                    ModuloPresidenteSedePersonaDiRiferimento, ModuloPresidenteSedeNominativo,
+                    ModuloProfiloModificaAnagraficaDatoreLavoro)
+
 from .models import (Persona, Documento, Telefono, Estensione, Delega, Trasferimento,
-    Appartenenza, Sede, Riserva, Dimissione, Nominativo)
+                     Appartenenza, Sede, Riserva, Dimissione, Nominativo, DatoreLavoro)
 
 
 TIPO_VOLONTARIO = 'volontario'
@@ -341,22 +342,20 @@ def utente(request, me):
     return 'anagrafica_utente_home.html', contesto
 
 
+
 @pagina_privata
 def utente_datore_di_lavoro(request, me):
-    form = ModuloProfiloModificaAnagraficaDatoreLavoro(request.POST or None, instance=me)
+    form = ModuloProfiloModificaAnagraficaDatoreLavoro(request.POST or None)
 
     if request.POST:
         if form.is_valid():
-            form.save()
-
-            if me.ha_datore_di_lavoro:
-                messages.error(request, "Hai salvato i dati del datore di lavoro nella tua anagrafica. Adesso puoi inserire le tue reperibilità")
-
-                # se cambi questo redirect, pensa anche a questa vista: so_reperibilita
-                return redirect(reverse('so:reperibilita'))
+            datore = form.save(commit=False)
+            datore.persona = me
+            datore.save()
 
     context = {
         "form": form,
+        "datori": DatoreLavoro.objects.filter(persona=me)
     }
     return 'anagrafica_utente_datore_lavoro.html', context
 
@@ -2072,3 +2071,31 @@ def admin_pulisci_email(request, me):
         "modulo": modulo
     }
     return "admin_pulisci_email.html", contesto
+
+
+@pagina_privata
+def utente_datore_di_lavoro_modifica(request, me, pk=None):
+    datore = get_object_or_404(DatoreLavoro, pk=pk)
+
+    form = ModuloProfiloModificaAnagraficaDatoreLavoro(request.POST or None, instance=datore)
+
+    if request.method == 'POST':
+        if form.is_valid():
+            datore = form.save(commit=False)
+            datore.save()
+            return redirect(reverse('utente:datore_di_lavoro'))
+
+    context = {
+        'form': form,
+        'datore': datore,
+    }
+    return 'anagrafica_utente_datore_lavoro_modifica.html', context
+
+
+@pagina_privata
+def utente_datore_di_lavoro_cancella(request, me, pk=None):
+    datore = get_object_or_404(DatoreLavoro, pk=pk)
+
+    datore.delete()
+    messages.success(request, 'Il datore selezionato è stato rimosso.')
+    return redirect(reverse('utente:datore_di_lavoro'))

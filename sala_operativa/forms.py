@@ -17,7 +17,7 @@ class VolontarioReperibilitaForm(ModelForm):
     class Meta:
         model = ReperibilitaSO
         fields = ['estensione', 'inizio', 'fine', 'attivazione',
-                  'applicazione_bdl', ]
+                  'applicazione_bdl', 'datore_lavoro']
 
 
 class AggiungiReperibilitaPerVolontarioForm(ModelForm):
@@ -94,27 +94,27 @@ class AggiungiPartecipantiForm(forms.Form):
 
 
 class OrganizzaServizioForm(ModelForm):
-    SERVIZI_STANDART_CHOICES = ServizioSO.servizi_standart()
+    servizi_standard_CHOICES = ServizioSO.servizi_standard()
 
-    servizi_standart = forms.ChoiceField(
+    servizi_standard = forms.ChoiceField(
         required=False,
-        choices=[(None, '--------')] + SERVIZI_STANDART_CHOICES,
+        choices=[(None, '--------')] + servizi_standard_CHOICES,
         help_text='Scegli un nome predefinito o dai il nome al servizio nel '
                   'campo "Nome" che si trova sotto',
     )
 
     def clean(self):
         cd = self.cleaned_data
-        servizi_standart, nome = cd['servizi_standart'], cd['nome']
-        if servizi_standart and nome:
+        servizi_standard, nome = cd['servizi_standard'], cd['nome']
+        if servizi_standard and nome:
             self.add_error('nome', 'Uno dei campi "Nome" devono rimanere non valorizzati.')
 
-        if servizi_standart and not nome:
-            cd['nome'] = dict(self.SERVIZI_STANDART_CHOICES)[servizi_standart]
+        if servizi_standard and not nome:
+            cd['nome'] = dict(self.servizi_standard_CHOICES)[servizi_standard]
 
     class Meta:
         model = ServizioSO
-        fields = ['servizi_standart', 'nome', 'sede', 'inizio', 'fine',
+        fields = ['servizi_standard', 'nome', 'sede', 'inizio', 'fine',
                   'impiego_bdl', ]
 
     def __init__(self, *args, **kwargs):
@@ -175,17 +175,6 @@ class RipetiTurnoForm(forms.Form):
 
 
 class CreazioneMezzoSO(ModelForm):
-    def clean_inizio(self):
-        inizio = self.cleaned_data['inizio']
-        if inizio < now() - timezone.timedelta(minutes=5):
-            raise ValidationError('Non puoi creare il mezzo o materiale con la data di inizio già passata.')
-        return inizio
-
-    def clean_fine(self):
-        fine = self.cleaned_data['fine']
-        if fine < now():
-            raise ValidationError('Non puoi creare il mezzo o materiale con la data di fine già passata.')
-        return fine
 
     def clean(self):
         cd = self.cleaned_data
@@ -198,7 +187,7 @@ class CreazioneMezzoSO(ModelForm):
 
     class Meta:
         model = MezzoSO
-        fields = ['nome', 'tipo', 'mezzo_tipo', 'estensione', 'inizio', 'fine', ]
+        fields = ['nome', 'tipo', 'mezzo_tipo', 'estensione', 'stato']
 
 
 class AbbinaMezzoMaterialeForm(ModelForm):

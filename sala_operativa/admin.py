@@ -40,6 +40,6 @@ class AdminPartecipazione(ReadonlyAdminMixin, admin.ModelAdmin):
 @admin.register(MezzoSO)
 class MezzoSOAdmin(admin.ModelAdmin):
     search_fields = ['nome', 'creato_da', ]
-    list_display = ['nome', 'tipo', 'mezzo_tipo', 'inizio', 'fine',
+    list_display = ['nome', 'tipo', 'mezzo_tipo',
                     'creato_da', 'creazione', ]
     list_filter = ['creazione', 'tipo', 'mezzo_tipo', ]
