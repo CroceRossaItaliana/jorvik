@@ -96,6 +96,12 @@
                         <dd>{{ presidente.link|safe }}</dd>
                     {% endif %}
 
+
+                    {% if vice_presidente %}
+                        <dt>Vice Presidente <i class="fa fa-fw fa-user"></i></dt>
+                        <dd>{{ vice_presidente.link|safe }}</dd>
+                    {% endif %}
+
                     {% if consiglieri %}
                         {% for consigliere in consiglieri %}
                             <dt>Consigliere <i class="fa fa-fw fa-user"></i></dt>
