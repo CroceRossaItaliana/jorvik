@@ -4,14 +4,21 @@
 {% load humanize %}
 
 {% block pagina_titolo %}Sala Operativa - Le mie reperibilit&agrave;{% endblock %}
-
+{% if messages %}
+        <ul class="messages">
+            {% for message in messages %}
+            <li{% if message.tags %} class="{{ message.tags }}"{% endif %}>{{ message }}</li>
+            {% endfor %}
+        </ul>
+    {% endif %}
 {% block app_contenuto %}
+
 <div class="alert alert-block alert-info">
     <i class="fa fa-fw fa-info-circle"></i> Da qui puoi fornire la tua reperibilit&agrave; per la Sala Operativa del Comitato, nonch&egrave; visionare lo storico delle tue ultime reperibilit&agrave; segnalate.
 </div>
 
 <div class="row">
-    <div class="col-md-8">
+    <div class="col-md-9">
         <div class="panel panel-info">
             <div class="panel-heading">
                 <h2 class="panel-title">
@@ -25,6 +32,7 @@
                           <th>Orario</th>
                           <th>Attivazione</th>
                           <th>Data segnalazione</th>
+                          <th>Azioni</th>
                       </tr>
                     </thead>
                     <tbody>
@@ -54,14 +62,19 @@
                             <td>{{ r.attivazione }}</td>
                             <td>
                                 {{ r.creazione|date:"SHORT_DATETIME_FORMAT" }}<br />
+                            </td>
+                            <td>
                                 <a href="{% url 'so:reperibilita_cancella' r.pk %}"  data-conferma="Vuoi cancellare la reperibilità selezionata?">
                                     <i class="fa fa-fw fa-trash"></i> Cancella
+                                </a><br>
+                                <a href="{% url 'so:reperibilita_modifica' r.pk %}">
+                                    <i class="fa fa-fw fa-edit"></i> Modifica
                                 </a>
                             </td>
                         </tr>
                     {% empty %}
                         <tr class="alert alert-warning">
-                            <td colspan="3">
+                            <td colspan="4">
                                 <i class="fa fa-fw fa-warning"></i> Ancora nessuna reperibilit&agrave; segnalata.
                             </td>
                         </tr>
@@ -72,25 +85,17 @@
         </div>
     </div>
 
-    <div class="col-md-4">
+    <div class="col-md-3">
         <div class="panel panel-primary">
             <div class="panel-heading">
                 <h2 class="panel-title"><i class="fa fa-fw fa-plus-circle"></i>
-                    {% if me.ha_datore_di_lavoro %}
-                        Segnala reperibilit&agrave;
-                    {% else %}
-                        Inserisci i dati del datore di lavoro
-                    {% endif %}
+                    Segnala reperibilit&agrave;
                 </h2>
             </div>
             <div class="panel-body">
                 <p>Compila questo modulo per segnalare la tua reperibilit&agrave;. Verrai contattato dalla Sala Operativa in caso di necessit&agrave;.</p>
 
-                {% if me.ha_datore_di_lavoro %}
-                    <form method="POST" action=".">
-                {% else %}
-                    <form method="POST" action="{% url 'utente:datore_di_lavoro' %}">
-                {% endif %}
+                <form method="POST" action=".">
                     {% bootstrap_form form %}
 
                     <button type="submit" class="btn btn-block btn-primary">
@@ -102,4 +107,16 @@
         </div>
     </div>
 </div>
+<script>
+    $('#id_datore_lavoro').parent().hide();
+
+    $('#id_applicazione_bdl').change(function (){
+        if ($(this).is(':checked')){
+            $('#id_datore_lavoro').parent().show();
+        }
+        else{
+            $('#id_datore_lavoro').parent().hide();
+        }
+    });
+</script>
 {% endblock %}

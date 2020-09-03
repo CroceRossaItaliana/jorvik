@@ -360,7 +360,7 @@ class ReperibilitaSO(ModelloSemplice, ConMarcaTemporale, ConStorico):
     persona = models.ForeignKey(Persona, related_name="so_reperibilita", on_delete=models.CASCADE)
     applicazione_bdl = models.BooleanField("Applicazione dei Benefici di Legge", default=False)
     creato_da = models.ForeignKey(Persona, null=True, blank=True)
-    datore_lavoro = models.OneToOneField(DatoreLavoro, related_name="datore", null=True, on_delete=models.PROTECT)
+    datore_lavoro = models.ForeignKey(DatoreLavoro, blank=True, null=True)
 
     @classmethod
     def reperibilita_di(cls, persona):

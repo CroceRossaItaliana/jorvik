@@ -1393,6 +1393,8 @@ class DatoreLavoro(ModelloSemplice, ConMarcaTemporale):
         verbose_name = 'Datore di lavoro'
         verbose_name_plural = 'Datori di lavoro'
 
+    def __str__(self):
+        return self.nominativo
 
 class Telefono(ConMarcaTemporale, ModelloSemplice):
     """

@@ -1,19 +1,55 @@
 from autocomplete_light import shortcuts as autocomplete_light
 from django import forms
 from django.core.exceptions import ValidationError
-from django.forms import ModelForm
+from django.forms import ModelForm, Form
+from django import forms
 from django.forms.extras import SelectDateWidget
 from django.utils import timezone
 from django.utils.timezone import now
 
 from anagrafica.costanti import LOCALE
-from anagrafica.models import Sede
+from anagrafica.models import Sede, DatoreLavoro
 from anagrafica.permessi.costanti import GESTIONE_SO_SEDE
 from base.wysiwyg import WYSIWYGSemplice
 from .models import ServizioSO, TurnoSO, ReperibilitaSO, MezzoSO, PrenotazioneMMSO
 
 
-class VolontarioReperibilitaForm(ModelForm):
+class VolontarioReperibilitaForm(Form):
+
+    estensione = forms.MultipleChoiceField(
+        label="Estensione di reperibiltà",
+        widget=forms.CheckboxSelectMultiple,
+        choices=ReperibilitaSO.ESTENSIONE_CHOICES
+    )
+    inizio = forms.DateTimeField()
+    fine = forms.DateTimeField()
+    attivazione = forms.TimeField(initial='00:15')
+    applicazione_bdl = forms.BooleanField(label="Applicazione dei Benefici di Legge", required=False)
+    datore_lavoro = forms.ChoiceField(choices=(), required=False)
+
+    def clean(self):
+        cd = self.cleaned_data
+
+        if cd['applicazione_bdl'] and cd['datore_lavoro'] == '0':
+            self.add_error('datore_lavoro', 'Se vengono applicati i benefici di legge, devi inserire il datore di lavoro.')
+
+        return cd
+
+    @staticmethod
+    def popola_datore(persona):
+        l = [
+            ('0', '--------')
+        ]
+        for datore in DatoreLavoro.objects.filter(persona=persona):
+            l.append(
+                (datore.pk, datore.nominativo)
+            )
+        return l
+
+
+class VolontarioReperibilitaModelForm(ModelForm):
+    # datore_lavoro = forms.ChoiceField(choices=(), required=False)
+
     class Meta:
         model = ReperibilitaSO
         fields = ['estensione', 'inizio', 'fine', 'attivazione',
