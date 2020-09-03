@@ -20,4 +20,13 @@
           </form>
       </div>
   </div>
+    <script>
+        if ($('#id_tipo').val() === 'me'){
+            $('#id_mezzo_tipo').parent().show();
+            $('#id_stato').parent().show();
+        }else{
+            $('#id_mezzo_tipo').parent().hide();
+            $('#id_stato').parent().hide();
+        }
+    </script>
 {% endblock %}

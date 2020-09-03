@@ -88,12 +88,15 @@
     <script>
 
         $('#id_mezzo_tipo').parent().hide();
+        $('#id_stato').parent().hide();
 
         $('#id_tipo').on('change', function (e) {
             if ($(this).val() === 'me'){
                 $('#id_mezzo_tipo').parent().show();
+                $('#id_stato').parent().show();
             }else{
                 $('#id_mezzo_tipo').parent().hide();
+                $('#id_stato').parent().hide();
             }
         });
     </script>
