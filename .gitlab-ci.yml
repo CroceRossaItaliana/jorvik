@@ -26,7 +26,7 @@ build_containers:
   only:
     - merge_requests
 
-build_master_containers:
+build_release_containers:
   stage: build
   tags:
     - staging
@@ -34,7 +34,7 @@ build_master_containers:
     - pwd
     - docker build -t gaia:master .
   only:
-    - master
+    - release
 
 setup_pr:
   stage: setup
@@ -89,7 +89,7 @@ fire_pr:
   only:
     - merge_requests
 
-restore_db_master:
+restore_db_release:
   stage: restore_db
   tags:
     - staging
@@ -107,10 +107,10 @@ restore_db_master:
     - echo "SELECT pg_terminate_backend(pid) FROM pg_stat_activity WHERE datname = 'jorvik';" | docker-compose -f docker-compose-staging.yml exec -T db psql -U postgres
     - docker-compose -f docker-compose-staging.yml exec -T db pg_restore --disable-triggers -C --clean --no-acl --no-owner -j 8 -U postgres -d postgres /tmp/smalldump
   only:
-    - master
+    - release
   allow_failure: true
 
-deploy_master:
+deploy_release:
   stage: deploy
   tags:
     - staging
@@ -125,10 +125,10 @@ deploy_master:
     - sleep 30
     - docker-compose -f docker-compose-staging.yml restart proxy
   environment:
-    name: master
-    url: https://master.staging.gaia.cri.it
+    name: release
+    url: https://release.staging.gaia.cri.it
   only:
-    - master
+    - release
 
 deploy_provami:
   stage: deploy
@@ -147,4 +147,4 @@ deploy_provami:
     name: provami
     url: https://provami.gaia.cri.it
   only:
-    - master
+    - release
