@@ -100,7 +100,7 @@
 
       <footer class="row">
       {% block pagina_footer %}
-          <div class="col-md-6 text-center">
+          <div class="col-md-8 text-center">
             <p class="margine-nullo-sotto">
                 &copy;{% now "Y" %} <strong>Il Progetto Gaia</strong>
             </p>
@@ -118,11 +118,13 @@
             </a> |
             <a href="https://wiki.gaia.cri.it/" target="_blank">
                 Manuale d'uso
+            </a> |
+            <a href="/informazioni/sedi/" target="_blank">
+                Elenco Comitati CRI
             </a>
-
           </div>
 
-          <div class="col-md-6 allinea-destra">
+          <div class="col-md-4 allinea-destra">
             <img src="{% static 'img/uica.png' %}" alt="CRI" class="logo-uica"/>
           </div>
       {% endblock %}
