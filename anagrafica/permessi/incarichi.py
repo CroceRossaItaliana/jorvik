@@ -119,7 +119,7 @@ ESPANSIONE_DELEGHE = {
     UFFICIO_SOCI_UNITA:     espandi_incarichi_ufficio_soci_unita,
     UFFICIO_SOCI:           espandi_incarichi_ufficio_soci,
     PRESIDENTE:             espandi_incarichi_presidente,
-    VICE_PRESIDENTE:             espandi_incarichi_presidente,
+    # VICE_PRESIDENTE:             espandi_incarichi_presidente,
     COMMISSARIO:            espandi_incarichi_commissario,
     REFERENTE:              espandi_incarichi_referente_attivita,
     DIRETTORE_CORSO:        espandi_incarichi_direttore_corso,
