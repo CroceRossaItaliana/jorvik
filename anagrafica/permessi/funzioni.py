@@ -356,7 +356,7 @@ PERMESSI_FUNZIONI = (
     (CONSIGLIERE,               permessi_consigliere),
     (CONSIGLIERE_GIOVANE,       permessi_consigliere),
     (PRESIDENTE,                permessi_presidente),
-    (VICE_PRESIDENTE,           permessi_presidente),
+    # (VICE_PRESIDENTE,           permessi_presidente),
     (UFFICIO_SOCI,              permessi_ufficio_soci),
     (UFFICIO_SOCI_UNITA,        permessi_ufficio_soci_unita),
     (DELEGATO_AREA,             permessi_delegato_area),
