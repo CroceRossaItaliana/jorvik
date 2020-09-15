@@ -176,3 +176,4 @@ http://django-two-factor-auth.readthedocs.io/en/stable/installation.html#yubikey
  7. Inserire il token generato da Google Authenticator
  8. Il dispositivo è adesso configurato.
  
+
