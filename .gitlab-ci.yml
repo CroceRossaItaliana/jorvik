@@ -3,6 +3,7 @@ stages:
   - setup
   - restore_db
   - deploy
+  - release
 
 cache:
   key: ${CI_MERGE_REQUEST_ID}
@@ -148,3 +149,20 @@ deploy_provami:
     url: https://provami.gaia.cri.it
   only:
     - release
+
+release_app01:
+  stage: release
+  tags:
+    - gaia-app01,prod
+  before_script:
+    - su jorvik
+    - cd ~/jorvik
+    - git status
+    - git stash
+  script:
+    - echo "pullerei..."
+  after_script:
+    - git stash pop
+  only:
+    - release
+  when: manual
