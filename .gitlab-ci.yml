@@ -120,7 +120,7 @@ deploy_release:
   tags:
     - staging
   before_script:
-    - export CI_MERGE_REQUEST_ID=master
+    - export CI_MERGE_REQUEST_ID=release
   script:
     - docker-compose -f docker-compose-staging.yml down
     - sleep 30
