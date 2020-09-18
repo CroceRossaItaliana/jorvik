@@ -7,7 +7,6 @@
 # before starting the Django development server.
 #
 
-
 if [ "$SKIP_ALL" ]
 then
     SKIP_CONFIGURATION=1
