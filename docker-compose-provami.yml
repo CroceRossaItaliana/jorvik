@@ -22,4 +22,3 @@ services:
 
   pdf:
     container_name: provami_pdf
-
