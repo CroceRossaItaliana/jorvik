@@ -296,10 +296,9 @@ class TypeForm:
 
 
 class TypeFormResponses(TypeForm):
-
     form_ids = OrderedDict([
-        ('SdODRWCq', 'Servizi sanitari'),
-        ('r74BXkdn', 'Servizi di inclusione sociale'),
+        ('jG811ueg', 'Servizi sanitari'),
+        ('vlnVkzY4', 'Servizi di inclusione sociale'),
     ])
     email_body = """Grazie per aver completato il Monitoraggio 2020 (dati 2019).\n
         Nell'apprezzare la collaborazione prestata, a breve restituiremo i dati 
