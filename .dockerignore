@@ -1,0 +1,6 @@
+*.pyc
+.idea
+Dockerfile
+DockerfileWeb
+.git
+smalldump
