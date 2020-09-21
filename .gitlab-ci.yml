@@ -37,7 +37,7 @@ build_release_containers:
     - staging
   script:
     - pwd
-    - docker build -t gaia:master .
+    - docker build -t gaia:release .
   only:
     - release
 
@@ -99,7 +99,7 @@ restore_db_release:
   tags:
     - staging
   before_script:
-    - export CI_MERGE_REQUEST_ID=master
+    - export CI_MERGE_REQUEST_ID=release
     - chown -R gitlab-runner:gitlab-runner /home/gitlab-runner
   script:
     - docker-compose -f docker-compose-staging.yml stop
