@@ -3,16 +3,26 @@ version: '3'
 services:
   db:
     container_name: provami_db
+    networks:
+      - "provami-network"
+
   web:
     image: gaia:release
     container_name: provami_web
+    networks:
+      - "traefik-public"
+      - "provami-network"
 
   broker:
     container_name: provami_broker
+    networks:
+      - "provami-network"
 
   celery:
     image: gaia:release
     container_name: provami_celery
+    networks:
+      - "provami-network"
 
   proxy:
     labels:
@@ -21,6 +31,14 @@ services:
       - "traefik.http.routers.provami.entrypoints=websecure"
       - "traefik.http.routers.provami.tls.certresolver=myresolver"
     container_name: provami_proxy
+    networks:
+      - "traefik-public"
+      - "provami-network"
 
   pdf:
     container_name: provami_pdf
+    networks:
+      - "provami-network"
+
+networks:
+  provami-network:
