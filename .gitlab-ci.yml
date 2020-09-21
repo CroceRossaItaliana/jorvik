@@ -91,17 +91,9 @@ fire_pr:
   environment:
     name: pr$CI_MERGE_REQUEST_ID
     url: https://pr$CI_MERGE_REQUEST_ID.staging.gaia.cri.it
-    on_stop: stop_review
   only:
     - merge_requests
 
-stop_review:
-    script:
-      - docker-compose -f docker-compose-staging.yml down -v
-    when: manual
-    environment:
-      name: pr$CI_MERGE_REQUEST_ID
-      action: stop
 
 restore_db_release:
   stage: restore_db
