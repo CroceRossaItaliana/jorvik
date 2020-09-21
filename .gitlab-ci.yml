@@ -94,6 +94,7 @@ fire_pr:
   only:
     - merge_requests
 
+
 restore_db_release:
   stage: restore_db
   tags:
