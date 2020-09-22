@@ -55,3 +55,4 @@ beautifulsoup4==4.8.2
 django-formtools==1.0
 https://github.com/emfcamp/python-barcode/archive/0.7.zip # pyBarcode==0.7
 https://github.com/nephila/django-filer/archive/296fa6170a3749532b85ceb033eeae0fb839e9a6.zip
+django-cryptography==0.3
