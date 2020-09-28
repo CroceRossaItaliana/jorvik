@@ -8,6 +8,7 @@ COMMISSARIO = 'CM'
 CONSIGLIERE = 'CN'
 CONSIGLIERE_GIOVANE = 'CG'
 UFFICIO_SOCI = 'US'
+UFFICIO_SOCI_CM = 'CM'
 UFFICIO_SOCI_UNITA = 'UU'
 UFFICIO_SOCI_TEMPORANEO = 'UT'
 DELEGATO_AREA = 'DA'
@@ -44,6 +45,7 @@ PERMESSI_NOMI = (
     (CONSIGLIERE,               "Consigliere"),
     (CONSIGLIERE_GIOVANE,       "Consigliere giovane"),
     (UFFICIO_SOCI,              "Ufficio Soci"),
+    (UFFICIO_SOCI_CM,           "Ufficio Soci corpo militare"),
     (UFFICIO_SOCI_UNITA,        "Ufficio Soci Unità territoriali"),
     (DELEGATO_AREA,             "Delegato d'Area"),
     (DELEGATO_OBIETTIVO_1,      "Delegato Obiettivo I (Salute)"),

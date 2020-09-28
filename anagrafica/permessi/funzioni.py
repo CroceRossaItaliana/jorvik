@@ -2,11 +2,12 @@ from datetime import timedelta
 from django.db.models import QuerySet, Q
 
 from ..permessi.applicazioni import (PRESIDENTE, DIRETTORE_CORSO, RESPONSABILE_AUTOPARCO,
-    REFERENTE_GRUPPO, COMMISSARIO, UFFICIO_SOCI_UNITA, DELEGATO_OBIETTIVO_1,
-    DELEGATO_OBIETTIVO_2, DELEGATO_OBIETTIVO_3, DELEGATO_OBIETTIVO_4, DELEGATO_OBIETTIVO_5,
-    DELEGATO_OBIETTIVO_6, RESPONSABILE_FORMAZIONE, DELEGATO_CO, CONSIGLIERE,
-    CONSIGLIERE_GIOVANE, VICE_PRESIDENTE, UFFICIO_SOCI, DELEGATO_AREA,
-    RESPONSABILE_AREA, REFERENTE)
+                                     REFERENTE_GRUPPO, COMMISSARIO, UFFICIO_SOCI_UNITA, DELEGATO_OBIETTIVO_1,
+                                     DELEGATO_OBIETTIVO_2, DELEGATO_OBIETTIVO_3, DELEGATO_OBIETTIVO_4,
+                                     DELEGATO_OBIETTIVO_5,
+                                     DELEGATO_OBIETTIVO_6, RESPONSABILE_FORMAZIONE, DELEGATO_CO, CONSIGLIERE,
+                                     CONSIGLIERE_GIOVANE, VICE_PRESIDENTE, UFFICIO_SOCI, DELEGATO_AREA,
+                                     RESPONSABILE_AREA, REFERENTE, UFFICIO_SOCI_CM)
 from ..permessi.costanti import (GESTIONE_SOCI, ELENCHI_SOCI, \
     GESTIONE_ATTIVITA_SEDE, GESTIONE_CORSI_SEDE, \
     GESTIONE_SEDE, GESTIONE_ATTIVITA_AREA, GESTIONE_ATTIVITA, GESTIONE_CORSO, GESTIONE_AUTOPARCHI_SEDE, \
@@ -154,6 +155,19 @@ def permessi_ufficio_soci(sede):
         (GESTIONE_SOCI,         sede.espandi(includi_me=True)),
         (ELENCHI_SOCI,          sede.espandi(includi_me=True, pubblici=True)),
         (EMISSIONE_TESSERINI,   sede.queryset_modello().filter(estensione=REGIONALE)),
+    ]
+
+
+def permessi_ufficio_soci_cm(sede):
+    """
+    Permessi della delega di UFFICIO SOCI.
+
+    :param sede: Sede di cui si e' ufficio soci.
+    :return: Lista di permessi.
+    """
+    return [
+        (GESTIONE_SOCI,         sede.espandi(includi_me=True)),
+        (ELENCHI_SOCI,          sede.espandi(includi_me=True, pubblici=True)),
     ]
 
 
@@ -358,6 +372,7 @@ PERMESSI_FUNZIONI = (
     (PRESIDENTE,                permessi_presidente),
     # (VICE_PRESIDENTE,           permessi_presidente),
     (UFFICIO_SOCI,              permessi_ufficio_soci),
+    (UFFICIO_SOCI_CM,           permessi_ufficio_soci_cm),
     (UFFICIO_SOCI_UNITA,        permessi_ufficio_soci_unita),
     (DELEGATO_AREA,             permessi_delegato_area),
     (DELEGATO_CO,               permessi_delegato_centrale_operativa),
