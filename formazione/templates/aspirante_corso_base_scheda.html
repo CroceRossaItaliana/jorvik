@@ -38,11 +38,14 @@
 
         <li role="presentation"><a data-tab-id="#tabDettagliCorso" href="{{ corso.url }}" class="dettagli tabSelectorLink"><i class="fa fa-fw fa-info"></i> Dettagli corso ed iscrizione</a></li>
 
-        {% if puo_modificare %}
-            {% now "U" as today_ts %}
-            <li role="presentation"><a data-tab-id="#tabLezioni" href="{{ corso.url_lezioni }}" class="lezioni tabSelectorLink"><i class="fa fa-fw fa-calendar"></i> Lezioni</a></li>
-            {% if today_ts >= corso.data_esame|date:"U" %}<li role="presentation"><a data-tab-id="#tabEsami" href="{{ corso.url_report }}" class="esami tabSelectorLink"><i class="fa fa-fw fa-file-excel-o"></i> Documentazione Esame</a></li>{% endif %}
+        {% if not corso.online %}
+            {% if puo_modificare %}
+                {% now "U" as today_ts %}
+                <li role="presentation"><a data-tab-id="#tabLezioni" href="{{ corso.url_lezioni }}" class="lezioni tabSelectorLink"><i class="fa fa-fw fa-calendar"></i> Lezioni</a></li>
+                {% if today_ts >= corso.data_esame|date:"U" %}<li role="presentation"><a data-tab-id="#tabEsami" href="{{ corso.url_report }}" class="esami tabSelectorLink"><i class="fa fa-fw fa-file-excel-o"></i> Documentazione Esame</a></li>{% endif %}
+            {% endif %}
         {% endif %}
+
 
         {% can_show_tab_questionario as show_tab_questionario %}
         {% if show_tab_questionario %}
