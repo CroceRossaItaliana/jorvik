@@ -61,7 +61,9 @@ class Titolo(ModelloSemplice, ConVecchioID):
     richiede_data_scadenza = models.BooleanField(default=False)
     richiede_codice = models.BooleanField(default=False)
     inseribile_in_autonomia = models.BooleanField(default=True)
-    
+
+    online = models.BooleanField(default=False, blank=True)
+
     class Meta:
         verbose_name_plural = "Titoli: Elenco"
         permissions = (
