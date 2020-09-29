@@ -70,6 +70,16 @@
                         <br />
                     <i class="fa fa-fw fa-calendar"></i>
                         Esami: {{ corso.data_esame }}
+
+                    <br>
+                    <br>
+                    {% if corso.online %}
+                        <b style="color: #00ff1d;">
+                            <i class="fa fa-exclamation"></i>
+                            Corso online
+                        </b>
+                    {% endif %}
+
                 </td>
 
                 <td>

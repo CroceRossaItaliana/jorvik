@@ -39,9 +39,11 @@ class Corso(ModelloSemplice, ConDelegati, ConMarcaTemporale,
     # Tipologia di corso
     CORSO_NUOVO = 'C1'
     BASE = 'BA'
+    CORSO_ONLINE = 'CO'
     TIPO_CHOICES = (
         (BASE, 'Corso di Formazione per Volontari CRI'),
         (CORSO_NUOVO, 'Altri Corsi'),
+        (CORSO_ONLINE, 'Corsi online'),
     )
 
     # Stato del corso
@@ -304,6 +306,10 @@ class CorsoBase(Corso, ConVecchioID, ConPDF):
     def possibili_destinazioni(self):
         """ Ritorna le possibili destinazioni per l'iscrizione dei Volontari."""
         return self.sede.comitato.espandi(includi_me=True)
+
+    @property
+    def online(self):
+        return self.tipo == self.CORSO_ONLINE
 
     @property
     def prossimo(self):
@@ -635,7 +641,7 @@ class CorsoBase(Corso, ConVecchioID, ConPDF):
     def attivabile(self):
         """Controlla se il corso base e' attivabile."""
 
-        if not self.locazione:
+        if not self.locazione and self.tipo != Corso.CORSO_ONLINE:
             return False
 
         if not self.descrizione:

@@ -8,6 +8,7 @@ var level_form_group = $('#id_level').closest('.form-group');
 var area_form_group = $('#id_area').closest('.form-group');
 var corso_base_tipo_value = 'BA';
 var corso_nuovo_tipo_value = 'C1';
+var corso_online_value = 'CO';
 var titolo_options_ajax_data = {};
 
 
@@ -78,7 +79,7 @@ $('#id_tipo').on('change', function(e){
         cleanDeliberaFileLink();
     }
 
-    if (corso_tipo_value && corso_tipo_value == corso_nuovo_tipo_value) {
+    if (corso_tipo_value && (corso_tipo_value == corso_nuovo_tipo_value || corso_tipo_value == corso_online_value)){
         level_form_group.show();
         area_form_group.show();
     }
@@ -131,6 +132,7 @@ $('#id_area').on('change', function(e) {
             data: {
                 area: area_id,
                 cdf_livello: id_level_val,
+                tipo: $('#id_tipo').val(),
                 csrf_token: _csrf_token,
             },
             success: function(data) {
