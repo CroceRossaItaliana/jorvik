@@ -43,7 +43,7 @@ class Corso(ModelloSemplice, ConDelegati, ConMarcaTemporale,
     TIPO_CHOICES = (
         (BASE, 'Corso di Formazione per Volontari CRI'),
         (CORSO_NUOVO, 'Altri Corsi'),
-        (CORSO_ONLINE, 'Corso online'),
+        (CORSO_ONLINE, 'Corsi online'),
     )
 
     # Stato del corso
