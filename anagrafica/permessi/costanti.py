@@ -15,6 +15,7 @@ from ..permessi.applicazioni import (PRESIDENTE, DELEGATO_AREA, RESPONSABILE_ARE
 
 GESTIONE_SEDE = "GESTIONE_SEDE"
 GESTIONE_SOCI = "GESTIONE_SOCI"
+GESTIONE_SOCI_CM = "GESTIONE_SOCI_CM"
 ELENCHI_SOCI = "ELENCHI_SOCI"
 RUBRICA_UFFICIO_SOCI = "RUBRICA_UFFICIO_SOCI"
 RUBRICA_UFFICIO_SOCI_UNITA = "RUBRICA_UFFICIO_SOCI_UNITA"
@@ -55,6 +56,7 @@ ASPIRANTE = "ASPIRANTE"
 PERMESSI_OGGETTI = (
     (GESTIONE_SEDE,             ('anagrafica', 'Sede')),
     (GESTIONE_SOCI,             ('anagrafica', 'Sede')),
+    (GESTIONE_SOCI_CM,             ('anagrafica', 'Sede')),
     (ELENCHI_SOCI,              ('anagrafica', 'Sede')),
     (RUBRICA_UFFICIO_SOCI,      ('anagrafica', 'Sede')),
     (RUBRICA_UFFICIO_SOCI_UNITA,('anagrafica', 'Sede')),

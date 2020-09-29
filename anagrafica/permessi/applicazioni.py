@@ -8,7 +8,7 @@ COMMISSARIO = 'CM'
 CONSIGLIERE = 'CN'
 CONSIGLIERE_GIOVANE = 'CG'
 UFFICIO_SOCI = 'US'
-UFFICIO_SOCI_CM = 'CM'
+UFFICIO_SOCI_CM = 'UM'
 UFFICIO_SOCI_UNITA = 'UU'
 UFFICIO_SOCI_TEMPORANEO = 'UT'
 DELEGATO_AREA = 'DA'
@@ -80,6 +80,7 @@ RUBRICHE_TITOLI = OrderedDict((
     ('condigliere_giovane', (CONSIGLIERE_GIOVANE, 'Consiglieri giovani', True)),
     ('delegati_us', (UFFICIO_SOCI, 'Delegati Ufficio Soci', True)),
     ('delegati_us_unita', (UFFICIO_SOCI_UNITA, 'Delegati Ufficio Soci Unità territoriali', True)),
+    ('delegati_us_corpo_militare', (UFFICIO_SOCI_CM, 'Delegati Ufficio Soci Corpo militare', True)),
     ('delegati_obiettivo_1', (DELEGATO_OBIETTIVO_1, 'Delegati Obiettivo I (Salute)', True)),
     ('delegati_obiettivo_2', (DELEGATO_OBIETTIVO_2, 'Delegati Obiettivo II (Sociale)', True)),
     ('delegati_obiettivo_3', (DELEGATO_OBIETTIVO_3, 'Delegati Obiettivo III (Emergenze)', True)),
