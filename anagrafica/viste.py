@@ -1311,6 +1311,7 @@ def _presidente_sede_ruoli(sede):
         "Responsabili": [
             (UFFICIO_SOCI, "Ufficio Soci", sede.delegati_attuali(tipo=UFFICIO_SOCI).count(), []),
             (UFFICIO_SOCI_UNITA, "Ufficio Soci per Unità territoriale", sede.delegati_attuali(tipo=UFFICIO_SOCI_UNITA).count(), []),
+            (UFFICIO_SOCI_CM, "Ufficio Soci Corpo militare", sede.delegati_attuali(tipo=UFFICIO_SOCI_CM).count(), []),
             (RESPONSABILE_FORMAZIONE, "Formazione", sede.delegati_attuali(tipo=RESPONSABILE_FORMAZIONE).count(), []),
             (RESPONSABILE_AUTOPARCO, "Autoparco", sede.delegati_attuali(tipo=RESPONSABILE_AUTOPARCO).count(), []),
             (DELEGATO_CO, "Centrale Operativa", sede.delegati_attuali(tipo=DELEGATO_CO).count(), []),
