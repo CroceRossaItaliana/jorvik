@@ -32,7 +32,7 @@ from .forms import (ModuloCreazioneCorsoBase, ModuloModificaLezione,
     ModuloModificaCorsoBase, ModuloIscrittiCorsoBaseAggiungi, FormCommissioneEsame,
     FormVerbaleCorso, FormRelazioneDelDirettoreCorso)
 from .classes import GeneraReport, GestioneLezioni
-
+from .utils import costruisci_titoli
 
 @pagina_privata
 def formazione(request, me):
@@ -173,7 +173,7 @@ def formazione_corsi_base_nuovo(request, me):
                                                       tipo=Titolo.TITOLO_CRI,
                                                       is_active=True)
 
-        if tipo == Corso.CORSO_NUOVO:
+        if tipo == Corso.CORSO_NUOVO or tipo == Corso.CORSO_ONLINE:
             kwargs['titolo_cri'] = cd['titolo_cri']
             kwargs['cdf_level'] = cd['level']
             kwargs['cdf_area'] = cd['area']
@@ -198,8 +198,9 @@ def formazione_corsi_base_nuovo(request, me):
         # Il corso è creato. Informa presidenza allegando delibera_file
         course.inform_presidency_with_delibera_file()
         request.session['corso_base_creato'] = course.pk
+        online_sede = cd['locazione'] == form.ONLINE
 
-        if same_sede:
+        if same_sede or online_sede:
             # Rindirizza sulla pagina: selezione direttori
             return redirect(course.url_direttori)
         else:
@@ -262,7 +263,7 @@ def aspirante_corso_base_informazioni(request, me=None, pk=None):
     corso = get_object_or_404(CorsoBase, pk=pk)
     puoi_partecipare = corso.persona(me) if me else None
 
-    if corso.locazione is None:
+    if corso.locazione is None and corso.tipo != Corso.CORSO_ONLINE:
         # Il corso non ha una locazione (è stata selezionata la voce °Sede presso Altrove"
         messages.error(request, "Imposta una locazione per procedere la navigazione del Corso.")
 
@@ -1464,6 +1465,7 @@ def catalogo_corsi(request, me):
 
     context = {
         'titoli': OrderedDict(),
+        'titoli_online': OrderedDict(),
         'form': CatalogoCorsiSearchForm,
     }
 
@@ -1475,25 +1477,8 @@ def catalogo_corsi(request, me):
     else:
         qs = Titolo.objects.filter(tipo=Titolo.TITOLO_CRI, sigla__isnull=False)
 
-    for i in OBBIETTIVI_STRATEGICI:
-        area_id, area_nome = i
-        areas = qs.filter(area=i[0])
-
-        context['titoli'][area_nome] = OrderedDict()
-
-        for k in Titolo.CDF_LIVELLI:
-            level_id = k[0]
-            levels = areas.filter(cdf_livello=level_id)
-            context['titoli'][area_nome]['level_%s' % level_id] = levels
-
-        if search_query:
-            # Fare pulizia dei settori che non hanno un risultato (solo nel caso di ricerca)
-            settore_in_dict = context['titoli'][area_nome]
-            cleaned = OrderedDict((a,t) for a,t in dict(settore_in_dict).items() if t)
-            if not len(cleaned):
-                del context['titoli'][area_nome]
-            else:
-                context['titoli'][area_nome] = cleaned
+    context = costruisci_titoli(context, qs.filter(online=False), search_query, 'titoli')
+    context = costruisci_titoli(context, qs.filter(online=True), search_query, 'titoli_online')
 
     context['titoli_total'] = qs.count()
 

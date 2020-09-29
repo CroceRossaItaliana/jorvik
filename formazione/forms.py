@@ -19,9 +19,11 @@ from .models import (Corso, CorsoBase, CorsoFile, CorsoEstensione,
 class ModuloCreazioneCorsoBase(ModelForm):
     PRESSO_SEDE = "PS"
     ALTROVE = "AL"
+    ONLINE = "OL"
     LOCAZIONE = (
         (PRESSO_SEDE, "Il corso si svolgerà presso la Sede"),
-        (ALTROVE, "Il corso si svolgerà altrove")
+        (ALTROVE, "Il corso si svolgerà altrove"),
+        (ONLINE, "Modalità online"),
     )
 
     DEFAULT_BLANK_LEVEL = ('', '---------'),
@@ -71,7 +73,7 @@ class ModuloCreazioneCorsoBase(ModelForm):
                 if field in cd:
                     del cd[field]
 
-        if tipo == Corso.CORSO_NUOVO:
+        if tipo == Corso.CORSO_NUOVO or tipo == Corso.CORSO_ONLINE:
             cd_titolo_cri = cd.get('titolo_cri')
 
             if not cd_titolo_cri:
