@@ -33,6 +33,8 @@ from .forms import (ModuloCreazioneCorsoBase, ModuloModificaLezione,
     FormVerbaleCorso, FormRelazioneDelDirettoreCorso)
 from .classes import GeneraReport, GestioneLezioni
 from .utils import costruisci_titoli
+from .training_api import TrainingApi
+
 
 @pagina_privata
 def formazione(request, me):
@@ -290,6 +292,11 @@ def aspirante_corso_base_informazioni(request, me=None, pk=None):
     context['puo_modificare'] = corso.can_modify(me)
     context['can_activate'] = corso.can_activate(me)
     context['puoi_partecipare'] = puoi_partecipare
+
+    if corso.online:
+        api = TrainingApi()
+        r = api.core_course_get_courses_by_field_shortname(corso.titolo_cri.nome)
+        context['link'] = 'https://training.cri.it/course/view.php?id={}'.format(r['id'])
 
     return 'aspirante_corso_base_scheda_informazioni.html', context
 
@@ -642,10 +649,16 @@ def aspirante_corso_base_termina(request, me, pk):
 
     # Validazione delle form
     for partecipante in partecipanti_qs:
+        api = TrainingApi()
         form = FormVerbaleCorso(request.POST or None,
             prefix="part_%d" % partecipante.pk,
             instance=partecipante,
-            generazione_verbale=generazione_verbale)
+            generazione_verbale=generazione_verbale,
+            initial={
+                'ammissione': PartecipazioneCorsoBase.AMMESSO
+                if api.ha_ottenuto_competenze(persona=partecipante.persona, corso=corso) else ''
+            }
+        )
 
         if corso.tipo == Corso.BASE:
             if corso.titolo_cri and corso.titolo_cri.scheda_prevede_esame:
@@ -822,10 +835,15 @@ def aspirante_corso_base_iscritti_cancella(request, me, pk, iscritto):
                                messaggio="La persona cercata non è iscritta.",
                                torna_titolo="Torna al corso base", torna_url=corso.url_iscritti)
     if request.method == 'POST':
+        api = TrainingApi()
         for partecipazione in corso.partecipazioni_confermate_o_in_attesa().filter(persona=persona):
             partecipazione.disiscrivi(mittente=me)
+            if corso.online:
+                api.cancellazione_iscritto(persona, corso)
         for partecipazione in corso.inviti_confermati_o_in_attesa().filter(persona=persona):
             partecipazione.disiscrivi(mittente=me)
+            if corso.online:
+                api.cancellazione_iscritto(persona, corso)
         return messaggio_generico(request, me, titolo="Iscritto cancellato",
                                   messaggio="{} è stato cancellato dal corso {}.".format(persona, corso),
                                   torna_titolo="Torna al corso base", torna_url=corso.url_iscritti)
@@ -907,6 +925,11 @@ def aspirante_corso_base_iscritti_aggiungi(request, me, pk):
                         mittente=me,
                         destinatari=[persona]
                     )
+
+                if corso.online:
+                    from formazione.training_api import TrainingApi
+                    api = TrainingApi()
+                    api.aggiugi_ruolo(persona=persona, corso=corso, ruolo=TrainingApi.DISCENTE)
 
                 Log.crea(me, partecipazione)
 
