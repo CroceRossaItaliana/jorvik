@@ -26,6 +26,7 @@ services:
       - WAIT_HOST_CONNECT_TIMEOUT=60
       - SKIP_REQUIREMENTS_CHECK=1
       - GOOGLE_KEY=${GOOGLE_KEY}
+      - MOODLE_KEY=${MOODLE_KEY}
     networks:
       - "default"
 

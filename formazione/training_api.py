@@ -3,6 +3,7 @@ from django.conf import settings
 from requests import PreparedRequest
 
 from autenticazione.models import Utenza
+from jorvik.settings import MOODLE_KEY, MOODLE_DOMAIN
 
 
 class TrainingApi:
@@ -15,8 +16,8 @@ class TrainingApi:
 
     def __init__(self):
         self.pr = PreparedRequest()
-        self.token = settings.APIS_CONF['moodle']['token']
-        self.domain = settings.APIS_CONF['moodle']['domain']
+        self.token = MOODLE_KEY
+        self.domain = MOODLE_DOMAIN
 
     def core_course_get_courses_by_field_shortname(self, shortname):
 

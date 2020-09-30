@@ -260,8 +260,9 @@ if gateway:
 APIS_CONF = configparser.ConfigParser()
 APIS_CONF.read(APIS_CONF_FILE)
 GOOGLE_KEY = APIS_CONF.get('google', 'api_key', fallback=os.environ.get("GOOGLE_KEY"))
-DOMPDF_ENDPOINT = APIS_CONF.get('dompdf', 'endpoint',
-                                fallback='')
+MOODLE_KEY = APIS_CONF.get('moodle', 'token', fallback=os.environ.get("MOODLE_KEY"))
+MOODLE_DOMAIN = APIS_CONF.get('moodle', 'domain', fallback=os.environ.get("MOODLE_DOMAIN"))
+DOMPDF_ENDPOINT = APIS_CONF.get('dompdf', 'endpoint', fallback='')
 
 DESTINATARI_REPORT = ['sviluppo@cri.it', 'info@gaia.cri.it']
 
