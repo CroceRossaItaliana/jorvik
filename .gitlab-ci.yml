@@ -204,6 +204,7 @@ migrate_db:
   script:  
     - /home/appserver/venv/bin/python /home/appserver/jorvik/manage.py makemigrations
     - /home/appserver/venv/bin/python /home/appserver/jorvik/manage.py migrate
+    - /home/appserver/venv/bin/python /home/appserver/jorvik/manage.py collectstatic --no-input
   after_script:
     - sudo service jorvik start
   only:
