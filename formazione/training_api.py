@@ -31,7 +31,7 @@ class TrainingApi:
                 "value": shortname
             }
         )
-
+        print(r)
         return r['courses'][0]
 
     def core_user_get_users_by_field(self, email):
@@ -65,7 +65,7 @@ class TrainingApi:
             }
         )
 
-        return r[0]
+        return r
 
     def core_role_assign_roles(self, userid, contextid, roleid):
         r = self._get(
