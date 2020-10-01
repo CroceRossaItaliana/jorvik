@@ -537,6 +537,7 @@ class ReportElenco(ConMarcaTemporale):
     VOLONTARI_GIOVANI = 'vog'
     SERVIZIO_CIVILE = 'civ'
     IV_E_CM = 'ivcm'
+    CM = 'cm'
     DIMESSI = 'dim'
     VOLONTARI_IN_RISERVA = 'vir'
     TRASFERITI = 'tra'

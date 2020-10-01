@@ -292,6 +292,32 @@ class ElencoIVCM(ElencoVistaSoci):
         ).distinct('cognome', 'nome', 'codice_fiscale')
 
 
+class ElencoCM(ElencoVistaSoci):
+    """ args: QuerySet<Sede>, Sedi per le quali compilare gli elenchi sostenitori """
+
+    REPORT_TYPE = ReportElenco.CM
+
+    def risultati(self):
+        qs_sedi = self.args[0]
+
+        # modulo = self.modulo_riempito
+        query = Q()
+        query &= Q(cm=True)
+        return Persona.objects.filter(
+            query,
+            Appartenenza.query_attuale(
+                sede__in=qs_sedi, membro__in=Appartenenza.MEMBRO_DIRETTO,
+            ).via("appartenenze")
+        ).annotate(
+                appartenenza_tipo=F('appartenenze__membro'),
+                appartenenza_inizio=F('appartenenze__inizio'),
+                appartenenza_sede=F('appartenenze__sede'),
+        ).prefetch_related(
+            'appartenenze', 'appartenenze__sede',
+            'utenza', 'numeri_telefono'
+        ).distinct('cognome', 'nome', 'codice_fiscale')
+
+
 class ElencoSenzaTurni(ElencoVistaSoci):
     """ args: QuerySet<Sede>, Sedi per le quali compilare gli elenchi sostenitori """
 
