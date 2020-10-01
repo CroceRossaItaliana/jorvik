@@ -170,6 +170,7 @@ dump_db:
   stage: maintenance
   script:
     - sudo service jorvik stop 
+    - sudo service nginx stop
   only:
     - release
   allow_failure: false
@@ -222,6 +223,7 @@ migrate_db:
     - git pull --rebase origin release
   after_script:    
     - sudo service jorvik restart
+    - sudo service nginx restart
   only:
     - release
   when: manual
