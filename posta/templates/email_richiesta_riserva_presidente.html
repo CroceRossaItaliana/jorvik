@@ -1,0 +1,8 @@
+{% extends 'email.html' %}
+
+{% block corpo %}
+  <p class="grassetto">Salve presidente.</p>
+  <p>Riceve la richiesta di riserva appena effettuata dal volontario <strong>{{ riserva.persona.nome_completo }}</strong>.</p>
+  <p>Richiesta di riserva presso il <strong>{{ riserva.sede }}</strong> inoltrata il <strong>{{ riserva.creazione }}</strong>.</p>
+  <p>La richiesta è in attesa di essere protocollata dalla segreteria del Comitato.</p>
+{% endblock %}
