@@ -2571,7 +2571,6 @@ class Trasferimento(ModelloSemplice, ConMarcaTemporale, ConAutorizzazioni, ConPD
             self.persona,
             INCARICO_GESTIONE_TRASFERIMENTI,
             invia_notifica_presidente=notifiche_attive,
-            invia_notifica_ufficio_soci=True,
             auto=Autorizzazione.AP_AUTO,
             scadenza=self.APPROVAZIONE_AUTOMATICA,
             forza_sede_riferimento=sede,
@@ -2664,7 +2663,6 @@ class Estensione(ModelloSemplice, ConMarcaTemporale, ConAutorizzazioni, ConPDF):
             self.persona,
             INCARICO_GESTIONE_ESTENSIONI,
             invia_notifica_presidente=notifiche_attive,
-            invia_notifica_ufficio_soci=True,
             auto=Autorizzazione.MANUALE,
             forza_sede_riferimento=sede,
         )
@@ -2726,18 +2724,10 @@ class Riserva(ModelloSemplice, ConMarcaTemporale, ConStorico, ConProtocollo,
     appartenenza = models.ForeignKey(Appartenenza, related_name="riserve", on_delete=models.PROTECT)
 
     def richiedi(self, notifiche_attive=True):
-        app = self.persona.appartenenze_attuali(membro=Appartenenza.VOLONTARIO).first()
-        if not app:
-            raise ValueError("Impossibile richiedere estensione: Nessuna appartenenza attuale.")
-        sede = app.sede
-
         self.autorizzazione_richiedi_sede_riferimento(
             self.persona,
             INCARICO_GESTIONE_RISERVE,
-            invia_notifica_ufficio_soci=notifiche_attive,
-            invia_notifica_presidente=notifiche_attive,
-            auto=Autorizzazione.MANUALE,
-            forza_sede_riferimento=sede,
+            invia_notifica_presidente=notifiche_attive
         )
         if notifiche_attive:
             self.invia_mail()
