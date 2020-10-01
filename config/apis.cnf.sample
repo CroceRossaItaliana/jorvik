@@ -12,5 +12,4 @@
 endpoint = http://pdf/www/render.php
 
 [moodle]
-token=
 domain=http://training.cri.it/webservice/rest/server.php
