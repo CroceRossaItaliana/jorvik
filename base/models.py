@@ -221,7 +221,6 @@ class Autorizzazione(ModelloSemplice, ConMarcaTemporale):
 
     @staticmethod
     def espandi_notifiche(sede, invia_notifiche, invia_notifica_presidente=False, invia_notifica_ufficio_soci=False):
-
         if invia_notifica_presidente:
             presidente = sede.presidente()
             invia_notifiche = list(invia_notifiche) + ([presidente] if presidente else [])

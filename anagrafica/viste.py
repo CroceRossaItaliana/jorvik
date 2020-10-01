@@ -811,17 +811,19 @@ def utente_estensione(request, me):
             #         ##presidente sede di estensione
             #     ]
             # )
-            # Messaggio.costruisci_e_invia(
-            #     oggetto="Richiesta di estensione",
-            #     modello="email_richiesta_estensione_presidente.html",
-            #     corpo={
-            #         "trasferimento": est,
-            #     },
-            #     mittente=None,
-            #     destinatari=[
-            #         ##presidente sede riferimento
-            #     ]
-            # )
+
+            # Avviso al Presidente dove è Dipendente (o MEMBRO_DIRETTO)
+            Messaggio.costruisci_e_accoda(
+                oggetto="Richiesta di estensione di un membro diretto",
+                modello="email_richiesta_estensione_presidente.html",
+                corpo={
+                    "trasferimento": est,
+                },
+                mittente=None,
+                destinatari=[
+                    est.persona.sede_riferimento().presidente()
+                ]
+            )
 
     in_attesa, delegati = estensioni_pending(me)
 
@@ -914,7 +916,9 @@ def utente_trasferimento(request, me):
             trasf.richiedente = me
             trasf.save()
             trasf.richiedi()
-            Messaggio.costruisci_e_invia(
+
+            # Avviso a se stesso
+            Messaggio.costruisci_e_accoda(
                 oggetto="Richiesta di trasferimento",
                 modello="email_richiesta_trasferimento.html",
                 corpo={
@@ -925,7 +929,9 @@ def utente_trasferimento(request, me):
                     trasf.persona,
                 ]
             )
-            Messaggio.costruisci_e_invia(
+
+            # Avviso al Presidente di Sede Destinazione
+            Messaggio.costruisci_e_accoda(
                 oggetto="Richiesta di trasferimento",
                 modello="email_richiesta_trasferimento_cc.html",
                 corpo={
@@ -936,7 +942,9 @@ def utente_trasferimento(request, me):
                     trasf.destinazione.presidente()
                 ]
             )
-            Messaggio.costruisci_e_invia(
+
+            # Avviso al Presidente dove è Dipendente (o MEMBRO_DIRETTO)
+            Messaggio.costruisci_e_accoda(
                 oggetto="Richiesta di trasferimento",
                 modello="email_richiesta_trasferimento_presidente.html",
                 corpo={
@@ -971,12 +979,20 @@ def utente_riserva(request, me):
     if modulo.is_valid():
         r = modulo.save(commit=False)
         r.persona = me
-        r.appartenenza = me.appartenenze_attuali().first()
+        r.appartenenza = me.appartenenze_attuali(membro=Appartenenza.VOLONTARIO).first()
         r.save()
-        r.invia_mail()
-        r.autorizzazione_richiedi_sede_riferimento(
-            me, INCARICO_GESTIONE_RISERVE,
-            invia_notifica_presidente=True,
+        r.richiedi()
+
+        Messaggio.costruisci_e_accoda(
+            oggetto="Richiesta di riserva di un membro diretto",
+            modello="email_richiesta_riserva_presidente.html",
+            corpo={
+                "riserva": r,
+            },
+            mittente=None,
+            destinatari=[
+                r.persona.sede_riferimento().presidente()
+            ]
         )
 
         return messaggio_generico(request, me, titolo="Riserva registrata",
