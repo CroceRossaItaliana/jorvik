@@ -47,7 +47,7 @@ PERMESSI_NOMI = (
     (CONSIGLIERE_GIOVANE,       "Consigliere giovane"),
     (UFFICIO_SOCI,              "Ufficio Soci"),
     (UFFICIO_SOCI_CM,           "Ufficio Soci corpo militare"),
-    (UFFICIO_SOCI_IIVV,           "Ufficio Soci corpo militare"),
+    (UFFICIO_SOCI_IIVV,         "Ufficio Soci Infermiere volontarie"),
     (UFFICIO_SOCI_UNITA,        "Ufficio Soci Unità territoriali"),
     (DELEGATO_AREA,             "Delegato d'Area"),
     (DELEGATO_OBIETTIVO_1,      "Delegato Obiettivo I (Salute)"),

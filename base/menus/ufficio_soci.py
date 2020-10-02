@@ -1,3 +1,5 @@
+from anagrafica.permessi.costanti import GESTIONE_SOCI_IIVV
+
 
 def menu_us(me):
     from django.core.urlresolvers import reverse
@@ -7,13 +9,16 @@ def menu_us(me):
 
     us = me and me.ha_permessi([GESTIONE_SOCI])
     uc = me and me.ha_permessi([GESTIONE_SOCI_CM])
+    iv = me and me.ha_permessi([GESTIONE_SOCI_IIVV])
+    print(iv)
     return (
         ("Elenchi", (
             ("Volontari", "fa-list", "/us/elenchi/volontari/") if us else None,
             ("Vol. giovani", "fa-list", "/us/elenchi/giovani/") if us else None,
             ("Estesi", "fa-list", "/us/elenchi/estesi/") if us else None,
-            ("IV e CM", "fa-list", "/us/elenchi/ivcm/") if us else None,
-            ("Corpo Militare", "fa-list", "/us/elenchi/cm/") if uc else None,
+            # ("IV e CM", "fa-list", "/us/elenchi/ivcm/") if us else None,
+            ("Corpo Militare", "fa-list", "/us/elenchi/cm/") if uc or us else None,
+            ("Infermiere volontarie", "fa-list", "/us/elenchi/iv/") if iv or us else None,
             ("In Riserva", "fa-list", "/us/elenchi/riserva/") if us else None,
             ("Zero turni", "fa-list", "/us/elenchi/senza-turni/") if us else None,
             ("Soci", "fa-list", "/us/elenchi/soci/") if us else None,
