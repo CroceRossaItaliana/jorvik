@@ -1173,7 +1173,7 @@ class CorsoBase(Corso, ConVecchioID, ConPDF):
 
     @property
     def is_nuovo_corso(self):
-        return self.tipo == Corso.CORSO_NUOVO
+        return self.tipo == Corso.CORSO_NUOVO or self.tipo == Corso.CORSO_ONLINE
 
     def get_course_links(self):
         return self.corsolink_set.filter(is_enabled=True)

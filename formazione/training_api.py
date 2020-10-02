@@ -31,7 +31,6 @@ class TrainingApi:
                 "value": shortname
             }
         )
-        print(r)
         return r['courses'][0]
 
     def core_user_get_users_by_field(self, email):
@@ -46,8 +45,7 @@ class TrainingApi:
                 "values[0]": email
             }
         )
-
-        return r[0]
+        return r[0] if r else r
 
     def core_user_create_users(self, persona):
 
@@ -73,7 +71,7 @@ class TrainingApi:
             parameters={
                 "moodlewsrestformat": "json",
                 "wstoken": self.token,
-                "wsfunction": "core_user_create_users",
+                "wsfunction": "core_role_assign_roles",
                 "assignments[0][roleid]": roleid,
                 "assignments[0][userid]": userid,
                 "assignments[0][contextid]": contextid
@@ -121,6 +119,7 @@ class TrainingApi:
         # Se l'utente non esiste la crea
         if not utente:
             utente = self.core_user_create_users(persona)
+
         if ruolo == self.DIRETTORE:
             return self.core_role_assign_roles(utente['id'], corso['id'], ruolo)
         elif ruolo == self.DISCENTE:
