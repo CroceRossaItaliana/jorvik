@@ -39,7 +39,7 @@ from .permessi.applicazioni import (PRESIDENTE, UFFICIO_SOCI, PERMESSI_NOMI_DICT
                                     RESPONSABILE_AUTOPARCO, DELEGATO_CO, UFFICIO_SOCI_UNITA, DELEGHE_RUBRICA, REFERENTE,
                                     RESPONSABILE_AREA, DIRETTORE_CORSO, DELEGATO_AREA, REFERENTE_GRUPPO,
                                     PERMESSI_NOMI, RUBRICHE_TITOLI, CONSIGLIERE, VICE_PRESIDENTE, CONSIGLIERE_GIOVANE,
-                                    UFFICIO_SOCI_CM)
+                                    UFFICIO_SOCI_CM, UFFICIO_SOCI_IIVV)
 from .permessi.costanti import (ERRORE_PERMESSI, MODIFICA, LETTURA, GESTIONE_SEDE,
     GESTIONE, ELENCHI_SOCI, GESTIONE_ATTIVITA, GESTIONE_ATTIVITA_AREA, GESTIONE_CORSO)
 from .permessi.incarichi import (INCARICO_GESTIONE_RISERVE, INCARICO_GESTIONE_TITOLI,
@@ -1312,6 +1312,7 @@ def _presidente_sede_ruoli(sede):
             (UFFICIO_SOCI, "Ufficio Soci", sede.delegati_attuali(tipo=UFFICIO_SOCI).count(), []),
             (UFFICIO_SOCI_UNITA, "Ufficio Soci per Unità territoriale", sede.delegati_attuali(tipo=UFFICIO_SOCI_UNITA).count(), []),
             (UFFICIO_SOCI_CM, "Ufficio Soci Corpo militare", sede.delegati_attuali(tipo=UFFICIO_SOCI_CM).count(), []),
+            (UFFICIO_SOCI_IIVV, "Ufficio Soci Infermiere volontarie", sede.delegati_attuali(tipo=UFFICIO_SOCI_IIVV).count(), []),
             (RESPONSABILE_FORMAZIONE, "Formazione", sede.delegati_attuali(tipo=RESPONSABILE_FORMAZIONE).count(), []),
             (RESPONSABILE_AUTOPARCO, "Autoparco", sede.delegati_attuali(tipo=RESPONSABILE_AUTOPARCO).count(), []),
             (DELEGATO_CO, "Centrale Operativa", sede.delegati_attuali(tipo=DELEGATO_CO).count(), []),
@@ -1488,6 +1489,7 @@ def presidente_checklist(request, me, sede_pk):
     deleghe_da_processare = [
         (UFFICIO_SOCI, sede),
         (UFFICIO_SOCI_CM, sede),
+        (UFFICIO_SOCI_IIVV, sede),
         # (CONSIGLIERE, sede),
         (DELEGATO_OBIETTIVO_1, sede),
         (DELEGATO_OBIETTIVO_2, sede),

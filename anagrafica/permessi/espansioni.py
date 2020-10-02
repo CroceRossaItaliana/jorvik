@@ -14,7 +14,7 @@ from anagrafica.permessi.costanti import GESTIONE_SOCI, ELENCHI_SOCI, GESTIONE_A
     RUBRICA_DELEGATI_GIOVANI, RUBRICA_RESPONSABILI_AREA, RUBRICA_REFERENTI_ATTIVITA, \
     RUBRICA_REFERENTI_GRUPPI, RUBRICA_CENTRALI_OPERATIVE, RUBRICA_RESPONSABILI_FORMAZIONE, \
     RUBRICA_DIRETTORI_CORSI, RUBRICA_RESPONSABILI_AUTOPARCO, RUBRICA_COMMISSARI, RUBRICA_CONSIGLIERE_GIOVANE, \
-    GESTIONE_SOCI_CM
+    GESTIONE_SOCI_CM, GESTIONE_SOCI_IIVV
 
 """
 Questo file gestisce la espansione dei permessi in Gaia.
@@ -85,6 +85,19 @@ def espandi_gestione_soci(qs_sedi, al_giorno=None):
 def espandi_gestione_soci_cm(qs_sedi, al_giorno=None):
     from anagrafica.models import Persona, Appartenenza
     
+    try:
+        return [
+            (LETTURA, Persona.objects.filter(Appartenenza.query_attuale(al_giorno=al_giorno, sede__in=qs_sedi,
+                                                                        membro__in=Appartenenza.MEMBRO_ESTESO).via(
+                "appartenenze"))),
+        ]
+    except (AttributeError, ValueError, KeyError):
+        return []
+
+
+def espandi_gestione_soci_iivv(qs_sedi, al_giorno=None):
+    from anagrafica.models import Persona, Appartenenza
+
     try:
         return [
             (LETTURA, Persona.objects.filter(Appartenenza.query_attuale(al_giorno=al_giorno, sede__in=qs_sedi,
@@ -361,6 +374,7 @@ def espandi_gestione_gruppi_sede(qs_sedi, al_giorno=None):
 ESPANDI_PERMESSI = {
     GESTIONE_SOCI: espandi_gestione_soci,
     GESTIONE_SOCI_CM: espandi_gestione_soci_cm,
+    GESTIONE_SOCI_IIVV: espandi_gestione_soci_iivv,
     ELENCHI_SOCI: espandi_elenchi_soci,
     EMISSIONE_TESSERINI: espandi_emissione_tesserini,
     GESTIONE_SEDE: espandi_gestione_sede,
