@@ -1,7 +1,9 @@
-{% extends "anagrafica_utente_vuota.html" %}
+{% extends 'so_vuota.html' %}
 
 {% load bootstrap3 %}
-{% block pagina_titolo %}Modifica Anagrafica{% endblock %}
+{% load humanize %}
+
+{% block pagina_titolo %}Datore di lavoro{% endblock %}
 
 {% block app_contenuto %}
     <div class="alert bg-info">
@@ -41,10 +43,10 @@
                                 <div style="margin-bottom:15px;"><i class="fa fas fa-circle"></i> {{ datore.partita_iva }}</div>
                             </td>
                             <td>
-                                <a href="{% url 'utente:datore_di_lavoro_cancella' datore.pk %}"
+                                <a href="{% url 'so:datore_di_lavoro_cancella' datore.pk %}"
                                    data-conferma="Vuoi cancellare questo mezzo/materiale?">
                                     <i class="fa fa-fw fa-trash"></i> Cancella</a><br>
-                                <a href="{% url 'utente:datore_di_lavoro_modifica' datore.pk %}"><i class="fa fa-fw fa-edit"></i>
+                                <a href="{% url 'so:datore_di_lavoro_modifica' datore.pk %}"><i class="fa fa-fw fa-edit"></i>
                                     Modifica</a>
                             </td>
                         </tr>

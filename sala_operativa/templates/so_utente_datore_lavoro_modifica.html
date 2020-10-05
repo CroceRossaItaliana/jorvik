@@ -1,14 +1,18 @@
-{% extends "anagrafica_utente_vuota.html" %}
+{% extends 'so_vuota.html' %}
 
 {% load bootstrap3 %}
-{% block pagina_titolo %}Modifica Anagrafica{% endblock %}
+{% load humanize %}
+
+{% block pagina_titolo %}Datore di lavoro modifica{% endblock %}
 
 {% block app_contenuto %}
+
     <div class="alert bg-info">
         <p>
             <i class="fa fa-info-circle fa-fw"></i> Da questa pagina potrai modificare i dati riguardanti il datore di lavoro.
         </p>
     </div>
+
     <div class="row">
         <div class="col-md-9">
             <div class="panel panel-primary">

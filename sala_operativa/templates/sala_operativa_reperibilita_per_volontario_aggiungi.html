@@ -10,7 +10,9 @@
         <i class="fa fa-fw fa-info-circle"></i> Da qui puoi fornire e visionare la reperibilità per la Sala Operativa del Comitato.<br>
         Compila questo modulo per segnalare reperibilit&agrave; per i Volontari della tua Sede.
     </div>
-
+    <div class="alert alert-block alert-warning" hidden id="datore_warning">
+        <i class="fa fa-fw fa-info-circle"></i> Assicurati di aver inserito il datore di lavoro.
+    </div>
     <div class="row">
         <div class="col-md-8">
             <div class="panel panel-info">
@@ -83,4 +85,18 @@
         </div>
     </div>
     </div>
+    <script>
+    $('#id_datore_lavoro').parent().hide();
+
+    $('#id_applicazione_bdl').change(function (){
+        if ($(this).is(':checked')){
+            $('#id_datore_lavoro').parent().show();
+            $('#datore_warning').show();
+        }
+        else{
+            $('#id_datore_lavoro').parent().hide();
+            $('#datore_warning').show();
+        }
+    });
+</script>
 {% endblock %}

@@ -23,7 +23,7 @@ from formazione.models import Corso
 from .costanti import REGIONALE
 from .models import (Sede, Persona, Appartenenza, Documento, Estensione,
                      ProvvedimentoDisciplinare, Delega, Fototessera, Trasferimento, Riserva,
-                     Nominativo, DatoreLavoro)
+                     Nominativo)
 from .validators import valida_almeno_14_anni, valida_data_nel_passato
 from .permessi.applicazioni import (PRESIDENTE, COMMISSARIO,
     CONSIGLIERE, CONSIGLIERE_GIOVANE, VICE_PRESIDENTE)
@@ -250,13 +250,6 @@ class ModuloProfiloModificaAnagrafica(ModelForm):
                 for f in ['codice_fiscale', 'nome', 'cognome', 'data_nascita']:
                     self.fields[f].disabled = True
 
-
-class ModuloProfiloModificaAnagraficaDatoreLavoro(ModelForm):
-    class Meta:
-        model = DatoreLavoro
-        fields = ['nominativo', 'ragione_sociale', 'partita_iva',
-                  'telefono', 'referente',
-                  'email', 'pec']
 
 
 class ModuloProfiloModificaAnagraficaDomicilio(ModelForm):

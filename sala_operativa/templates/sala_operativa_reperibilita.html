@@ -11,10 +11,15 @@
             {% endfor %}
         </ul>
     {% endif %}
+
 {% block app_contenuto %}
 
 <div class="alert alert-block alert-info">
     <i class="fa fa-fw fa-info-circle"></i> Da qui puoi fornire la tua reperibilit&agrave; per la Sala Operativa del Comitato, nonch&egrave; visionare lo storico delle tue ultime reperibilit&agrave; segnalate.
+</div>
+
+<div class="alert alert-block alert-warning" hidden id="datore_warning">
+    <i class="fa fa-fw fa-info-circle"></i> Assicurati di aver inserito il datore di lavoro.
 </div>
 
 <div class="row">
@@ -113,9 +118,11 @@
     $('#id_applicazione_bdl').change(function (){
         if ($(this).is(':checked')){
             $('#id_datore_lavoro').parent().show();
+            $('#datore_warning').show();
         }
         else{
             $('#id_datore_lavoro').parent().hide();
+            $('#datore_warning').show();
         }
     });
 </script>

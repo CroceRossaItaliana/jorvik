@@ -40,7 +40,6 @@ class MenuUtente:
         return ("Persona", (
             ("Benvenuto", "fa-bolt", "/utente/"),
             ("Anagrafica", "fa-edit", "/utente/anagrafica/"),
-            ("Datore di lavore", "fa-edit", reverse('utente:datore_di_lavoro')) if me and (me.volontario or me.dipendente) else None,
             ("Storico", "fa-clock-o", "/utente/storico/"),
             ("Documenti", "fa-folder", "/utente/documenti/") if me and (
                     me.volontario or me.dipendente or me.servizio_civile

@@ -9,7 +9,7 @@ from django.utils import timezone
 from django.utils.timezone import now
 
 from anagrafica.costanti import (LOCALE, PROVINCIALE, REGIONALE, NAZIONALE, )
-from anagrafica.models import Persona, Appartenenza, Sede, DatoreLavoro
+from anagrafica.models import Persona, Appartenenza, Sede
 from anagrafica.permessi.applicazioni import REFERENTE_SO
 from anagrafica.permessi.costanti import GESTIONE_SERVIZI
 from base.files import PDF
@@ -19,6 +19,24 @@ from base.tratti import ConMarcaTemporale, ConStorico, ConDelegati
 from base.utils import concept, poco_fa
 from posta.models import Messaggio
 from social.models import ConGiudizio
+
+class DatoreLavoro(ModelloSemplice, ConMarcaTemporale):
+
+    nominativo = models.CharField(max_length=25, default="", db_index=True, blank=True, null=True)
+    ragione_sociale = models.CharField(max_length=25, default="", db_index=True, blank=True, null=True)
+    partita_iva = models.CharField(max_length=11, default="", db_index=True, blank=True, null=True)
+    telefono = models.CharField(max_length=10, default="", db_index=True, blank=True, null=True)
+    referente = models.CharField(max_length=25, default="", db_index=True, blank=True, null=True)
+    email = models.CharField(max_length=25, default="", db_index=True, blank=True, null=True)
+    pec = models.CharField(max_length=25, default="", db_index=True, blank=True, null=True)
+    persona = models.ForeignKey(Persona, db_index=True, on_delete=models.CASCADE, blank=True, null=True)
+
+    class Meta:
+        verbose_name = 'Datore di lavoro'
+        verbose_name_plural = 'Datori di lavoro'
+
+    def __str__(self):
+        return self.nominativo
 
 
 class ServizioSO(ModelloSemplice, ConGeolocalizzazione, ConMarcaTemporale,
@@ -346,6 +364,7 @@ class ServizioSO(ModelloSemplice, ConGeolocalizzazione, ConMarcaTemporale,
         verbose_name_plural = 'Servizi'
 
 
+
 class ReperibilitaSO(ModelloSemplice, ConMarcaTemporale, ConStorico):
     ESTENSIONE_CHOICES = (
         (LOCALE, 'Sede Locale'),
@@ -369,6 +388,10 @@ class ReperibilitaSO(ModelloSemplice, ConMarcaTemporale, ConStorico):
     @classmethod
     def reperibilita_create_da(cls, persona):
         return cls.objects.filter(creato_da=persona)
+
+    @classmethod
+    def reperibilita_creati_da(cls, persone):
+        return cls.objects.filter(creato_da__in=persone)
 
     @classmethod
     def reperibilita_per_sedi(cls, sedi):
@@ -859,3 +882,4 @@ class PrenotazioneMMSO(ModelloSemplice, ConMarcaTemporale, ConStorico):
     class Meta:
         verbose_name = 'Prenotazione Mezzo o materiale'
         verbose_name_plural = 'Prenotazione Mezzi e materiali'
+

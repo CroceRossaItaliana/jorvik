@@ -8,10 +8,10 @@ from django.utils import timezone
 from django.utils.timezone import now
 
 from anagrafica.costanti import LOCALE
-from anagrafica.models import Sede, DatoreLavoro
+from anagrafica.models import Sede
 from anagrafica.permessi.costanti import GESTIONE_SO_SEDE
 from base.wysiwyg import WYSIWYGSemplice
-from .models import ServizioSO, TurnoSO, ReperibilitaSO, MezzoSO, PrenotazioneMMSO
+from .models import ServizioSO, TurnoSO, ReperibilitaSO, MezzoSO, PrenotazioneMMSO, DatoreLavoro
 
 
 class VolontarioReperibilitaForm(Form):
@@ -56,16 +56,58 @@ class VolontarioReperibilitaModelForm(ModelForm):
                   'applicazione_bdl', 'datore_lavoro']
 
 
-class AggiungiReperibilitaPerVolontarioForm(ModelForm):
+# class AggiungiReperibilitaPerVolontarioForm(ModelForm):
+#     persona = autocomplete_light.ModelChoiceField("AggiungiReperibilitaPerVolontario", )
+#
+#     class Meta:
+#         model = ReperibilitaSO
+#         fields = ['persona', 'estensione', 'inizio', 'fine', 'attivazione',
+#                   'applicazione_bdl', ]
+#
+#     def __init__(self, *args, **kwargs):
+#         super().__init__(*args, **kwargs)
+
+
+class AggiungiReperibilitaPerVolontarioForm(Form):
     persona = autocomplete_light.ModelChoiceField("AggiungiReperibilitaPerVolontario", )
 
-    class Meta:
-        model = ReperibilitaSO
-        fields = ['persona', 'estensione', 'inizio', 'fine', 'attivazione',
-                  'applicazione_bdl', ]
+    estensione = forms.MultipleChoiceField(
+        label="Estensione di reperibiltà",
+        widget=forms.CheckboxSelectMultiple,
+        choices=ReperibilitaSO.ESTENSIONE_CHOICES
+    )
+    inizio = forms.DateTimeField()
+    fine = forms.DateTimeField()
+    attivazione = forms.TimeField(initial='00:15')
+    applicazione_bdl = forms.BooleanField(label="Applicazione dei Benefici di Legge", required=False)
+    datore_lavoro = forms.ChoiceField(choices=(), required=False)
 
-    def __init__(self, *args, **kwargs):
-        super().__init__(*args, **kwargs)
+    def clean(self):
+        cd = self.cleaned_data
+
+        if cd['applicazione_bdl'] and cd['datore_lavoro'] == '0':
+            self.add_error('datore_lavoro', 'Se vengono applicati i benefici di legge, devi inserire il datore di lavoro.')
+
+        return cd
+
+    @staticmethod
+    def popola_datore(persona):
+        l = [
+            ('0', '--------')
+        ]
+        for datore in DatoreLavoro.objects.filter(creat=persona):
+            l.append(
+                (datore.pk, datore.nominativo)
+            )
+        return l
+
+
+class ModuloProfiloModificaAnagraficaDatoreLavoro(ModelForm):
+    class Meta:
+        model = DatoreLavoro
+        fields = ['nominativo', 'ragione_sociale', 'partita_iva',
+                  'telefono', 'referente',
+                  'email', 'pec']
 
 
 class StoricoTurniForm(forms.Form):

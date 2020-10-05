@@ -9,6 +9,11 @@ app_label = 'so'
 urlpatterns = [
     url(r'^$', views.so_index, name='index'),
 
+    # Datore Lavoro
+    url(r'^ddl/$', views.utente_datore_di_lavoro, name='datore_di_lavoro'),
+    url(r'^ddl/(?P<pk>.*)/modifica$', views.utente_datore_di_lavoro_modifica, name='datore_di_lavoro_modifica'),
+    url(r'^ddl/(?P<pk>.*)/cancella$', views.utente_datore_di_lavoro_cancella, name='datore_di_lavoro_cancella'),
+
     # Organizza
     url(r'^organizza/$', views.so_organizza, name='organizza'),
     url(r'^organizza/(?P<pk>[0-9\-]+)/referenti/$', views.so_referenti, {"nuova": True}, name='organizza_referenti'),

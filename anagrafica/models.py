@@ -19,6 +19,7 @@ from django.utils.functional import cached_property
 from django_countries.fields import CountryField
 
 from .costanti import (ESTENSIONE, TERRITORIALE, LOCALE, PROVINCIALE, REGIONALE, NAZIONALE)
+from .permessi.applicazioni import DELEGATO_SO
 from .validators import (valida_codice_fiscale, ottieni_genere_da_codice_fiscale,
     valida_dimensione_file_8mb, valida_partita_iva, valida_dimensione_file_5mb,
     valida_iban, valida_email_personale) # valida_almeno_14_anni, crea_validatore_dimensione_file)
@@ -1378,24 +1379,6 @@ class Persona(ModelloSemplice, ConMarcaTemporale, ConAllegati, ConVecchioID):
         )
 
 
-class DatoreLavoro(ModelloSemplice, ConMarcaTemporale):
-
-    nominativo = models.CharField(max_length=25, default="", db_index=True, blank=True, null=True)
-    ragione_sociale = models.CharField(max_length=25, default="", db_index=True, blank=True, null=True)
-    partita_iva = models.CharField(max_length=11, default="", db_index=True, blank=True, null=True)
-    telefono = models.CharField(max_length=10, default="", db_index=True, blank=True, null=True)
-    referente = models.CharField(max_length=25, default="", db_index=True, blank=True, null=True)
-    email = models.CharField(max_length=25, default="", db_index=True, blank=True, null=True)
-    pec = models.CharField(max_length=25, default="", db_index=True, blank=True, null=True)
-    persona = models.ForeignKey(Persona, related_name="datore", db_index=True, on_delete=models.CASCADE, blank=True, null=True)
-
-    class Meta:
-        verbose_name = 'Datore di lavoro'
-        verbose_name_plural = 'Datori di lavoro'
-
-    def __str__(self):
-        return self.nominativo
-
 class Telefono(ConMarcaTemporale, ModelloSemplice):
     """
     Rappresenta un numero di telefono.
@@ -1977,6 +1960,12 @@ class Sede(ModelloAlbero, ConMarcaTemporale, ConGeolocalizzazione, ConVecchioID,
 
     def commissari(self):
         return self.comitato.delegati_attuali(tipo=COMMISSARIO, solo_deleghe_attive=True)
+
+    def obbiettivo_3(self):
+        return self.comitato.delegati_attuali(tipo=DELEGATO_OBIETTIVO_3, solo_deleghe_attive=True)
+
+    def delegati_so(self):
+        return self.comitato.delegati_attuali(tipo=DELEGATO_SO, solo_deleghe_attive=True)
 
     def vice_presidente(self):
         delega_vice_presidenziale = self.comitato.delegati_attuali(tipo=VICE_PRESIDENTE, solo_deleghe_attive=True).first()

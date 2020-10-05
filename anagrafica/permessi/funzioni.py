@@ -332,6 +332,7 @@ def permessi_delegato_sala_operativa(sede):
 
     return [
         (RUBRICA_SALE_OPERATIVE, sede.espandi(includi_me=True, pubblici=True)),
+        (GESTIONE_SERVIZI, servizi),
         (GESTIONE_SO_SEDE, sede_espansa),
         (GESTIONE_REFERENTI_SO, servizi),
     ]

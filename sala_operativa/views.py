@@ -12,7 +12,6 @@ from django.shortcuts import redirect, get_object_or_404, HttpResponse
 from django.utils.safestring import mark_safe
 
 from anagrafica.costanti import NAZIONALE
-from anagrafica.models import DatoreLavoro
 from anagrafica.permessi.applicazioni import REFERENTE_SO
 from anagrafica.permessi.costanti import (MODIFICA, COMPLETO, ERRORE_PERMESSI,
       GESTIONE_SO_SEDE, GESTIONE_SERVIZI, GESTIONE_REFERENTI_SO, )
@@ -20,13 +19,14 @@ from autenticazione.funzioni import pagina_privata, pagina_pubblica
 from base.errori import errore_generico, messaggio_generico, errore_no_volontario
 from base.utils import poco_fa, timedelta_ore
 from .utils import turni_raggruppa_giorno
-from .models import PartecipazioneSO, ServizioSO, TurnoSO, ReperibilitaSO, MezzoSO, PrenotazioneMMSO
+from .models import PartecipazioneSO, ServizioSO, TurnoSO, ReperibilitaSO, MezzoSO, PrenotazioneMMSO, DatoreLavoro
 from .elenchi import ElencoPartecipantiTurno, ElencoPartecipantiAttivita
 from .forms import (ModificaServizioForm, ModificaTurnoForm, StatisticheServiziForm,
                     AggiungiPartecipantiForm, CreazioneTurnoForm, RipetiTurnoForm,
                     VolontarioReperibilitaForm, AggiungiReperibilitaPerVolontarioForm,
                     OrganizzaServizioReferenteForm, OrganizzaServizioForm, CreazioneMezzoSO,
-                    AbbinaMezzoMaterialeForm, VolontarioReperibilitaModelForm)
+                    AbbinaMezzoMaterialeForm, VolontarioReperibilitaModelForm,
+                    ModuloProfiloModificaAnagraficaDatoreLavoro)
 from django.contrib import messages
 
 INITIAL_INIZIO_FINE_PARAMS = {
@@ -130,26 +130,52 @@ def so_reperibilita_edit(request, me, pk):
 @pagina_privata
 def so_reperibilita_backup(request, me):
     form = AggiungiReperibilitaPerVolontarioForm(request.POST or None, initial=INITIAL_INIZIO_FINE_PARAMS)
+    form.fields['datore_lavoro'].choices = VolontarioReperibilitaForm.popola_datore(me)
+
+    creati_da = []
+
+    for sede in me.oggetti_permesso(GESTIONE_SO_SEDE, solo_deleghe_attive=False):
+        creati_da.append(sede.presidente())
+        creati_da.extend(list(sede.commissari()))
+        creati_da.extend(list(sede.commissari()))
+        creati_da.extend(list(sede.obbiettivo_3()))
+        creati_da.extend(list(sede.delegati_so()))
+
     if request.method == 'POST':
         if form.is_valid():
             cd = form.cleaned_data
-            reperibilita = form.save(commit=False)
-            reperibilita.persona = cd['persona']
-            reperibilita.creato_da = me
-            reperibilita.save()
+            if cd['inizio'] < datetime.now():
+                messages.warning(request, 'Attenzione! la data di inizio inserita è precedente a quella corrente.')
+            for estensione in cd['estensione']:
+                reperibilita = ReperibilitaSO(
+                    estensione=estensione,
+                    inizio=cd['inizio'],
+                    fine=cd['fine'],
+                    attivazione=cd['attivazione'],
+                    applicazione_bdl=cd['applicazione_bdl'],
+                    persona=cd['persona'],
+                    creato_da=me,
+                )
+                if cd['applicazione_bdl']:
+                    reperibilita.datore_lavoro = DatoreLavoro.objects.get(pk=cd['datore_lavoro'])
+                reperibilita.save()
             return redirect(reverse('so:reperibilita_backup'))
 
     context = {
         'form': form,
-        'reperibilita': ReperibilitaSO.reperibilita_create_da(me),
+        'reperibilita': ReperibilitaSO.reperibilita_creati_da(creati_da),
     }
     return 'sala_operativa_reperibilita_per_volontario_aggiungi.html', context
 
 
 @pagina_privata
 def so_gestisci(request, me, stato="aperte"):
-    so_mie_sedi = me.oggetti_permesso(GESTIONE_SO_SEDE, solo_deleghe_attive=False)
-    servizi_tutti = ServizioSO.objects.filter(sede__in=so_mie_sedi)
+    if me.is_presidente or me.is_comissario:
+        so_mie_sedi = me.oggetti_permesso(GESTIONE_SO_SEDE, solo_deleghe_attive=False)
+        servizi_tutti = ServizioSO.objects.filter(sede__in=so_mie_sedi)
+    else:
+        servizi_tutti = me.oggetti_permesso(GESTIONE_SERVIZI, solo_deleghe_attive=False)
+
     servizi_aperti = servizi_tutti.filter(apertura=ServizioSO.APERTA)
     servizi_chiusi = servizi_tutti.filter(apertura=ServizioSO.CHIUSA)
 
@@ -1097,3 +1123,47 @@ def so_scheda_scarica_attestato(request, me, pk, partecipazione_pk):
     response['Content-Disposition'] = 'attachment; filename=%s' % filename
     response.write(pdf)
     return response
+
+
+@pagina_privata
+def utente_datore_di_lavoro_modifica(request, me, pk=None):
+    datore = get_object_or_404(DatoreLavoro, pk=pk)
+
+    form = ModuloProfiloModificaAnagraficaDatoreLavoro(request.POST or None, instance=datore)
+
+    if request.method == 'POST':
+        if form.is_valid():
+            datore = form.save(commit=False)
+            datore.save()
+            return redirect(reverse('so:datore_di_lavoro'))
+
+    context = {
+        'form': form,
+        'datore': datore,
+    }
+    return 'so_utente_datore_lavoro_modifica.html', context
+
+@pagina_privata
+def utente_datore_di_lavoro(request, me):
+    form = ModuloProfiloModificaAnagraficaDatoreLavoro(request.POST or None)
+
+    if request.POST:
+        if form.is_valid():
+            datore = form.save(commit=False)
+            datore.persona = me
+            datore.save()
+
+    context = {
+        "form": form,
+        "datori": DatoreLavoro.objects.filter(persona=me)
+    }
+    return 'so_utente_datore_lavoro.html', context
+
+
+@pagina_privata
+def utente_datore_di_lavoro_cancella(request, me, pk=None):
+    datore = get_object_or_404(DatoreLavoro, pk=pk)
+
+    datore.delete()
+    messages.success(request, 'Il datore selezionato è stato rimosso.')
+    return redirect(reverse('so:datore_di_lavoro'))

@@ -60,11 +60,10 @@ from .forms import (ModuloStepComitato, ModuloStepCredenziali, ModuloStepFine,
                     ModuloCreazioneRiserva, ModuloModificaPrivacy, ModuloPresidenteSede,
                     ModuloImportVolontari, ModuloImportPresidenti, ModuloPulisciEmail,
                     ModuloReportFederazione, ModuloStepCodiceFiscale, ModuloStepAnagrafica,
-                    ModuloPresidenteSedePersonaDiRiferimento, ModuloPresidenteSedeNominativo,
-                    ModuloProfiloModificaAnagraficaDatoreLavoro)
+                    ModuloPresidenteSedePersonaDiRiferimento, ModuloPresidenteSedeNominativo,)
 
 from .models import (Persona, Documento, Telefono, Estensione, Delega, Trasferimento,
-                     Appartenenza, Sede, Riserva, Dimissione, Nominativo, DatoreLavoro)
+                     Appartenenza, Sede, Riserva, Dimissione, Nominativo)
 
 
 TIPO_VOLONTARIO = 'volontario'
@@ -340,24 +339,6 @@ def utente(request, me):
         "articoli": articoli[:5],
     }
     return 'anagrafica_utente_home.html', contesto
-
-
-
-@pagina_privata
-def utente_datore_di_lavoro(request, me):
-    form = ModuloProfiloModificaAnagraficaDatoreLavoro(request.POST or None)
-
-    if request.POST:
-        if form.is_valid():
-            datore = form.save(commit=False)
-            datore.persona = me
-            datore.save()
-
-    context = {
-        "form": form,
-        "datori": DatoreLavoro.objects.filter(persona=me)
-    }
-    return 'anagrafica_utente_datore_lavoro.html', context
 
 
 @pagina_privata
@@ -2071,31 +2052,3 @@ def admin_pulisci_email(request, me):
         "modulo": modulo
     }
     return "admin_pulisci_email.html", contesto
-
-
-@pagina_privata
-def utente_datore_di_lavoro_modifica(request, me, pk=None):
-    datore = get_object_or_404(DatoreLavoro, pk=pk)
-
-    form = ModuloProfiloModificaAnagraficaDatoreLavoro(request.POST or None, instance=datore)
-
-    if request.method == 'POST':
-        if form.is_valid():
-            datore = form.save(commit=False)
-            datore.save()
-            return redirect(reverse('utente:datore_di_lavoro'))
-
-    context = {
-        'form': form,
-        'datore': datore,
-    }
-    return 'anagrafica_utente_datore_lavoro_modifica.html', context
-
-
-@pagina_privata
-def utente_datore_di_lavoro_cancella(request, me, pk=None):
-    datore = get_object_or_404(DatoreLavoro, pk=pk)
-
-    datore.delete()
-    messages.success(request, 'Il datore selezionato è stato rimosso.')
-    return redirect(reverse('utente:datore_di_lavoro'))
