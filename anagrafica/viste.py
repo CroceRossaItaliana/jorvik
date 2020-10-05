@@ -1101,11 +1101,6 @@ def strumenti_delegati(request, me):
                 torna_url=reverse('strumenti_delegati'),
             )
 
-        if model == 'corsobase':
-            from formazione.training_api import TrainingApi
-            api = TrainingApi()
-            api.aggiugi_ruolo(persona=d.persona, corso=oggetto, ruolo=TrainingApi.DIRETTORE)
-
         d.inizio = poco_fa()
         d.firmatario = me
         d.tipo = delega
