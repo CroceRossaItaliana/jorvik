@@ -1029,9 +1029,16 @@ def aspirante_corsi(request, me):
         # Trova corsi da partecipare
         corsi_da_partecipare = CorsoBase.find_courses_for_volunteer(volunteer=me, sede=mie_sedi)
 
+        # Trova corsi da partecipare online
+        corsi_online = CorsoBase.objects.filter(
+            tipo__isnull=False,
+            titolo_cri__online=True,
+            stato=CorsoBase.ATTIVO,
+        )
+
         # Unisci 2 categorie di corsi
-        corsi = corsi_confermati | corsi_da_partecipare | corsi_estensione_mia_appartenenze
-        corsi = corsi.filter(tipo=Corso.CORSO_NUOVO)
+        corsi = corsi_confermati | corsi_da_partecipare | corsi_estensione_mia_appartenenze | corsi_online
+        corsi = corsi.filter(tipo__in=[Corso.CORSO_NUOVO, Corso.CORSO_ONLINE])
 
     corsi_frequentati = me.corsi_frequentati
     corsi_attivi = corsi.exclude(pk__in=corsi_frequentati.values_list('pk', flat=True))
