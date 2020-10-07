@@ -63,7 +63,7 @@ class TrainingApi:
             }
         )
 
-        return r
+        return r[0] if r else r
 
     def core_role_assign_roles(self, userid, contextid, roleid):
         r = self._get(
@@ -111,12 +111,13 @@ class TrainingApi:
     def cancellazione_iscritto(self, persona, corso):
         utente = self.core_user_get_users_by_field(persona.email)
         corso = self.core_course_get_courses_by_field_shortname(corso.titolo_cri.nome)
+
         return self.enrol_manual_unenrol_users(utente['id'], corso['id'], self.DISCENTE)
 
     def aggiugi_ruolo(self, persona, corso, ruolo):
         utente = self.core_user_get_users_by_field(persona.email)
         corso = self.core_course_get_courses_by_field_shortname(corso.titolo_cri.nome)
-        # Se l'utente non esiste la crea
+        # Se l'utente non esiste lo crea
         if not utente:
             utente = self.core_user_create_users(persona)
 
