@@ -1029,15 +1029,8 @@ def aspirante_corsi(request, me):
         # Trova corsi da partecipare
         corsi_da_partecipare = CorsoBase.find_courses_for_volunteer(volunteer=me, sede=mie_sedi)
 
-        # Trova corsi da partecipare online
-        corsi_online = CorsoBase.objects.filter(
-            tipo__isnull=False,
-            titolo_cri__online=True,
-            stato=CorsoBase.ATTIVO,
-        )
-
         # Unisci 2 categorie di corsi
-        corsi = corsi_confermati | corsi_da_partecipare | corsi_estensione_mia_appartenenze | corsi_online
+        corsi = corsi_confermati | corsi_da_partecipare | corsi_estensione_mia_appartenenze
         corsi = corsi.filter(tipo__in=[Corso.CORSO_NUOVO, Corso.CORSO_ONLINE])
 
     corsi_frequentati = me.corsi_frequentati
@@ -1101,11 +1094,12 @@ def aspirante_corso_estensioni_modifica(request, me, pk):
     SELECT_EXTENSIONS_FORMSET_PREFIX = 'extensions'
 
     course = get_object_or_404(CorsoBase, pk=pk)
+
     if not me.permessi_almeno(course, MODIFICA):
         return redirect(ERRORE_PERMESSI)
 
-    if not course.tipo == Corso.CORSO_NUOVO:
-        # The page is not accessible if the type of course is not CORSO_NUOVO
+    if not course.tipo == Corso.CORSO_NUOVO and not course.tipo == Corso.CORSO_ONLINE:
+        # The page is not accessible if the type of course is not CORSO_NUOVO or CORSO_ONLINE
         return redirect(ERRORE_PERMESSI)
 
     if request.method == 'POST':

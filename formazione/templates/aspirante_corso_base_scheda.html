@@ -59,7 +59,7 @@
             <li role="presentation"><a href="{% url 'formazione:new_course' %}"><i class="fa fa-fw fa-info"></i> Nuovo</a></li>
             <li {% if request.path == corso.url_direttori %}class="active_link"{% endif %} role="presentation"><a href="{{ corso.url_direttori }}"><i class="fa fa-fw fa-group"></i> Direttore ({{ corso.deleghe.count }})</a></li>
 
-            {% if corso.tipo == 'C1' and me.is_presidente %}
+            {% if corso.is_base and me.is_presidente %}
                 <li {% if request.path == corso.url_estensioni %}class="active_link"{% endif %} role="presentation"><a href="{% url 'aspirante:estensioni_modifica' corso.pk %}"><i class="fa fa-fw fa-pencil"></i> Destinatari e sede</a></li>
             {% endif %}
         </ul>

@@ -68,6 +68,10 @@ class Corso(ModelloSemplice, ConDelegati, ConMarcaTemporale,
             ("view_corso", "Can view corso"),
         )
 
+    @property
+    def is_base(self):
+        return self.tipo != self.BASE
+
 
 class CorsoFile(models.Model):
     is_enabled = models.BooleanField(default=True)
