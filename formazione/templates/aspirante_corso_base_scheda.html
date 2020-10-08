@@ -38,13 +38,13 @@
 
         <li role="presentation"><a data-tab-id="#tabDettagliCorso" href="{{ corso.url }}" class="dettagli tabSelectorLink"><i class="fa fa-fw fa-info"></i> Dettagli corso ed iscrizione</a></li>
 
-        {% if not corso.online %}
+{#        {% if not corso.online %}#}
             {% if puo_modificare %}
                 {% now "U" as today_ts %}
                 <li role="presentation"><a data-tab-id="#tabLezioni" href="{{ corso.url_lezioni }}" class="lezioni tabSelectorLink"><i class="fa fa-fw fa-calendar"></i> Lezioni</a></li>
                 {% if today_ts >= corso.data_esame|date:"U" %}<li role="presentation"><a data-tab-id="#tabEsami" href="{{ corso.url_report }}" class="esami tabSelectorLink"><i class="fa fa-fw fa-file-excel-o"></i> Documentazione Esame</a></li>{% endif %}
             {% endif %}
-        {% endif %}
+{#        {% endif %}#}
 
 
         {% can_show_tab_questionario as show_tab_questionario %}
@@ -120,7 +120,7 @@
         </div>
     </div>
 
-    {% if puo_modificare and corso.stato == corso.PREPARAZIONE and corso.prossimo and not corso.is_nuovo_corso %}
+    {% if puo_modificare and corso.stato == corso.PREPARAZIONE and corso.prossimo and not corso.is_nuovo_corso and not corso.online %}
         <div class="alert alert-danger">
             <h4><i class="fa fa-warning"></i> Non c'è tempo da perdere!</h4>
             <p>Questo corso inizier&agrave; a breve, ma non hai ancora attivato il Corso su Gaia.</p>
@@ -162,7 +162,7 @@
                 <a class="btn btn-warning {% if not corso.attivabile %}disabled{% endif %}" {% if corso.attivabile %}href="{{ corso.url_attiva }}"{% endif %}>
                     <i class="fa fa-fw fa-check-circle"></i>
 
-                    {% if corso.is_nuovo_corso %}
+                    {% if corso.is_nuovo_corso or corso.online %}
                         {% if corso.extension_type == corso.EXT_MIA_SEDE %}
                             Avvia il corso e informa i volontari della mia sede
                         {% elif corso.extension_type == corso.EXT_LVL_REGIONALE %}

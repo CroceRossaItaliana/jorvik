@@ -761,7 +761,7 @@ class CorsoBase(Corso, ConVecchioID, ConPDF):
         if not self.attivabile():
             raise ValueError("Questo corso non è attivabile.")
 
-        if self.is_nuovo_corso:
+        if self.is_nuovo_corso or self.online:
             messaggio = "A breve tutti i volontari dei segmenti selezionati "\
                         "verranno informati dell'attivazione di questo corso."
         else:
@@ -785,7 +785,7 @@ class CorsoBase(Corso, ConVecchioID, ConPDF):
         Trovare destinatari aspiranti o volontari da avvisare di un nuovo corso attivato.
         :return: <Persona>QuerySet
         """
-        if self.corso_vecchio or not self.is_nuovo_corso:
+        if self.corso_vecchio or not self.is_nuovo_corso or not self.online:
             aspiranti_list = self.aspiranti_nelle_vicinanze().values_list('persona', flat=True)
             persone = Persona.objects.filter(pk__in=aspiranti_list)
         else:
@@ -870,7 +870,7 @@ class CorsoBase(Corso, ConVecchioID, ConPDF):
         return CorsoEstensione.get_titles(course=self, **kwargs)
 
     def get_volunteers_by_course_requirements(self, **kwargs):
-        """ Da utilizzare solo per i corsi che hanno estensione (nuovi corsi) """
+        """ Da utilizzare solo per i corsi che hanno estensione (nuovi corsi/online) """
 
         persone_da_informare = None
 
