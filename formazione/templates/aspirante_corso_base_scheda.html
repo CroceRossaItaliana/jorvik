@@ -23,7 +23,14 @@
     <h4 class="course__name {% if not corso.titolo_cri %}course__name-without-title-cri{%endif%}">{{ corso.nome }} ({{ corso.sede.nome_completo }})</h4>
 
     <h4 class="allinea-centro">
-        <i class="fa fa-fw fa-map-marker"></i> {% if corso.locazione %}<a href="{{ corso.url_mappa }}">{{ corso.locazione }}</a>{% else %} Posizione non impostata{% endif %} &mdash;
+        <i class="fa fa-fw fa-map-marker"></i>
+        {% if corso.online %}
+            Modalità online
+        {% elif corso.locazione %}
+            <a href="{{ corso.url_mappa }}">{{ corso.locazione }}</a>
+        {% else %}
+            Posizione non impostata
+        {% endif %} &mdash;
         <i class="fa fa-fw fa-info-circle"></i> {{ corso.get_stato_display }}
     </h4>
 

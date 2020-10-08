@@ -190,14 +190,14 @@ class CorsoBase(Corso, ConVecchioID, ConPDF):
 
     def persona(self, persona):
         # Validazione per Nuovi Corsi (Altri Corsi)
-        if self.is_nuovo_corso:
+        if self.is_nuovo_corso or self.online:
             # Aspirante non può iscriversi a corso nuovo
             if persona.ha_aspirante:
                 return self.NON_PUOI_SEI_ASPIRANTE
 
         # Non fare la verifica per gli aspiranti (non hanno appartenenze)
         if not persona.ha_aspirante:
-            if not self.is_nuovo_corso and persona.volontario:
+            if not self.is_nuovo_corso and not self.online and persona.volontario:
                 return self.NON_PUOI_ISCRIVERTI_GIA_VOLONTARIO
 
             # Controllo estensioni
@@ -785,11 +785,12 @@ class CorsoBase(Corso, ConVecchioID, ConPDF):
         Trovare destinatari aspiranti o volontari da avvisare di un nuovo corso attivato.
         :return: <Persona>QuerySet
         """
-        if self.corso_vecchio or not self.is_nuovo_corso or not self.online:
+        if self.corso_vecchio:
             aspiranti_list = self.aspiranti_nelle_vicinanze().values_list('persona', flat=True)
             persone = Persona.objects.filter(pk__in=aspiranti_list)
         else:
             persone = self.get_volunteers_by_course_requirements()
+            print('volontari', persone)
         return persone
 
     def _corso_activation_recipients_for_email_generator(self):
@@ -880,8 +881,11 @@ class CorsoBase(Corso, ConVecchioID, ConPDF):
             persone_da_informare = self.get_volunteers_by_only_sede()
 
         if CorsoBase.EXT_LVL_REGIONALE == corso_extension:
+            print(CorsoBase.EXT_LVL_REGIONALE)
             by_ext_sede = self.get_volunteers_by_ext_sede()
+            print('by_ext_sede', by_ext_sede)
             by_ext_titles = self.get_volunteers_by_ext_titles()
+            print('by_ext_titles', by_ext_titles)
             persone_da_informare = by_ext_sede | by_ext_titles
 
         if persone_da_informare is None:
