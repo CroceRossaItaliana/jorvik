@@ -122,7 +122,7 @@ class TrainingApi:
             utente = self.core_user_create_users(persona)
 
         if ruolo == self.DIRETTORE:
-            return self.core_role_assign_roles(utente['id'], corso['id'], ruolo)
+            return self.enrol_manual_enrol_users(utente['id'], corso['id'], ruolo)
         elif ruolo == self.DISCENTE:
             return self.enrol_manual_enrol_users(utente['id'], corso['id'], ruolo)
 
