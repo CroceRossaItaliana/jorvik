@@ -34,6 +34,7 @@ from .forms import (ModuloCreazioneCorsoBase, ModuloModificaLezione,
 from .classes import GeneraReport, GestioneLezioni
 from .utils import costruisci_titoli
 
+
 @pagina_privata
 def formazione(request, me):
     corsi = me.oggetti_permesso(GESTIONE_CORSO)
@@ -645,7 +646,8 @@ def aspirante_corso_base_termina(request, me, pk):
         form = FormVerbaleCorso(request.POST or None,
             prefix="part_%d" % partecipante.pk,
             instance=partecipante,
-            generazione_verbale=generazione_verbale)
+            generazione_verbale=generazione_verbale
+        )
 
         if corso.tipo == Corso.BASE:
             if corso.titolo_cri and corso.titolo_cri.scheda_prevede_esame:
