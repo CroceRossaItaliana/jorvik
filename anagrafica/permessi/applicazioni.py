@@ -8,6 +8,8 @@ COMMISSARIO = 'CM'
 CONSIGLIERE = 'CN'
 CONSIGLIERE_GIOVANE = 'CG'
 UFFICIO_SOCI = 'US'
+UFFICIO_SOCI_CM = 'UM'
+UFFICIO_SOCI_IIVV = 'IV'
 UFFICIO_SOCI_UNITA = 'UU'
 UFFICIO_SOCI_TEMPORANEO = 'UT'
 DELEGATO_AREA = 'DA'
@@ -44,6 +46,8 @@ PERMESSI_NOMI = (
     (CONSIGLIERE,               "Consigliere"),
     (CONSIGLIERE_GIOVANE,       "Consigliere giovane"),
     (UFFICIO_SOCI,              "Ufficio Soci"),
+    (UFFICIO_SOCI_CM,           "Ufficio Soci corpo militare"),
+    (UFFICIO_SOCI_IIVV,         "Ufficio Soci Infermiere volontarie"),
     (UFFICIO_SOCI_UNITA,        "Ufficio Soci Unità territoriali"),
     (DELEGATO_AREA,             "Delegato d'Area"),
     (DELEGATO_OBIETTIVO_1,      "Delegato Obiettivo I (Salute)"),
@@ -78,6 +82,8 @@ RUBRICHE_TITOLI = OrderedDict((
     ('condigliere_giovane', (CONSIGLIERE_GIOVANE, 'Consiglieri giovani', True)),
     ('delegati_us', (UFFICIO_SOCI, 'Delegati Ufficio Soci', True)),
     ('delegati_us_unita', (UFFICIO_SOCI_UNITA, 'Delegati Ufficio Soci Unità territoriali', True)),
+    ('delegati_us_corpo_militare', (UFFICIO_SOCI_CM, 'Delegati Ufficio Soci Corpo militare', True)),
+    ('delegati_us_infermiere_volontarie', (UFFICIO_SOCI_IIVV, 'Delegati Ufficio Infermiere Volontarie', True)),
     ('delegati_obiettivo_1', (DELEGATO_OBIETTIVO_1, 'Delegati Obiettivo I (Salute)', True)),
     ('delegati_obiettivo_2', (DELEGATO_OBIETTIVO_2, 'Delegati Obiettivo II (Sociale)', True)),
     ('delegati_obiettivo_3', (DELEGATO_OBIETTIVO_3, 'Delegati Obiettivo III (Emergenze)', True)),
