@@ -1,6 +1,6 @@
 from ..permessi.applicazioni import (PRESIDENTE, DELEGATO_AREA, RESPONSABILE_AREA,
-    REFERENTE, DIRETTORE_CORSO, RESPONSABILE_AUTOPARCO, REFERENTE_GRUPPO, COMMISSARIO,
-    CONSIGLIERE, UFFICIO_SOCI)
+                                     REFERENTE, DIRETTORE_CORSO, RESPONSABILE_AUTOPARCO, REFERENTE_GRUPPO, COMMISSARIO,
+                                     CONSIGLIERE, UFFICIO_SOCI, UFFICIO_SOCI_CM)
 
 """
                        Questo file gestisce i permessi in Gaia.
@@ -15,6 +15,8 @@ from ..permessi.applicazioni import (PRESIDENTE, DELEGATO_AREA, RESPONSABILE_ARE
 
 GESTIONE_SEDE = "GESTIONE_SEDE"
 GESTIONE_SOCI = "GESTIONE_SOCI"
+GESTIONE_SOCI_CM = "GESTIONE_SOCI_CM"
+GESTIONE_SOCI_IIVV = "GESTIONE_SOCI_IIVV"
 ELENCHI_SOCI = "ELENCHI_SOCI"
 RUBRICA_UFFICIO_SOCI = "RUBRICA_UFFICIO_SOCI"
 RUBRICA_UFFICIO_SOCI_UNITA = "RUBRICA_UFFICIO_SOCI_UNITA"
@@ -55,6 +57,8 @@ ASPIRANTE = "ASPIRANTE"
 PERMESSI_OGGETTI = (
     (GESTIONE_SEDE,             ('anagrafica', 'Sede')),
     (GESTIONE_SOCI,             ('anagrafica', 'Sede')),
+    (GESTIONE_SOCI_CM,             ('anagrafica', 'Sede')),
+    (GESTIONE_SOCI_IIVV,             ('anagrafica', 'Sede')),
     (ELENCHI_SOCI,              ('anagrafica', 'Sede')),
     (RUBRICA_UFFICIO_SOCI,      ('anagrafica', 'Sede')),
     (RUBRICA_UFFICIO_SOCI_UNITA,('anagrafica', 'Sede')),
@@ -94,9 +98,10 @@ PERMESSI_OGGETTI = (
 # Tipologia degli oggetti assegnati ad ogni Delega.
 DELEGHE_OGGETTI = (
     (PRESIDENTE,                ('anagrafica', 'Sede', None)),
-    (CONSIGLIERE,                ('anagrafica', 'Sede', None)),
-    (COMMISSARIO,                ('anagrafica', 'Sede', None)),
+    (CONSIGLIERE,               ('anagrafica', 'Sede', None)),
+    (COMMISSARIO,               ('anagrafica', 'Sede', None)),
     (UFFICIO_SOCI,              ('anagrafica', 'Sede', None)),
+    (UFFICIO_SOCI_CM,           ('anagrafica', 'Sede', None)),
     (DELEGATO_AREA,             ('attivita', 'Area', 'sede__in')),
     (RESPONSABILE_AREA,         ('attivita', 'Area', 'sede__in')),
     (REFERENTE,                 ('attivita', 'Attivita', 'sede__in')),
