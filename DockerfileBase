@@ -12,6 +12,9 @@ RUN wget https://raw.githubusercontent.com/CroceRossaItaliana/jorvik-docker-base
 RUN apt-get --assume-yes install `cat apt-dependencies.txt | grep -v "#" | xargs`
 # actually not deleting the file, to fix
 RUN rm apt-dependencies.txt
+RUN apt-get install libgeos-c1v5 apt-get install libgeos-3.7.1
+
+ENV GEOS_LIBRARY_PATH /usr/lib/x86_64-linux-gnu
 
 # Scarica e installa i requisiti PIP da CroceRossaItalian/jorvik (branch master)
 RUN pip install -r https://raw.githubusercontent.com/CroceRossaItaliana/jorvik/master/requirements.txt
