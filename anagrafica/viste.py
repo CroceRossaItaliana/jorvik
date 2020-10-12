@@ -777,13 +777,13 @@ def utente_estensione(request, me):
     if not me.volontario:
         return errore_no_volontario(request, me)
     storico = me.estensioni.all()
-    modulo = ModuloCreazioneEstensione(request.POST or None)
-    if modulo.is_valid():
-        est = modulo.save(commit=False)
+    form = ModuloCreazioneEstensione(request.POST or None)
+    if form.is_valid():
+        est = form.save(commit=False)
         if est.destinazione in me.sedi_attuali():
-            modulo.add_error('destinazione', 'Sei già appartenente a questa sede.')
+            form.add_error('destinazione', 'Sei già appartenente a questa sede.')
         elif est.destinazione in [x.destinazione for x in me.estensioni_attuali_e_in_attesa()]:
-            modulo.add_error('destinazione', 'Estensione già richiesta a questa sede.')
+            form.add_error('destinazione', 'Estensione già richiesta a questa sede.')
         else:
             est.richiedente = me
             est.persona = me
@@ -811,22 +811,24 @@ def utente_estensione(request, me):
             #         ##presidente sede di estensione
             #     ]
             # )
-            # Messaggio.costruisci_e_invia(
-            #     oggetto="Richiesta di estensione",
+
+            # Avviso al Presidente dove è Volontario
+            # Messaggio.costruisci_e_accoda(
+            #     oggetto="Richiesta di estensione di un membro diretto",
             #     modello="email_richiesta_estensione_presidente.html",
             #     corpo={
-            #         "trasferimento": est,
+            #         "estensione": est,
             #     },
             #     mittente=None,
             #     destinatari=[
-            #         ##presidente sede riferimento
+            #         est.persona.sede_riferimento(membro=[Appartenenza.VOLONTARIO]).presidente()
             #     ]
             # )
 
     in_attesa, delegati = estensioni_pending(me)
 
     contesto = {
-        "modulo": modulo,
+        "modulo": form,
         "storico": storico,
         "attuali": me.estensioni_attuali(),
         "in_attesa": in_attesa,
@@ -900,11 +902,11 @@ def utente_trasferimento(request, me):
         return errore_no_volontario(request, me)
     storico = me.trasferimenti.all()
 
-    modulo = ModuloCreazioneTrasferimento(request.POST or None)
-    if modulo.is_valid():
-        trasf = modulo.save(commit=False)
+    form = ModuloCreazioneTrasferimento(request.POST or None)
+    if form.is_valid():
+        trasf = form.save(commit=False)
         if trasf.destinazione in me.sedi_attuali(membro=Appartenenza.VOLONTARIO):
-            modulo.add_error('destinazione', 'Sei già appartenente a questa sede.')
+            form.add_error('destinazione', 'Sei già appartenente a questa sede.')
         #elif trasf.destinazione.comitato != me.sede_riferimento().comitato and True:##che in realta' e' il discriminatore delle elezioni
         #    return errore_generico(request, me, messaggio="Non puoi richiedere un trasferimento tra comitati durante il periodo elettorale")
         elif me.trasferimento:
@@ -925,8 +927,10 @@ def utente_trasferimento(request, me):
                     trasf.persona,
                 ]
             )
-            Messaggio.costruisci_e_invia(
-                oggetto="Richiesta di trasferimento",
+
+            # Avviso al Presidente di Sede Destinazione
+            Messaggio.costruisci_e_accoda(
+                oggetto="Richiesta di trasferimento in entrata",
                 modello="email_richiesta_trasferimento_cc.html",
                 corpo={
                     "trasferimento": trasf,
@@ -936,22 +940,24 @@ def utente_trasferimento(request, me):
                     trasf.destinazione.presidente()
                 ]
             )
-            Messaggio.costruisci_e_invia(
-                oggetto="Richiesta di trasferimento",
-                modello="email_richiesta_trasferimento_presidente.html",
-                corpo={
-                    "trasferimento": trasf,
-                },
-                mittente=None,
-                destinatari=[
-                    trasf.persona.sede_riferimento().presidente()
-                ]
-            )
+
+            # # Avviso al Presidente dove è Dipendente (o MEMBRO_DIRETTO)
+            # Messaggio.costruisci_e_accoda(
+            #     oggetto="Richiesta di trasferimento",
+            #     modello="email_richiesta_trasferimento_presidente.html",
+            #     corpo={
+            #         "trasferimento": trasf,
+            #     },
+            #     mittente=None,
+            #     destinatari=[
+            #         trasf.persona.sede_riferimento().presidente()
+            #     ]
+            # )
 
     trasferimenti_auto_pending, trasferimenti_manuali_pending, delegati = trasferimenti_pending(me)
 
     contesto = {
-        "modulo": modulo,
+        "modulo": form,
         "storico": storico,
         "trasferimenti_auto_pending": trasferimenti_auto_pending,
         "trasferimenti_manuali_pending": trasferimenti_manuali_pending,
@@ -967,24 +973,32 @@ def utente_riserva(request, me):
     if not me.appartenenze_attuali() or not me.sede_riferimento():
         return errore_generico(titolo="Errore", messaggio="Si è verificato un errore generico.", request=request)
     storico = me.riserve.all()
-    modulo = ModuloCreazioneRiserva(request.POST or None)
-    if modulo.is_valid():
-        r = modulo.save(commit=False)
+    form = ModuloCreazioneRiserva(request.POST or None)
+    if form.is_valid():
+        r = form.save(commit=False)
         r.persona = me
         r.appartenenza = me.appartenenze_attuali().first()
         r.save()
-        r.invia_mail()
-        r.autorizzazione_richiedi_sede_riferimento(
-            me, INCARICO_GESTIONE_RISERVE,
-            invia_notifica_presidente=True,
-        )
+        r.richiedi()
+
+        # Messaggio.costruisci_e_accoda(
+        #     oggetto="Richiesta di riserva di un membro diretto",
+        #     modello="email_richiesta_riserva_presidente.html",
+        #     corpo={
+        #         "riserva": r,
+        #     },
+        #     mittente=None,
+        #     destinatari=[
+        #         r.persona.sede_riferimento().presidente()
+        #     ]
+        # )
 
         return messaggio_generico(request, me, titolo="Riserva registrata",
                                       messaggio="La riserva è stato registrata con successo",
                                       torna_titolo="Torna alla dash",
                                       torna_url="/utente/")
     contesto = {
-        "modulo": modulo,
+        "modulo": form,
         "storico": storico,
     }
     return "anagrafica_utente_riserva.html", contesto

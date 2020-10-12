@@ -2681,7 +2681,7 @@ class Estensione(ModelloSemplice, ConMarcaTemporale, ConAutorizzazioni, ConPDF):
             forza_sede_riferimento=sede,
         )
         if self.destinazione.presidente():
-            Messaggio.costruisci_e_invia(
+            Messaggio.costruisci_e_accoda(
                oggetto="Notifica di Estensione in entrata",
                modello="email_richiesta_estensione_cc.html",
                corpo={
@@ -2766,8 +2766,7 @@ class Riserva(ModelloSemplice, ConMarcaTemporale, ConStorico, ConProtocollo,
         self.save()
 
     def invia_mail(self):
-
-        Messaggio.costruisci_e_invia(
+        Messaggio.costruisci_e_accoda(
            oggetto="Richiesta di riserva",
            modello="email_richiesta_riserva.html",
            corpo={
