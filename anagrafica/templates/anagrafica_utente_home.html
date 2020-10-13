@@ -13,111 +13,120 @@
     {% endif %}
 
         <div class="row" style="margin-bottom:3em;">
-        <!--<div class="col col-md-4">
+        <!--<div class="col col-md-3">
             <div class="alert alert-danger" role="alert" style="text-align: center; margin:0; display: grid;">
                 <span class="glyphicon glyphicon-phone-alt" aria-hidden="true" style="font-size:48px; margin-bottom: 0.5em;"></span>
-                <a target="_blank" href="https://telefonia.cri.it" class="alert-link">Gestionale Telefonia</a>
+                <a target="_blank" href="https://telefonia.cri.it" class="alert-link testi-lunghi">Gestionale Telefonia</a>
             </div>
         </div>-->
         {% if me.dipendente %}
-            <div class="col col-md-4">
+            <div class="col col-md-3" style="padding-left: 5px; padding-right: 5px;">
                 <div class="alert alert-success" role="alert" style="text-align: center; margin:0; display: grid;">
                     <span class="glyphicon glyphicon-check" aria-hidden="true" style="font-size:48px; margin-bottom: 0.5em;"></span>
-                    <a target="_blank" href="https://criwiki.cri.it:8443/pages/viewpage.action?spaceKey=DA&title=Minute+di+Riunione" class="alert-link">Minute di riunione</a>
+                    <a target="_blank" href="https://criwiki.cri.it:8443/pages/viewpage.action?spaceKey=DA&title=Minute+di+Riunione" class="alert-link testi-lunghi" data-toggle="tooltip" data-placement="top" title="Minute di riunione">Minute di riunione</a>
                 </div>
             </div>
         {% endif %}
 
         {% if me.dipendente or me.volontario or me.operatore_villa_maraini or me.servizio_civile %}
-        <div class="col col-md-4">
+        <div class="col col-md-3" style="padding-left: 5px; padding-right: 5px;">
             <div class="alert alert-success" role="alert" style="text-align: center; margin:0; display: grid;">
                 <span class="glyphicon glyphicon-road" aria-hidden="true" style="font-size:48px; margin-bottom: 0.5em;"></span>
-                <a target="_blank" href="https://roadmap.cri.it" class="alert-link">Roadmap</a>
+                <a target="_blank" href="https://roadmap.cri.it" class="alert-link testi-lunghi" data-toggle="tooltip" data-placement="top" title="Roadmap">Roadmap</a>
             </div>
         </div>
         {% endif %}
 
         {% if me.dipendente %}
-            <div class="col col-md-4">
+            <div class="col col-md-3" style="padding-left: 5px; padding-right: 5px;">
                 <div class="alert alert-success" role="alert" style="text-align: center; margin:0; display: grid;">
                     <span class="glyphicon glyphicon-folder-open" aria-hidden="true" style="font-size:48px; margin-bottom: 0.5em;"></span>
-                    <a target="_blank" href="https://sites.google.com/a/cri.it/manuale-processi/home?pli=1" class="alert-link">Manuale dei processi</a>
+                    <a target="_blank" href="https://sites.google.com/a/cri.it/manuale-processi/home?pli=1" class="alert-link testi-lunghi" data-toggle="tooltip" data-placement="top" title="Manuale dei processi">Manuale dei processi</a>
                 </div>
             </div>
         {% endif %}
 
         {% if not me.operatore_villa_maraini %}
-        <div class="col col-md-4">
+        <div class="col col-md-3" style="padding-left: 5px; padding-right: 5px;">
             <div class="alert alert-success" role="alert" style="text-align: center; margin:0; display: grid; ">
                 <span class="glyphicon glyphicon-cloud" aria-hidden="true" style="font-size:48px; margin-bottom: 0.5em;"></span>
-                <a target="_blank" href="https://redcloud.cri.it/?auto_login=true" class="alert-link">Redcloud</a>
+                <a target="_blank" href="https://redcloud.cri.it/?auto_login=true" class="alert-link testi-lunghi" data-toggle="tooltip" data-placement="top" title="Redcloud">Redcloud</a>
             </div>
         </div>
 
-        <div class="col col-md-4">
+        <div class="col col-md-3" style="padding-left: 5px; padding-right: 5px;">
             <div class="alert alert-success" role="alert" style="text-align: center; margin:0; display: grid; ">
                 <span class="glyphicon glyphicon-link" aria-hidden="true" style="font-size:48px; margin-bottom: 0.5em;"></span>
-                <a target="_blank" href="https://gaia.cri.it/page/portale-convenzioni/" class="alert-link">Portale Convenzioni</a>
+                <a target="_blank" href="https://gaia.cri.it/page/portale-convenzioni/" class="alert-link testi-lunghi" data-toggle="tooltip" data-placement="top" title="Portale Convenzioni">Portale Convenzioni</a>
             </div>
         </div>
-        <!--<div class="col col-md-4">
+        <!--<div class="col col-md-3" style="padding-left: 5px; padding-right: 5px;">
             <div class="alert alert-danger" role="alert" style="text-align: center; margin:0; display: grid; ">
                 <span class="glyphicon glyphicon-inbox" aria-hidden="true" style="font-size:48px; margin-bottom: 0.5em;"></span>
-                <a target="_blank" href="https://gestionale.cri.it" class="alert-link">Gestionale SG</a>
+                <a target="_blank" href="https://gestionale.cri.it" class="alert-link testi-lunghi">Gestionale SG</a>
             </div>
         </div>-->
-        <div class="col col-md-4">
+        <div class="col col-md-3" style="padding-left: 5px; padding-right: 5px;">
             <div class="alert alert-success" role="alert" style="text-align: center; margin:0; display: grid; ">
                 <span class="glyphicon glyphicon-home" aria-hidden="true" style="font-size:48px; margin-bottom: 0.5em;"></span>
-                <a target="_blank" href="https://cri.it" class="alert-link">CRI.IT</a>
+                <a target="_blank" href="https://cri.it" class="alert-link testi-lunghi" data-toggle="tooltip" data-placement="top" title="CRI.IT">CRI.IT</a>
             </div>
         </div>
 
-        <div class="col col-md-4">
+        <div class="col col-md-3" style="padding-left: 5px; padding-right: 5px;">
             <div class="alert alert-success" role="alert" style="text-align: center; margin:0; display: grid; ">
                 <span class="glyphicon glyphicon-folder-open" aria-hidden="true" style="font-size:48px; margin-bottom: 0.5em;"></span>
-                <a target="_blank" href="https://gaia.cri.it/documenti/90/" class="alert-link">Toolkit Inclusione Lavorativa</a>
+                <a target="_blank" href="https://gaia.cri.it/documenti/90/" class="alert-link testi-lunghi" data-toggle="tooltip" data-placement="top" title="Toolkit Inclusione Lavorativa">Toolkit Inclusione Lavorativa</a>
             </div>
         </div>
 
-        <div class="col col-md-4">
+        <div class="col col-md-3" style="padding-left: 5px; padding-right: 5px;">
             <div class="alert alert-success" role="alert" style="text-align: center; margin:0; display: grid; ">
                 <span class="fa fa-newspaper-o" aria-hidden="true" style="font-size:48px; margin-bottom: 0.5em;"></span>
-                <a target="_blank" href="https://gaia.cri.it/documenti/91/" class="alert-link">Edicola digitale</a>
+                <a target="_blank" href="https://gaia.cri.it/documenti/91/" class="alert-link testi-lunghi" data-toggle="tooltip" data-placement="top" title="Edicola digitale">Edicola digitale</a>
             </div>
         </div>
         {% endif %}
 
         {% if me.dipendente %}
-            <div class="col col-md-4">
+            <div class="col col-md-3" style="padding-left: 5px; padding-right: 5px;">
                 <div class="alert alert-success" role="alert" style="text-align: center; margin:0; display: grid;">
                     <span class="glyphicon glyphicon-globe" aria-hidden="true" style="font-size:48px; margin-bottom: 0.5em;"></span>
-                    <a target="_blank" href="https://criwiki.cri.it:8443/display/DA/Mission+Report" class="alert-link">Mission Report</a>
+                    <a target="_blank" href="https://criwiki.cri.it:8443/display/DA/Mission+Report" class="alert-link testi-lunghi" data-toggle="tooltip" data-placement="top" title="Mission Report">Mission Report</a>
                 </div>
             </div>
         {% endif %}
 
         {% if me.dipendente or me.volontario %}
-            <div class="col col-md-4">
+            <div class="col col-md-3" style="padding-left: 5px; padding-right: 5px;">
                 <div class="alert alert-success" role="alert" style="text-align: center; margin:0; display: grid;">
                     <span class="glyphicon glyphicon-shopping-cart" aria-hidden="true" style="font-size:48px; margin-bottom: 0.5em;"></span>
-                    <a target="_blank" href="https://shop.cri.it" class="alert-link">CRI Shop</a>
+                    <a target="_blank" href="https://shop.cri.it" class="alert-link testi-lunghi" data-toggle="tooltip" data-placement="top" title="CRI Shop">CRI Shop</a>
                 </div>
             </div>
         {% endif %}
 
-        <div class="col col-md-4">
+        <div class="col col-md-3" style="padding-left: 5px; padding-right: 5px;">
             <div class="alert alert-success" role="alert" style="text-align: center; margin:0; display: grid;">
               <span class="glyphicon glyphicon glyphicon-ok-circle" aria-hidden="true" style="font-size:48px; margin-bottom: 0.5em;"></span>
-              <a target="_blank" href="https://gaia.cri.it/documenti/146/" class="alert-link">Strategia CRI 2030</a>
+              <a target="_blank" href="https://gaia.cri.it/documenti/146/" class="alert-link testi-lunghi" data-toggle="tooltip" data-placement="top" title="Strategia CRI 2030">Strategia CRI 2030</a>
             </div>
         </div>
-        <div class="col col-md-4">
+        <div class="col col-md-3" style="padding-left: 5px; padding-right: 5px;">
             <div class="alert alert-success" role="alert" style="text-align: center; margin:0; display: grid;">
               <span class="glyphicon glyphicon glyphicon-book" aria-hidden="true" style="font-size:48px; margin-bottom: 0.5em;"></span>
-              <a target="_blank" href="https://datafiles.gaia.cri.it/media/filer_public/50/0b/500b1177-f7ae-4bea-9adc-9fac12684d45/strategia_cri_verso_la_gioventu.pdf" class="alert-link">Strategia CRI verso la Gioventù</a>
+              <a target="_blank" href="https://datafiles.gaia.cri.it/media/filer_public/50/0b/500b1177-f7ae-4bea-9adc-9fac12684d45/strategia_cri_verso_la_gioventu.pdf" class="alert-link testi-lunghi" data-toggle="tooltip" data-placement="top" title="Strategia CRI verso la Gioventù">Strategia CRI verso la Gioventù</a>
             </div>
         </div>
+
+        {% if me.delegato_tempo_della_gentilezza %}
+        <div class="col col-md-3" style="padding-left: 5px; padding-right: 5px;">
+            <div class="alert alert-success" role="alert" style="text-align: center; margin:0; display: grid;">
+              <span class="glyphicon glyphicon glyphicon-leaf" aria-hidden="true" style="font-size:48px; margin-bottom: 0.5em;"></span>
+              <a target="_blank" href="https://auth2pro.cri.it/iltempodellagentilezza/auth/?sso " class="alert-link testi-lunghi" data-toggle="tooltip" data-placement="top" title="Il tempo della gentilezza">Il tempo della gentilezza</a>
+            </div>
+        </div>
+        {% endif %}
 
     </div>
     <!--<div
