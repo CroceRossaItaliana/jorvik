@@ -32,7 +32,7 @@
                 <p>Se sei interessat{{ me.genere_o_a }} a iscriverti a questo corso, clicca sul pulsante seguente.
                     La tua richiesta di iscrizione verrà inviata al Direttore del Corso.
 
-                    {% if not corso.is_nuovo_corso %}
+                    {% if not corso.is_nuovo_corso and not corso.online %}
                         <label for="autocert_assenza_condanne_penali">
                             <input type="checkbox" id="autocert_assenza_condanne_penali" style="display: inline-block;">
                             Autocertificare l’assenza di condanne penali, con sentenza passata in giudicato, per uno dei reati comportanti la destituzione di diritto dal pubblico impiego
