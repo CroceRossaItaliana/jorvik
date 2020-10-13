@@ -335,6 +335,50 @@ class ElencoCM(ElencoVistaSoci):
             'utenza', 'numeri_telefono'
         ).distinct('cognome', 'nome', 'codice_fiscale')
 
+class ElencoIV(ElencoVistaSoci):
+    """ args: QuerySet<Sede>, Sedi per le quali compilare gli elenchi sostenitori """
+
+    REPORT_TYPE = ReportElenco.IV_E_CM
+
+    def risultati(self):
+        qs_sedi = self.args[0]
+        return Persona.objects.filter(
+            Q(iv=True),
+            Appartenenza.query_attuale(
+                sede__in=qs_sedi, membro__in=Appartenenza.MEMBRO_DIRETTO,
+            ).via("appartenenze")
+        ).annotate(
+                appartenenza_tipo=F('appartenenze__membro'),
+                appartenenza_inizio=F('appartenenze__inizio'),
+                appartenenza_sede=F('appartenenze__sede'),
+        ).prefetch_related(
+            'appartenenze', 'appartenenze__sede',
+            'utenza', 'numeri_telefono'
+        ).distinct('cognome', 'nome', 'codice_fiscale')
+
+
+class ElencoCM(ElencoVistaSoci):
+    """ args: QuerySet<Sede>, Sedi per le quali compilare gli elenchi sostenitori """
+
+    REPORT_TYPE = ReportElenco.CM
+
+    def risultati(self):
+        qs_sedi = self.args[0]
+
+        return Persona.objects.filter(
+            Q(cm=True),
+            Appartenenza.query_attuale(
+                sede__in=qs_sedi, membro__in=Appartenenza.MEMBRO_DIRETTO,
+            ).via("appartenenze")
+        ).annotate(
+                appartenenza_tipo=F('appartenenze__membro'),
+                appartenenza_inizio=F('appartenenze__inizio'),
+                appartenenza_sede=F('appartenenze__sede'),
+        ).prefetch_related(
+            'appartenenze', 'appartenenze__sede',
+            'utenza', 'numeri_telefono'
+        ).distinct('cognome', 'nome', 'codice_fiscale')
+
 
 class ElencoSenzaTurni(ElencoVistaSoci):
     """ args: QuerySet<Sede>, Sedi per le quali compilare gli elenchi sostenitori """
