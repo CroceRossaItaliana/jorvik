@@ -536,7 +536,7 @@ class ReportElenco(ConMarcaTemporale):
     VOLONTARI = 'vol'
     VOLONTARI_GIOVANI = 'vog'
     SERVIZIO_CIVILE = 'civ'
-    IV_E_CM = 'ivcm'
+    # IV_E_CM = 'ivcm'
     CM = 'cm'
     IV = 'iv'
     DIMESSI = 'dim'
@@ -559,7 +559,9 @@ class ReportElenco(ConMarcaTemporale):
     REPORT_TYPE = (
         (VOLONTARI, 'Volontari'),
         (VOLONTARI_GIOVANI, 'Volontari Giovani'),
-        (IV_E_CM, 'IV e CM'),
+        # (IV_E_CM, 'IV e CM'),
+        (CM, 'Corpo militare'),
+        (IV, 'Infermiere volontarie'),
         (DIMESSI, 'Dimessi'),
         (VOLONTARI_IN_RISERVA, 'Volontari in Riserva'),
         (TRASFERITI, 'Trasferiti'),
