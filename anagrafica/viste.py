@@ -791,6 +791,7 @@ def utente_estensione(request, me):
             est.persona = me
             est.save()
             est.richiedi()
+
             # Messaggio.costruisci_e_invia(
             #     oggetto="Richiesta di estensione",
             #     modello="email_richiesta_estensione.html",
@@ -813,7 +814,6 @@ def utente_estensione(request, me):
             #         ##presidente sede di estensione
             #     ]
             # )
-
             # Avviso al Presidente dove è Volontario
             # Messaggio.costruisci_e_accoda(
             #     oggetto="Richiesta di estensione di un membro diretto",
@@ -918,7 +918,9 @@ def utente_trasferimento(request, me):
             trasf.richiedente = me
             trasf.save()
             trasf.richiedi()
-            Messaggio.costruisci_e_invia(
+
+            # Avviso a se stesso
+            Messaggio.costruisci_e_accoda(
                 oggetto="Richiesta di trasferimento",
                 modello="email_richiesta_trasferimento.html",
                 corpo={
@@ -943,7 +945,7 @@ def utente_trasferimento(request, me):
                 ]
             )
 
-            # # Avviso al Presidente dove è Dipendente (o MEMBRO_DIRETTO)
+            # Avviso al Presidente dove è Dipendente (o MEMBRO_DIRETTO)
             # Messaggio.costruisci_e_accoda(
             #     oggetto="Richiesta di trasferimento",
             #     modello="email_richiesta_trasferimento_presidente.html",
@@ -978,8 +980,9 @@ def utente_riserva(request, me):
     form = ModuloCreazioneRiserva(request.POST or None)
     if form.is_valid():
         r = form.save(commit=False)
+
         r.persona = me
-        r.appartenenza = me.appartenenze_attuali().first()
+        r.appartenenza = me.appartenenze_attuali(membro=Appartenenza.VOLONTARIO).first()
         r.save()
         r.richiedi()
 
