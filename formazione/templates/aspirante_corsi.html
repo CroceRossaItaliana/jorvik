@@ -53,6 +53,13 @@
                         {% for d in corso.deleghe.all %}
                             {{ d.persona.link|safe }}
                         {% endfor %}
+                    {% if corso.online %}
+                        <br>
+                        <b style="color: #00ff1d;">
+                            <i class="fa fa-exclamation"></i>
+                            Corso online
+                        </b>
+                    {% endif %}
                 </td>
                 <td>{{ corso.partecipazioni.count }} richieste</td>
             </tr>
@@ -104,6 +111,13 @@
                         {% for d in corso.deleghe.all %}
                             {{ d.persona.link|safe }}
                         {% endfor %}
+                    {% if corso.online %}
+                        <br>
+                        <b style="color: #00ff1d;">
+                            <i class="fa fa-exclamation"></i>
+                            Corso online
+                        </b>
+                    {% endif %}
                 </td>
             </tr>
         {% endfor %}

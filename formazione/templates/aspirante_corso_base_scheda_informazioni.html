@@ -12,8 +12,6 @@
     .scheda-lezione-non-revisionata {color:red;}
 </style>
 
-
-
 {% if not me or not puo_modificare %}
     {% if not me or puoi_partecipare in corso.PUOI_ISCRIVERTI %}
         <div class="alert alert-success alert-block">
@@ -32,9 +30,9 @@
                 <p>Se sei interessat{{ me.genere_o_a }} a iscriverti a questo corso, clicca sul pulsante seguente.
                     La tua richiesta di iscrizione verrà inviata al Direttore del Corso.
 
-                    {% if not corso.is_nuovo_corso %}
-                        <label for="autocert_assenza_condanne_penali">
-                            <input type="checkbox" id="autocert_assenza_condanne_penali" style="display: inline-block;">
+                    {% if not corso.is_nuovo_corso%}
+                        <label for="autocert_assenza_condanne_penali" {% if corso.online %}hidden{% endif %}>
+                            <input type="checkbox" id="autocert_assenza_condanne_penali" style="display: inline-block;" {% if corso.online %}checked{% endif %}>
                             Autocertificare l’assenza di condanne penali, con sentenza passata in giudicato, per uno dei reati comportanti la destituzione di diritto dal pubblico impiego
                         </label>
                     {% endif %}
@@ -221,7 +219,6 @@
         {% endif %}
     </div>
 
- {% if not corso.online %}
     <div class="col-md-6">
         <h3>
             <i class="fa fa-fw fa-calendar"></i> Lezioni
@@ -271,7 +268,6 @@
             </tbody>
         </table>
     </div>
-{% endif %}
 </div>
 
 <div class="row">

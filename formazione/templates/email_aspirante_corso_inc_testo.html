@@ -4,9 +4,17 @@
     <p>ti scriviamo in riferimento alla tua richiesta di diventare volontario della Croce Rossa Italiana fatta attraverso <a href="/">Gaia</a>.</p>
 {% endif %}
 
-<p>Nelle tue vicinanze è stato attivato un corso {% if corso.tipo == Corso.BASE %}base per Aspiranti{% else %}per Volontari{% endif %} CRI!</p>
-<p class="grassetto">Il corso è stato organizzato dal {{ corso.sede.link|safe }} ed avrà inizio il {{ corso.data_inizio|date:"SHORT_DATETIME_FORMAT" }},
+{% if not corso.online %}
+    <p>Nelle tue vicinanze è stato attivato un corso {% if corso.tipo == Corso.BASE %}base per Aspiranti{% else %}per Volontari{% endif %} CRI!</p>
+    <p class="grassetto">Il corso è stato organizzato dal {{ corso.sede.link|safe }} ed avrà inizio il {{ corso.data_inizio|date:"SHORT_DATETIME_FORMAT" }},
     al seguente indirizzo: <a href="{{ corso.url_mappa }}">{{ corso.locazione }} (vedi in mappa)</a>.</p>
+{% else %}
+    <p class="grassetto">Il corso è stato organizzato dal {{ corso.sede.link|safe }} ed avrà inizio il {{ corso.data_inizio|date:"SHORT_DATETIME_FORMAT" }},
+    in modalita online.</p>
+{% endif %}
+
+
+
 <p>Alcune informazioni su questo corso:</p>
 
 <blockquote>{{ corso.descrizione|safe }}</blockquote>
