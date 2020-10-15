@@ -321,7 +321,7 @@ def aspirante_corso_base_iscriviti(request, me=None, pk=None):
     p = PartecipazioneCorsoBase(persona=me, corso=corso)
     p.save()
     p.richiedi()
-
+    print(p)
     return messaggio_generico(request, me,
         titolo="Sei iscritt%s al corso" % me.genere_o_a,
         messaggio="Complimenti! La tua richiesta di iscrizione è stata registrata ed inviata al Direttore di Corso. "
@@ -1031,7 +1031,7 @@ def aspirante_corsi(request, me):
 
         # Unisci 2 categorie di corsi
         corsi = corsi_confermati | corsi_da_partecipare | corsi_estensione_mia_appartenenze
-        corsi = corsi.filter(tipo=Corso.CORSO_NUOVO)
+        corsi = corsi.filter(tipo__in=[Corso.CORSO_NUOVO, Corso.CORSO_ONLINE])
 
     corsi_frequentati = me.corsi_frequentati
     corsi_attivi = corsi.exclude(pk__in=corsi_frequentati.values_list('pk', flat=True))
@@ -1094,11 +1094,12 @@ def aspirante_corso_estensioni_modifica(request, me, pk):
     SELECT_EXTENSIONS_FORMSET_PREFIX = 'extensions'
 
     course = get_object_or_404(CorsoBase, pk=pk)
+
     if not me.permessi_almeno(course, MODIFICA):
         return redirect(ERRORE_PERMESSI)
 
-    if not course.tipo == Corso.CORSO_NUOVO:
-        # The page is not accessible if the type of course is not CORSO_NUOVO
+    if not course.tipo == Corso.CORSO_NUOVO and not course.tipo == Corso.CORSO_ONLINE:
+        # The page is not accessible if the type of course is not CORSO_NUOVO or CORSO_ONLINE
         return redirect(ERRORE_PERMESSI)
 
     if request.method == 'POST':

@@ -68,6 +68,10 @@ class Corso(ModelloSemplice, ConDelegati, ConMarcaTemporale,
             ("view_corso", "Can view corso"),
         )
 
+    @property
+    def is_base(self):
+        return self.tipo != self.BASE
+
 
 class CorsoFile(models.Model):
     is_enabled = models.BooleanField(default=True)
@@ -186,14 +190,14 @@ class CorsoBase(Corso, ConVecchioID, ConPDF):
 
     def persona(self, persona):
         # Validazione per Nuovi Corsi (Altri Corsi)
-        if self.is_nuovo_corso:
+        if self.is_nuovo_corso or self.online:
             # Aspirante non può iscriversi a corso nuovo
             if persona.ha_aspirante:
                 return self.NON_PUOI_SEI_ASPIRANTE
 
         # Non fare la verifica per gli aspiranti (non hanno appartenenze)
         if not persona.ha_aspirante:
-            if not self.is_nuovo_corso and persona.volontario:
+            if not self.is_nuovo_corso and not self.online and persona.volontario:
                 return self.NON_PUOI_ISCRIVERTI_GIA_VOLONTARIO
 
             # Controllo estensioni
@@ -340,7 +344,7 @@ class CorsoBase(Corso, ConVecchioID, ConPDF):
         # Trova corsi che hanno <sede> uguale alla <sede del volontario>
         ###
         qs_estensioni_1 = CorsoEstensione.objects.filter(sede__in=sede,
-                                                         corso__tipo__in=[Corso.CORSO_NUOVO, Corso.BASE],
+                                                         corso__tipo__in=[Corso.CORSO_NUOVO, Corso.CORSO_ONLINE, Corso.BASE],
                                                          corso__stato=Corso.ATTIVO,)
         courses_1 = cls.objects.filter(id__in=qs_estensioni_1.values_list('corso__id'))
 
@@ -349,7 +353,7 @@ class CorsoBase(Corso, ConVecchioID, ConPDF):
         ###
         # four_weeks_delta = today + datetime.timedelta(weeks=4)
         qs_estensioni_2 = CorsoEstensione.objects.filter(
-            corso__tipo__in=[Corso.CORSO_NUOVO, Corso.BASE],
+            corso__tipo__in=[Corso.CORSO_NUOVO, Corso.CORSO_ONLINE, Corso.BASE],
             corso__stato=Corso.ATTIVO,
         ).exclude(corso__id__in=courses_1.values_list('id', flat=True))
 
@@ -757,7 +761,7 @@ class CorsoBase(Corso, ConVecchioID, ConPDF):
         if not self.attivabile():
             raise ValueError("Questo corso non è attivabile.")
 
-        if self.is_nuovo_corso:
+        if self.is_nuovo_corso or self.online:
             messaggio = "A breve tutti i volontari dei segmenti selezionati "\
                         "verranno informati dell'attivazione di questo corso."
         else:
@@ -781,11 +785,12 @@ class CorsoBase(Corso, ConVecchioID, ConPDF):
         Trovare destinatari aspiranti o volontari da avvisare di un nuovo corso attivato.
         :return: <Persona>QuerySet
         """
-        if self.corso_vecchio or not self.is_nuovo_corso:
+        if self.corso_vecchio:
             aspiranti_list = self.aspiranti_nelle_vicinanze().values_list('persona', flat=True)
             persone = Persona.objects.filter(pk__in=aspiranti_list)
         else:
             persone = self.get_volunteers_by_course_requirements()
+            print('volontari', persone)
         return persone
 
     def _corso_activation_recipients_for_email_generator(self):
@@ -866,7 +871,7 @@ class CorsoBase(Corso, ConVecchioID, ConPDF):
         return CorsoEstensione.get_titles(course=self, **kwargs)
 
     def get_volunteers_by_course_requirements(self, **kwargs):
-        """ Da utilizzare solo per i corsi che hanno estensione (nuovi corsi) """
+        """ Da utilizzare solo per i corsi che hanno estensione (nuovi corsi/online) """
 
         persone_da_informare = None
 
@@ -876,8 +881,11 @@ class CorsoBase(Corso, ConVecchioID, ConPDF):
             persone_da_informare = self.get_volunteers_by_only_sede()
 
         if CorsoBase.EXT_LVL_REGIONALE == corso_extension:
+            print(CorsoBase.EXT_LVL_REGIONALE)
             by_ext_sede = self.get_volunteers_by_ext_sede()
+            print('by_ext_sede', by_ext_sede)
             by_ext_titles = self.get_volunteers_by_ext_titles()
+            print('by_ext_titles', by_ext_titles)
             persone_da_informare = by_ext_sede | by_ext_titles
 
         if persone_da_informare is None:

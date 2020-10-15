@@ -560,6 +560,8 @@ class ReportElenco(ConMarcaTemporale):
         (VOLONTARI, 'Volontari'),
         (VOLONTARI_GIOVANI, 'Volontari Giovani'),
         (IV_E_CM, 'IV e CM'),
+        (CM, 'Corpo militare'),
+        (IV, 'Infermiere volontarie'),
         (DIMESSI, 'Dimessi'),
         (VOLONTARI_IN_RISERVA, 'Volontari in Riserva'),
         (TRASFERITI, 'Trasferiti'),
