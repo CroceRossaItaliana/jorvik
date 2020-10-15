@@ -12,6 +12,8 @@
     .scheda-lezione-non-revisionata {color:red;}
 </style>
 
+
+
 {% if not me or not puo_modificare %}
     {% if not me or puoi_partecipare in corso.PUOI_ISCRIVERTI %}
         <div class="alert alert-success alert-block">
