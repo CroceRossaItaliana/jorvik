@@ -339,7 +339,6 @@ class ElencoIV(ElencoVistaSoci):
     """ args: QuerySet<Sede>, Sedi per le quali compilare gli elenchi sostenitori """
 
     REPORT_TYPE = ReportElenco.IV_E_CM
->>>>>>> ufficio_soci/elenchi.py
 
     def risultati(self):
         qs_sedi = self.args[0]
