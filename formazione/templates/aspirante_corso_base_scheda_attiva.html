@@ -15,7 +15,7 @@
                 <p>Assicurati di aver inserito tutte le informazioni utili per la partecipazione al Corso nella descrizione del corso.</p>
 
                 <p>Invieremo un messaggio a tutti i
-                    {% if corso.is_nuovo_corso %}
+                    {% if corso.is_nuovo_corso or corso.online %}
                         <strong>volontari in base all' estensione impostata</strong>
                     {% else %}
                         <strong>{{ corso.aspiranti_nelle_vicinanze.count }} aspiranti nelle vicinanze</strong>

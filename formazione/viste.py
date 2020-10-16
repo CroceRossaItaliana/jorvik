@@ -36,6 +36,7 @@ from .utils import costruisci_titoli
 from .training_api import TrainingApi
 
 
+
 @pagina_privata
 def formazione(request, me):
     corsi = me.oggetti_permesso(GESTIONE_CORSO)
@@ -292,11 +293,6 @@ def aspirante_corso_base_informazioni(request, me=None, pk=None):
     context['puo_modificare'] = corso.can_modify(me)
     context['can_activate'] = corso.can_activate(me)
     context['puoi_partecipare'] = puoi_partecipare
-
-    if corso.online:
-        api = TrainingApi()
-        r = api.core_course_get_courses_by_field_shortname(corso.titolo_cri.nome)
-        context['link'] = 'https://training.cri.it/course/view.php?id={}'.format(r['id'])
 
     return 'aspirante_corso_base_scheda_informazioni.html', context
 
@@ -835,15 +831,10 @@ def aspirante_corso_base_iscritti_cancella(request, me, pk, iscritto):
                                messaggio="La persona cercata non è iscritta.",
                                torna_titolo="Torna al corso base", torna_url=corso.url_iscritti)
     if request.method == 'POST':
-        api = TrainingApi()
         for partecipazione in corso.partecipazioni_confermate_o_in_attesa().filter(persona=persona):
             partecipazione.disiscrivi(mittente=me)
-            if corso.online:
-                api.cancellazione_iscritto(persona, corso)
         for partecipazione in corso.inviti_confermati_o_in_attesa().filter(persona=persona):
             partecipazione.disiscrivi(mittente=me)
-            if corso.online:
-                api.cancellazione_iscritto(persona, corso)
         return messaggio_generico(request, me, titolo="Iscritto cancellato",
                                   messaggio="{} è stato cancellato dal corso {}.".format(persona, corso),
                                   torna_titolo="Torna al corso base", torna_url=corso.url_iscritti)
@@ -925,11 +916,6 @@ def aspirante_corso_base_iscritti_aggiungi(request, me, pk):
                         mittente=me,
                         destinatari=[persona]
                     )
-
-                if corso.online:
-                    from formazione.training_api import TrainingApi
-                    api = TrainingApi()
-                    api.aggiugi_ruolo(persona=persona, corso=corso, ruolo=TrainingApi.DISCENTE)
 
                 Log.crea(me, partecipazione)
 
@@ -1052,7 +1038,7 @@ def aspirante_corsi(request, me):
 
         # Unisci 2 categorie di corsi
         corsi = corsi_confermati | corsi_da_partecipare | corsi_estensione_mia_appartenenze
-        corsi = corsi.filter(tipo=Corso.CORSO_NUOVO)
+        corsi = corsi.filter(tipo__in=[Corso.CORSO_NUOVO, Corso.CORSO_ONLINE])
 
     corsi_frequentati = me.corsi_frequentati
     corsi_attivi = corsi.exclude(pk__in=corsi_frequentati.values_list('pk', flat=True))
@@ -1115,11 +1101,12 @@ def aspirante_corso_estensioni_modifica(request, me, pk):
     SELECT_EXTENSIONS_FORMSET_PREFIX = 'extensions'
 
     course = get_object_or_404(CorsoBase, pk=pk)
+
     if not me.permessi_almeno(course, MODIFICA):
         return redirect(ERRORE_PERMESSI)
 
-    if not course.tipo == Corso.CORSO_NUOVO:
-        # The page is not accessible if the type of course is not CORSO_NUOVO
+    if not course.tipo == Corso.CORSO_NUOVO and not course.tipo == Corso.CORSO_ONLINE:
+        # The page is not accessible if the type of course is not CORSO_NUOVO or CORSO_ONLINE
         return redirect(ERRORE_PERMESSI)
 
     if request.method == 'POST':

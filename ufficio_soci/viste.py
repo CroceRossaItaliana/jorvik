@@ -20,7 +20,7 @@ from anagrafica.forms import ModuloNuovoProvvedimento
 from anagrafica.models import Appartenenza, Persona, Estensione, Sede, Riserva, Dimissione
 from anagrafica.permessi.costanti import (GESTIONE_SOCI, ELENCHI_SOCI,
                                           ERRORE_PERMESSI, MODIFICA,
-                                          EMISSIONE_TESSERINI)
+                                          EMISSIONE_TESSERINI, GESTIONE_SOCI_CM, GESTIONE_SOCI_IIVV)
 from autenticazione.funzioni import pagina_privata, pagina_pubblica
 from base.errori import (errore_generico, errore_nessuna_appartenenza,
                          messaggio_generico, messaggio_avvertimento)
@@ -39,11 +39,18 @@ from .forms import (ModuloCreazioneEstensione, ModuloAggiungiPersona,
     ModuloScaricaTesserini, ModuloDimissioniSostenitore)
 
 
-@pagina_privata(permessi=(GESTIONE_SOCI,))
+@pagina_privata
 def us(request, me):
     """ Ritorna la home page per la gestione dei soci. """
 
+    if not me.ha_permessi([GESTIONE_SOCI]) and \
+            not me.ha_permessi([GESTIONE_SOCI_CM]) and \
+            not me.ha_permessi([GESTIONE_SOCI_IIVV]):
+        return redirect(ERRORE_PERMESSI)
+
     sedi = me.oggetti_permesso(GESTIONE_SOCI)
+    if not sedi:
+        sedi = me.oggetti_permesso(GESTIONE_SOCI_CM)
 
     persone = Persona.objects.filter(
         Appartenenza.query_attuale(sede__in=sedi).via("appartenenze")
