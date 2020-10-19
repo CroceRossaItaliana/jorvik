@@ -294,6 +294,12 @@ def aspirante_corso_base_informazioni(request, me=None, pk=None):
     context['can_activate'] = corso.can_activate(me)
     context['puoi_partecipare'] = puoi_partecipare
 
+    if corso.online:
+        api = TrainingApi()
+        r = api.core_course_get_courses_by_field_shortname(corso.titolo_cri.nome)
+        context['link'] = 'https://training.cri.it/course/view.php?id={}'.format(r['id'])
+
+
     return 'aspirante_corso_base_scheda_informazioni.html', context
 
 
@@ -916,6 +922,11 @@ def aspirante_corso_base_iscritti_aggiungi(request, me, pk):
                         mittente=me,
                         destinatari=[persona]
                     )
+
+                if corso.online:
+                    from formazione.training_api import TrainingApi
+                    api = TrainingApi()
+                    api.aggiugi_ruolo(persona=persona, corso=corso, ruolo=TrainingApi.DISCENTE)
 
                 Log.crea(me, partecipazione)
 
