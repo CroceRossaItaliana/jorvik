@@ -54,7 +54,7 @@
 
                                 {% if r.nel_turno %}
                                     <i class="fas fa-thumbs-up"></i> Già abbinata al turno
-                                    {% for partecipazione in r.nel_turno%}
+                                    {% for partecipazione in r.nel_turno %}
                                         <div style="margin-top:15px;">
                                             <strong><a href="{{ partecipazione.turno.url }}">{{ partecipazione.turno.nome }}</a></strong>
                                             <a href="{{ partecipazione.turno.url_ritirati }}"><i class="far fa-minus-square"></i> Ritirati</a><br>
@@ -69,11 +69,11 @@
                                 {{ r.creazione|date:"SHORT_DATETIME_FORMAT" }}<br />
                             </td>
                             <td>
-                                <a href="{% url 'so:reperibilita_cancella' r.pk %}"  data-conferma="Vuoi cancellare la reperibilità selezionata?">
-                                    <i class="fa fa-fw fa-trash"></i> Cancella
-                                </a><br>
                                 <a href="{% url 'so:reperibilita_modifica' r.pk %}">
                                     <i class="fa fa-fw fa-edit"></i> Modifica
+                                </a><br>
+                                <a href="{% url 'so:reperibilita_cancella' r.pk %}"  data-conferma="Vuoi cancellare la reperibilità selezionata?">
+                                    <i class="fa fa-fw fa-trash"></i> Cancella
                                 </a>
                             </td>
                         </tr>

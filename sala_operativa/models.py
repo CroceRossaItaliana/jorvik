@@ -394,26 +394,35 @@ class ReperibilitaSO(ModelloSemplice, ConMarcaTemporale, ConStorico):
         return cls.objects.filter(creato_da__in=persone)
 
     @classmethod
-    def reperibilita_per_sedi(cls, sedi):
-        if isinstance(sedi, Sede):
-            sedi = Sede.objects.filter(pk__in=[sedi.pk, ])
+    def reperibilita_per_sedi(cls, sedi, **kwargs):
+        """
 
-        q = cls.query_attuale(
+        :param sedi:
+        :param kwargs:
+        :return: ReperibilitaSO<QuerySet>
+        """
+        if isinstance(sedi, Sede):
+            sedi_pks = list(sedi.esplora(includi_me=True).values_list('pk', flat=True))
+            sedi = Sede.objects.filter(pk__in=sedi_pks)
+
+        turno = kwargs.pop('turno') if 'turno' in kwargs else None
+        if turno:
+            q = cls.query_attuale_tra_date(inizio=turno.inizio, fine=turno.fine)
+        else:
+            q = cls.query_attuale_in_anno(anno=now().date().year)
+
+        q = q.filter(
             Appartenenza.query_attuale(sede__in=sedi).via("persona__appartenenze"),
         ).order_by('attivazione', '-creazione')
+
         return cls.objects.filter(pk__in=q.values_list('pk', flat=True))
 
     @property
     def nel_turno(self):
         """
-        Da migliorare. Ora restituisce gli oggetto di 2 tipi diversi.
-        In realta' TurnoSO associato non deve essere piu' di 1.
-        :return: <TurnoSO> or QuerySet<PartecipazioneSO>
+        :return: QuerySet<PartecipazioneSO>
         """
-        p = self.partecipazioneso_set.all()
-        if p.count() == 1:
-            return p.last().turno
-        return p
+        return self.partecipazioneso_set.all()
 
     def __str__(self):
         return str(self.persona)
@@ -678,7 +687,7 @@ class TurnoSO(ModelloSemplice, ConMarcaTemporale, ConGiudizio):
         :return: PartecipazioneSO<QuerySet>
         """
         servizio = self.attivita
-        reperibilita = ReperibilitaSO.reperibilita_per_sedi(servizio.sede)
+        reperibilita = ReperibilitaSO.reperibilita_per_sedi(servizio.sede, turno=self)
         reperibilita_abbinate = self.reperibilita_abbinate().values_list('reperibilita')
 
         disponibili = reperibilita.exclude(pk__in=reperibilita_abbinate)
