@@ -1,31 +1,52 @@
 from datetime import timedelta
 from django.db.models import QuerySet, Q
 
-from ..permessi.applicazioni import (PRESIDENTE, DIRETTORE_CORSO, RESPONSABILE_AUTOPARCO,
-                                     REFERENTE_GRUPPO, COMMISSARIO, UFFICIO_SOCI_UNITA, DELEGATO_OBIETTIVO_1,
-                                     DELEGATO_OBIETTIVO_2, DELEGATO_OBIETTIVO_3, DELEGATO_OBIETTIVO_4,
-                                     DELEGATO_OBIETTIVO_5,
-                                     DELEGATO_OBIETTIVO_6, RESPONSABILE_FORMAZIONE, DELEGATO_CO, CONSIGLIERE,
-                                     CONSIGLIERE_GIOVANE, VICE_PRESIDENTE, UFFICIO_SOCI, DELEGATO_AREA,
-                                     RESPONSABILE_AREA, REFERENTE, UFFICIO_SOCI_CM, UFFICIO_SOCI_IIVV)
+from ..permessi.applicazioni import (PRESIDENTE, DIRETTORE_CORSO,
+                                     RESPONSABILE_AUTOPARCO,
+                                     REFERENTE_GRUPPO, COMMISSARIO,
+                                     UFFICIO_SOCI_UNITA, DELEGATO_OBIETTIVO_1,
+                                     DELEGATO_OBIETTIVO_2, DELEGATO_OBIETTIVO_3,
+                                     DELEGATO_OBIETTIVO_4, DELEGATO_OBIETTIVO_5,
+                                     DELEGATO_OBIETTIVO_6,
+                                     RESPONSABILE_FORMAZIONE, DELEGATO_CO,
+                                     DELEGATO_SO, CONSIGLIERE,
+                                     CONSIGLIERE_GIOVANE, VICE_PRESIDENTE,
+                                     UFFICIO_SOCI, DELEGATO_AREA,
+                                     RESPONSABILE_AREA, REFERENTE, REFERENTE_SO,
+                                     UFFICIO_SOCI_CM, UFFICIO_SOCI_IIVV)
 from ..permessi.costanti import (GESTIONE_SOCI, ELENCHI_SOCI, \
                                  GESTIONE_ATTIVITA_SEDE, GESTIONE_CORSI_SEDE, \
-                                 GESTIONE_SEDE, GESTIONE_ATTIVITA_AREA, GESTIONE_ATTIVITA, GESTIONE_CORSO,
+                                 GESTIONE_SEDE, GESTIONE_ATTIVITA_AREA,
+                                 GESTIONE_ATTIVITA, GESTIONE_CORSO,
                                  GESTIONE_AUTOPARCHI_SEDE, \
-                                 GESTIONE_GRUPPI_SEDE, GESTIONE_GRUPPO, GESTIONE_GRUPPI, GESTIONE_AREE_SEDE,
+                                 GESTIONE_GRUPPI_SEDE, GESTIONE_GRUPPO,
+                                 GESTIONE_GRUPPI, GESTIONE_AREE_SEDE,
                                  GESTIONE_REFERENTI_ATTIVITA, \
-                                 GESTIONE_CENTRALE_OPERATIVA_SEDE, EMISSIONE_TESSERINI,
+                                 GESTIONE_CENTRALE_OPERATIVA_SEDE,
+                                 EMISSIONE_TESSERINI,
                                  GESTIONE_POTERI_CENTRALE_OPERATIVA_SEDE, \
-                                 RUBRICA_UFFICIO_SOCI, RUBRICA_UFFICIO_SOCI_UNITA, \
-                                 RUBRICA_PRESIDENTI, RUBRICA_DELEGATI_AREA, RUBRICA_DELEGATI_OBIETTIVO_1,
-                                 RUBRICA_DELEGATI_OBIETTIVO_2, \
-                                 RUBRICA_DELEGATI_OBIETTIVO_3, RUBRICA_DELEGATI_OBIETTIVO_4,
-                                 RUBRICA_DELEGATI_OBIETTIVO_6, \
-                                 RUBRICA_DELEGATI_GIOVANI, RUBRICA_RESPONSABILI_AREA, RUBRICA_REFERENTI_ATTIVITA, \
-                                 RUBRICA_REFERENTI_GRUPPI, RUBRICA_CENTRALI_OPERATIVE, RUBRICA_RESPONSABILI_FORMAZIONE, \
-                                 RUBRICA_DIRETTORI_CORSI, RUBRICA_RESPONSABILI_AUTOPARCO, RUBRICA_COMMISSARI,
-                                 GESTIONE_SOCI_CM, GESTIONE_SOCI_IIVV)
-
+                                 GESTIONE_SO_SEDE,
+                                 RUBRICA_SALE_OPERATIVE,
+                                 RUBRICA_UFFICIO_SOCI,
+                                 RUBRICA_UFFICIO_SOCI_UNITA,
+                                 RUBRICA_PRESIDENTI, RUBRICA_DELEGATI_AREA,
+                                 RUBRICA_DELEGATI_OBIETTIVO_1,
+                                 RUBRICA_DELEGATI_OBIETTIVO_2,
+                                 RUBRICA_DELEGATI_OBIETTIVO_3,
+                                 RUBRICA_DELEGATI_OBIETTIVO_4,
+                                 RUBRICA_DELEGATI_OBIETTIVO_6,
+                                 RUBRICA_DELEGATI_GIOVANI,
+                                 RUBRICA_RESPONSABILI_AREA,
+                                 RUBRICA_REFERENTI_ATTIVITA,
+                                 RUBRICA_REFERENTI_SO,
+                                 RUBRICA_REFERENTI_GRUPPI,
+                                 RUBRICA_CENTRALI_OPERATIVE,
+                                 RUBRICA_RESPONSABILI_FORMAZIONE,
+                                 RUBRICA_DIRETTORI_CORSI,
+                                 RUBRICA_RESPONSABILI_AUTOPARCO,
+                                 RUBRICA_COMMISSARI, GESTIONE_SERVIZI,
+                                 GESTIONE_REFERENTI_SO,
+                                 GESTIONE_SOCI_CM, GESTIONE_SOCI_IIVV, )
 
 """
 Questo modulo contiene tutte le funzioni per testare i permessi
@@ -96,6 +117,7 @@ def permessi_presidente(sede):
         + permessi_responsabile_formazione(sede) \
         + permessi_responsabile_autoparco(sede) \
         + permessi_delegato_centrale_operativa(sede) \
+        + permessi_delegato_sala_operativa(sede) \
         + _espandi(sede)
 
 
@@ -119,6 +141,7 @@ def permessi_commissario(sede):
         + permessi_responsabile_formazione(sede) \
         + permessi_responsabile_autoparco(sede) \
         + permessi_delegato_centrale_operativa(sede) \
+        + permessi_delegato_sala_operativa(sede) \
         + _espandi(sede)
 
 
@@ -233,8 +256,10 @@ def permessi_delegato_obiettivo_3(sede):
     from attivita.models import Area
     sede_espansa = sede.espandi(includi_me=True)
     return [
-        (RUBRICA_DELEGATI_OBIETTIVO_3, sede.espandi(includi_me=True, pubblici=True)),
-           ] + permessi_delegato_area(Area.objects.filter(sede__in=sede_espansa, obiettivo=3))
+            (RUBRICA_DELEGATI_OBIETTIVO_3, sede.espandi(includi_me=True, pubblici=True)),
+    ] \
+           + permessi_delegato_area(Area.objects.filter(sede__in=sede_espansa, obiettivo=3))\
+           + permessi_delegato_sala_operativa(sede)
 
 
 def permessi_delegato_obiettivo_4(sede):
@@ -326,6 +351,20 @@ def permessi_delegato_centrale_operativa(sede):
     ]
 
 
+def permessi_delegato_sala_operativa(sede):
+    from sala_operativa.models import ServizioSO
+
+    sede_espansa = sede.espandi(includi_me=True)
+    servizi = ServizioSO.objects.filter(sede__in=sede_espansa)
+
+    return [
+        (RUBRICA_SALE_OPERATIVE, sede.espandi(includi_me=True, pubblici=True)),
+        (GESTIONE_SERVIZI, servizi),
+        (GESTIONE_SO_SEDE, sede_espansa),
+        (GESTIONE_REFERENTI_SO, servizi),
+    ]
+
+
 def permessi_responsabile_area(area):
     """
     Permessi della delega di RESPONSABILE D'AREA.
@@ -349,6 +388,20 @@ def permessi_referente(attivita):
     return [
         (RUBRICA_REFERENTI_ATTIVITA, attivita.sede.espandi(includi_me=True, pubblici=True)),
         (GESTIONE_ATTIVITA,         Attivita.objects.filter(pk=attivita.pk))
+    ]
+
+
+def permessi_referente_so(servizio):
+    """
+    Permessi della delega di REFERENTE SO.
+
+    :param servizio: Il servizio di cui si e' referenti
+    :return: Lista di permessi.
+    """
+    from sala_operativa.models import ServizioSO
+    return [
+        (RUBRICA_REFERENTI_SO, servizio.sede.espandi(includi_me=True, pubblici=True)),
+        (GESTIONE_SERVIZI, ServizioSO.objects.filter(pk=servizio.pk))
     ]
 
 
@@ -396,8 +449,10 @@ PERMESSI_FUNZIONI = (
     (UFFICIO_SOCI_UNITA,        permessi_ufficio_soci_unita),
     (DELEGATO_AREA,             permessi_delegato_area),
     (DELEGATO_CO,               permessi_delegato_centrale_operativa),
+    (DELEGATO_SO,               permessi_delegato_sala_operativa),
     (RESPONSABILE_AREA,         permessi_responsabile_area),
     (REFERENTE,                 permessi_referente),
+    (REFERENTE_SO,              permessi_referente_so),
     (DIRETTORE_CORSO,           permessi_direttore_corso),
     (RESPONSABILE_AUTOPARCO,    permessi_responsabile_autoparco),
     (REFERENTE_GRUPPO,          permessi_referente_gruppo),

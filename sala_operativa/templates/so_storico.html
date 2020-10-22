@@ -1,0 +1,49 @@
+{% extends 'so_vuota.html' %}
+
+{% load bootstrap3 %}
+
+{% block pagina_titolo %}Storico partecipazioni ai servizi{% endblock %}
+
+{% block app_contenuto %}
+    <div class="row">
+        <div class="col-md-8">
+            <div class="alert alert-info">
+                <i class="fa fa-fw fa-info-circle"></i> Da questa pagina puoi seguire lo stato e controllare lo storico delle partecipazioni ai turni dei Servizi.
+            </div>
+        </div>
+        <div class="col-md-4">
+            <div class="panel panel-primary">
+                <div class="panel-heading">
+                    <h2 class="panel-title">
+                        <i class="fa fa-fw fa-file"></i> Foglio di servizio
+                    </h2>
+                </div>
+                <div class="panel-body">
+                    {% if storico.exists %}
+                        <p>Il file, in formato Excel, conterr&agrave;
+                            un foglio per ogni anno di servizio.</p>
+                        <a href="{% url 'so:storico' %}" class="btn btn-block btn-primary" download>
+                            <i class="fa fa-fw fa-download"></i> Scarica Excel
+                        </a>
+                    {% else %}
+                        <span class="text-muted">
+                            <i class="fa fa-fw fa-info-circle"></i>
+                            Nessun foglio di servizio disponibile: questo sar&agrave; disponibile
+                            non appena ti sar&agrave; confermata la partecipazione a un'attivit&agrave;.
+                        </span>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+    </div>
+    <div class="panel panel-info">
+        <div class="panel-heading">
+            <h2 class="panel-title">
+                <i class="fa fa-fw fa-list"></i> Storico delle partecipazioni
+            </h2>
+        </div>
+        <div class="panel-body">
+            {% include 'so_storico_inc_tabella.html' %}
+        </div>
+    </div>
+{% endblock %}

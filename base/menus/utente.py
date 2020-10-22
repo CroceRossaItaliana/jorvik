@@ -54,7 +54,7 @@ class MenuUtente:
             ("Patenti Civili", "fa-car", "/utente/curriculum/PP/"),
             ("Titoli di Studio", "fa-graduation-cap", "/utente/curriculum/TS/"),
             ("Patenti CRI", "fa-ambulance", "/utente/curriculum/PC/") if me and (me.volontario or me.dipendente) else None,
-            ("Titoli CRI", "fa-plus-square-o", "/utente/curriculum/TC/") if me and (me.volontario or me.dipendente) else None,
+            ("Titoli CRI", "fa-plus-square", "/utente/curriculum/TC/") if me and (me.volontario or me.dipendente) else None,
 
             # Competenze personali commentate per non visuallizarle
             # ("Competenze personali", "fa-suitcase", "/utente/curriculum/CP/"),

@@ -1,0 +1,17 @@
+<p>
+  Data: {{ partecipazione.creazione }}<br>
+  In riferimento all’emergenza <strong>{{ partecipazione.turno.attivita }}</strong>
+</p>
+<p style="text-align:center;">SI ATTESTA</p>
+<p>che il Volontario della Croce Rossa Italiana <strong>{{ partecipazione.reperibilita.persona }}</strong>,
+  codice fiscale: {{ partecipazione.reperibilita.persona.codice_fiscale }}
+</p>
+<p style="text-align:center;">
+  {{ servizio.estensione }} / {{ servizio.estensione.sede_regionale }}
+</p>
+<p>
+  Ha partecipato alle attività di risposta dal {{ partecipazione.turno.inizio }} al {{ partecipazione.turno.fine }} presso <strong>{{ servizio }}</strong>
+</p>
+<p>
+  Si rilascia per gli usi consentiti dalla legge <strong>n. univoco identificativo attestato</strong>
+</p>

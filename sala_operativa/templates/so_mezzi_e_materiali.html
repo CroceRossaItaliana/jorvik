@@ -1,0 +1,104 @@
+{% extends 'so_vuota.html' %}
+
+{% load bootstrap3 %}
+{% load humanize %}
+
+{% block pagina_titolo %}Mezzi e materiali{% endblock %}
+
+{% block app_contenuto %}
+    <div class="alert alert-block alert-info">
+        <i class="fa fa-fw fa-info-circle"></i> Da qui puoi inserire e visulaizzare infomarmazioni sui mezze e i
+        materiali creati da te.<br>
+    </div>
+
+    <div class="row">
+        <div class="col-md-9">
+            <div class="panel panel-info">
+                <div class="panel-heading">
+                    <h2 class="panel-title">
+                        <i class="fa fa-fw fa-list"></i> Mezzi e materiali
+                    </h2>
+                </div>
+                <div class="panel-body">
+                    <table class="table table-striped">
+                        <thead>
+                        <tr>
+                            <th>Informazioni</th>
+                            <th>Creato da, inizio e fine</th>
+                            <th>Azioni</th>
+                        </tr>
+                        </thead>
+                        <tbody>
+                        {% for mm in mezzi_materiali %}
+                            <tr>
+                                <td>
+                                    <div style="margin-bottom:15px;"><i
+                                            class="fa fas fa-ambulance fa-fw"></i> {{ mm.nome }}</div>
+                                    <strong>{{ mm.get_tipo_display|default:"" }}</strong>
+                                    <span style="font-size:12px;">{{ mm.get_mezzo_tipo_display|default:"" }}</span><br>
+                                    <strong>{{ mm.estensione }}</strong><br>
+                                </td>
+                                <td style="font-size:12px;">
+                                    {{ mm.creato_da.link|safe }}<br>
+                                    {% if mm.abbinato_ai_servizi %}
+                                        <div style="margin-top:10px;">Abbinato ai servizi: <a
+                                                href="#">{{ mm.abbinato_ai_servizi.count }}</a></div>
+                                    {% endif %}
+                                </td>
+                                <td style="font-size:12px;">
+                                    <a href="{% url 'so:mezzo_cancella' mm.pk %}"
+                                       data-conferma="Vuoi cancellare questo mezzo/materiale?">
+                                        <i class="fa fa-fw fa-trash"></i> Cancella</a><br>
+                                    <a href="{% url 'so:mezzo_modifica' mm.pk %}"><i class="fa fa-fw fa-edit"></i>
+                                        Modifica</a>
+                                </td>
+                            </tr>
+                        {% empty %}
+                            <tr class="alert alert-warning">
+                                <td colspan="3">
+                                    <i class="fa fa-fw fa-warning"></i> Ancora non ci sono mezzi e materiali
+                                </td>
+                            </tr>
+                        {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="panel panel-primary">
+                <div class="panel-heading">
+                    <h2 class="panel-title"><i class="fa fa-fw fa-plus-circle"></i> Aggiungi nuovo mezzo o materiale
+                    </h2>
+                </div>
+
+                <div class="panel-body">
+                    <form method="POST" action=".">
+                        {% bootstrap_form form %}
+                        <button type="submit" class="btn btn-block btn-primary">
+                            <i class="fa fa-fw fa-check"></i> Aggiungi
+                        </button>
+                        {% csrf_token %}
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+    </div>
+    <script>
+
+        $('#id_mezzo_tipo').parent().hide();
+        $('#id_stato').parent().hide();
+
+        $('#id_tipo').on('change', function (e) {
+            if ($(this).val() === 'me'){
+                $('#id_mezzo_tipo').parent().show();
+                $('#id_stato').parent().show();
+            }else{
+                $('#id_mezzo_tipo').parent().hide();
+                $('#id_stato').parent().hide();
+            }
+        });
+    </script>
+{% endblock %}
+

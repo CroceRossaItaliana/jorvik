@@ -1,0 +1,37 @@
+{% extends 'so_vuota.html' %}
+
+{% load bootstrap3 %}
+{% load humanize %}
+
+{% block pagina_titolo %}Datore di lavoro modifica{% endblock %}
+
+{% block app_contenuto %}
+
+    <div class="alert bg-info">
+        <p>
+            <i class="fa fa-info-circle fa-fw"></i> Da questa pagina potrai modificare i dati riguardanti il datore di lavoro.
+        </p>
+    </div>
+
+    <div class="row">
+        <div class="col-md-9">
+            <div class="panel panel-primary">
+                <div class="panel-heading">
+                    <h4 class="panel-title"><i class="fa fa-edit fa-fw"></i> Dati datore di lavoro</h4>
+                </div>
+                <div class="panel-body">
+                    <form method="POST" enctype="multipart/form-data">
+                        {% bootstrap_form form %}
+                        {% csrf_token %}
+                        <button class="btn btn-block btn-primary" type="submit">
+                            <i class="fa fa-save fa-fw"></i>
+                            Modifica
+                        </button>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+
+{% endblock %}
+

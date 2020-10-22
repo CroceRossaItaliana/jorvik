@@ -1,0 +1,92 @@
+{% extends 'so_vuota.html' %}
+
+{% load utils %}
+{% load bootstrap3 %}
+
+{% block pagina_titolo %}Gestisci Servizi{% endblock %}
+
+{% block app_contenuto %}
+
+<div class="alert alert-block alert-info">
+    <p>
+        <i class="fa fa-fw fa-info-circle"></i> Da questa pagina puoi accedere a tutti i servizi che puoi gestire.
+    </p>
+</div>
+
+<div class="panel panel-info">
+    <div class="panel-heading">
+        <h2 class="panel-title"><i class="fa fa-fw fa-list"></i> Elenco servizi gestiti</h2>
+    </div>
+    <div class="panel-body">
+        <p>
+            <ul class="nav nav-pills">
+              <li role="presentation" {% if stato == "aperte" %}class="active"{% endif %}>
+                  <a href="{% url 'so:gestisci' %}">
+                      <i class="fa fa-fw fa-check-circle"></i> Aperti <span class="badge">{{ servizi_aperti.count }}</span>
+                  </a>
+              </li>
+              <li role="presentation" {% if stato == "chiuse" %}class="active"{% endif %}>
+                  <a href="{% url 'so:gestisci_chiuse' %}">
+                      <i class="fa fa-fw fa-folder"></i> Chiusi <span class="badge">{{ servizi_chiusi.count }}</span>
+                  </a>
+              </li>
+            </ul>
+        </p>
+        {% include "so_gestisci_inc_paginazione.html" %}
+    </div>
+
+    <table class="table table-responsive table-striped">
+        <thead>
+            <tr>
+                <th>Servizio</th>
+                <th>Informazioni</th>
+                <th>Azioni</th>
+            </tr>
+        </thead>
+
+        <tbody>
+        {% for a in attivita %}
+            <tr>
+                <td class="piu-piccolo" style="width: 40%;">
+                    <span class="piu-grande">{{ a.link|safe }}</span><br />
+                    <i class="fa fa-fw fa-map-marker text-muted"></i> {{ a.estensione.get_estensione_display }}<br />
+                    <i class="fa fa-fw fa-map-marker text-muted"></i> <a href="{{ a.url_mappa }}">{{ a.locazione|default:"Nessuna posizione" }}</a><br />
+                    <i class="fa fa-fw fa-info-circle text-muted"></i> {{ a.delegati_attuali|join:", "|default:"(Nessun referente selezionato)" }}<br>
+                    L'impiego con i Benefici di legge: <strong>{% if a.impiego_bdl %}Si{% else %}No{% endif %}</strong>
+                </td>
+
+                <td>
+                    {{ a.get_stato_display }} ({{ a.get_apertura_display }})<br />
+                    <i class="fa fa-fw fa-calendar text-muted"></i> {{ a.num_turni }} turni<br />
+                    <i class="fa fa-fw fa-clock text-muted"></i> {{ a.creazione|date:"SHORT_DATETIME_FORMAT" }}<br />
+                </td>
+
+                <td>
+                    {% if a in servizio_referenti_modificabili and a.cancellabile %}
+                        <a href="{{ a.url_cancella }}"><i class="far fa-trash-alt"></i> cancella servizio</a><br />
+                    {% endif %}
+
+                    <a href="{{ a.url_modifica }}"><i class="fas fa-pencil-alt"></i> modifica info</a><br />
+
+                    {% if a in servizio_referenti_modificabili %}
+                        <a href="{{ a.url_referenti }}"><i class="fas fa-pencil-alt"></i> modifica referenti</a><br />
+                    {% endif %}
+
+                    <a href="{{ a.url_turni_modifica }}"><i class="fas fa-pencil-alt"></i> modifica turni</a><br />
+                    <a href="{{ a.url_mezzi_materiali }}"><i class="fas fa-pencil-alt"></i> modifica mezzi e materiali</a>
+                </td>
+            </tr>
+        {% empty %}
+            <tr class="alert alert-warning">
+                <td colspan="4">
+                    <p><i class="fa fa-fw fa-info-circle"></i> Nessun servizio organizzato.</p>
+                </td>
+            </tr>
+        {% endfor %}
+        </tbody>
+    </table>
+
+    {% include "so_gestisci_inc_paginazione.html" %}
+</div>
+
+{% endblock %}

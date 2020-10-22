@@ -1,0 +1,22 @@
+{% load bootstrap3 %}
+
+<!-- Modale inserimento partecipante -->
+<div class="modal fade" id="aggiungi-{{ turno.pk }}" tabindex="-1" role="dialog" aria-labelledby="myModalLabel">
+    <div class="modal-dialog" role="document">
+        <div class="modal-content">
+            <div class="modal-header">
+                <button type="button" class="close" data-dismiss="modal" aria-label="Chiudi"><span aria-hidden="true">&times;</span></button>
+                <h4 class="modal-title">Aggiungi partecipanti ({{ turno.nome }}, {{ turno.inizio|date:"DATETIME_FORMAT" }})</h4>
+            </div>
+            <div class="modal-body">
+                <p>Seleziona una o pi&ugrave; persone che vuoi aggiungere come partecipanti al turno.</p>
+
+                {% bootstrap_form modulo_aggiungi_partecipanti %}
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-default" data-dismiss="modal"> Annulla</button>
+                <button type="submit" class="btn btn-primary"><i class="fa fa-fw fa-check"></i> Inserisci</button>
+            </div>
+        </div>
+    </div>
+</div>

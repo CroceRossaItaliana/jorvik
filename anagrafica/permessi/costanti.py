@@ -1,6 +1,15 @@
-from ..permessi.applicazioni import (PRESIDENTE, DELEGATO_AREA, RESPONSABILE_AREA,
-                                     REFERENTE, DIRETTORE_CORSO, RESPONSABILE_AUTOPARCO, REFERENTE_GRUPPO, COMMISSARIO,
-                                     CONSIGLIERE, UFFICIO_SOCI, UFFICIO_SOCI_CM)
+from ..permessi.applicazioni import (PRESIDENTE,
+                                     CONSIGLIERE,
+                                     COMMISSARIO,
+                                     UFFICIO_SOCI,
+                                     DELEGATO_AREA,
+                                     RESPONSABILE_AREA,
+                                     REFERENTE,
+                                     REFERENTE_GRUPPO,
+                                     REFERENTE_SO,
+                                     DIRETTORE_CORSO,
+                                     RESPONSABILE_AUTOPARCO,
+                                     UFFICIO_SOCI, UFFICIO_SOCI_CM, )
 
 """
                        Questo file gestisce i permessi in Gaia.
@@ -30,30 +39,51 @@ RUBRICA_DELEGATI_OBIETTIVO_3 = "RUBRICA_DELEGATI_OBIETTIVO_3"
 RUBRICA_DELEGATI_OBIETTIVO_4 = "RUBRICA_DELEGATI_OBIETTIVO_4"
 RUBRICA_DELEGATI_OBIETTIVO_6 = "RUBRICA_DELEGATI_OBIETTIVO_6"
 RUBRICA_DELEGATI_GIOVANI = "RUBRICA_DELEGATI_GIOVANI"
+
+# ATTIVITA
 RUBRICA_RESPONSABILI_AREA = "RUBRICA_RESPONSABILI_AREA"
 RUBRICA_REFERENTI_ATTIVITA = "RUBRICA_REFERENTI_ATTIVITA"
+RUBRICA_REFERENTI_SO = "RUBRICA_REFERENTI_SO"
 RUBRICA_REFERENTI_GRUPPI = "RUBRICA_REFERENTI_GRUPPI"
 RUBRICA_CENTRALI_OPERATIVE = "RUBRICA_CENTRALI_OPERATIVE"
+
+# FORMAZIONE
+ASPIRANTE = "ASPIRANTE"
 RUBRICA_RESPONSABILI_FORMAZIONE = "RUBRICA_RESPONSABILI_FORMAZIONE"
 RUBRICA_DIRETTORI_CORSI = "RUBRICA_DIRETTORI_CORSI"
+GESTIONE_CORSI_SEDE = "GESTIONE_CORSI_SEDE"
+GESTIONE_CORSO = "GESTIONE_CORSO"
+
+# VEICOLI
 RUBRICA_RESPONSABILI_AUTOPARCO = "RUBRICA_RESPONSABILI_AUTOPARCO"
+GESTIONE_AUTOPARCHI_SEDE = "GESTIONE_AUTOPARCHI_SEDE"
+
+# ATTIVITA
 GESTIONE_ATTIVITA_SEDE = "GESTIONE_ATTIVITA_SEDE"
 GESTIONE_ATTIVITA_AREA = "GESTIONE_ATTIVITA_AREA"
 GESTIONE_AREE_SEDE = "GESTIONE_AREE_SEDE"
 GESTIONE_ATTIVITA = "GESTIONE_ATTIVITA"
 GESTIONE_REFERENTI_ATTIVITA = "GESTIONE_REFERENTI_ATTIVITA"
-GESTIONE_CORSI_SEDE = "GESTIONE_CORSI_SEDE"
-GESTIONE_CORSO = "GESTIONE_CORSO"
-GESTIONE_AUTOPARCHI_SEDE = "GESTIONE_AUTOPARCHI_SEDE"
 GESTIONE_GRUPPI_SEDE = "GESTIONE_GRUPPI_SEDE"
 GESTIONE_GRUPPO = "GESTIONE_GRUPPO"
 GESTIONE_GRUPPI = "GESTIONE_GRUPPI"
+
+# SALA OPERATIVA
+GESTIONE_SO_SEDE = "GESTIONE_SALA_OPERATIVA_SEDE"
+GESTIONE_SERVIZI = "GESTIONE_SERVIZI"
+GESTIONE_REFERENTI_SO = "GESTIONE_REFERENTI_SO"
+RUBRICA_SALE_OPERATIVE = "RUBRICA_SALE_OPERATIVE"
+
+# CO
 GESTIONE_CENTRALE_OPERATIVA_SEDE = "GESTIONE_CENTRALE_OPERATIVA_SEDE"
 GESTIONE_POTERI_CENTRALE_OPERATIVA_SEDE = "GESTIONE_POTERI_CENTRALE_OPERATIVA_SEDE"
-EMISSIONE_TESSERINI = "EMISSIONE_TESSERINI"
-ASPIRANTE = "ASPIRANTE"
 
+# ALTRI
+EMISSIONE_TESSERINI = "EMISSIONE_TESSERINI"
+
+# ###
 # Tipologia degli oggetti assegnati ad ogni Permesso.
+# ###
 PERMESSI_OGGETTI = (
     (GESTIONE_SEDE,             ('anagrafica', 'Sede')),
     (GESTIONE_SOCI,             ('anagrafica', 'Sede')),
@@ -79,34 +109,65 @@ PERMESSI_OGGETTI = (
     (RUBRICA_DIRETTORI_CORSI,       ('formazione', 'CorsoBase')),
     (RUBRICA_RESPONSABILI_AUTOPARCO,    ('anagrafica', 'Sede')),
     (EMISSIONE_TESSERINI,       ('anagrafica', 'Sede')),
+
+    # ATTIVITA
     (GESTIONE_ATTIVITA_SEDE,    ('anagrafica', 'Sede')),
     (GESTIONE_ATTIVITA_AREA,    ('attivita',   'Area')),
     (GESTIONE_REFERENTI_ATTIVITA,('attivita',   'Attivita')),
     (GESTIONE_ATTIVITA,         ('attivita',   'Attivita')),
     (GESTIONE_AREE_SEDE,        ('anagrafica', 'Sede')),
+
+    # SALA OPERATIVA
+    (GESTIONE_SO_SEDE,          ('anagrafica', 'Sede')),  # accesso a SO in generale
+    (GESTIONE_SERVIZI,          ('sala_operativa', 'ServizioSO')),  # permesso per creare/gestire servizio
+    (GESTIONE_REFERENTI_SO,     ('sala_operativa', 'ServizioSO')),  # permesso per gestire referenti dei servizi
+    (RUBRICA_SALE_OPERATIVE,    ('anagrafica', 'Sede')),
+    (RUBRICA_REFERENTI_SO,      ('sala_operativa', 'ServizioSO')),
+
+    # CENTRALE OPERATIVA
+    (GESTIONE_CENTRALE_OPERATIVA_SEDE, ('anagrafica', 'Sede')),
+    (GESTIONE_POTERI_CENTRALE_OPERATIVA_SEDE, ('anagrafica', 'Sede')),
+
+    # FORMAZIONE
     (GESTIONE_CORSI_SEDE,       ('anagrafica', 'Sede')),
     (GESTIONE_CORSO,            ('formazione', 'CorsoBase')),
+    (ASPIRANTE,                 ('formazione', 'InvitoCorsoBase')),
+
+    # VEICOLI
     (GESTIONE_AUTOPARCHI_SEDE,  ('anagrafica', 'Sede')),
+
+    # GRUPPI
     (GESTIONE_GRUPPI_SEDE,      ('anagrafica', 'Sede')),
     (GESTIONE_GRUPPO,           ('gruppi',     'Gruppo')),
     (GESTIONE_GRUPPI,           ('gruppi',     'Gruppo')),
-    (GESTIONE_CENTRALE_OPERATIVA_SEDE,  ('anagrafica', 'Sede')),
-    (GESTIONE_POTERI_CENTRALE_OPERATIVA_SEDE,  ('anagrafica', 'Sede')),
-    (ASPIRANTE,                 ('formazione', 'InvitoCorsoBase')),
 )
 
+# ###
 # Tipologia degli oggetti assegnati ad ogni Delega.
+# ###
 DELEGHE_OGGETTI = (
+    # ANAGRAFICA
     (PRESIDENTE,                ('anagrafica', 'Sede', None)),
     (CONSIGLIERE,               ('anagrafica', 'Sede', None)),
     (COMMISSARIO,               ('anagrafica', 'Sede', None)),
     (UFFICIO_SOCI,              ('anagrafica', 'Sede', None)),
     (UFFICIO_SOCI_CM,           ('anagrafica', 'Sede', None)),
+
+    # ATTIVITA
     (DELEGATO_AREA,             ('attivita', 'Area', 'sede__in')),
     (RESPONSABILE_AREA,         ('attivita', 'Area', 'sede__in')),
     (REFERENTE,                 ('attivita', 'Attivita', 'sede__in')),
+
+    # SO
+    (REFERENTE_SO,              ('sala_operativa', 'ServizioSO', 'sede__in')),
+
+    # FORMAZIONE
     (DIRETTORE_CORSO,           ('formazione', 'CorsoBase', 'sede__in')),
+
+    # VEICOLI
     (RESPONSABILE_AUTOPARCO,    ('anagrafica', 'Sede', None)),
+
+    # GRUPPI
     (REFERENTE_GRUPPO,          ('anagrafica', 'Gruppo', 'sede__in')),
 )
 

@@ -1,0 +1,179 @@
+{% extends 'so_scheda.html' %}
+
+{% load humanize %}
+{% load gravatar %}
+{% load bootstrap3 %}
+
+{% block scheda_titolo %}Turni{% endblock %}
+
+{% block scheda_contenuto %}
+    {% include 'so_scheda_turni_inc_paginazione.html' %}
+
+    <form class="table-responsive" method="POST">
+        {% csrf_token %}
+
+        <table class="table table-striped table-responsive">
+            <thead>
+                <tr class="piu-grande">
+                    <th><i class="fas fa-pencil-alt"></i> Modifica turno</th>
+                    <th><i class="fa fa-fw fa-users"></i> Partecipazioni</th>
+                    <th><i class="fa fa-fw fa-bolt"></i> Azioni</th>
+                </tr>
+            </thead>
+            <tbody>
+            {% for turno, modulo, modulo_aggiungi_partecipanti, reperibilita_disponibili in turni %}
+                <tr id="turno-{{ turno.pk }}">
+                    <td style="width: 25%; padding:30px 0;">
+                        {% bootstrap_form modulo size='small' %}
+
+                        {% if not turno.passato %}
+                        <button type="submit" class="btn btn-sm btn-block btn-primary">
+                            <i class="fa fa-fw fa-save"></i> Salva modifiche
+                        </button>
+                        {% endif %}
+                    </td>
+                    <td>
+                        <table class="table table-condensed table-striped">
+                            <tbody>
+                            <tr><!--Reperibilità abbinate-->
+                                <td>
+                                    <h4 class="text-success">
+                                        <i class="fa fa-fw fa-check"></i> Reperibilità abbinate: {{ turno.partecipazioni_confermate.count }}
+                                    </h4>
+                                    <table class="table table-condensed piu-piccolo">
+                                        <thead>
+                                        <tr>
+                                            <th>Persona</th>
+                                            <th>Stato</th>
+                                            {% if not turno.passato %}
+                                                <th>Azione</th>
+                                            {% endif %}
+                                        </tr>
+                                        </thead>
+                                        <tbody>
+                                        {% for p in turno.partecipazioni_confermate %}
+                                            <tr>
+                                                <td>
+                                                    {{ p.reperibilita.persona.link|safe }}<br>
+                                                    <span style="font-size:10px;">Abbinato il {{ p.creazione|date:"SHORT_DATETIME_FORMAT" }}</span>
+                                                </td>
+                                                <td>{{ p.get_stato_display }}</td>
+                                                {% if not turno.passato %}
+                                                    <td>
+                                                        <a href="{{ p.url_cancella }}" data-conferma="Sei sicuro di voler rimuovere {{ p.reperibilita.persona.nome_completo }} dal turno?">
+                                                            <i class="fa fa-fw fa-times"></i> Rimuovi
+                                                        </a>
+                                                    </td>
+                                                {% endif %}
+                                            </tr>
+                                        {% empty %}
+                                            <tr>
+                                                <td colspan="3" style="text-align:center;">
+                                                    <i class="fa fa-fw fa-info-circle"></i> Nessuna reperibilità abbinata al turno.
+                                                </td>
+                                            </tr>
+                                        {% endfor %}
+                                        </tbody>
+                                    </table>
+                                </td>
+                            </tr><!--./Reperibilità abbinate-->
+
+                            {% if not turno.passato %}
+                            <tr><!--Reperibilità disponibili-->
+                                <td>
+                                    <h4 class="text-success">
+                                        <i class="fa fa-fw fa-check"></i> Reperibilità disponibili: {{ reperibilita_disponibili.count }}
+                                    </h4>
+                                    <table class="table table-condensed piu-piccolo">
+                                        <thead>
+                                        <tr>
+                                            <th>Persona</th>
+                                            <th>Reperibilità</th>
+                                            {% if not turno.passato %}
+                                                <th>Azione</th>
+                                            {% endif %}
+                                        </tr>
+                                        </thead>
+                                        <tbody>
+                                        {% for reperibilita in reperibilita_disponibili %}
+                                            <tr>
+                                                <td>
+                                                    {{ reperibilita.persona.link|safe }}<br>
+                                                    {{ reperibilita.get_estensione_display }}<br>
+                                                    Attivazione in <strong>{{ reperibilita.attivazione }}</strong>
+                                                </td>
+                                                <td>
+                                                    dal {{ reperibilita.inizio|date:"SHORT_DATETIME_FORMAT" }}<br>
+                                                    al {{ reperibilita.fine|date:"SHORT_DATETIME_FORMAT" }}
+                                                </td>
+                                                <td>
+                                                    <a href="{% url 'so:servizio_turno_abbina_volontario' turno.pk reperibilita.pk %}">
+                                                        <i class="fa fa-fw fa-plus"></i> Abbina
+                                                    </a>
+                                                </td>
+                                            </tr>
+                                        {% empty %}
+                                            <tr>
+                                                <td colspan="3" style="text-align:center;">
+                                                    <i class="fa fa-fw fa-info-circle"></i> Nessuna reperibilità disponibile. <br>
+                                                    <p>Puoi <a target="_blank" href="{% url 'so:reperibilita_backup' %}">aggiungere nuova reperibilità </a> per un volontario dei tuoi comitati</p>
+                                                </td>
+                                            </tr>
+                                        {% endfor %}
+                                        </tbody>
+                                    </table>
+                                </td>
+                            </tr>{% endif %}<!--./Reperibilità disponibili-->
+                            </tbody>
+                        </table>
+                    </td>
+
+                    <td>
+                        {% if not turno.passato %}
+
+                        {% include 'so_scheda_turni_aggiungi_partecipante_modal_inc.html' %}
+
+                        <div class="btn-group-vertical btn-block">
+                            <p>
+                                <button type="button" class="btn btn-block btn-primary" data-toggle="modal" data-target="#aggiungi-{{ turno.pk }}">
+                                    <i class="fa fa-fw fa-plus-circle"></i> Aggiungi partecipante
+                                </button>
+                            </p>
+                            <!--<p><a href="{{ turno.url_partecipanti }}" class="btn btn-info btn-block"><i class="fa fa-fw fa-list"></i> Elenco Partecipanti</a></p>-->
+                            <p>
+                                <a href="{{ turno.url_cancella }}" class="btn btn-danger btn-block"
+                                   data-conferma="Sei sicur{{ me.genere_o_a }} di voler cancellare questo turno? L'operazione non è reversibile e tutte le richieste di partecipazione, approvate o meno, verranno cancellate.">
+                                    <i class="fa fa-fw fa-trash"></i> Cancella turno
+                                </a>
+                            </p>
+                        </div>
+                        {% else %}
+                            <p style="margin:15px 0 0; text-align:center; font-size:12px;">Turno passato.<br>Non disponibili.</p>
+                        {% endif %}
+                    </td>
+                </tr>
+            {% empty %}
+                <tr class="alert alert-warning allinea-centro">
+                    <td colspan="3">
+                        <p>
+                            <i class="fa fa-fw fa-info-circle"></i> Nessun turno trovato.
+                        </p>
+                    </td>
+                </tr>
+            {% endfor %}
+            </tbody>
+        </table>
+    </form>
+
+    {% include 'so_scheda_turni_inc_paginazione.html' %}
+
+    {% if evidenzia_turno %}
+        <!-- Salta al turno evidenziato -->
+        <script type="text/javascript">
+            $(document).ready(function () {
+                autoscroll("#turno-{{ evidenzia_turno.pk }}");
+                $("#turno-{{ evidenzia_turno.pk }}").hide().show("highlight", 3000);
+            });
+        </script>
+    {% endif %}
+{% endblock %}
