@@ -13,6 +13,9 @@ class TrainingApi:
 
     DIRETTORE = 1
     DISCENTE = 5
+    DOCENTE = 3
+
+    ROULI = [DIRETTORE, DISCENTE, DOCENTE]
 
     def __init__(self):
         self.pr = PreparedRequest()
@@ -121,9 +124,7 @@ class TrainingApi:
         if not utente:
             utente = self.core_user_create_users(persona)
 
-        if ruolo == self.DIRETTORE:
-            return self.enrol_manual_enrol_users(utente['id'], corso['id'], ruolo)
-        elif ruolo == self.DISCENTE:
+        if ruolo == self.ROULI:
             return self.enrol_manual_enrol_users(utente['id'], corso['id'], ruolo)
 
     def tool_lp_data_for_user_competency_summary_in_course(self, userid, competencyid, courseid):

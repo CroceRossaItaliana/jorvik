@@ -246,10 +246,16 @@ class GestioneLezioni:
         if self.AZIONE_NUOVA:
             form_args.append(self.request.POST)
         else:
-            form_kwargs['initial'] = {
-                "inizio": timezone.now(),
-                "fine": timezone.now() + timedelta(hours=2)
-            }
+            if self.corso.online:
+                form_kwargs['initial'] = {
+                    "inizio": self.corso.data_inizio,
+                    "fine": self.corso.data_esame
+                }
+            else:
+                form_kwargs['initial'] = {
+                    "inizio": timezone.now(),
+                    "fine": timezone.now() + timedelta(hours=2)
+                }
         return ModuloModificaLezione(*form_args, **form_kwargs)
 
     @property
@@ -266,6 +272,12 @@ class GestioneLezioni:
             lezione.save()
 
             lezione.docente = cd['docente']
+            if self.corso.online:
+                from formazione.training_api import TrainingApi
+                api = TrainingApi()
+                for docente in cd['docente']:
+                    api.aggiugi_ruolo(docente, self.corso, TrainingApi.DOCENTE)
+
             lezione.save()
 
             self.avvisare_docente_e_presidente(lezione)
