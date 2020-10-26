@@ -30,7 +30,7 @@ def partecipazione_riunione(persona):
 
     finish_date = datetime.strptime('10/31/20 01:00:00', '%m/%d/%y %H:%M:%S')
 
-    return (persona.is_presidente or persona.is_commissario) and datetime.now() < finish_date
+    return (persona.is_presidente or persona.is_comissario) and datetime.now() < finish_date
 
 @register.filter
 def stato_riserva(riserva):
