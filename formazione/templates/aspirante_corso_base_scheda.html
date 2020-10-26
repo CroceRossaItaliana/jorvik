@@ -79,7 +79,7 @@
                 <li {% if request.path == corso.url_modifica %}class="active_link"{% endif %} role="presentation"><a href="{{ corso.url_modifica }}"><i class="fa fa-fw fa-pencil"></i> Pubblicizza il corso</a></li>
 
                 {# link doppione per visualizzarlo solo ai direttore che non vedono la sezione "Attivazione" #}
-                {% if corso.tipo == 'C1' and not me.is_presidente %}
+                {% if corso.is_nuovo_corso and not me.is_presidente %}
                     <li {% if request.path == corso.url_estensioni %}class="active_link"{% endif %} role="presentation"><a href="{% url 'aspirante:estensioni_modifica' corso.pk %}"><i class="fa fa-fw fa-globe"></i> Destinatari e sede</a></li>
                 {% endif %}
 
