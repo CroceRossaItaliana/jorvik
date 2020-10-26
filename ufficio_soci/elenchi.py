@@ -335,6 +335,7 @@ class ElencoCM(ElencoVistaSoci):
             'utenza', 'numeri_telefono'
         ).distinct('cognome', 'nome', 'codice_fiscale')
 
+
 class ElencoIV(ElencoVistaSoci):
     """ args: QuerySet<Sede>, Sedi per le quali compilare gli elenchi sostenitori """
 
