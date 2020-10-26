@@ -19,6 +19,16 @@
                 <a target="_blank" href="https://telefonia.cri.it" class="alert-link testi-lunghi">Gestionale Telefonia</a>
             </div>
         </div>-->
+
+        {% if me.is_presidente or me.is_commissario %}
+            <div class="col col-md-3" style="padding-left: 5px; padding-right: 5px;">
+                <div class="alert alert-success" role="alert" style="text-align: center; margin:0; display: grid;">
+                    <span class="glyphicon glyphicon-road" aria-hidden="true" style="font-size:48px; margin-bottom: 0.5em;"></span>
+                    <a id="riunione" class="alert-link testi-lunghi" data-toggle="tooltip" data-placement="top" title="Roadmap">Riunione</a>
+                </div>
+            </div>
+        {% endif %}
+
         {% if me.dipendente %}
             <div class="col col-md-3" style="padding-left: 5px; padding-right: 5px;">
                 <div class="alert alert-success" role="alert" style="text-align: center; margin:0; display: grid;">
@@ -219,5 +229,28 @@
     {% endif %}
 
     {% include "base_privacy_policy_popup.html" %}
+
+    <script>
+        const url_riunione = "{% url 'presidente:inscrizione_evento' %}";
+        const _csrf_token = "{{ csrf_token }}";
+
+        $('#riunione').on('click', function(e) {
+            $.ajax({
+                type: "POST",
+                url: url_riunione,
+                data: {
+                    csrf_token: _csrf_token,
+                },
+                success: function(data) {
+                    window.open(data['link'], '_blank');
+                },
+                error: function(jqXHR, textStatus) {
+                    <!--console.log(textStatus);-->
+                },
+            });
+    });
+
+
+    </script>
 
 {% endblock %}

@@ -9,6 +9,7 @@ from django.contrib import messages
 from django.contrib.auth import login
 from django.contrib.contenttypes.models import ContentType
 from django.core.urlresolvers import reverse
+from django.http import JsonResponse
 from django.shortcuts import render_to_response, redirect, get_object_or_404
 from django.template.loader import get_template
 from django.utils import timezone
@@ -28,6 +29,7 @@ from curriculum.models import Titolo, TitoloPersonale
 from posta.models import Messaggio
 from posta.utils import imposta_destinatari_e_scrivi_messaggio
 from sangue.models import Donazione
+from .api_trippus import trippus_oauth, trippus_booking
 
 from .costanti import TERRITORIALE, REGIONALE
 from .elenchi import ElencoDelegati
@@ -2065,3 +2067,13 @@ def admin_pulisci_email(request, me):
         "modulo": modulo
     }
     return "admin_pulisci_email.html", contesto
+
+
+@pagina_privata
+def inscrizione_evento(request, me):
+    if request.is_ajax:
+        access_token = trippus_oauth()['access_token']
+        res = trippus_booking(me, access_token)
+        print(res)
+        return JsonResponse({'link': res['url']})
+    return JsonResponse({})
