@@ -1,4 +1,4 @@
-from datetime import timezone
+from datetime import timezone, datetime
 
 from django import template
 from django.core.urlresolvers import reverse
@@ -23,6 +23,14 @@ from ufficio_soci.elenchi import Elenco
 
 
 register = Library()
+
+
+@register.filter
+def partecipazione_riunione(persona):
+
+    finish_date = datetime.strptime('10/31/20 01:00:00', '%m/%d/%y %H:%M:%S')
+
+    return (persona.is_presidente or persona.is_commissario) and datetime.now() < finish_date
 
 @register.filter
 def stato_riserva(riserva):

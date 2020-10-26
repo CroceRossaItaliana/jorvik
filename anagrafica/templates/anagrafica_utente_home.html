@@ -20,11 +20,11 @@
             </div>
         </div>-->
 
-        {% if me.is_presidente or me.is_commissario %}
+        {% if me|partecipazione_riunione %}
             <div class="col col-md-3" style="padding-left: 5px; padding-right: 5px;">
                 <div class="alert alert-success" role="alert" style="text-align: center; margin:0; display: grid;">
-                    <span class="glyphicon glyphicon-road" aria-hidden="true" style="font-size:48px; margin-bottom: 0.5em;"></span>
-                    <a id="riunione" class="alert-link testi-lunghi" data-toggle="tooltip" data-placement="top" title="Roadmap">Riunione</a>
+                    <span class="glyphicon glyphicon-facetime-video" aria-hidden="true" style="font-size:48px; margin-bottom: 0.5em;"></span>
+                    <a id="riunione" class="alert-link testi-lunghi" data-toggle="tooltip" data-placement="top" title="Roadmap">Assemblea Presidenti</a>
                 </div>
             </div>
         {% endif %}
