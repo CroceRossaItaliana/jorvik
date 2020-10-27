@@ -10,6 +10,7 @@ from django.utils import timezone
 from django.utils.safestring import mark_safe
 from django.utils.encoding import force_text
 
+from jorvik import settings
 from jorvik.settings import GOOGLE_KEY
 from ..models import Persona, Delega
 from ..permessi.applicazioni import PRESIDENTE
@@ -28,9 +29,12 @@ register = Library()
 @register.filter
 def partecipazione_riunione(persona):
 
-    finish_date = datetime.strptime('10/31/20 01:00:00', '%m/%d/%y %H:%M:%S')
+    start_date = datetime.strptime(settings.INIZIO_ASSEMBLEA_NAZIONALE, '%m/%d/%Y %H:%M:%S')
+    finish_date = datetime.strptime(settings.FINE_ASSEMBLEA_NAZIONALE, '%m/%d/%Y %H:%M:%S')
 
-    return (persona.is_presidente or persona.is_comissario) and datetime.now() < finish_date
+    # return persona.utenza.groups.filter(name='assemblea').exists() and start_date < datetime.now() < finish_date
+    return (persona.is_presidente or persona.is_comissario) and start_date < datetime.now() < finish_date
+
 
 @register.filter
 def stato_riserva(riserva):

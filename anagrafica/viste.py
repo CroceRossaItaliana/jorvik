@@ -2074,6 +2074,5 @@ def inscrizione_evento(request, me):
     if request.is_ajax:
         access_token = trippus_oauth()['access_token']
         res = trippus_booking(me, access_token)
-        print(res)
         return JsonResponse({'link': res['url']})
     return JsonResponse({})

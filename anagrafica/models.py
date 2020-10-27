@@ -1232,8 +1232,16 @@ class Persona(ModelloSemplice, ConMarcaTemporale, ConAllegati, ConVecchioID):
         return self.deleghe_attuali(tipo=PRESIDENTE).exists()
 
     @property
+    def delega_presidente(self):
+        return self.deleghe_attuali(tipo=PRESIDENTE).first()
+
+    @property
     def is_comissario(self):
         return self.deleghe_attuali(tipo=COMMISSARIO).exists()
+
+    @property
+    def delega_commissario(self):
+        return self.deleghe_attuali(tipo=COMMISSARIO).first()
 
     @property
     def delegato_tempo_della_gentilezza(self):

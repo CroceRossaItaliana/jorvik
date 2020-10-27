@@ -1,9 +1,10 @@
+from anagrafica.permessi.applicazioni import PERMESSI_NOMI_DICT
 from jorvik import settings
 import requests
 
 
-PRESIDENTE = '210905'
-COMMISSARIO = '210915'
+PRESIDENTE = '211091'
+COMMISSARIO = '211092'
 
 
 def trippus_oauth():
@@ -25,6 +26,16 @@ def trippus_oauth():
 
 
 def trippus_booking(persona=None, access_token=''):
+    if persona.is_presidente:
+        delega = persona.delega_presidente
+        sede = persona.sedi_deleghe_attuali(tipo=PRESIDENTE).first()
+    elif persona.is_comissario:
+        delega = persona.delega_commissario
+        sede = persona.sedi_deleghe_attuali(tipo=COMMISSARIO).first()
+    else:
+        delega = None
+        sede = None
+
     payload = {
       "participants": [
         {
@@ -41,19 +52,24 @@ def trippus_booking(persona=None, access_token=''):
                 } if persona.cognome else None,
                 {
                   "key": "Email",
-                  "value": persona.email,
+                  "value": persona.utenza.email,
                   "type": "Standard"
                 } if persona.email else None,
-                # {
-                #   "key": "Username",
-                #   "value": persona.utenza.email,
-                #   "type": "Standard"
-                # }
+                {
+                  "key": "Comitato",
+                  "value": sede.nome,
+                  "type": "Web"
+                },
+                {
+                  "key": "Ruolo",
+                  "value": PERMESSI_NOMI_DICT[delega.tipo],
+                  "type": "Web"
+                }
             ]
         }
       ]
     }
-    print(payload)
+
     headers = {
         'Authorization': 'Bearer {}'.format(access_token),
         'Content-Type': 'application/json'

@@ -417,3 +417,7 @@ from django.utils.translation import ugettext_lazy as _
 COUNTRIES_OVERRIDE = {
     'KS': _('Kosovo'),
 }
+
+
+INIZIO_ASSEMBLEA_NAZIONALE = '10/27/2020 01:00:00'
+FINE_ASSEMBLEA_NAZIONALE = '10/31/2020 01:00:00'
