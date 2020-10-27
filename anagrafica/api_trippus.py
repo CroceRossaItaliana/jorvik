@@ -28,10 +28,10 @@ def trippus_oauth():
 def trippus_booking(persona=None, access_token=''):
     if persona.is_presidente:
         delega = persona.delega_presidente
-        sede = persona.sedi_deleghe_attuali(tipo=PRESIDENTE).first()
+        sede = delega.oggetto
     elif persona.is_comissario:
         delega = persona.delega_commissario
-        sede = persona.sedi_deleghe_attuali(tipo=COMMISSARIO).first()
+        sede = delega.oggetto
     else:
         delega = None
         sede = None
