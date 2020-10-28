@@ -32,8 +32,7 @@ def partecipazione_riunione(persona):
     start_date = datetime.strptime(settings.INIZIO_ASSEMBLEA_NAZIONALE, '%m/%d/%Y %H:%M:%S')
     finish_date = datetime.strptime(settings.FINE_ASSEMBLEA_NAZIONALE, '%m/%d/%Y %H:%M:%S')
 
-    # return persona.utenza.groups.filter(name='assemblea').exists() and start_date < datetime.now() < finish_date
-    return (persona.is_presidente or persona.is_comissario) and start_date < datetime.now() < finish_date
+    return persona.utenza.groups.filter(name='Assemblea').exists() and start_date < datetime.now() < finish_date
 
 
 @register.filter
