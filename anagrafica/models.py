@@ -1244,6 +1244,18 @@ class Persona(ModelloSemplice, ConMarcaTemporale, ConAllegati, ConVecchioID):
         return self.deleghe_attuali(tipo=COMMISSARIO).first()
 
     @property
+    def is_delegato_assemblea_nazionale(self):
+        return self.deleghe_attuali(tipo=VICE_PRESIDENTE).exists() or \
+               self.deleghe_attuali(tipo=CONSIGLIERE).exists() or \
+               self.deleghe_attuali(tipo=CONSIGLIERE_GIOVANE).exists()
+
+    @property
+    def delega_delegato_assemblea_nazionale(self):
+        return self.deleghe_attuali(tipo=VICE_PRESIDENTE).first() or \
+               self.deleghe_attuali(tipo=CONSIGLIERE).first() or \
+               self.deleghe_attuali(tipo=CONSIGLIERE_GIOVANE).first()
+
+    @property
     def delegato_tempo_della_gentilezza(self):
         obbiettivi = self.deleghe_attuali(
             tipo__in=[DELEGATO_OBIETTIVO_1, DELEGATO_OBIETTIVO_2, DELEGATO_OBIETTIVO_3]

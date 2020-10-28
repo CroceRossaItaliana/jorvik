@@ -29,12 +29,19 @@ def trippus_booking(persona=None, access_token=''):
     if persona.is_presidente:
         delega = persona.delega_presidente
         sede = delega.oggetto
+        codice = PRESIDENTE
     elif persona.is_comissario:
         delega = persona.delega_commissario
         sede = delega.oggetto
+        codice = COMMISSARIO
+    elif persona.is_delegato_assemblea_nazionale:
+        delega = persona.delega_delegato_assemblea_nazionale
+        sede = delega.oggetto
+        codice = PRESIDENTE
     else:
         delega = None
         sede = None
+        codice = None
 
     payload = {
       "participants": [
@@ -64,6 +71,11 @@ def trippus_booking(persona=None, access_token=''):
                   "key": "Ruolo",
                   "value": PERMESSI_NOMI_DICT[delega.tipo],
                   "type": "Web"
+                },
+                {
+                  "key": "CountryCode",
+                  "value": "+39",
+                  "type": "Standard"
                 }
             ]
         }
@@ -78,7 +90,7 @@ def trippus_booking(persona=None, access_token=''):
     res = requests.post(
         "{}/v1/categories/{}/booking-sources".format(
             settings.TRIPPUS_DOMAIN,
-            PRESIDENTE if persona.is_presidente else COMMISSARIO
+            codice
         ),
         headers=headers,
         json=payload

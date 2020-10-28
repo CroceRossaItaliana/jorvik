@@ -1,8 +1,10 @@
 from django.contrib.auth.models import Group
+from django.contrib.contenttypes.models import ContentType
 from django.core.management import BaseCommand
 
 from anagrafica.costanti import LOCALE, PROVINCIALE, REGIONALE, NAZIONALE
-from anagrafica.models import Sede
+from anagrafica.models import Sede, Delega
+from anagrafica.permessi.applicazioni import PRESIDENTE, COMMISSARIO
 from autenticazione.models import Utenza
 
 
@@ -36,20 +38,30 @@ class Command(BaseCommand):
         gruppo = self._crea_gruppo()
         presidenti = 0
         commissari = 0
+        presidenti_commissari = 0
         pr_cm = []
         for sede in Sede.objects.filter(attiva=True, estensione__in=[LOCALE, PROVINCIALE, REGIONALE, NAZIONALE]):
             persona = sede.presidente()
             if persona:
-                if persona.is_presidente:
-                    presidenti += 1
-                elif persona.is_comissario:
-                    commissari += 1
-            if persona not in pr_cm:
-                utenza = Utenza.objects.filter(persona=persona).order_by('last_login').first()
-                utenza.groups.add(gruppo)
-                utenza.save()
-                pr_cm.append(persona)
-        print('distinct perosone', len(pr_cm), 'presidenti', presidenti, 'commissari', commissari)
+                if persona not in pr_cm:
+                    utenza = Utenza.objects.filter(persona=persona).order_by('last_login').first()
+                    utenza.groups.add(gruppo)
+                    utenza.save()
+                    pr_cm.append(persona)
+
+                    if persona.is_presidente and persona.is_comissario:
+                        presidenti_commissari += 1
+                    elif persona.is_comissario:
+                        commissari += 1
+                    elif persona.is_presidente:
+                        presidenti += 1
+
+        print(
+            'distinct persone', len(pr_cm), '\n'
+            'presidenti', presidenti, '\n'
+            'commissari', commissari, '\n'
+            'presidenti_commissari', presidenti_commissari, '\n'
+        )
 
     def handle(self, *args, **options):
 
