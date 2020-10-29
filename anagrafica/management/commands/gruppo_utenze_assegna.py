@@ -12,7 +12,7 @@ class Command(BaseCommand):
 
     NOME_GRUPPO = 'Assemblea'
 
-    help = 'Closes the specified poll for voting'
+    help = 'Creare ilo grupppo {} ed assegna Presidenti e Commissari'.format(NOME_GRUPPO)
 
     def add_arguments(self, parser):
         parser.add_argument('clean', nargs='?', type=str, default='')

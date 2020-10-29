@@ -1256,6 +1256,16 @@ class Persona(ModelloSemplice, ConMarcaTemporale, ConAllegati, ConVecchioID):
                self.deleghe_attuali(tipo=CONSIGLIERE_GIOVANE).first()
 
     @property
+    def is_responsabile_area_delegato_assemblea_nazionale(self):
+        delegato_area = False
+        for delega in self.deleghe_attuali(tipo=RESPONSABILE_AREA):
+            if 'CM'.lower() in delega.oggetto.__str__().lower():
+                delegato_area = True
+            if 'IIVV'.lower() in delega.oggetto.__str__().lower():
+                delegato_area = True
+        return delegato_area
+
+    @property
     def delegato_tempo_della_gentilezza(self):
         obbiettivi = self.deleghe_attuali(
             tipo__in=[DELEGATO_OBIETTIVO_1, DELEGATO_OBIETTIVO_2, DELEGATO_OBIETTIVO_3]

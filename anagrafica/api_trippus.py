@@ -1,3 +1,4 @@
+from anagrafica.models import Sede
 from anagrafica.permessi.applicazioni import PERMESSI_NOMI_DICT
 from jorvik import settings
 import requests
@@ -38,6 +39,10 @@ def trippus_booking(persona=None, access_token=''):
         delega = persona.delega_delegato_assemblea_nazionale
         sede = delega.oggetto
         codice = PRESIDENTE
+    elif persona.is_responsabile_area_delegato_assemblea_nazionale:
+        delega = None
+        sede = Sede.objects.get(pk=1)
+        codice = PRESIDENTE
     else:
         delega = None
         sede = None
@@ -69,7 +74,7 @@ def trippus_booking(persona=None, access_token=''):
                 },
                 {
                   "key": "Ruolo",
-                  "value": PERMESSI_NOMI_DICT[delega.tipo],
+                  "value": PERMESSI_NOMI_DICT[delega.tipo] if delega else 'Consigliere',
                   "type": "Web"
                 },
                 {
