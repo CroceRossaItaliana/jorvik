@@ -1232,8 +1232,38 @@ class Persona(ModelloSemplice, ConMarcaTemporale, ConAllegati, ConVecchioID):
         return self.deleghe_attuali(tipo=PRESIDENTE).exists()
 
     @property
+    def delega_presidente(self):
+        return self.deleghe_attuali(tipo=PRESIDENTE).first()
+
+    @property
     def is_comissario(self):
         return self.deleghe_attuali(tipo=COMMISSARIO).exists()
+
+    @property
+    def delega_commissario(self):
+        return self.deleghe_attuali(tipo=COMMISSARIO).first()
+
+    @property
+    def is_delegato_assemblea_nazionale(self):
+        return self.deleghe_attuali(tipo=VICE_PRESIDENTE).exists() or \
+               self.deleghe_attuali(tipo=CONSIGLIERE).exists() or \
+               self.deleghe_attuali(tipo=CONSIGLIERE_GIOVANE).exists()
+
+    @property
+    def delega_delegato_assemblea_nazionale(self):
+        return self.deleghe_attuali(tipo=VICE_PRESIDENTE).first() or \
+               self.deleghe_attuali(tipo=CONSIGLIERE).first() or \
+               self.deleghe_attuali(tipo=CONSIGLIERE_GIOVANE).first()
+
+    @property
+    def is_responsabile_area_delegato_assemblea_nazionale(self):
+        delegato_area = False
+        for delega in self.deleghe_attuali(tipo=RESPONSABILE_AREA):
+            if 'CM'.lower() in delega.oggetto.__str__().lower():
+                delegato_area = True
+            if 'IIVV'.lower() in delega.oggetto.__str__().lower():
+                delegato_area = True
+        return delegato_area
 
     @property
     def delegato_tempo_della_gentilezza(self):

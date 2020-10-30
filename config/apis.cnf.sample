@@ -10,3 +10,7 @@
 [dompdf]
 
 endpoint = http://pdf/www/render.php
+
+
+[trippus]
+domain=https://api.trippus.se
