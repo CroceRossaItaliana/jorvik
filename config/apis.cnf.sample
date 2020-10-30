@@ -13,4 +13,4 @@ endpoint = http://pdf/www/render.php
 
 
 [trippus]
-password=083a7da7aead4b35a487
+domain=https://api.trippus.se
