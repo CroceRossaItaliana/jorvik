@@ -19,9 +19,19 @@
                 <a target="_blank" href="https://telefonia.cri.it" class="alert-link testi-lunghi">Gestionale Telefonia</a>
             </div>
         </div>-->
+
+        {% if me|partecipazione_riunione %}
+            <div class="col col-md-3" style="padding-left: 5px; padding-right: 5px;" id="div_riunione">
+                <div class="alert alert-success" role="alert" style="text-align: center; margin:0; display: grid;">
+                    <span class="glyphicon glyphicon-facetime-video" aria-hidden="true" style="font-size:48px; margin-bottom: 0.5em;"></span>
+                    <a id="riunione" class="alert-link testi-lunghi hand" data-toggle="tooltip" data-placement="top" title="Assemblea Nazionale">Assemblea Nazionale</a>
+                </div>
+            </div>
+        {% endif %}
+
         {% if me.dipendente %}
             <div class="col col-md-3" style="padding-left: 5px; padding-right: 5px;">
-                <div class="alert alert-success" role="alert" style="text-align: center; margin:0; display: grid;">
+                <div class="alert alert-success role="alert" style="text-align: center; margin:0; display: grid;">
                     <span class="glyphicon glyphicon-check" aria-hidden="true" style="font-size:48px; margin-bottom: 0.5em;"></span>
                     <a target="_blank" href="https://criwiki.cri.it:8443/pages/viewpage.action?spaceKey=DA&title=Minute+di+Riunione" class="alert-link testi-lunghi" data-toggle="tooltip" data-placement="top" title="Minute di riunione">Minute di riunione</a>
                 </div>
@@ -219,5 +229,37 @@
     {% endif %}
 
     {% include "base_privacy_policy_popup.html" %}
+
+    <script>
+        const url_riunione = "{% url 'presidente:inscrizione_evento' %}";
+        const _csrf_token = "{{ csrf_token }}";
+        var load = false;
+        $('#riunione').on('click', function(e) {
+            var ancor = $(this);
+            if (load === false) {
+                load = true;
+                ancor.toggleClass('wait');
+                ancor.toggleClass('hand');
+                $.ajax({
+                    type: "POST",
+                    url: url_riunione,
+                    data: {
+                        csrf_token: _csrf_token,
+                    },
+                    success: function (data) {
+                        load = false;
+                        ancor.toggleClass('wait');
+                        ancor.toggleClass('hand');
+                        window.open(data['link'], '_blank');
+                    },
+                    error: function (jqXHR, textStatus) {
+                        load = false;
+                        ancor.toggleClass('wait');
+                        ancor.toggleClass('hand');
+                    },
+                });
+            }
+    });
+    </script>
 
 {% endblock %}
