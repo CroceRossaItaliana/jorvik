@@ -64,9 +64,9 @@ def trippus_booking(persona=None, access_token=''):
                 } if persona.cognome else None,
                 {
                   "key": "Email",
-                  "value": persona.utenza.email,
+                  "value": persona.email if persona.email else persona.utenza.email,
                   "type": "Standard"
-                } if persona.email else None,
+                },
                 {
                   "key": "Comitato",
                   "value": sede.nome,
