@@ -113,18 +113,18 @@ class TrainingApi:
 
     def cancellazione_iscritto(self, persona, corso):
         utente = self.core_user_get_users_by_field(persona.email)
-        corso = self.core_course_get_courses_by_field_shortname(corso.titolo_cri.nome)
+        corso = self.core_course_get_courses_by_field_shortname(corso.titolo_cri.sigla)
 
         return self.enrol_manual_unenrol_users(utente['id'], corso['id'], self.DISCENTE)
 
     def aggiugi_ruolo(self, persona, corso, ruolo):
         utente = self.core_user_get_users_by_field(persona.email)
-        corso = self.core_course_get_courses_by_field_shortname(corso.titolo_cri.nome)
+        corso = self.core_course_get_courses_by_field_shortname(corso.titolo_cri.sigla)
         # Se l'utente non esiste lo crea
         if not utente:
             utente = self.core_user_create_users(persona)
 
-        if ruolo == self.ROULI:
+        if ruolo in self.ROULI:
             return self.enrol_manual_enrol_users(utente['id'], corso['id'], ruolo)
 
     def tool_lp_data_for_user_competency_summary_in_course(self, userid, competencyid, courseid):
@@ -155,7 +155,7 @@ class TrainingApi:
 
     def ha_ottenuto_competenze(self, persona, corso):
         utente = self.core_user_get_users_by_field(persona.email)
-        corso = self.core_course_get_courses_by_field_shortname(corso.titolo_cri.nome)
+        corso = self.core_course_get_courses_by_field_shortname(corso.titolo_cri.sigla)
         competencies_id = [competencie['competency']['id'] for competencie in self.core_competency_list_course_competencies(corso['id'])]
         ha_ottenuto = False
         for id in competencies_id:

@@ -296,7 +296,7 @@ def aspirante_corso_base_informazioni(request, me=None, pk=None):
 
     if corso.online:
         api = TrainingApi()
-        r = api.core_course_get_courses_by_field_shortname(corso.titolo_cri.nome)
+        r = api.core_course_get_courses_by_field_shortname(corso.titolo_cri.sigla)
         context['link'] = 'https://training.cri.it/course/view.php?id={}'.format(r['id'])
 
 

@@ -180,7 +180,7 @@ class ModuloModificaLezione(ModelForm):
                 # hours = days * 24 + seconds // 3600
                 # hours = datetime.timedelta(hours=hours)
 
-                if duration > lezione_ore.seconds:
+                if duration > lezione_ore.seconds and not self.corso.online:
                     self.add_error('fine', 'La durata della lezione non può essere '
                         'maggiore della durata impostata nella scheda per questa lezione (%s). '
                         'Hai indicato %s' % (lezione_ore, datetime.timedelta(seconds=duration)))
