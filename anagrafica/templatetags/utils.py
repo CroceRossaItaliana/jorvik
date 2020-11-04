@@ -1,4 +1,4 @@
-from datetime import timezone
+from datetime import timezone, datetime
 
 from django import template
 from django.core.urlresolvers import reverse
@@ -10,6 +10,7 @@ from django.utils import timezone
 from django.utils.safestring import mark_safe
 from django.utils.encoding import force_text
 
+from jorvik import settings
 from jorvik.settings import GOOGLE_KEY
 from ..models import Persona, Delega
 from ..permessi.applicazioni import PRESIDENTE
@@ -23,6 +24,16 @@ from ufficio_soci.elenchi import Elenco
 
 
 register = Library()
+
+
+@register.filter
+def partecipazione_riunione(persona):
+
+    start_date = datetime.strptime(settings.INIZIO_ASSEMBLEA_NAZIONALE, '%m/%d/%Y %H:%M:%S')
+    finish_date = datetime.strptime(settings.FINE_ASSEMBLEA_NAZIONALE, '%m/%d/%Y %H:%M:%S')
+
+    return persona.utenza.groups.filter(name='Assemblea').exists() and start_date < datetime.now() < finish_date
+
 
 @register.filter
 def stato_riserva(riserva):

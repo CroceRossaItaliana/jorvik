@@ -50,6 +50,13 @@ parser.add_argument('--aggiorna-province', dest='province', action='store_const'
 args = parser.parse_args()
 
 
+# Creare utente con i privilegi di superuser
+superuser = Utenza.objects.create_superuser('provami@provami.gaia.cri.it',
+                                            'hZ4hK5uL5tE8gG2u')
+if superuser:
+    print("Utente <%s> con privilegi di superuser creato."  % str(superuser))
+
+
 def ottieni_random():  # Ottiene una persona a caso.
     numero = Persona.objects.aggregate(count=Count('id'))['count']
     while True:

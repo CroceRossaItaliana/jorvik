@@ -149,6 +149,7 @@ deploy_provami:
     - docker-compose -f docker-compose-staging.yml -f docker-compose-provami.yml exec -T web python manage.py makemigrations
     - docker-compose -f docker-compose-staging.yml -f docker-compose-provami.yml exec -T web python manage.py migrate
     - docker-compose -f docker-compose-staging.yml -f docker-compose-provami.yml exec -T web python scramble.py --dati-di-esempio
+    - docker-compose -f docker-compose-staging.yml -f docker-compose-provami.yml exec -T web python manage.py loaddata fixtures_data/formazione_titoli_cri_con_sigle.json
     - docker-compose -f docker-compose-staging.yml -f docker-compose-provami.yml restart proxy
   environment:
     name: provami
