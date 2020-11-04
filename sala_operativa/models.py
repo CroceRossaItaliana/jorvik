@@ -790,18 +790,19 @@ class PartecipazioneSO(ModelloSemplice, ConMarcaTemporale, ConStorico, ConAutori
 
 class MezzoSO(ModelloSemplice, ConMarcaTemporale):
     MEZZO = 'me'
-    MEZZO_PRIVATO = 'mp'
+
     MATERIALE = 'ma'
     MEZZI_E_MATERIALI_CHOICES = (
         (MEZZO, 'Mezzo'),
-        (MEZZO_PRIVATO, 'Mezzo privato'),
         (MATERIALE, 'Materiale'),
     )
 
     MEZZO_CRI = 'm1'
     MEZZO_LEASING = 'm2'
+    MEZZO_PRIVATO = 'm3'
     MEZZO_TIPO_CHOICES = (
         (MEZZO_CRI, 'Mezzo CRI'),
+        (MEZZO_PRIVATO, 'Mezzo privato'),
         (MEZZO_LEASING, 'Mezzo in leasing'),
     )
 

@@ -91,7 +91,7 @@
         $('#id_stato').parent().hide();
 
         $('#id_tipo').on('change', function (e) {
-            if ($(this).val() === 'me' || $(this).val() === 'mp'){
+            if ($(this).val() === 'me'){
                 $('#id_mezzo_tipo').parent().show();
                 $('#id_stato').parent().show();
             }else{
