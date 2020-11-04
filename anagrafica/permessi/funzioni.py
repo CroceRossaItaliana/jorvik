@@ -354,7 +354,7 @@ def permessi_delegato_centrale_operativa(sede):
 def permessi_delegato_sala_operativa(sede):
     from sala_operativa.models import ServizioSO
 
-    sede_espansa = sede.espandi(includi_me=True)
+    sede_espansa = sede.espandi(includi_me=True, pubblici=True)
     servizi = ServizioSO.objects.filter(sede__in=sede_espansa)
 
     return [

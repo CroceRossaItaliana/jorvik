@@ -410,7 +410,7 @@ def espandi_gestione_so_sede(qs_servizi, al_giorno=None):
         return [
             (COMPLETO, ServizioSO.objects.filter(sede__in=qs_servizi.espandi())),
         ] \
-        + espandi_gestione_servizi(ServizioSO.objects.filter(sede__in=qs_servizi.espandi()))
+        + espandi_gestione_servizi(ServizioSO.objects.filter(sede__in=qs_servizi.espandi(pubblici=True)))
     except (AttributeError, ValueError, KeyError, TypeError):
         return []
 

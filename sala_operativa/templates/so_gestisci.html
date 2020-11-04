@@ -7,86 +7,83 @@
 
 {% block app_contenuto %}
 
-<div class="alert alert-block alert-info">
-    <p>
-        <i class="fa fa-fw fa-info-circle"></i> Da questa pagina puoi accedere a tutti i servizi che puoi gestire.
-    </p>
-</div>
-
-<div class="panel panel-info">
-    <div class="panel-heading">
-        <h2 class="panel-title"><i class="fa fa-fw fa-list"></i> Elenco servizi gestiti</h2>
-    </div>
-    <div class="panel-body">
+    <div class="alert alert-block alert-info">
         <p>
-            <ul class="nav nav-pills">
-              <li role="presentation" {% if stato == "aperte" %}class="active"{% endif %}>
-                  <a href="{% url 'so:gestisci' %}">
-                      <i class="fa fa-fw fa-check-circle"></i> Aperti <span class="badge">{{ servizi_aperti.count }}</span>
-                  </a>
-              </li>
-              <li role="presentation" {% if stato == "chiuse" %}class="active"{% endif %}>
-                  <a href="{% url 'so:gestisci_chiuse' %}">
-                      <i class="fa fa-fw fa-folder"></i> Chiusi <span class="badge">{{ servizi_chiusi.count }}</span>
-                  </a>
-              </li>
-            </ul>
+            <i class="fa fa-fw fa-info-circle"></i> Da questa pagina puoi accedere a tutti i servizi che puoi gestire.
         </p>
-        {% include "so_gestisci_inc_paginazione.html" %}
     </div>
 
-    <table class="table table-responsive table-striped">
-        <thead>
-            <tr>
-                <th>Servizio</th>
-                <th>Informazioni</th>
-                <th>Azioni</th>
-            </tr>
-        </thead>
+    <div class="panel panel-info">
+        <div class="panel-heading">
+            <h2 class="panel-title"><i class="fa fa-fw fa-list"></i> Elenco servizi gestiti</h2>
+        </div>
+        <div class="panel-body">
+            <p>
+            <ul class="nav nav-pills">
+                <li role="presentation" {% if stato == "aperte" %}class="active"{% endif %}>
+                    <a href="{% url 'so:gestisci' %}">
+                        <i class="fa fa-fw fa-check-circle"></i> Aperti <span class="badge">{{ servizi_aperti }}</span>
+                    </a>
+                </li>
+                <li role="presentation" {% if stato == "chiuse" %}class="active"{% endif %}>
+                    <a href="{% url 'so:gestisci_chiuse' %}">
+                        <i class="fa fa-fw fa-folder"></i> Chiusi <span class="badge">{{ servizi_chiusi }}</span>
+                    </a>
+                </li>
+            </ul>
+            </p>
+        </div>
 
-        <tbody>
-        {% for a in attivita %}
-            <tr>
-                <td class="piu-piccolo" style="width: 40%;">
-                    <span class="piu-grande">{{ a.link|safe }}</span><br />
-                    <i class="fa fa-fw fa-map-marker text-muted"></i> {{ a.estensione.get_estensione_display }}<br />
-                    <i class="fa fa-fw fa-map-marker text-muted"></i> <a href="{{ a.url_mappa }}">{{ a.locazione|default:"Nessuna posizione" }}</a><br />
-                    <i class="fa fa-fw fa-info-circle text-muted"></i> {{ a.delegati_attuali|join:", "|default:"(Nessun referente selezionato)" }}<br>
-                    L'impiego con i Benefici di legge: <strong>{% if a.impiego_bdl %}Si{% else %}No{% endif %}</strong>
-                </td>
+        {% if servizi_n %}
+            <div class="panel panel-info">
+                <div class="panel-heading" data-toggle="collapse" href="#collapseNazionele" role="button"
+                     aria-expanded="false"
+                     aria-controls="collapseExample">
+                    <h2 class="panel-title"><i class="fa fa-fw fa-list"></i> Elenco Nazionale</h2>
+                </div>
+                <div class="panel-body collapse" id="collapseNazionele">
+                    {% include "so_servizi_table.html" with attivita=servizi_n %}
+                </div>
+            </div>
+        {% endif %}
 
-                <td>
-                    {{ a.get_stato_display }} ({{ a.get_apertura_display }})<br />
-                    <i class="fa fa-fw fa-calendar text-muted"></i> {{ a.num_turni }} turni<br />
-                    <i class="fa fa-fw fa-clock text-muted"></i> {{ a.creazione|date:"SHORT_DATETIME_FORMAT" }}<br />
-                </td>
+        {% if servizi_r %}
+            <div class="panel panel-info">
+                <div class="panel-heading" data-toggle="collapse" href="#collapseRegionale" role="button"
+                     aria-expanded="false"
+                     aria-controls="collapseExample">
+                    <h2 class="panel-title"><i class="fa fa-fw fa-list"></i> Elenco Regionale</h2>
+                </div>
+                <div class="panel-body collapse" id="collapseRegionale">
+                    {% include "so_servizi_table.html" with attivita=servizi_r %}
+                </div>
+            </div>
+        {% endif %}
 
-                <td>
-                    {% if a in servizio_referenti_modificabili and a.cancellabile %}
-                        <a href="{{ a.url_cancella }}"><i class="far fa-trash-alt"></i> cancella servizio</a><br />
-                    {% endif %}
+        {% if servizi_p %}
+            <div class="panel panel-info">
+                <div class="panel-heading" data-toggle="collapse" href="#collapseProvinciale" role="button"
+                     aria-expanded="false"
+                     aria-controls="collapseExample">
+                    <h2 class="panel-title"><i class="fa fa-fw fa-list"></i> Elenco Provinciale</h2>
+                </div>
+                <div class="panel-body collapse" id="collapseProvinciale">
+                    {% include "so_servizi_table.html" with attivita=servizi_p %}
+                </div>
+            </div>{% endif %}
 
-                    <a href="{{ a.url_modifica }}"><i class="fas fa-pencil-alt"></i> modifica info</a><br />
-
-                    {% if a in servizio_referenti_modificabili %}
-                        <a href="{{ a.url_referenti }}"><i class="fas fa-pencil-alt"></i> modifica referenti</a><br />
-                    {% endif %}
-
-                    <a href="{{ a.url_turni_modifica }}"><i class="fas fa-pencil-alt"></i> modifica turni</a><br />
-                    <a href="{{ a.url_mezzi_materiali }}"><i class="fas fa-pencil-alt"></i> modifica mezzi e materiali</a>
-                </td>
-            </tr>
-        {% empty %}
-            <tr class="alert alert-warning">
-                <td colspan="4">
-                    <p><i class="fa fa-fw fa-info-circle"></i> Nessun servizio organizzato.</p>
-                </td>
-            </tr>
-        {% endfor %}
-        </tbody>
-    </table>
-
-    {% include "so_gestisci_inc_paginazione.html" %}
-</div>
+        {% if servizi_l %}
+            <div class="panel panel-info">
+                <div class="panel-heading" data-toggle="collapse" href="#collapseLocale" role="button"
+                     aria-expanded="false"
+                     aria-controls="collapseExample">
+                    <h2 class="panel-title"><i class="fa fa-fw fa-list"></i> Elenco Locale</h2>
+                </div>
+                <div class="panel-body collapse" id="collapseLocale">
+                    {% include "so_servizi_table.html" with attivita=servizi_l %}
+                </div>
+            </div>
+        {% endif %}
+    </div>
 
 {% endblock %}

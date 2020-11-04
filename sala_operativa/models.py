@@ -815,7 +815,6 @@ class MezzoSO(ModelloSemplice, ConMarcaTemporale):
         (FUORI_USO, 'Fuori servizio')
     )
 
-
     tipo = models.CharField(choices=MEZZI_E_MATERIALI_CHOICES, max_length=3)
     mezzo_tipo = models.CharField(choices=MEZZO_TIPO_CHOICES, max_length=3,
                                   null=True, blank=True)

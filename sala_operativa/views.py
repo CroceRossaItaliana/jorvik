@@ -11,7 +11,7 @@ from django.core.paginator import Paginator, PageNotAnInteger, EmptyPage
 from django.shortcuts import redirect, get_object_or_404, HttpResponse
 from django.utils.safestring import mark_safe
 
-from anagrafica.costanti import NAZIONALE
+from anagrafica.costanti import NAZIONALE, LOCALE, PROVINCIALE, REGIONALE
 from anagrafica.permessi.applicazioni import REFERENTE_SO
 from anagrafica.permessi.costanti import (MODIFICA, COMPLETO, ERRORE_PERMESSI,
       GESTIONE_SO_SEDE, GESTIONE_SERVIZI, GESTIONE_REFERENTI_SO, )
@@ -170,31 +170,23 @@ def so_reperibilita_backup(request, me):
 
 @pagina_privata
 def so_gestisci(request, me, stato="aperte"):
-    if me.is_presidente or me.is_comissario:
-        so_mie_sedi = me.oggetti_permesso(GESTIONE_SO_SEDE, solo_deleghe_attive=False)
-        servizi_tutti = ServizioSO.objects.filter(sede__in=so_mie_sedi)
-    else:
-        servizi_tutti = me.oggetti_permesso(GESTIONE_SERVIZI, solo_deleghe_attive=False)
+
+    servizi_tutti = me.oggetti_permesso(GESTIONE_SERVIZI, solo_deleghe_attive=False)
 
     servizi_aperti = servizi_tutti.filter(apertura=ServizioSO.APERTA)
     servizi_chiusi = servizi_tutti.filter(apertura=ServizioSO.CHIUSA)
 
     servizi = servizi_aperti if stato == "aperte" else servizi_chiusi
     servizi = servizi.order_by('-inizio', ).annotate(num_turni=Count('turni_so'))
-    servizi = Paginator(servizi, 30)
-
-    try:
-        servizi = servizi.page(request.GET.get('pagina'))
-    except PageNotAnInteger:
-        servizi = servizi.page(1)
-    except EmptyPage:
-        servizi = servizi.page(servizi.num_pages)
 
     context = {
         "stato": stato,
-        "attivita": servizi,
-        "servizi_aperti": servizi_aperti,
-        "servizi_chiusi": servizi_chiusi,
+        "servizi_n": servizi.filter(estensione__estensione=NAZIONALE),
+        "servizi_l": servizi.filter(estensione__estensione=LOCALE),
+        "servizi_p": servizi.filter(estensione__estensione=PROVINCIALE),
+        "servizi_r": servizi.filter(estensione__estensione=REGIONALE),
+        "servizi_aperti": servizi_aperti.count(),
+        "servizi_chiusi": servizi_chiusi.count(),
         "servizio_referenti_modificabili": me.oggetti_permesso(GESTIONE_REFERENTI_SO),
     }
     return 'so_gestisci.html', context
@@ -318,7 +310,6 @@ def so_calendario(request, me=None):
         "fine": fine_mese,
         "turni": turni,
         'calendario': mark_safe(malendario_mensile_html),
-
         'next_month': CalendarTurniSO.next_month(inizio_mese),
         'prev_month': CalendarTurniSO.prev_month(inizio_mese),
     }
