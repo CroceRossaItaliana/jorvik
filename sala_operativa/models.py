@@ -364,7 +364,6 @@ class ServizioSO(ModelloSemplice, ConGeolocalizzazione, ConMarcaTemporale,
         verbose_name_plural = 'Servizi'
 
 
-
 class ReperibilitaSO(ModelloSemplice, ConMarcaTemporale, ConStorico):
     ESTENSIONE_CHOICES = (
         (LOCALE, 'Sede Locale'),
@@ -662,13 +661,16 @@ class TurnoSO(ModelloSemplice, ConMarcaTemporale, ConGiudizio):
         :param reperibilita:
         :return: PartecipazioneSO object
         """
-        kwargs = dict(turno=self,
-                      reperibilita=reperibilita,
-                      stato=PartecipazioneSO.PARTECIPA,)
-        try:
-            return PartecipazioneSO.objects.get(**kwargs), False
-        except PartecipazioneSO.DoesNotExist:
-            partecipazione_al_turno = PartecipazioneSO(**kwargs)
+
+        if PartecipazioneSO.objects.filter(
+            reperibilita__persona=reperibilita.persona,
+            reperibilita__inizio__gte=reperibilita.inizio,
+            reperibilita__fine__lte=reperibilita.inizio,
+            stato=PartecipazioneSO.PARTECIPA
+        ).exists():
+            return None, False
+        else:
+            partecipazione_al_turno = PartecipazioneSO(turno=self, reperibilita=reperibilita, stato=PartecipazioneSO.PARTECIPA)
             partecipazione_al_turno.inizio = self.inizio
             partecipazione_al_turno.fine = self.fine
             partecipazione_al_turno.save()

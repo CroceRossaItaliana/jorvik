@@ -83,10 +83,15 @@ def so_reperibilita(request, me):
                 reperibilita.save()
             return redirect(reverse('so:reperibilita'))
 
+    reperibilita = ReperibilitaSO.reperibilita_di(me)
+
     context = {
         'me': me,
         'form': form,
-        'reperibilita': ReperibilitaSO.reperibilita_di(me)[:50],
+        'reperibilita_n': reperibilita.filter(estensione=NAZIONALE)[:50],
+        'reperibilita_r': reperibilita.filter(estensione=REGIONALE)[:50],
+        'reperibilita_p': reperibilita.filter(estensione=PROVINCIALE)[:50],
+        'reperibilita_l': reperibilita.filter(estensione=LOCALE)[:50],
     }
     return 'sala_operativa_reperibilita.html', context
 
@@ -161,11 +166,15 @@ def so_reperibilita_backup(request, me):
                 reperibilita.save()
             return redirect(reverse('so:reperibilita_backup'))
 
+    reperibilita = ReperibilitaSO.reperibilita_creati_da(creati_da)
     context = {
         'form': form,
-        'reperibilita': ReperibilitaSO.reperibilita_creati_da(creati_da),
+        'reperibilita_n': reperibilita.filter(estensione=NAZIONALE),
+        'reperibilita_r': reperibilita.filter(estensione=REGIONALE),
+        'reperibilita_p': reperibilita.filter(estensione=PROVINCIALE),
+        'reperibilita_l': reperibilita.filter(estensione=LOCALE),
     }
-    return 'sala_operativa_reperibilita_per_volontario_aggiungi.html', context
+    return 'sala_operativa_reperibilita.html', context
 
 
 @pagina_privata
@@ -747,13 +756,20 @@ def so_turno_abbina_volontario(request, me, turno_pk, reperibilita_pk):
     turno = get_object_or_404(TurnoSO, pk=turno_pk)
     servizio = turno.attivita
     reperibilita = ReperibilitaSO.objects.get(pk=reperibilita_pk)
+    if reperibilita.estensione != servizio.estensione.estensione:
+        messages.success(request, 'La reperibilità ha una estensione diversa non può essere abbinata')
+        return redirect(reverse('so:servizio_turni_modifica_link_permanente',
+                                args=[servizio.pk, turno.pk, ]))
+
     partecipazione, created = turno.abbina_reperibilita(reperibilita)
     if created:
         messages.success(request, 'Il volontario è stato abbinato al turno.')
         return redirect(reverse('so:servizio_turni_modifica_link_permanente',
                                     args=[servizio.pk, turno.pk,]))
-
-    return redirect(reverse('so:servizio_turni_modifica', args=[servizio.pk, ]))
+    else:
+        messages.success(request, 'Il volontario è già abbinato in questa fascia oraria')
+        return redirect(reverse('so:servizio_turni_modifica_link_permanente',
+                                args=[servizio.pk, turno.pk, ]))
 
 
 @pagina_privata(permessi=(GESTIONE_SERVIZI,))
@@ -833,7 +849,10 @@ def so_scheda_turni_modifica(request, me, pk=None, pagina=None):
 
     forms = list()
     moduli_aggiungi_partecipanti = list()
-    reperibilita_disponibili = list()
+    reperibilita_n = list()
+    reperibilita_r = list()
+    reperibilita_l = list()
+    reperibilita_p = list()
 
     turni = pg.object_list
     for turno in turni:
@@ -843,8 +862,11 @@ def so_scheda_turni_modifica(request, me, pk=None, pagina=None):
         modulo_aggiungi_partecipanti = AggiungiPartecipantiForm(request.POST or None,
                                                                 prefix="turno_agg_%d" % turno.pk)
         moduli_aggiungi_partecipanti += [modulo_aggiungi_partecipanti]
-
-        reperibilita_disponibili.append(turno.trova_reperibilita())
+        reperibilita = turno.trova_reperibilita()
+        reperibilita_n.append(reperibilita.filter(estensione=NAZIONALE))
+        reperibilita_r.append(reperibilita.filter(estensione=REGIONALE))
+        reperibilita_l.append(reperibilita.filter(estensione=LOCALE))
+        reperibilita_p.append(reperibilita.filter(estensione=PROVINCIALE))
 
         if form.is_valid():
             form.save()
@@ -862,7 +884,10 @@ def so_scheda_turni_modifica(request, me, pk=None, pagina=None):
         turni,
         forms,
         moduli_aggiungi_partecipanti,
-        reperibilita_disponibili
+        reperibilita_n,
+        reperibilita_r,
+        reperibilita_p,
+        reperibilita_l
     )
 
     evidenzia_turno = TurnoSO.objects.get(pk=request.GET['evidenzia_turno']) \

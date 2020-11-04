@@ -5,125 +5,132 @@
 
 {% block pagina_titolo %}Sala Operativa - Le mie reperibilit&agrave;{% endblock %}
 {% if messages %}
-        <ul class="messages">
-            {% for message in messages %}
+    <ul class="messages">
+        {% for message in messages %}
             <li{% if message.tags %} class="{{ message.tags }}"{% endif %}>{{ message }}</li>
-            {% endfor %}
-        </ul>
-    {% endif %}
+        {% endfor %}
+    </ul>
+{% endif %}
 
 {% block app_contenuto %}
 
-<div class="alert alert-block alert-info">
-    <i class="fa fa-fw fa-info-circle"></i> Da qui puoi fornire la tua reperibilit&agrave; per la Sala Operativa del Comitato, nonch&egrave; visionare lo storico delle tue ultime reperibilit&agrave; segnalate.
-</div>
-
-<div class="alert alert-block alert-warning" hidden id="datore_warning">
-    <i class="fa fa-fw fa-info-circle"></i> Assicurati di aver inserito il datore di lavoro.
-</div>
-
-<div class="row">
-    <div class="col-md-9">
-        <div class="panel panel-info">
-            <div class="panel-heading">
-                <h2 class="panel-title">
-                    <i class="fa fa-fw fa-list"></i> Ultime reperibilit&agrave; segnalate
-                </h2>
-            </div>
-            <div class="panel-body">
-                <table class="table table-striped">
-                    <thead>
-                      <tr>
-                          <th>Orario</th>
-                          <th>Attivazione</th>
-                          <th>Data segnalazione</th>
-                          <th>Azioni</th>
-                      </tr>
-                    </thead>
-                    <tbody>
-                    {% for r in reperibilita %}
-                        <tr>
-                            <td>
-                                <strong>{{ r.get_estensione_display }}</strong><br>
-                                <strong>Inizio:</strong> {{ r.inizio }}<br>
-                                <strong>Fine:</strong> {{ r.fine }}<br>
-
-                                <div style="margin:4px 0 8px; font-size:12px;">
-                                    Applicazione dei Benefici di Legge: <strong>{% if r.applicazione_bdl %}Si{% else %}No{% endif %}</strong>
-                                </div>
-
-                                {% if r.nel_turno %}
-                                    <i class="fas fa-thumbs-up"></i> Già abbinata al turno
-                                    {% for partecipazione in r.nel_turno %}
-                                        <div style="margin-top:15px;">
-                                            <strong><a href="{{ partecipazione.turno.url }}">{{ partecipazione.turno.nome }}</a></strong>
-                                            <a href="{{ partecipazione.turno.url_ritirati }}"><i class="far fa-minus-square"></i> Ritirati</a><br>
-                                            <span style="font-size:12px;">dal {{ partecipazione.inizio|date:"SHORT_DATETIME_FORMAT" }}
-                                                <strong style="padding:0 10px;">al</strong> {{ partecipazione.fine|date:"SHORT_DATETIME_FORMAT" }}</span>
-                                        </div>
-                                    {% endfor %}
-                                {% endif %}
-                            </td>
-                            <td>{{ r.attivazione }}</td>
-                            <td>
-                                {{ r.creazione|date:"SHORT_DATETIME_FORMAT" }}<br />
-                            </td>
-                            <td>
-                                <a href="{% url 'so:reperibilita_modifica' r.pk %}">
-                                    <i class="fa fa-fw fa-edit"></i> Modifica
-                                </a><br>
-                                <a href="{% url 'so:reperibilita_cancella' r.pk %}"  data-conferma="Vuoi cancellare la reperibilità selezionata?">
-                                    <i class="fa fa-fw fa-trash"></i> Cancella
-                                </a>
-                            </td>
-                        </tr>
-                    {% empty %}
-                        <tr class="alert alert-warning">
-                            <td colspan="4">
-                                <i class="fa fa-fw fa-warning"></i> Ancora nessuna reperibilit&agrave; segnalata.
-                            </td>
-                        </tr>
-                    {% endfor %}
-                    </tbody>
-                </table>
-            </div>
-        </div>
+    <div class="alert alert-block alert-info">
+        <i class="fa fa-fw fa-info-circle"></i> Da qui puoi fornire la tua reperibilit&agrave; per la Sala Operativa del
+        Comitato, nonch&egrave; visionare lo storico delle tue ultime reperibilit&agrave; segnalate.
     </div>
 
-    <div class="col-md-3">
-        <div class="panel panel-primary">
-            <div class="panel-heading">
-                <h2 class="panel-title"><i class="fa fa-fw fa-plus-circle"></i>
-                    Segnala reperibilit&agrave;
-                </h2>
-            </div>
-            <div class="panel-body">
-                <p>Compila questo modulo per segnalare la tua reperibilit&agrave;. Verrai contattato dalla Sala Operativa in caso di necessit&agrave;.</p>
+    <div class="alert alert-block alert-warning" hidden id="datore_warning">
+        <i class="fa fa-fw fa-info-circle"></i> Assicurati di aver inserito il datore di lavoro.
+    </div>
 
-                <form method="POST" action=".">
-                    {% bootstrap_form form %}
+    <div class="row">
+        <div class="col-md-12">
+            <div class="panel panel-primary">
+                <div class="panel-heading"  data-toggle="collapse"
+                     href="#collapseCreaReperibilita"
+                     role="button"
+                     aria-expanded="false"
+                     aria-controls="collapseCreaReperibilita">
+                    <h2 class="panel-title"><i class="fa fa-fw fa-plus-circle"></i>
+                        Segnala reperibilit&agrave;
+                    </h2>
+                </div>
+                <div class="panel-body collapse" id="collapseCreaReperibilita">
+                    <p>Compila questo modulo per segnalare la tua reperibilit&agrave;. Verrai contattato dalla Sala
+                        Operativa in caso di necessit&agrave;.</p>
 
-                    <button type="submit" class="btn btn-block btn-primary">
-                        <i class="fa fa-fw fa-check"></i> Segnala
-                    </button>
-                    {% csrf_token %}
-                </form>
+                    <form method="POST" action=".">
+                        {% bootstrap_form form %}
+
+                        <button type="submit" class="btn btn-block btn-primary">
+                            <i class="fa fa-fw fa-check"></i> Segnala
+                        </button>
+                        {% csrf_token %}
+                    </form>
+                </div>
             </div>
         </div>
-    </div>
-</div>
-<script>
-    $('#id_datore_lavoro').parent().hide();
 
-    $('#id_applicazione_bdl').change(function (){
-        if ($(this).is(':checked')){
-            $('#id_datore_lavoro').parent().show();
-            $('#datore_warning').show();
-        }
-        else{
-            $('#id_datore_lavoro').parent().hide();
-            $('#datore_warning').show();
-        }
-    });
-</script>
+
+        <div class="col-md-12">
+            <div class="panel panel-info">
+                <div class="panel-heading" data-toggle="collapse"
+                     href="#collapseNazione"
+                     role="button"
+                     aria-expanded="false"
+                     aria-controls="collapseNazione">
+                    <h2 class="panel-title">
+                        <i class="fa fa-fw fa-list"></i> Ultime reperibilit&agrave; segnalate Nazionale
+                    </h2>
+                </div>
+                <div class="panel-body collapse" id="collapseNazione">
+                    {% include "sala_operativa_responsabilità_tabella.html" with reperibilita=reperibilita_n %}
+                </div>
+            </div>
+        </div>
+        <div class="col-md-12">
+            <div class="panel panel-info">
+                <div class="panel-heading" data-toggle="collapse"
+                     href="#collapseRegionale"
+                     role="button"
+                     aria-expanded="false"
+                     aria-controls="collapseRegionale">
+                    <h2 class="panel-title">
+                        <i class="fa fa-fw fa-list"></i> Ultime reperibilit&agrave; segnalate Regionale
+                    </h2>
+                </div>
+                <div class="panel-body collapse" id="collapseRegionale">
+                    {% include "sala_operativa_responsabilità_tabella.html" with reperibilita=reperibilita_r %}
+                </div>
+            </div>
+        </div>
+
+        <div class="col-md-12">
+            <div class="panel panel-info">
+                <div class="panel-heading" data-toggle="collapse"
+                     href="#collapseProvinciale"
+                     role="button"
+                     aria-expanded="false"
+                     aria-controls="collapseProvinciale">
+                    <h2 class="panel-title ">
+                        <i class="fa fa-fw fa-list"></i> Ultime reperibilit&agrave; segnalate Provinciale
+                    </h2>
+                </div>
+                <div class="panel-body collapse" id="collapseProvinciale">
+                    {% include "sala_operativa_responsabilità_tabella.html" with reperibilita=reperibilita_p %}
+                </div>
+            </div>
+        </div>
+
+        <div class="col-md-12">
+            <div class="panel panel-info">
+                <div class="panel-heading" data-toggle="collapse"
+                     href="#collapseLocale"
+                     role="button"
+                     aria-expanded="false"
+                     aria-controls="collapseLocale">
+                    <h2 class="panel-title ">
+                        <i class="fa fa-fw fa-list"></i> Ultime reperibilit&agrave; segnalate Locale
+                    </h2>
+                </div>
+                <div class="panel-body collapse" id="collapseLocale">
+                    {% include "sala_operativa_responsabilità_tabella.html" with reperibilita=reperibilita_l %}
+                </div>
+            </div>
+        </div>
+
+    </div>
+    <script>
+        $('#id_datore_lavoro').parent().hide();
+
+        $('#id_applicazione_bdl').change(function () {
+            if ($(this).is(':checked')) {
+                $('#id_datore_lavoro').parent().show();
+                $('#datore_warning').show();
+            } else {
+                $('#id_datore_lavoro').parent().hide();
+                $('#datore_warning').show();
+            }
+        });
+    </script>
 {% endblock %}
