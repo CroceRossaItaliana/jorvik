@@ -778,7 +778,10 @@ def so_scheda_informazioni_modifica(request, me, pk=None):
         return redirect(ERRORE_PERMESSI)
 
     form = ModificaServizioForm(request.POST or None, instance=servizio)
-    form.fields['estensione'].queryset = servizio.sede.get_ancestors(include_self=True).exclude(estensione=NAZIONALE)
+
+    form.fields['estensione'].queryset = servizio.sede.get_ancestors(include_self=True) if \
+        me.sedi_deleghe_attuali().filter(estensione=NAZIONALE).exists() else \
+        servizio.sede.get_ancestors(include_self=True).exclude(estensione=NAZIONALE)
 
     if form.is_valid():
         form.save()

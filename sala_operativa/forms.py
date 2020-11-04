@@ -259,7 +259,7 @@ class CreazioneMezzoSO(ModelForm):
         tipo = cd.get('tipo')
         mezzo_tipo = cd.get('mezzo_tipo')
 
-        if tipo and mezzo_tipo and tipo != MezzoSO.MEZZO:
+        if tipo and mezzo_tipo and (tipo != MezzoSO.MEZZO and tipo != MezzoSO.MEZZO_PRIVATO):
             self.add_error('mezzo_tipo', 'Il tipo del mezzo è selezionabile solo con tipo "Mezzo".')
         return cd
 
