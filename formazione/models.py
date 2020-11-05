@@ -790,7 +790,6 @@ class CorsoBase(Corso, ConVecchioID, ConPDF):
             persone = Persona.objects.filter(pk__in=aspiranti_list)
         else:
             persone = self.get_volunteers_by_course_requirements()
-            print('volontari', persone)
         return persone
 
     def _corso_activation_recipients_for_email_generator(self):
@@ -881,11 +880,11 @@ class CorsoBase(Corso, ConVecchioID, ConPDF):
             persone_da_informare = self.get_volunteers_by_only_sede()
 
         if CorsoBase.EXT_LVL_REGIONALE == corso_extension:
-            print(CorsoBase.EXT_LVL_REGIONALE)
+            # print(CorsoBase.EXT_LVL_REGIONALE)
             by_ext_sede = self.get_volunteers_by_ext_sede()
-            print('by_ext_sede', by_ext_sede)
+            #print('by_ext_sede', by_ext_sede)
             by_ext_titles = self.get_volunteers_by_ext_titles()
-            print('by_ext_titles', by_ext_titles)
+            #print('by_ext_titles', by_ext_titles)
             persone_da_informare = by_ext_sede | by_ext_titles
 
         if persone_da_informare is None:
@@ -1332,7 +1331,10 @@ class CorsoBase(Corso, ConVecchioID, ConPDF):
         """ Verifica se il corso appartiene al "vecchio" modulo formazione (
         prima dell'aggiornamento del 31/08/2019) """
 
-        if not self.titolo_cri:
+        if self.titolo_cri:
+            if self.titolo_cri.is_titolo_corso_base:
+                return True
+        elif not self.titolo_cri:
             return True
         # elif self.creazione < timezone.datetime(2019, 9, 1):
         #     return True
