@@ -785,7 +785,7 @@ class CorsoBase(Corso, ConVecchioID, ConPDF):
         Trovare destinatari aspiranti o volontari da avvisare di un nuovo corso attivato.
         :return: <Persona>QuerySet
         """
-        if self.corso_vecchio:
+        if self.titolo_cri and self.titolo_cri.is_titolo_corso_base:
             aspiranti_list = self.aspiranti_nelle_vicinanze().values_list('persona', flat=True)
             persone = Persona.objects.filter(pk__in=aspiranti_list)
         else:
@@ -1124,7 +1124,7 @@ class CorsoBase(Corso, ConVecchioID, ConPDF):
         partecipazioni = self.partecipazioni_confermate_assente_motivo(solo=verbale_per_seconda_data_esame)
 
         pdf_template = "pdf_corso_%sesame_verbale.html"
-        pdf_template = pdf_template % "base_" if self.corso_vecchio else pdf_template % ""
+        pdf_template = pdf_template % 'base_' if self.corso_vecchio else pdf_template % ''
 
         if anteprima:
             numero_idonei = len([p.pk for p in partecipazioni if p.idoneo])
@@ -1331,11 +1331,10 @@ class CorsoBase(Corso, ConVecchioID, ConPDF):
         """ Verifica se il corso appartiene al "vecchio" modulo formazione (
         prima dell'aggiornamento del 31/08/2019) """
 
-        if self.titolo_cri:
-            if self.titolo_cri.is_titolo_corso_base:
-                return True
-        elif not self.titolo_cri:
+        if not self.titolo_cri:
             return True
+        elif self.titolo_cri:
+            return False
         # elif self.creazione < timezone.datetime(2019, 9, 1):
         #     return True
         return False
