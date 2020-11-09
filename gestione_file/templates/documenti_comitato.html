@@ -26,12 +26,12 @@
         <div class="col-md-8">
             {% for sede in sedi %}
                 <div class="panel panel-info">
-                    <div class="panel-heading" data-toggle="collapse" data-target="#collapseComitato{{ sede.comitato.id }}" aria-expanded="false" aria-controls="#collapseComitato{{ sede.comitato.id }}">
-                        <h2 class="panel-title">
+                    <div class="panel-heading">
+                        <h2 class="panel-title" data-toggle="collapse" role="button" data-target="#collapseComitato{{ sede.comitato.id }}" aria-expanded="false" aria-controls="#collapseComitato{{ sede.comitato.id }}">
                             {{ sede.comitato }}
                         </h2>
                     </div>
-                    <div class="panel-body collapse" id="#collapseComitato{{ sede.comitato.id }}">
+                    <div class="panel-body" id="#collapseComitato{{ sede.comitato.id }}">
                         <table class="table">
                             <thead>
                                 <th width="24%">Data caricamento</th>
@@ -43,7 +43,7 @@
                             {% for d in sede.documenti %}
                                 <tr>
                                     <td style="font-size: 12px;">{{ d.creazione|date:"SHORT_DATETIME_FORMAT" }}</td>
-                                    <td style="text-align:center;">{{ d.expires|date:"d/m/Y"|default:"-" }}</td>
+                                    <td >{{ d.expires|date:"d/m/Y" }}</td>
                                     <td>
                                         <a href="{{ d.file.url }}" download title="Scarica il documento">
                                             <i class="fa fa-download"></i> Scarica
