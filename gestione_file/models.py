@@ -6,6 +6,11 @@ from django.utils.timezone import now
 from django.utils.translation import ugettext_lazy as _
 from filer.models import File
 from filer.models.abstract import BaseImage
+
+from anagrafica.validators import valida_dimensione_file_8mb
+from base.models import ModelloSemplice
+from base.stringhe import GeneratoreNomeFile
+from base.tratti import ConMarcaTemporale
 from segmenti.models import BaseSegmento
 
 
@@ -60,6 +65,20 @@ class Documento(InterfacciaJorvik, File):
             return 'fa fa-file-code-o'
 
 
+class DocumentoComitato(ModelloSemplice, ConMarcaTemporale):
+
+    nome = models.CharField(max_length=150, db_index=True)
+    file = models.FileField("File", upload_to=GeneratoreNomeFile('documenti/'),
+                            validators=[valida_dimensione_file_8mb])
+    sede = models.ForeignKey('anagrafica.Sede', db_index=True, on_delete=models.PROTECT)
+    expires = models.DateField(null=True)
+
+    class Meta:
+        verbose_name = 'Documenti Comitato'
+        verbose_name_plural = "Documenti Comitato"
+        app_label = 'gestione_file'
+
+
 class Immagine(InterfacciaJorvik, BaseImage):
     url_documento = models.URLField(_('URL Documento'), default='', blank=True)
     downloads = models.PositiveIntegerField("Downloads", db_index=True, default=0)
@@ -80,6 +99,7 @@ class Immagine(InterfacciaJorvik, BaseImage):
     @property
     def image(self):
         return self.immagine
+
 
 class DocumentoSegmento(BaseSegmento):
     _oggetto_collegato = File

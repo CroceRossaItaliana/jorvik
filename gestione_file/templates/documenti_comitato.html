@@ -1,0 +1,98 @@
+{% extends "anagrafica_utente_vuota.html" %}
+
+{% load bootstrap3 %}
+{% load static %}
+
+{% block pagina_titolo %}Documenti{% endblock %}
+
+{% block menu_laterale %}
+    <div class="col-md-2 well well-sm">
+        <ul id="sezione" role="navigation" class="nav nav-pills nav-stacked navbar-collapse collapse">
+            {% for sezione_nome, sezione_pagine in menu.documenti %}
+                <li class="dropdown-header grassetto piu-grande">{{ sezione_nome }}</li>
+                {% for link_nome, link_icona, link_url, link_contatore in sezione_pagine %}
+                    <li role="presentation" {% if link_url == request.path %}class="active"{% endif %}>
+                        <a href="{{ link_url|urlencode }}"><i class="fa {{ link_icona }} fa-fw"></i> {{ link_nome }}</a>
+                    </li>
+                {% endfor %}
+                <hr/>
+            {% endfor %}
+        </ul>
+    </div>
+{% endblock %}
+
+{% block app_contenuto %}
+    <div class="row">
+        <div class="col-md-8">
+            {% for sede in sedi %}
+                <div class="panel panel-info">
+                    <div class="panel-heading" data-toggle="collapse" data-target="#collapseComitato{{ sede.comitato.id }}" aria-expanded="false" aria-controls="#collapseComitato{{ sede.comitato.id }}">
+                        <h2 class="panel-title">
+                            {{ sede.comitato }}
+                        </h2>
+                    </div>
+                    <div class="panel-body collapse" id="#collapseComitato{{ sede.comitato.id }}">
+                        <table class="table">
+                            <thead>
+                                <th width="24%">Data caricamento</th>
+                                <th width="22%">Scadenza</th>
+                                <th width="22%">Visualizza</th>
+                                <th width="10%">Cancella</th>
+                            </thead>
+                            <tbody>
+                            {% for d in sede.documenti %}
+                                <tr>
+                                    <td style="font-size: 12px;">{{ d.creazione|date:"SHORT_DATETIME_FORMAT" }}</td>
+                                    <td style="text-align:center;">{{ d.expires|date:"d/m/Y"|default:"-" }}</td>
+                                    <td>
+                                        <a href="{{ d.file.url }}" download title="Scarica il documento">
+                                            <i class="fa fa-download"></i> Scarica
+                                            {% if d.file and d.file.size %}
+                                                ({{ d.file.size|filesizeformat }})
+                                            {% endif %}
+                                        </a>
+                                    </td>
+                                    <td style="text-align:center;">
+{#                                        {% if d.can_be_deleted %}#}
+{#                                            <a href="{% url 'utente:remove_document' d.pk %}" title="Cancella il documento"><i class="fa fa-remove"></i></a>#}
+{#                                        {% endif %}#}
+                                    </td>
+                                </tr>
+
+                            {% empty %}
+                                <tr>
+                                    <td colspan="4" class="alert-warning">
+                                        <i class="fa fa-info-circle"></i> Nessun documento caricato.
+                                    </td>
+                                </tr>
+                            {% endfor %}
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            {% endfor %}
+        </div>
+        <div class="col-md-4">
+            <div class="panel panel-primary">
+                <div class="panel-heading">
+                    <h2 class="panel-title">
+                        Modulo importazione
+                    </h2>
+                </div>
+                <div class="panel-body">
+
+                    <form method="post" enctype="multipart/form-data">
+                        {% csrf_token %}
+
+                        {% bootstrap_form form %}
+
+                        <button type="submit" class="btn btn-block btn-primary">
+                            <i class="fa fa-send"></i>
+                            Aggiungi
+                        </button>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+{% endblock %}
