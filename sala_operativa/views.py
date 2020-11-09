@@ -18,6 +18,7 @@ from anagrafica.permessi.costanti import (MODIFICA, COMPLETO, ERRORE_PERMESSI,
 from autenticazione.funzioni import pagina_privata, pagina_pubblica
 from base.errori import errore_generico, messaggio_generico, errore_no_volontario
 from base.utils import poco_fa, timedelta_ore
+from posta.models import Messaggio
 from .utils import turni_raggruppa_giorno
 from .models import PartecipazioneSO, ServizioSO, TurnoSO, ReperibilitaSO, MezzoSO, PrenotazioneMMSO, DatoreLavoro
 from .elenchi import ElencoPartecipantiTurno, ElencoPartecipantiAttivita
@@ -181,7 +182,7 @@ def so_reperibilita_backup(request, me):
 def so_gestisci(request, me, stato="aperte"):
 
     servizi_tutti = me.oggetti_permesso(GESTIONE_SERVIZI, solo_deleghe_attive=False)
-
+    print(servizi_tutti)
     servizi_aperti = servizi_tutti.filter(apertura=ServizioSO.APERTA)
     servizi_chiusi = servizi_tutti.filter(apertura=ServizioSO.CHIUSA)
 
@@ -764,6 +765,17 @@ def so_turno_abbina_volontario(request, me, turno_pk, reperibilita_pk):
     partecipazione, created = turno.abbina_reperibilita(reperibilita)
     if created:
         messages.success(request, 'Il volontario è stato abbinato al turno.')
+
+        Messaggio.costruisci_e_invia(
+            oggetto="Abbinamento turno",
+            modello="email_abbina_reperibilità.html",
+            corpo={},
+            mittente=me,
+            destinatari=[
+                partecipazione.reperibilita.persona
+            ]
+        )
+
         return redirect(reverse('so:servizio_turni_modifica_link_permanente',
                                     args=[servizio.pk, turno.pk,]))
     else:
@@ -886,8 +898,8 @@ def so_scheda_turni_modifica(request, me, pk=None, pagina=None):
         moduli_aggiungi_partecipanti,
         reperibilita_n,
         reperibilita_r,
-        reperibilita_p,
-        reperibilita_l
+        reperibilita_l,
+        reperibilita_p
     )
 
     evidenzia_turno = TurnoSO.objects.get(pk=request.GET['evidenzia_turno']) \
