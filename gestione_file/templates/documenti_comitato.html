@@ -26,12 +26,12 @@
         <div class="col-md-8">
             {% for sede in sedi %}
                 <div class="panel panel-info">
-                    <div class="panel-heading">
-                        <h2 class="panel-title" data-toggle="collapse" role="button" data-target="#collapseComitato{{ sede.comitato.id }}" aria-expanded="false" aria-controls="#collapseComitato{{ sede.comitato.id }}">
+                        <div class="panel-heading" data-toggle="collapse" href="#collapseComitato{{ sede.comitato.id }}" role="button" aria-expanded="True" aria-controls="collapseComitato{{ sede.comitato.id }}">
+                        <h2 class="panel-title">
                             {{ sede.comitato }}
                         </h2>
                     </div>
-                    <div class="panel-body" id="#collapseComitato{{ sede.comitato.id }}">
+                    <div class="panel-body collapse" id="#collapseComitato{{ sede.comitato.id }}">
                         <table class="table">
                             <thead>
                                 <th width="24%">Data caricamento</th>
