@@ -25,25 +25,26 @@
     <div class="row">
         <div class="col-md-8">
             {% for sede in sedi %}
+
                 <div class="panel panel-info">
-                        <div class="panel-heading" data-toggle="collapse" href="#collapseComitato{{ sede.comitato.id }}" role="button" aria-expanded="True" aria-controls="collapseComitato{{ sede.comitato.id }}">
-                        <h2 class="panel-title">
-                            {{ sede.comitato }}
-                        </h2>
+                    <div class="panel-heading" data-toggle="collapse" href="#collapseComitato{{ sede.comitato.id }}" role="button"
+                         aria-expanded="false"
+                         aria-controls="collapseComitato{{ sede.comitato.id }}">
+                        <h2 class="panel-title">{{ sede.comitato }}</h2>
                     </div>
-                    <div class="panel-body collapse" id="#collapseComitato{{ sede.comitato.id }}">
+                    <div class="panel-body collapse" id="collapseComitato{{ sede.comitato.id }}">
                         <table class="table">
                             <thead>
-                                <th width="24%">Data caricamento</th>
-                                <th width="22%">Scadenza</th>
-                                <th width="22%">Visualizza</th>
-                                <th width="10%">Cancella</th>
+                            <th width="24%">Data caricamento</th>
+                            <th width="22%">Scadenza</th>
+                            <th width="22%">Visualizza</th>
+                            <th width="10%">Cancella</th>
                             </thead>
                             <tbody>
                             {% for d in sede.documenti %}
                                 <tr>
                                     <td style="font-size: 12px;">{{ d.creazione|date:"SHORT_DATETIME_FORMAT" }}</td>
-                                    <td >{{ d.expires|date:"d/m/Y" }}</td>
+                                    <td>{{ d.expires|date:"d/m/Y" }}</td>
                                     <td>
                                         <a href="{{ d.file.url }}" download title="Scarica il documento">
                                             <i class="fa fa-download"></i> Scarica
@@ -53,9 +54,9 @@
                                         </a>
                                     </td>
                                     <td style="text-align:center;">
-{#                                        {% if d.can_be_deleted %}#}
-{#                                            <a href="{% url 'utente:remove_document' d.pk %}" title="Cancella il documento"><i class="fa fa-remove"></i></a>#}
-{#                                        {% endif %}#}
+                                        {#                                        {% if d.can_be_deleted %}#}
+                                        {#                                            <a href="{% url 'utente:remove_document' d.pk %}" title="Cancella il documento"><i class="fa fa-remove"></i></a>#}
+                                        {#                                        {% endif %}#}
                                     </td>
                                 </tr>
 
