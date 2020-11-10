@@ -59,11 +59,12 @@ class TrainingApi:
                 "moodlewsrestformat": "json",
                 "wstoken": self.token,
                 "wsfunction": "core_user_create_users",
-                "users[0][username]": persona.email,
+                "users[0][username]": persona.email if persona.email else persona.utenza.email,
                 "users[0][password]": Utenza.objects.get(persona=persona).password,
                 "users[0][firstname]": persona.nome,
                 "users[0][lastname]": persona.cognome,
                 "users[0][email]": persona.email,
+                "users[0][auth]": "saml",
             }
         )
 
