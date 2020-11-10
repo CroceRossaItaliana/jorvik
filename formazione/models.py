@@ -785,12 +785,11 @@ class CorsoBase(Corso, ConVecchioID, ConPDF):
         Trovare destinatari aspiranti o volontari da avvisare di un nuovo corso attivato.
         :return: <Persona>QuerySet
         """
-        if self.corso_vecchio:
+        if self.titolo_cri and self.titolo_cri.is_titolo_corso_base:
             aspiranti_list = self.aspiranti_nelle_vicinanze().values_list('persona', flat=True)
             persone = Persona.objects.filter(pk__in=aspiranti_list)
         else:
             persone = self.get_volunteers_by_course_requirements()
-            print('volontari', persone)
         return persone
 
     def _corso_activation_recipients_for_email_generator(self):
@@ -881,11 +880,11 @@ class CorsoBase(Corso, ConVecchioID, ConPDF):
             persone_da_informare = self.get_volunteers_by_only_sede()
 
         if CorsoBase.EXT_LVL_REGIONALE == corso_extension:
-            print(CorsoBase.EXT_LVL_REGIONALE)
+            # print(CorsoBase.EXT_LVL_REGIONALE)
             by_ext_sede = self.get_volunteers_by_ext_sede()
-            print('by_ext_sede', by_ext_sede)
+            #print('by_ext_sede', by_ext_sede)
             by_ext_titles = self.get_volunteers_by_ext_titles()
-            print('by_ext_titles', by_ext_titles)
+            #print('by_ext_titles', by_ext_titles)
             persone_da_informare = by_ext_sede | by_ext_titles
 
         if persone_da_informare is None:
@@ -1125,7 +1124,7 @@ class CorsoBase(Corso, ConVecchioID, ConPDF):
         partecipazioni = self.partecipazioni_confermate_assente_motivo(solo=verbale_per_seconda_data_esame)
 
         pdf_template = "pdf_corso_%sesame_verbale.html"
-        pdf_template = pdf_template % "base_" if self.corso_vecchio else pdf_template % ""
+        pdf_template = pdf_template % 'base_' if self.corso_vecchio else pdf_template % ''
 
         if anteprima:
             numero_idonei = len([p.pk for p in partecipazioni if p.idoneo])
@@ -1181,7 +1180,7 @@ class CorsoBase(Corso, ConVecchioID, ConPDF):
 
     @property
     def is_nuovo_corso(self):
-        return self.tipo == Corso.CORSO_NUOVO
+        return self.tipo == Corso.CORSO_NUOVO or self.tipo == Corso.CORSO_ONLINE
 
     def get_course_links(self):
         return self.corsolink_set.filter(is_enabled=True)
@@ -1334,6 +1333,8 @@ class CorsoBase(Corso, ConVecchioID, ConPDF):
 
         if not self.titolo_cri:
             return True
+        elif self.titolo_cri:
+            return False
         # elif self.creazione < timezone.datetime(2019, 9, 1):
         #     return True
         return False

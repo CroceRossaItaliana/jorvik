@@ -263,6 +263,10 @@ APIS_CONF.read(APIS_CONF_FILE)
 GOOGLE_KEY = APIS_CONF.get('google', 'api_key', fallback=os.environ.get("GOOGLE_KEY"))
 DOMPDF_ENDPOINT = APIS_CONF.get('dompdf', 'endpoint',
                                 fallback='')
+TRIPPUS_DOMAIN = APIS_CONF.get('trippus', 'domain')
+TRIPPUS_USERNAME = APIS_CONF.get('trippus', 'username', fallback=os.environ.get("TRIPPUS_USERNAME"))
+TRIPPUS_PASSWORD = APIS_CONF.get('trippus', 'password', fallback=os.environ.get("TRIPPUS_PASSWORD"))
+
 
 DESTINATARI_REPORT = ['sviluppo@cri.it', 'info@gaia.cri.it']
 
@@ -414,3 +418,7 @@ from django.utils.translation import ugettext_lazy as _
 COUNTRIES_OVERRIDE = {
     'KS': _('Kosovo'),
 }
+
+
+INIZIO_ASSEMBLEA_NAZIONALE = '10/30/2020 08:00:00'
+FINE_ASSEMBLEA_NAZIONALE = '10/31/2020 15:30:00'

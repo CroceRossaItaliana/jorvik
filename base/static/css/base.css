@@ -267,3 +267,10 @@ body, p, span, div {
     text-overflow: ellipsis;
 }
 
+.hand:hover {
+    cursor: pointer;
+}
+
+.wait:hover {
+    cursor: wait;
+}
