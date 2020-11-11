@@ -23,6 +23,9 @@ class TrainingApi:
         self.token = MOODLE_KEY
         self.domain = MOODLE_DOMAIN
 
+    def _persona_mail(self, persona):
+        return persona.utenza.email if persona.utenza.email else persona.email
+
     def core_course_get_courses_by_field_shortname(self, shortname):
 
         r = self._get(
@@ -59,7 +62,7 @@ class TrainingApi:
                 "moodlewsrestformat": "json",
                 "wstoken": self.token,
                 "wsfunction": "core_user_create_users",
-                "users[0][username]": persona.email if persona.email else persona.utenza.email,
+                "users[0][username]": self._persona_mail(persona),
                 "users[0][password]": Utenza.objects.get(persona=persona).password,
                 "users[0][firstname]": persona.nome,
                 "users[0][lastname]": persona.cognome,
@@ -114,13 +117,13 @@ class TrainingApi:
         return r
 
     def cancellazione_iscritto(self, persona, corso):
-        utente = self.core_user_get_users_by_field(persona.email)
+        utente = self.core_user_get_users_by_field(self._persona_mail(persona))
         corso = self.core_course_get_courses_by_field_shortname(corso.titolo_cri.sigla)
 
         return self.enrol_manual_unenrol_users(utente['id'], corso['id'], self.DISCENTE)
 
     def aggiugi_ruolo(self, persona, corso, ruolo):
-        utente = self.core_user_get_users_by_field(persona.email)
+        utente = self.core_user_get_users_by_field(self._persona_mail(persona))
         corso = self.core_course_get_courses_by_field_shortname(corso.titolo_cri.sigla)
         # Se l'utente non esiste lo crea
         if not utente:
@@ -156,7 +159,7 @@ class TrainingApi:
         return r
 
     def ha_ottenuto_competenze(self, persona, corso):
-        utente = self.core_user_get_users_by_field(persona.email)
+        utente = self.core_user_get_users_by_field(self._persona_mail(persona))
         corso = self.core_course_get_courses_by_field_shortname(corso.titolo_cri.sigla)
         competencies_id = [
             competencie['competency']['id'] for competencie in self.core_competency_list_course_competencies(

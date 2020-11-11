@@ -651,16 +651,24 @@ def aspirante_corso_base_termina(request, me, pk):
 
     # Validazione delle form
     for partecipante in partecipanti_qs:
-        api = TrainingApi()
-        form = FormVerbaleCorso(request.POST or None,
-            prefix="part_%d" % partecipante.pk,
-            instance=partecipante,
-            generazione_verbale=generazione_verbale,
-            initial={
-                'ammissione': PartecipazioneCorsoBase.AMMESSO
-                if api.ha_ottenuto_competenze(persona=partecipante.persona, corso=corso) else ''
-            }
-        )
+        if corso.online:
+            api = TrainingApi()
+            form = FormVerbaleCorso(request.POST or None,
+                prefix="part_%d" % partecipante.pk,
+                instance=partecipante,
+                generazione_verbale=generazione_verbale,
+                initial={
+                    'ammissione': PartecipazioneCorsoBase.AMMESSO
+                    if api.ha_ottenuto_competenze(persona=partecipante.persona, corso=corso) else ''
+                }
+            )
+        else:
+            form = FormVerbaleCorso(
+                request.POST or None,
+                prefix="part_%d" % partecipante.pk,
+                instance=partecipante,
+                generazione_verbale=generazione_verbale
+            )
 
         if corso.tipo == Corso.BASE:
             if corso.titolo_cri and corso.titolo_cri.scheda_prevede_esame:
@@ -738,6 +746,10 @@ def aspirante_corso_base_termina(request, me, pk):
         corso.termina(mittente=me,
                       partecipanti_qs=partecipanti_qs,
                       data_ottenimento=data_ottenimento)
+
+        if corso.online:
+            api = TrainingApi()
+            api.cancellazione_iscritto(persona=partecipante.persona, corso=corso)
 
         if corso.is_nuovo_corso:
             torna_titolo = "Vai al Report del Corso"
