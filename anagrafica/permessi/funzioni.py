@@ -12,8 +12,8 @@ from ..permessi.applicazioni import (PRESIDENTE, DIRETTORE_CORSO,
                                      DELEGATO_SO, CONSIGLIERE,
                                      CONSIGLIERE_GIOVANE, VICE_PRESIDENTE,
                                      UFFICIO_SOCI, DELEGATO_AREA,
-                                     RESPONSABILE_AREA, REFERENTE, REFERENTE_SO,
-                                     UFFICIO_SOCI_CM, UFFICIO_SOCI_IIVV)
+                                     RESPONSABILE_AREA, REFERENTE, REFERENTE_SERVIZI_SO,
+                                     UFFICIO_SOCI_CM, UFFICIO_SOCI_IIVV, REFERENTE_OPERAZIONE_SO)
 from ..permessi.costanti import (GESTIONE_SOCI, ELENCHI_SOCI, \
                                  GESTIONE_ATTIVITA_SEDE, GESTIONE_CORSI_SEDE, \
                                  GESTIONE_SEDE, GESTIONE_ATTIVITA_AREA,
@@ -46,7 +46,8 @@ from ..permessi.costanti import (GESTIONE_SOCI, ELENCHI_SOCI, \
                                  RUBRICA_RESPONSABILI_AUTOPARCO,
                                  RUBRICA_COMMISSARI, GESTIONE_SERVIZI,
                                  GESTIONE_REFERENTI_SO,
-                                 GESTIONE_SOCI_CM, GESTIONE_SOCI_IIVV, )
+                                 GESTIONE_SOCI_CM, GESTIONE_SOCI_IIVV, GESTIONE_OPERAZIONI,
+                                 GESTIONE_REFERENTI_OPERAZIONI_SO, )
 
 """
 Questo modulo contiene tutte le funzioni per testare i permessi
@@ -352,16 +353,19 @@ def permessi_delegato_centrale_operativa(sede):
 
 
 def permessi_delegato_sala_operativa(sede):
-    from sala_operativa.models import ServizioSO
+    from sala_operativa.models import ServizioSO, OperazioneSO
 
     sede_espansa = sede.espandi(includi_me=True, pubblici=True)
     servizi = ServizioSO.objects.filter(sede__in=sede_espansa)
+    operazioni = OperazioneSO.objects.filter(sede__in=sede_espansa)
 
     return [
         (RUBRICA_SALE_OPERATIVE, sede.espandi(includi_me=True, pubblici=True)),
         (GESTIONE_SERVIZI, servizi),
+        (GESTIONE_OPERAZIONI, operazioni),
         (GESTIONE_SO_SEDE, sede_espansa),
         (GESTIONE_REFERENTI_SO, servizi),
+        (GESTIONE_REFERENTI_OPERAZIONI_SO, operazioni),
     ]
 
 
@@ -391,7 +395,7 @@ def permessi_referente(attivita):
     ]
 
 
-def permessi_referente_so(servizio):
+def permessi_referente_servizio_so(servizio):
     """
     Permessi della delega di REFERENTE SO.
 
@@ -402,6 +406,20 @@ def permessi_referente_so(servizio):
     return [
         (RUBRICA_REFERENTI_SO, servizio.sede.espandi(includi_me=True, pubblici=True)),
         (GESTIONE_SERVIZI, ServizioSO.objects.filter(pk=servizio.pk))
+    ]
+
+
+def permessi_referente_operazione_so(operazione):
+    """
+    Permessi della delega di REFERENTE SO.
+
+    :param servizio: Il servizio di cui si e' referenti
+    :return: Lista di permessi.
+    """
+    from sala_operativa.models import OperazioneSO
+    return [
+        # (RUBRICA_REFERENTI_SO, operazione.sede.espandi(includi_me=True, pubblici=True)),
+        (GESTIONE_OPERAZIONI, OperazioneSO.objects.filter(pk=operazione.pk))
     ]
 
 
@@ -452,7 +470,8 @@ PERMESSI_FUNZIONI = (
     (DELEGATO_SO,               permessi_delegato_sala_operativa),
     (RESPONSABILE_AREA,         permessi_responsabile_area),
     (REFERENTE,                 permessi_referente),
-    (REFERENTE_SO,              permessi_referente_so),
+    (REFERENTE_SERVIZI_SO,      permessi_referente_servizio_so),
+    (REFERENTE_OPERAZIONE_SO,   permessi_referente_servizio_so),
     (DIRETTORE_CORSO,           permessi_direttore_corso),
     (RESPONSABILE_AUTOPARCO,    permessi_responsabile_autoparco),
     (REFERENTE_GRUPPO,          permessi_referente_gruppo),

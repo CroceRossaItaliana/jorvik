@@ -12,22 +12,25 @@ from django.shortcuts import redirect, get_object_or_404, HttpResponse
 from django.utils.safestring import mark_safe
 
 from anagrafica.costanti import NAZIONALE, LOCALE, PROVINCIALE, REGIONALE
-from anagrafica.permessi.applicazioni import REFERENTE_SO
+from anagrafica.permessi.applicazioni import REFERENTE_SERVIZI_SO, REFERENTE_OPERAZIONE_SO
 from anagrafica.permessi.costanti import (MODIFICA, COMPLETO, ERRORE_PERMESSI,
-      GESTIONE_SO_SEDE, GESTIONE_SERVIZI, GESTIONE_REFERENTI_SO, )
+                                          GESTIONE_SO_SEDE, GESTIONE_SERVIZI, GESTIONE_REFERENTI_SO,
+                                          GESTIONE_OPERAZIONI, GESTIONE_REFERENTI_OPERAZIONI_SO, )
 from autenticazione.funzioni import pagina_privata, pagina_pubblica
 from base.errori import errore_generico, messaggio_generico, errore_no_volontario
 from base.utils import poco_fa, timedelta_ore
 from posta.models import Messaggio
 from .utils import turni_raggruppa_giorno
-from .models import PartecipazioneSO, ServizioSO, TurnoSO, ReperibilitaSO, MezzoSO, PrenotazioneMMSO, DatoreLavoro
+from .models import PartecipazioneSO, ServizioSO, TurnoSO, ReperibilitaSO, MezzoSO, PrenotazioneMMSO, DatoreLavoro, \
+    OperazioneSO
 from .elenchi import ElencoPartecipantiTurno, ElencoPartecipantiAttivita
 from .forms import (ModificaServizioForm, ModificaTurnoForm, StatisticheServiziForm,
                     AggiungiPartecipantiForm, CreazioneTurnoForm, RipetiTurnoForm,
                     VolontarioReperibilitaForm, AggiungiReperibilitaPerVolontarioForm,
                     OrganizzaServizioReferenteForm, OrganizzaServizioForm, CreazioneMezzoSO,
                     AbbinaMezzoMaterialeForm, VolontarioReperibilitaModelForm,
-                    ModuloProfiloModificaAnagraficaDatoreLavoro)
+                    ModuloProfiloModificaAnagraficaDatoreLavoro, OrganizzaOperazioneReferenteForm,
+                    OrganizzaOperazioneForm)
 from django.contrib import messages
 
 INITIAL_INIZIO_FINE_PARAMS = {
@@ -226,7 +229,7 @@ def so_organizza(request, me):
 
         if form_referente_cd['scelta'] == form_referente.SONO_IO:
             # Io sono il referente.
-            servizio.aggiungi_delegato(REFERENTE_SO, me, firmatario=me, inizio=poco_fa())
+            servizio.aggiungi_delegato(REFERENTE_SERVIZI_SO, me, firmatario=me, inizio=poco_fa())
             return redirect(servizio.url_modifica)
 
         elif form_referente_cd['scelta'] == form_referente.SCEGLI_REFERENTI:
@@ -235,7 +238,7 @@ def so_organizza(request, me):
 
         else:
             persona = Persona.objects.get(pk=form_referente_cd['scelta'])
-            servizio.aggiungi_delegato(REFERENTE_SO, persona, firmatario=me, inizio=poco_fa())
+            servizio.aggiungi_delegato(REFERENTE_SERVIZI_SO, persona, firmatario=me, inizio=poco_fa())
             return redirect(servizio.url_modifica)
 
     context = {
@@ -261,13 +264,28 @@ def so_organizza_fatto(request, me, pk=None):
 
 
 @pagina_privata
+def so_organizza_operazione_fatto(request, me, pk=None):
+    operazione = get_object_or_404(OperazioneSO, pk=pk)
+    if not me.permessi_almeno(operazione, MODIFICA):
+        return redirect(ERRORE_PERMESSI)
+
+    return messaggio_generico(request, me,
+        titolo="Operazione organizzato",
+        messaggio="Abbiamo inviato un messaggio ai referenti che hai selezionato. "
+                  "Appena accederanno a Gaia, gli chiederemo di darci maggiori informazioni sul servizio, "
+                  "come gli orari dei turni e l'indirizzo.",
+        torna_titolo="Torna a Organizza operazione",
+        torna_url=reverse('so:gestisce_operazione'))
+
+
+@pagina_privata
 def so_referenti(request, me, pk=None, nuova=False):
     servizio = get_object_or_404(ServizioSO, pk=pk)
 
     if not me.permessi_almeno(servizio, MODIFICA):
         return redirect(ERRORE_PERMESSI)
 
-    delega = REFERENTE_SO
+    delega = REFERENTE_SERVIZI_SO
 
     if nuova:
         continua_url = reverse('so:organizza_fatto', args=[servizio.pk,])
@@ -280,6 +298,29 @@ def so_referenti(request, me, pk=None, nuova=False):
         "continua_url": continua_url
     }
     return 'so_referenti.html', context
+
+
+@pagina_privata
+def so_referenti_operazione(request, me, pk=None, nuova=False):
+    operazione = get_object_or_404(OperazioneSO, pk=pk)
+
+    if not me.permessi_almeno(operazione, MODIFICA):
+        return redirect(ERRORE_PERMESSI)
+
+    delega = REFERENTE_OPERAZIONE_SO
+
+    if nuova:
+        continua_url = reverse('so:organizza_operazione_fatto', args=[operazione.pk,])
+    else:
+        continua_url = reverse('so:gestisce_operazione')
+
+    context = {
+        "delega": delega,
+        "servizio": operazione,
+        "continua_url": continua_url
+    }
+    return 'so_referenti.html', context
+
 
 
 @pagina_privata
@@ -1198,3 +1239,131 @@ def utente_datore_di_lavoro_cancella(request, me, pk=None):
     datore.delete()
     messages.success(request, 'Il datore selezionato è stato rimosso.')
     return redirect(reverse('so:datore_di_lavoro'))
+
+
+@pagina_privata
+def so_organizza_operazione(request, me):
+    from anagrafica.models import Persona
+
+    sedi = me.oggetti_permesso(GESTIONE_SO_SEDE)
+    if not sedi:
+        messages.error(request, 'Non hai sedi con la delega SO.')
+        return redirect(reverse('so:index'))
+
+    form_referente = OrganizzaOperazioneReferenteForm(request.POST or None)
+
+    form = OrganizzaOperazioneForm(request.POST or None)
+    form.fields['sede'].queryset = sedi
+
+    if form.is_valid() and form_referente.is_valid():
+        cd = form.cleaned_data
+        form_referente_cd = form_referente.cleaned_data
+
+        operazione = form.save(commit=False)
+        operazione.sede = cd['sede']
+        operazione.estensione = cd['sede'].comitato
+        operazione.save()
+
+        if form_referente_cd['scelta'] == form_referente.SONO_IO:
+            # Io sono il referente.
+            operazione.aggiungi_delegato(REFERENTE_OPERAZIONE_SO, me, firmatario=me, inizio=poco_fa())
+            return redirect(operazione.url_modifica)
+
+        elif form_referente_cd['scelta'] == form_referente.SCEGLI_REFERENTI:
+            # Il referente è qualcun altro.
+            return redirect(reverse('so:organizza_referenti_operazione', args=[operazione.pk, ]))
+
+        # else:
+        #     persona = Persona.objects.get(pk=form_referente_cd['scelta'])
+        #     operazione.aggiungi_delegato(REFERENTE_SERVIZI_SO, persona, firmatario=me, inizio=poco_fa())
+        #     return redirect(operazione.url_modifica)
+
+    context = {
+        "modulo": form,
+        "modulo_referente": form_referente,
+    }
+    return 'so_organizza_operazione.html', context
+
+
+@pagina_privata
+def so_gestisci_operazione(request, me, stato="aperte"):
+
+    operazioni_tutti = me.oggetti_permesso(GESTIONE_OPERAZIONI, solo_deleghe_attive=False)
+
+    operazioni_aperti = operazioni_tutti.filter(archivia_emergenza=False)
+    operazioni_chiusi = operazioni_tutti.filter(archivia_emergenza=True)
+
+    operazioni = operazioni_aperti if stato == "aperte" else operazioni_chiusi
+
+    context = {
+        "stato": stato,
+        "operazioni_n": operazioni.filter(sede__estensione=NAZIONALE),
+        "operazioni_l": operazioni.filter(sede__estensione=LOCALE),
+        "operazioni_p": operazioni.filter(sede__estensione=PROVINCIALE),
+        "operazioni_r": operazioni.filter(sede__estensione=REGIONALE),
+        "operazioni_aperti": operazioni_aperti.count(),
+        "operazioni_chiusi": operazioni_chiusi.count(),
+        "servizio_referenti_modificabili": me.oggetti_permesso(GESTIONE_REFERENTI_OPERAZIONI_SO),
+    }
+    return 'so_gestisci_operazioni.html', context
+
+
+@pagina_privata(permessi=(GESTIONE_OPERAZIONI,))
+def so_scheda_informazioni_modifica_operazione(request, me, pk=None):
+    operazione = get_object_or_404(OperazioneSO, pk=pk)
+
+    if not me.permessi_almeno(operazione, MODIFICA):
+        if me.permessi_almeno(operazione, MODIFICA, solo_deleghe_attive=False):
+            # Se la mia delega e' sospesa per l'attivita', vai in prima pagina per riattivarla.
+            return redirect(operazione.url)
+        return redirect(ERRORE_PERMESSI)
+
+    sedi = me.oggetti_permesso(GESTIONE_SO_SEDE)
+    if not sedi:
+        messages.error(request, 'Non hai sedi con la delega SO.')
+        return redirect(reverse('so:index'))
+
+    form = OrganizzaOperazioneForm(request.POST or None, instance=operazione)
+    form.fields['sede'].queryset = sedi
+
+    if form.is_valid():
+        form.save()
+
+    context = {
+        "me": me,
+        "operazione": operazione,
+        "puo_modificare": True,
+        "modulo": form,
+    }
+    return 'so_scheda_informazioni_modifica_operazione.html', context
+
+
+@pagina_pubblica
+def so_scheda_informazioni_info_operazione(request, me=None, pk=None):
+    operazione = get_object_or_404(OperazioneSO, pk=pk)
+    puo_modificare = me and me.permessi_almeno(operazione, MODIFICA)
+
+    context = {
+        "operazione": operazione,
+        "puo_modificare": puo_modificare,
+        "me": me,
+    }
+    return 'so_scheda_operazione_informazioni.html', context
+
+
+@pagina_privata
+def so_scheda_cancella_operazione(request, me, pk):
+    operazione = get_object_or_404(OperazioneSO, pk=pk)
+    if not me and me.permessi_almeno(operazione, MODIFICA):
+        return redirect(ERRORE_PERMESSI)
+
+    titolo_messaggio = "Operazione cancellata"
+    testo_messaggio = "L'operazione è stato cancellato con successo."
+
+    operazione.delete()
+
+    return messaggio_generico(request, me,
+                              titolo=titolo_messaggio,
+                              messaggio=testo_messaggio,
+                              torna_titolo="Gestione operazione",
+                              torna_url=reverse('so:gestisce_operazione'), )

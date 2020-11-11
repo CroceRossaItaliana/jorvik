@@ -10,7 +10,7 @@ from django.utils.timezone import now
 
 from anagrafica.costanti import (LOCALE, PROVINCIALE, REGIONALE, NAZIONALE, )
 from anagrafica.models import Persona, Appartenenza, Sede
-from anagrafica.permessi.applicazioni import REFERENTE_SO
+from anagrafica.permessi.applicazioni import REFERENTE_SERVIZI_SO
 from anagrafica.permessi.costanti import GESTIONE_SERVIZI
 from base.files import PDF
 from base.geo import ConGeolocalizzazione
@@ -20,8 +20,67 @@ from base.utils import concept, poco_fa
 from posta.models import Messaggio
 from social.models import ConGiudizio
 
-class DatoreLavoro(ModelloSemplice, ConMarcaTemporale):
 
+class OperazioneSO(ModelloSemplice, ConMarcaTemporale, ConDelegati):
+
+    DIPARTIMENTO_PROTEZIONE_CIVILE = 'DIPARTIMENTO_PROTEZIONE_CIVILE'
+    REGIONE = 'REGIONE'
+    PREFETTURA = 'PREFETTURA'
+    PROVINCIA = 'PROVINCIA'
+    COMUNE = 'COMUNE'
+    CRI = 'CRI'
+    IFRC = 'IFRC'
+    ALTRO = 'ALTRO'
+
+    ATTIVATORE = (
+        (DIPARTIMENTO_PROTEZIONE_CIVILE, 'Dipartimento protezione civile'),
+        (REGIONE, 'Regione'),
+        (PREFETTURA, 'Prefettura'),
+        (PROVINCIA, 'Provincia'),
+        (COMUNE, 'Comune'),
+        (CRI, 'CRI'),
+        (IFRC, 'IFRC'),
+        (ALTRO, 'Altro'),
+    )
+
+    nome = models.CharField(max_length=100, db_index=True)
+    # evento = #TODO: da ricevere
+    impiego_bdl = models.BooleanField("L'attività prevede l'impiego dei Benefici di Legge", default=False, )
+    attivatore = models.CharField(
+        max_length=50,
+        db_index=True,
+        choices=ATTIVATORE,
+        default=DIPARTIMENTO_PROTEZIONE_CIVILE,
+        null=True,
+        blank=True
+    )
+    # stato_configurazione_cri = #TODO: da ricevere
+    # responsabile #TODO: delega
+    # funzioni: # TODO: modello
+    inizio = models.DateTimeField(default=timezone.now, db_index=True)
+    fine = models.DateTimeField(db_index=True, blank=True, null=True)
+    operazione = models.ForeignKey("self", on_delete=models.PROTECT, blank=True, null=True)
+    archivia_emergenza = models.BooleanField(default=False)
+    # area_territoriale = # TODO: anche sedi non in gaia
+    sede = models.ForeignKey('anagrafica.Sede', on_delete=models.PROTECT)
+
+    def __str__(self):
+        return self.nome
+
+    @property
+    def url(self):
+        return reverse('so:operazione_info', args=[self.pk, ])
+
+    @property
+    def url_modifica(self):
+        return reverse('so:operazione_modifica', args=[self.pk, ])
+
+    @property
+    def url_cancella(self):
+        return reverse('so:operazione_cancella', args=[self.pk, ])
+
+
+class DatoreLavoro(ModelloSemplice, ConMarcaTemporale):
     nominativo = models.CharField(max_length=25, default="", db_index=True, blank=True, null=True)
     ragione_sociale = models.CharField(max_length=25, default="", db_index=True, blank=True, null=True)
     partita_iva = models.CharField(max_length=11, default="", db_index=True, blank=True, null=True)
@@ -40,7 +99,7 @@ class DatoreLavoro(ModelloSemplice, ConMarcaTemporale):
 
 
 class ServizioSO(ModelloSemplice, ConGeolocalizzazione, ConMarcaTemporale,
-        ConGiudizio, ConAllegati, ConDelegati, ConStorico):
+                 ConGiudizio, ConAllegati, ConDelegati, ConStorico):
     BOZZA = 'B'
     VISIBILE = 'V'
     STATO = (
@@ -58,10 +117,10 @@ class ServizioSO(ModelloSemplice, ConGeolocalizzazione, ConMarcaTemporale,
     nome = models.CharField(max_length=255, default="Nuovo servizio", db_index=True)
     sede = models.ForeignKey('anagrafica.Sede', related_name='servizio', on_delete=models.PROTECT)
     estensione = models.ForeignKey('anagrafica.Sede', null=True, default=None,
-        related_name='servizio_estensione', on_delete=models.PROTECT)
+                                   related_name='servizio_estensione', on_delete=models.PROTECT)
     stato = models.CharField(choices=STATO, default=BOZZA, max_length=1, db_index=True)
     apertura = models.CharField(choices=APERTURA, default=APERTA, max_length=1, db_index=True)
-    impiego_bdl = models.BooleanField("L'attività prevede l'impiego dei Benefici di Legge", default=False,)
+    impiego_bdl = models.BooleanField("L'attività prevede l'impiego dei Benefici di Legge", default=False, )
     descrizione = models.TextField(blank=True)
     meta = JSONField(null=True, blank=True)
 
@@ -163,7 +222,7 @@ class ServizioSO(ModelloSemplice, ConGeolocalizzazione, ConMarcaTemporale,
         return not self.turni_so.all().exists()
 
     def referenti_attuali(self, al_giorno=None):
-        return self.delegati_attuali(tipo=REFERENTE_SO, al_giorno=al_giorno)
+        return self.delegati_attuali(tipo=REFERENTE_SERVIZI_SO, al_giorno=al_giorno)
 
     def conferma_servizio(self):
         self.stato = ServizioSO.VISIBILE
@@ -310,8 +369,8 @@ class ServizioSO(ModelloSemplice, ConGeolocalizzazione, ConMarcaTemporale,
         return Persona.objects.filter(
             pk__in=PartecipazioneSO.con_esito_ok(turno__attivita=self).
                 values_list('reperibilita__persona', flat=True)
-        ).\
-            distinct('nome', 'cognome', 'codice_fiscale').\
+        ). \
+            distinct('nome', 'cognome', 'codice_fiscale'). \
             order_by('nome', 'cognome', 'codice_fiscale')
 
     @property
@@ -443,7 +502,8 @@ class TurnoSO(ModelloSemplice, ConMarcaTemporale, ConGiudizio):
     inizio = models.DateTimeField("Data e ora di inizio", db_index=True, null=False)
     fine = models.DateTimeField("Data e ora di fine", db_index=True, null=True, blank=True, default=None)
     minimo = models.SmallIntegerField(verbose_name="Num. minimo di partecipanti", db_index=True, default=1)
-    massimo = models.SmallIntegerField(verbose_name="Num. massimo di partecipanti", db_index=True, blank=True, null=True, default=None)
+    massimo = models.SmallIntegerField(verbose_name="Num. massimo di partecipanti", db_index=True, blank=True,
+                                       null=True, default=None)
 
     PER_PAGINA = 10
 
@@ -663,14 +723,15 @@ class TurnoSO(ModelloSemplice, ConMarcaTemporale, ConGiudizio):
         """
 
         if PartecipazioneSO.objects.filter(
-            reperibilita__persona=reperibilita.persona,
-            reperibilita__inizio__gte=reperibilita.inizio,
-            reperibilita__fine__lte=reperibilita.inizio,
-            stato=PartecipazioneSO.PARTECIPA
+                reperibilita__persona=reperibilita.persona,
+                reperibilita__inizio__gte=reperibilita.inizio,
+                reperibilita__fine__lte=reperibilita.inizio,
+                stato=PartecipazioneSO.PARTECIPA
         ).exists():
             return None, False
         else:
-            partecipazione_al_turno = PartecipazioneSO(turno=self, reperibilita=reperibilita, stato=PartecipazioneSO.PARTECIPA)
+            partecipazione_al_turno = PartecipazioneSO(turno=self, reperibilita=reperibilita,
+                                                       stato=PartecipazioneSO.PARTECIPA)
             partecipazione_al_turno.inizio = self.inizio
             partecipazione_al_turno.fine = self.fine
             partecipazione_al_turno.save()
@@ -708,10 +769,10 @@ class TurnoSO(ModelloSemplice, ConMarcaTemporale, ConGiudizio):
     class Meta:
         verbose_name = "Turno di Servizio"
         verbose_name_plural = "Turni dei Servizi"
-        ordering = ['inizio', 'fine', 'id',]
+        ordering = ['inizio', 'fine', 'id', ]
         index_together = [
-            ['inizio', 'fine',],
-            ['attivita', 'inizio',],
+            ['inizio', 'fine', ],
+            ['attivita', 'inizio', ],
             ['attivita', 'inizio', 'fine'],
         ]
         permissions = (
@@ -873,8 +934,8 @@ class PrenotazioneMMSO(ModelloSemplice, ConMarcaTemporale, ConStorico):
             Q(mezzo=mezzo) & (
                     Q(inizio=inizio, fine=fine)
                     | (
-                        Q(inizio__lte=inizio, fine__gte=inizio)
-                        | Q(inizio__lte=fine, fine__gte=fine)
+                            Q(inizio__lte=inizio, fine__gte=inizio)
+                            | Q(inizio__lte=fine, fine__gte=fine)
                     )
             )
         )
@@ -886,7 +947,7 @@ class PrenotazioneMMSO(ModelloSemplice, ConMarcaTemporale, ConStorico):
 
     @classmethod
     def del_servizio(cls, servizio):
-        return cls.objects.filter(servizio=servizio).order_by('-creazione',)
+        return cls.objects.filter(servizio=servizio).order_by('-creazione', )
 
     @property
     def passata(self):
@@ -895,4 +956,3 @@ class PrenotazioneMMSO(ModelloSemplice, ConMarcaTemporale, ConStorico):
     class Meta:
         verbose_name = 'Prenotazione Mezzo o materiale'
         verbose_name_plural = 'Prenotazione Mezzi e materiali'
-

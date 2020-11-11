@@ -21,7 +21,8 @@ DELEGATO_OBIETTIVO_5 = 'O5'
 DELEGATO_OBIETTIVO_6 = 'O6'
 RESPONSABILE_AREA = 'RA'
 REFERENTE = 'RE'
-REFERENTE_SO = 'RS'
+REFERENTE_SERVIZI_SO = 'RS'
+REFERENTE_OPERAZIONE_SO = 'RS'
 REFERENTE_GRUPPO = 'GR'
 DELEGATO_CO = 'CO'
 DELEGATO_SO = 'SO'
@@ -60,7 +61,8 @@ PERMESSI_NOMI = (
     (DELEGATO_OBIETTIVO_6,      "Delegato Obiettivo VI (Sviluppo)"),
     (RESPONSABILE_AREA,         "Responsabile d'Area"),
     (REFERENTE,                 "Referente Attività"),
-    (REFERENTE_SO,              "Referente Servizio SO"),
+    (REFERENTE_SERVIZI_SO,      "Referente Servizio SO"),
+    (REFERENTE_OPERAZIONE_SO,   "Referente Operazione SO"),
     (REFERENTE_GRUPPO,          "Referente Gruppo"),
     (DELEGATO_CO,               "Delegato Centrale Operativa"),
     (DELEGATO_SO,               "Delegato Sala Operativa"),
@@ -98,7 +100,8 @@ RUBRICHE_TITOLI = OrderedDict((
     # ('responsabili_area', (RESPONSABILE_AREA, 'Responsabili d\'Area', False)), rimosso perché non utile al momento
     ('referenti_attivita', (REFERENTE, 'Referenti Attività', False)),
     ('referenti_gruppi', (REFERENTE, 'Referenti Gruppi', False)),
-    ('referenti_so', (REFERENTE_SO, 'Referenti Servizi SO', False)),
+    ('referenti_servizio_so', (REFERENTE_SERVIZI_SO, 'Referenti Servizi SO', False)),
+    ('referenti_operazione_so', (REFERENTE_OPERAZIONE_SO, 'Referenti Operazione SO', False)),
     ('centrali_operative', (DELEGATO_CO, 'Referenti Centrale Operativa', True)),
     ('sale_operative', (DELEGATO_SO, 'Delegati Sale Operativa', True)),
     ('responsabili_formazione', (RESPONSABILE_FORMAZIONE, 'Referenti Responsabili Formazione', True)),

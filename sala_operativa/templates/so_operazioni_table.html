@@ -1,0 +1,49 @@
+<table class="table table-responsive table-striped">
+    <thead>
+    <tr>
+        <th>Operazione</th>
+        <th>Creazione</th>
+        <th>Azioni</th>
+    </tr>
+    </thead>
+
+    <tbody>
+    {% for a in attivita %}
+        <tr>
+            <td class="piu-piccolo" style="width: 40%;">
+                <span class="piu-grande">{{ a.nome }}</span><br/>
+                <i class="fa fa-fw fa-map-marker text-muted"></i> {{ a.sede }}<br/>
+{#                <i class="fa fa-fw fa-map-marker text-muted"></i> <a#}
+{#                    href="{{ a.url_mappa }}">{{ a.locazione|default:"Nessuna posizione" }}</a><br/>#}
+                <i class="fa fa-fw fa-info-circle text-muted"></i> {{ a.delegati_attuali|join:", "|default:"(Nessun referente selezionato)" }}<br>
+                L'impiego con i Benefici di legge: <strong>{% if a.impiego_bdl %}Si{% else %}
+                No{% endif %}</strong>
+            </td>
+
+            <td>
+                <i class="fa fa-fw fa-clock text-muted"></i> {{ a.creazione|date:"SHORT_DATETIME_FORMAT" }}<br/>
+            </td>
+
+            <td>
+                {% if a in servizio_referenti_modificabili %}
+                    <a href="{{ a.url_cancella }}"><i class="far fa-trash-alt"></i> cancella
+                        operazione</a><br/>
+                {% endif %}
+
+                <a href="{{ a.url_modifica }}"><i class="fas fa-pencil-alt"></i> modifica info</a><br/>
+
+                {% if a in servizio_referenti_modificabili %}
+                    <a href="{{ a.url_referenti }}"><i class="fas fa-pencil-alt"></i> modifica referenti</a>
+                    <br/>
+                {% endif %}
+            </td>
+        </tr>
+    {% empty %}
+        <tr class="alert alert-warning">
+            <td colspan="4">
+                <p><i class="fa fa-fw fa-info-circle"></i> Nessuna operazione organizzato.</p>
+            </td>
+        </tr>
+    {% endfor %}
+    </tbody>
+</table>

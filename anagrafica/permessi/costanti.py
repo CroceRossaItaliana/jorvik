@@ -6,7 +6,7 @@ from ..permessi.applicazioni import (PRESIDENTE,
                                      RESPONSABILE_AREA,
                                      REFERENTE,
                                      REFERENTE_GRUPPO,
-                                     REFERENTE_SO,
+                                     REFERENTE_SERVIZI_SO,
                                      DIRETTORE_CORSO,
                                      RESPONSABILE_AUTOPARCO,
                                      UFFICIO_SOCI, UFFICIO_SOCI_CM, )
@@ -71,7 +71,9 @@ GESTIONE_GRUPPI = "GESTIONE_GRUPPI"
 # SALA OPERATIVA
 GESTIONE_SO_SEDE = "GESTIONE_SALA_OPERATIVA_SEDE"
 GESTIONE_SERVIZI = "GESTIONE_SERVIZI"
+GESTIONE_OPERAZIONI = "GESTIONE_OPERAZIONI"
 GESTIONE_REFERENTI_SO = "GESTIONE_REFERENTI_SO"
+GESTIONE_REFERENTI_OPERAZIONI_SO = "GESTIONE_REFERENTI_OPERAZIONI_SO"
 RUBRICA_SALE_OPERATIVE = "RUBRICA_SALE_OPERATIVE"
 
 # CO
@@ -120,7 +122,9 @@ PERMESSI_OGGETTI = (
     # SALA OPERATIVA
     (GESTIONE_SO_SEDE,          ('anagrafica', 'Sede')),  # accesso a SO in generale
     (GESTIONE_SERVIZI,          ('sala_operativa', 'ServizioSO')),  # permesso per creare/gestire servizio
+    (GESTIONE_OPERAZIONI,       ('sala_operativa', 'OperazioneSO')),  # permesso per creare/gestire servizio
     (GESTIONE_REFERENTI_SO,     ('sala_operativa', 'ServizioSO')),  # permesso per gestire referenti dei servizi
+    (GESTIONE_REFERENTI_OPERAZIONI_SO,     ('sala_operativa', 'OperazioniSO')),  # permesso per gestire referenti dei servizi
     (RUBRICA_SALE_OPERATIVE,    ('anagrafica', 'Sede')),
     (RUBRICA_REFERENTI_SO,      ('sala_operativa', 'ServizioSO')),
 
@@ -159,7 +163,7 @@ DELEGHE_OGGETTI = (
     (REFERENTE,                 ('attivita', 'Attivita', 'sede__in')),
 
     # SO
-    (REFERENTE_SO,              ('sala_operativa', 'ServizioSO', 'sede__in')),
+    (REFERENTE_SERVIZI_SO,              ('sala_operativa', 'ServizioSO', 'sede__in')),
 
     # FORMAZIONE
     (DIRETTORE_CORSO,           ('formazione', 'CorsoBase', 'sede__in')),

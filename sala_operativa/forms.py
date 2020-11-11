@@ -11,7 +11,7 @@ from anagrafica.costanti import LOCALE
 from anagrafica.models import Sede
 from anagrafica.permessi.costanti import GESTIONE_SO_SEDE
 from base.wysiwyg import WYSIWYGSemplice
-from .models import ServizioSO, TurnoSO, ReperibilitaSO, MezzoSO, PrenotazioneMMSO, DatoreLavoro
+from .models import ServizioSO, TurnoSO, ReperibilitaSO, MezzoSO, PrenotazioneMMSO, DatoreLavoro, OperazioneSO
 
 
 class VolontarioReperibilitaForm(Form):
@@ -205,7 +205,29 @@ class OrganizzaServizioForm(ModelForm):
         self.fields['nome'].widget = forms.TextInput(attrs={})  # to override required attr
 
 
+class OrganizzaOperazioneForm(ModelForm):
+    class Meta:
+        model = OperazioneSO
+        fields = ["nome", "impiego_bdl", "attivatore", "inizio", "fine", "operazione", "sede"]
+
+
 class OrganizzaServizioReferenteForm(forms.Form):
+    SONO_IO = "IO"
+    SCEGLI_REFERENTI = "SC"
+    SCELTA = (
+        (None, "-- Scegli un'opzione --"),
+        (SONO_IO, "Sarò io il referente per questa attività"),
+        (SCEGLI_REFERENTI, "Fammi scegliere uno o più referenti che gestiranno "
+                           "quest'attività")
+    )
+
+    scelta = forms.ChoiceField(
+        choices=SCELTA,
+        help_text="Scegli l'opzione appropriata."
+    )
+
+
+class OrganizzaOperazioneReferenteForm(forms.Form):
     SONO_IO = "IO"
     SCEGLI_REFERENTI = "SC"
     SCELTA = (

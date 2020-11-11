@@ -19,6 +19,19 @@ urlpatterns = [
     url(r'^organizza/(?P<pk>[0-9\-]+)/referenti/$', views.so_referenti, {"nuova": True}, name='organizza_referenti'),
     url(r'^organizza/(?P<pk>[0-9\-]+)/fatto/$', views.so_organizza_fatto, name='organizza_fatto'),
 
+    # Organizza
+    url(r'^operazione/$', views.so_organizza_operazione, name='organizza-operazione'),
+    url(r'^operazione/(?P<pk>[0-9\-]+)/referenti/$', views.so_referenti_operazione, {"nuova": True}, name='organizza_referenti_operazione'),
+    url(r'^operazione/(?P<pk>[0-9\-]+)/fatto/$', views.so_organizza_operazione_fatto, name='organizza_operazione_fatto'),
+
+    # Gestisci operazioni
+    url(r'^gestisci-operazione/$', views.so_gestisci_operazione, name='gestisce_operazione'),
+    url(r'^gestisci-operazione/chiusi/$', views.so_gestisci_operazione, {"stato": "chiuse"}, name='gestisce_operazione_chiusi'),
+    url(r'^gestisci/%s/modifica/$' % pk, views.so_scheda_informazioni_modifica_operazione, name='operazione_modifica'),
+    url(r'^gestisci/%s/info/$' % pk, views.so_scheda_informazioni_info_operazione, name='operazione_info'),
+    url(r'^gestisci/%s/cancella/$' % pk, views.so_scheda_cancella_operazione, name='operazione_cancella'),
+
+
     # Gestisci servizi
     url(r'^servizi/$', views.so_gestisci, {"stato": "aperte"}, name='gestisci'),
     url(r'^servizi/chiusi/$', views.so_gestisci, {"stato": "chiuse"}, name='gestisci_chiuse'),
@@ -50,6 +63,7 @@ urlpatterns = [
     url(r'^servizio/%s/report/$' % pk, views.so_scheda_report, name='servizio_report'),
     url(r'^servizio/%s/attestati/$' % pk, views.so_scheda_attestati, name='servizio_attestati'),
     url(r'^servizio/%s/attestato/(?P<partecipazione_pk>[0-9]+)/$' % pk, views.so_scheda_scarica_attestato, name='servizio_scarica_attestato'),
+
 
     # Scheda Mezzi e Materiali
     url(r'^scheda/(?P<pk>[0-9]+)/mm/$', views.so_scheda_mm, name='scheda_mm'),
