@@ -18,17 +18,19 @@ def sala_operativa(me):
                 ("Calendario", "fa-calendar", reverse('so:calendario')),
                 ("Datore di lavore", "fa-edit", reverse('so:datore_di_lavoro')),
             )),
-            ('Sala Operativa', (
+            ('Sala Operativa', ()) if gestione_so or gestione_servizi or gestione_operazioni else None,
+            ('Operazione', (
                 ("Crea Operazione", "fa-asterisk", reverse('so:organizza-operazione')) if gestione_so else None,
                 ("Organizza Operazione", "fa-list", reverse('so:gestisce_operazione')) if gestione_so or gestione_operazioni else None,
-
+            )) if gestione_so or gestione_operazioni else None,
+            ('Servizio', (
                 ("Crea servizio", "fa-asterisk", reverse('so:organizza')) if gestione_so else None,
                 ("Organizza Servizio", "fa-list", reverse('so:gestisci')) if gestione_so or gestione_servizi else None,
                 ("Materiali e Mezzi", "fas fa-ambulance", reverse('so:mezzi')) if gestione_so else None,
-
-                ("Reperibilità dei Volontari", 'fa-thumb-tack', reverse('so:reperibilita_backup')) if gestione_so else None,
+            )) if gestione_so or gestione_servizi else None,
+            ('', (
                 ("Statistiche", "fa-bar-chart", reverse('so:statistiche')) if gestione_so else None,
-            )) if gestione_so or gestione_servizi or gestione_operazioni else None
+            )) if gestione_so or gestione_servizi or gestione_operazioni else None,
         )
     else:
         return None
