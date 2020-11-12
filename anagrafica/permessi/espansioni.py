@@ -41,7 +41,8 @@ from anagrafica.permessi.costanti import (GESTIONE_SOCI, ELENCHI_SOCI,
                                           GESTIONE_SERVIZI,
                                           GESTIONE_REFERENTI_SO,
                                           GESTIONE_SOCI_CM,
-                                          GESTIONE_SOCI_IIVV, GESTIONE_OPERAZIONI, GESTIONE_REFERENTI_OPERAZIONI_SO, )
+                                          GESTIONE_SOCI_IIVV, GESTIONE_OPERAZIONI, GESTIONE_REFERENTI_OPERAZIONI_SO,
+                                          GESTIONE_FUNZIONI, )
 
 """            Questo file gestisce la espansione dei permessi in Gaia.
  ===============================================================================
@@ -445,6 +446,16 @@ def espandi_gestione_operazioni(qs_operazioni, al_giorno=None):
         return []
 
 
+def espandi_gestione_funzioni(qs_funzioni, al_giorno=None):
+
+    try:
+        return [
+            (MODIFICA, qs_funzioni),
+        ]
+    except (AttributeError, ValueError, KeyError, TypeError):
+        return []
+
+
 ESPANDI_PERMESSI = {
     # SOCI
     GESTIONE_SOCI: espandi_gestione_soci,
@@ -469,6 +480,7 @@ ESPANDI_PERMESSI = {
     GESTIONE_REFERENTI_OPERAZIONI_SO: espandi_gestione_referenti_so,
     GESTIONE_SERVIZI: espandi_gestione_servizi,
     GESTIONE_OPERAZIONI: espandi_gestione_operazioni,
+    GESTIONE_FUNZIONI: espandi_gestione_operazioni,
 
     # FORMAZIONE
     GESTIONE_CORSI_SEDE: espandi_gestione_corsi_sede,

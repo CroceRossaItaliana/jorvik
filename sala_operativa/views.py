@@ -272,7 +272,7 @@ def so_organizza_operazione_fatto(request, me, pk=None):
     return messaggio_generico(request, me,
         titolo="Operazione organizzato",
         messaggio="Abbiamo inviato un messaggio ai referenti che hai selezionato. "
-                  "Appena accederanno a Gaia, gli chiederemo di darci maggiori informazioni sul servizio, "
+                  "Appena accederanno a Gaia, gli chiederemo di darci maggiori informazioni sull'operazione, "
                   "come gli orari dei turni e l'indirizzo.",
         torna_titolo="Torna a Organizza operazione",
         torna_url=reverse('so:gestisce_operazione'))

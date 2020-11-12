@@ -21,6 +21,36 @@ from posta.models import Messaggio
 from social.models import ConGiudizio
 
 
+class FunzioneSO(ModelloSemplice, ConMarcaTemporale, ConDelegati):
+
+    COORDINAMENTO = 'COORDINAMENTO'
+    OPERAZIONE_SOCCORSO_E_SANITA = 'OPERAZIONE_SOCCORSO_E_SANITA'
+    OPERAZIONI_SOCIO_ASSISTENZIALI = 'OPERAZIONI_SOCIO_ASSISTENZIALI'
+    PIANIFICAZIONE = 'PIANIFICAZIONE'
+    LOGISTICA = 'LOGISTICA'
+    AMMINISTRAZIONE_E_SEGRATERIA = 'AMMINISTRAZIONE_E_SEGRATERIA'
+
+    SETTORE = (
+        (COORDINAMENTO, 'Coordinamento'),
+        (OPERAZIONE_SOCCORSO_E_SANITA, 'Operazione soccorso e sanitarie'),
+        (OPERAZIONI_SOCIO_ASSISTENZIALI, 'Operazioni socio assistenziali'),
+        (PIANIFICAZIONE, 'Pianificazione'),
+        (LOGISTICA, 'Logistica'),
+        (AMMINISTRAZIONE_E_SEGRATERIA, 'Amministrazione e segreteria'),
+    )
+
+    nome = models.CharField(max_length=100, db_index=True)
+    settore = models.CharField(
+        max_length=50,
+        db_index=True,
+        choices=SETTORE,
+        default=COORDINAMENTO,
+        null=True,
+        blank=True
+    )
+    creato_da = models.ForeignKey(Persona, null=True, blank=True)
+
+
 class OperazioneSO(ModelloSemplice, ConMarcaTemporale, ConDelegati):
 
     DIPARTIMENTO_PROTEZIONE_CIVILE = 'DIPARTIMENTO_PROTEZIONE_CIVILE'
@@ -55,7 +85,6 @@ class OperazioneSO(ModelloSemplice, ConMarcaTemporale, ConDelegati):
         blank=True
     )
     # stato_configurazione_cri = #TODO: da ricevere
-    # responsabile #TODO: delega
     # funzioni: # TODO: modello
     inizio = models.DateTimeField(default=timezone.now, db_index=True)
     fine = models.DateTimeField(db_index=True, blank=True, null=True)
