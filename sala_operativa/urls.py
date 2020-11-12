@@ -31,13 +31,13 @@ urlpatterns = [
     url(r'^gestisci-operazione/%s/info/$' % pk, views.so_scheda_informazioni_info_operazione, name='operazione_info'),
     url(r'^gestisci-operazione/%s/cancella/$' % pk, views.so_scheda_cancella_operazione, name='operazione_cancella'),
 
-    # # Organizza Funzione
-    # url(r'^funzione/$', views.so_organizza_funzione, name='organizza_funzione'),
-    # url(r'^funzione/(?P<pk>[0-9\-]+)/referenti/$', views.so_referenti_funzione, {"nuova": True}, name='organizza_referenti_funzione'),
-    # url(r'^funzione/(?P<pk>[0-9\-]+)/fatto/$', views.so_organizza_funzione_fatto, name='organizza_funzione_fatto'),
-    #
-    # # Gestisci operazioni
-    # url(r'^gestisci-funzione/$', views.so_gestisci_funzione, name='gestisce_funzione'),
+    # Organizza Funzione
+    url(r'^funzione/$', views.so_organizza_funzione, name='organizza_funzione'),
+    url(r'^funzione/(?P<pk>[0-9\-]+)/referenti/$', views.so_referenti_funzione, {"nuova": True}, name='organizza_referenti_funzione'),
+    url(r'^funzione/(?P<pk>[0-9\-]+)/fatto/$', views.so_organizza_funzione_fatto, name='organizza_funzione_fatto'),
+
+    # Gestisci operazioni
+    url(r'^gestisci-funzione/$', views.so_gestisci_funzione, name='gestisce_funzione'),
     # url(r'^gestisci-funzione/chiusi/$', views.so_gestisci_funzione, {"stato": "chiuse"}, name='gestisce_funzione_chiusi'),
     # url(r'^gestisci-funzione/%s/modifica/$' % pk, views.so_scheda_informazioni_modifica_funzione, name='funzione_modifica'),
     # url(r'^gestisci-funzione/%s/info/$' % pk, views.so_scheda_informazioni_info_funzione, name='funzione_info'),

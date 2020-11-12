@@ -42,7 +42,7 @@ from anagrafica.permessi.costanti import (GESTIONE_SOCI, ELENCHI_SOCI,
                                           GESTIONE_REFERENTI_SO,
                                           GESTIONE_SOCI_CM,
                                           GESTIONE_SOCI_IIVV, GESTIONE_OPERAZIONI, GESTIONE_REFERENTI_OPERAZIONI_SO,
-                                          GESTIONE_FUNZIONI, )
+                                          GESTIONE_FUNZIONI, GESTIONE_REFERENTI_FUNZIONI_SO, )
 
 """            Questo file gestisce la espansione dei permessi in Gaia.
  ===============================================================================
@@ -478,6 +478,7 @@ ESPANDI_PERMESSI = {
     GESTIONE_SO_SEDE: espandi_gestione_so_sede,
     GESTIONE_REFERENTI_SO: espandi_gestione_referenti_so,
     GESTIONE_REFERENTI_OPERAZIONI_SO: espandi_gestione_referenti_so,
+    GESTIONE_REFERENTI_FUNZIONI_SO: espandi_gestione_referenti_so,
     GESTIONE_SERVIZI: espandi_gestione_servizi,
     GESTIONE_OPERAZIONI: espandi_gestione_operazioni,
     GESTIONE_FUNZIONI: espandi_gestione_operazioni,

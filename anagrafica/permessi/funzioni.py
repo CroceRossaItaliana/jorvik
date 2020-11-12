@@ -47,7 +47,7 @@ from ..permessi.costanti import (GESTIONE_SOCI, ELENCHI_SOCI, \
                                  RUBRICA_COMMISSARI, GESTIONE_SERVIZI,
                                  GESTIONE_REFERENTI_SO,
                                  GESTIONE_SOCI_CM, GESTIONE_SOCI_IIVV, GESTIONE_OPERAZIONI,
-                                 GESTIONE_REFERENTI_OPERAZIONI_SO, GESTIONE_FUNZIONI, )
+                                 GESTIONE_REFERENTI_OPERAZIONI_SO, GESTIONE_FUNZIONI, GESTIONE_REFERENTI_FUNZIONI_SO, )
 
 """
 Questo modulo contiene tutte le funzioni per testare i permessi
@@ -369,6 +369,7 @@ def permessi_delegato_sala_operativa(sede):
         (GESTIONE_SO_SEDE, sede_espansa),
         (GESTIONE_REFERENTI_SO, servizi),
         (GESTIONE_REFERENTI_OPERAZIONI_SO, operazioni),
+        (GESTIONE_REFERENTI_FUNZIONI_SO, funzioni),
     ]
 
 

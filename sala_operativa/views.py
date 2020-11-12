@@ -12,17 +12,18 @@ from django.shortcuts import redirect, get_object_or_404, HttpResponse
 from django.utils.safestring import mark_safe
 
 from anagrafica.costanti import NAZIONALE, LOCALE, PROVINCIALE, REGIONALE
-from anagrafica.permessi.applicazioni import REFERENTE_SERVIZI_SO, REFERENTE_OPERAZIONE_SO
+from anagrafica.permessi.applicazioni import REFERENTE_SERVIZI_SO, REFERENTE_OPERAZIONE_SO, REFERENTE_FUNZIONE_SO
 from anagrafica.permessi.costanti import (MODIFICA, COMPLETO, ERRORE_PERMESSI,
                                           GESTIONE_SO_SEDE, GESTIONE_SERVIZI, GESTIONE_REFERENTI_SO,
-                                          GESTIONE_OPERAZIONI, GESTIONE_REFERENTI_OPERAZIONI_SO, )
+                                          GESTIONE_OPERAZIONI, GESTIONE_REFERENTI_OPERAZIONI_SO, GESTIONE_FUNZIONI,
+                                          GESTIONE_REFERENTI_FUNZIONI_SO, )
 from autenticazione.funzioni import pagina_privata, pagina_pubblica
 from base.errori import errore_generico, messaggio_generico, errore_no_volontario
 from base.utils import poco_fa, timedelta_ore
 from posta.models import Messaggio
 from .utils import turni_raggruppa_giorno
 from .models import PartecipazioneSO, ServizioSO, TurnoSO, ReperibilitaSO, MezzoSO, PrenotazioneMMSO, DatoreLavoro, \
-    OperazioneSO
+    OperazioneSO, FunzioneSO
 from .elenchi import ElencoPartecipantiTurno, ElencoPartecipantiAttivita
 from .forms import (ModificaServizioForm, ModificaTurnoForm, StatisticheServiziForm,
                     AggiungiPartecipantiForm, CreazioneTurnoForm, RipetiTurnoForm,
@@ -30,7 +31,7 @@ from .forms import (ModificaServizioForm, ModificaTurnoForm, StatisticheServiziF
                     OrganizzaServizioReferenteForm, OrganizzaServizioForm, CreazioneMezzoSO,
                     AbbinaMezzoMaterialeForm, VolontarioReperibilitaModelForm,
                     ModuloProfiloModificaAnagraficaDatoreLavoro, OrganizzaOperazioneReferenteForm,
-                    OrganizzaOperazioneForm)
+                    OrganizzaOperazioneForm, OrganizzaFunzioneReferenteForm, OrganizzaFunzioneForm)
 from django.contrib import messages
 
 INITIAL_INIZIO_FINE_PARAMS = {
@@ -1243,7 +1244,6 @@ def utente_datore_di_lavoro_cancella(request, me, pk=None):
 
 @pagina_privata
 def so_organizza_operazione(request, me):
-    from anagrafica.models import Persona
 
     sedi = me.oggetti_permesso(GESTIONE_SO_SEDE)
     if not sedi:
@@ -1272,11 +1272,6 @@ def so_organizza_operazione(request, me):
         elif form_referente_cd['scelta'] == form_referente.SCEGLI_REFERENTI:
             # Il referente è qualcun altro.
             return redirect(reverse('so:organizza_referenti_operazione', args=[operazione.pk, ]))
-
-        # else:
-        #     persona = Persona.objects.get(pk=form_referente_cd['scelta'])
-        #     operazione.aggiungi_delegato(REFERENTE_SERVIZI_SO, persona, firmatario=me, inizio=poco_fa())
-        #     return redirect(operazione.url_modifica)
 
     context = {
         "modulo": form,
@@ -1367,3 +1362,88 @@ def so_scheda_cancella_operazione(request, me, pk):
                               messaggio=testo_messaggio,
                               torna_titolo="Gestione operazione",
                               torna_url=reverse('so:gestisce_operazione'), )
+
+
+@pagina_privata
+def so_organizza_funzione(request, me):
+
+    sedi = me.oggetti_permesso(GESTIONE_SO_SEDE)
+    if not sedi:
+        messages.error(request, 'Non hai sedi con la delega SO.')
+        return redirect(reverse('so:index'))
+
+    form_referente = OrganizzaFunzioneReferenteForm(request.POST or None)
+
+    form = OrganizzaFunzioneForm(request.POST or None)
+
+    if form.is_valid() and form_referente.is_valid():
+        cd = form.cleaned_data
+        form_referente_cd = form_referente.cleaned_data
+
+        operazione = form.save(commit=False)
+        operazione.save()
+
+        if form_referente_cd['scelta'] == form_referente.SONO_IO:
+            # Io sono il referente.
+            operazione.aggiungi_delegato(REFERENTE_FUNZIONE_SO, me, firmatario=me, inizio=poco_fa())
+            return redirect(operazione.url_gestione)
+
+        elif form_referente_cd['scelta'] == form_referente.SCEGLI_REFERENTI:
+            # Il referente è qualcun altro.
+            return redirect(reverse('so:organizza_referenti_funzione', args=[operazione.pk, ]))
+
+    context = {
+        "modulo": form,
+        "modulo_referente": form_referente,
+    }
+    return 'so_organizza_funzione.html', context
+
+
+@pagina_privata
+def so_referenti_funzione(request, me, pk=None, nuova=False):
+    funzione = get_object_or_404(FunzioneSO, pk=pk)
+
+    if not me.permessi_almeno(funzione, MODIFICA):
+        return redirect(ERRORE_PERMESSI)
+
+    delega = REFERENTE_OPERAZIONE_SO
+
+    if nuova:
+        continua_url = reverse('so:organizza_funzione_fatto', args=[funzione.pk,])
+    else:
+        continua_url = reverse('so:gestisce_funzione')
+
+    context = {
+        "delega": delega,
+        "servizio": funzione,
+        "continua_url": continua_url
+    }
+    return 'so_referenti.html', context
+
+
+@pagina_privata
+def so_organizza_funzione_fatto(request, me, pk=None):
+    funzione = get_object_or_404(FunzioneSO, pk=pk)
+    if not me.permessi_almeno(funzione, MODIFICA):
+        return redirect(ERRORE_PERMESSI)
+
+    return messaggio_generico(request, me,
+        titolo="Operazione organizzato",
+        messaggio="Abbiamo inviato un messaggio ai referenti che hai selezionato. "
+                  "Appena accederanno a Gaia, gli chiederemo di darci maggiori informazioni sulla funzione, "
+                  "come gli orari dei turni e l'indirizzo.",
+        torna_titolo="Torna a Organizza funzione",
+        torna_url=reverse('so:gestisce_funzione'))
+
+
+
+@pagina_privata
+def so_gestisci_funzione(request, me):
+
+    funzioni = me.oggetti_permesso(GESTIONE_FUNZIONI, solo_deleghe_attive=False)
+
+    context = {
+        "funzioni": funzioni,
+        # "servizio_referenti_modificabili": me.oggetti_permesso(GESTIONE_REFERENTI_FUNZIONI_SO),
+    }
+    return 'so_gestisci_funzioni.html', context

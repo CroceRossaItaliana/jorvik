@@ -75,6 +75,7 @@ GESTIONE_OPERAZIONI = "GESTIONE_OPERAZIONI"
 GESTIONE_FUNZIONI = "GESTIONE_FUNZIONI"
 GESTIONE_REFERENTI_SO = "GESTIONE_REFERENTI_SO"
 GESTIONE_REFERENTI_OPERAZIONI_SO = "GESTIONE_REFERENTI_OPERAZIONI_SO"
+GESTIONE_REFERENTI_FUNZIONI_SO = "GESTIONE_REFERENTI_FUNZIONI_SO"
 RUBRICA_SALE_OPERATIVE = "RUBRICA_SALE_OPERATIVE"
 
 # CO
@@ -126,7 +127,8 @@ PERMESSI_OGGETTI = (
     (GESTIONE_OPERAZIONI,       ('sala_operativa', 'OperazioneSO')),  # permesso per creare/gestire servizio
     (GESTIONE_FUNZIONI,         ('sala_operativa', 'FunzioneSO')),  # permesso per creare/gestire servizio
     (GESTIONE_REFERENTI_SO,     ('sala_operativa', 'ServizioSO')),  # permesso per gestire referenti dei servizi
-    (GESTIONE_REFERENTI_OPERAZIONI_SO,     ('sala_operativa', 'OperazioniSO')),  # permesso per gestire referenti dei servizi
+    (GESTIONE_REFERENTI_OPERAZIONI_SO,     ('sala_operativa', 'OperazioneSO')),  # permesso per gestire referenti dei servizi
+    (GESTIONE_REFERENTI_FUNZIONI_SO,     ('sala_operativa', 'FunzioneSO')),  # permesso per gestire referenti dei servizi
     (RUBRICA_SALE_OPERATIVE,    ('anagrafica', 'Sede')),
     (RUBRICA_REFERENTI_SO,      ('sala_operativa', 'ServizioSO')),
 

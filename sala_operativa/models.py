@@ -50,6 +50,22 @@ class FunzioneSO(ModelloSemplice, ConMarcaTemporale, ConDelegati):
     )
     creato_da = models.ForeignKey(Persona, null=True, blank=True)
 
+    @property
+    def url(self):
+        return reverse('so:funzione_info', args=[self.pk, ])
+
+    @property
+    def url_modifica(self):
+        return reverse('so:funzione_modifica', args=[self.pk, ])
+
+    @property
+    def url_cancella(self):
+        return reverse('so:funzione_cancella', args=[self.pk, ])
+
+    @property
+    def url_gestione(self):
+        return reverse('so:gestisce_funzione')
+
 
 class OperazioneSO(ModelloSemplice, ConMarcaTemporale, ConDelegati):
 

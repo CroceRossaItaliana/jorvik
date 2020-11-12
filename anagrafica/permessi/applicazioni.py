@@ -23,7 +23,7 @@ RESPONSABILE_AREA = 'RA'
 REFERENTE = 'RE'
 REFERENTE_SERVIZI_SO = 'RS'
 REFERENTE_OPERAZIONE_SO = 'RO'
-REFERENTE_FUNZIONE_SO = 'RF'
+REFERENTE_FUNZIONE_SO = 'RU'
 REFERENTE_GRUPPO = 'GR'
 DELEGATO_CO = 'CO'
 DELEGATO_SO = 'SO'
@@ -64,6 +64,7 @@ PERMESSI_NOMI = (
     (REFERENTE,                 "Referente Attività"),
     (REFERENTE_SERVIZI_SO,      "Referente Servizio SO"),
     (REFERENTE_OPERAZIONE_SO,   "Referente Operazione SO"),
+    (REFERENTE_FUNZIONE_SO,   "Referente Operazione SO"),
     (REFERENTE_GRUPPO,          "Referente Gruppo"),
     (DELEGATO_CO,               "Delegato Centrale Operativa"),
     (DELEGATO_SO,               "Delegato Sala Operativa"),

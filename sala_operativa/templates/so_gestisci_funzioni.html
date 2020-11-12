@@ -1,0 +1,44 @@
+{% extends 'so_vuota.html' %}
+
+{% load utils %}
+{% load bootstrap3 %}
+
+{% block pagina_titolo %}Gestisci Funzioni{% endblock %}
+
+{% block app_contenuto %}
+    <div class="alert alert-block alert-info">
+        <i class="fa fa-fw fa-info-circle"></i> Da qui puoi visulaizzare infomarmazioni sulle funzioni<br>
+    </div>
+
+    <div class="row">
+    <div class="col-md-12">
+    <div class="panel panel-info">
+        <div class="panel-heading">
+            <h2 class="panel-title">
+                <i class="fa fa-fw fa-list"></i> Funzioni
+            </h2>
+        </div>
+        <div class="panel-body">
+            <table class="table table-striped">
+                <thead>
+                <tr>
+                    <th>Nome</th>
+                    <th>Settore</th>
+                    <th>Delegati</th>
+                    <th>Azioni</th>
+                </tr>
+                </thead>
+                <tbody>
+                    {% for f in funzioni %}
+                        <tr>
+                            <td>{{ f.nome }}</td>
+                            <td>{{ f.settore }}</td>
+                            <td>{{ f.deleghe_attuali }}</td>
+                            <td></td>
+                        </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+{% endblock %}
