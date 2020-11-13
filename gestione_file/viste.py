@@ -8,7 +8,7 @@ from django.db.models import Q
 from django.http import Http404, HttpResponsePermanentRedirect, HttpResponseRedirect
 from django.utils.decorators import method_decorator
 from django.views.generic import ListView
-from filer.models import File, Folder
+from filer.models import File, Folder, datetime
 from filer.server.views import filer_settings
 
 from anagrafica.costanti import TERRITORIALE
@@ -123,7 +123,7 @@ def serve_image(request, persona, image_id, thumb_options=None, width=None, heig
 @pagina_privata
 def documenti_comitato(request, me):
     sede = me.delega_presidente.oggetto
-
+    from django.db.models import Q
     if request.method == 'POST':
         form = ModuloAggiungiDocumentoComitato(request.POST, request.FILES)
         if form.is_valid():
@@ -137,7 +137,11 @@ def documenti_comitato(request, me):
         sedi.append(
             {
                 "comitato": sede.comitato,
-                "documenti": DocumentoComitato.objects.filter(sede=sede)
+                "documenti": DocumentoComitato.objects.filter(
+                    Q(expires__gt=datetime.now())|
+                    Q(expires=None),
+                    sede=sede,
+                )
             }
         )
 
