@@ -1258,10 +1258,13 @@ def so_organizza_operazione(request, me):
     if form.is_valid() and form_referente.is_valid():
         cd = form.cleaned_data
         form_referente_cd = form_referente.cleaned_data
-
         operazione = form.save(commit=False)
-        operazione.sede = cd['sede']
-        operazione.estensione = cd['sede'].comitato
+        operazione.save()
+        for sede in cd['sede']:
+            operazione.sede.add(sede)
+
+        for sede in cd['sede_internazionale']:
+            operazione.sede_internazionale.add(sede)
         operazione.save()
 
         if form_referente_cd['scelta'] == form_referente.SONO_IO:
@@ -1296,6 +1299,7 @@ def so_gestisci_operazione(request, me, stato="aperte"):
         "operazioni_l": operazioni.filter(sede__estensione=LOCALE),
         "operazioni_p": operazioni.filter(sede__estensione=PROVINCIALE),
         "operazioni_r": operazioni.filter(sede__estensione=REGIONALE),
+        "operazioni_i": operazioni.filter(sede_internazionale__isnull=False),
         "operazioni_aperti": operazioni_aperti.count(),
         "operazioni_chiusi": operazioni_chiusi.count(),
         "servizio_referenti_modificabili": me.oggetti_permesso(GESTIONE_REFERENTI_OPERAZIONI_SO),

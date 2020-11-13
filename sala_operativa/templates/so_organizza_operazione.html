@@ -6,75 +6,90 @@
 
 {% block app_contenuto %}
 
-<form method="POST">
-    {% csrf_token %}
-    <div class="alert alert-info alert-block">
-        <p>
-            <i class="fa fa-fw fa-info-circle"></i>
-            Per iniziare l'organizzazione di un nuovo servizio, completa i moduli in questa pagina.
-        </p>
-    </div>
-    <div class="row">
-        <div class="col-md-8">
-            <div class="panel panel-primary">
-                <div class="panel-heading"><h2 class="panel-title">1. Informazioni sull'operazione</h2></div>
-                <div class="panel-body">{% bootstrap_form modulo %}</div>
-            </div>
-            <div class="panel panel-primary">
-                <div class="panel-heading"><h2 class="panel-title">2. Referenti Operazione</h2></div>
-                <div class="panel-body">
-                  <p><strong>Chi è il referente di un servizio?</strong>
-                  <ul>
-                      <li>Punto di riferimento per i volontari che vogliono partecipare sull'operazione;</li>
-                      <li>I suoi contatti verranno divulgati coi volontari interessati al sull'operazione;</li>
-                      <li>Generalmente è presente sul posto sull'operazione e/o conosce chi vi ci si reca;</li>
-                      <li>Potr&agrave; confermare o rifiutare le richieste di partecipazione sull'operazione.</li>
-                    </ul>
-                    {% bootstrap_form modulo_referente %}
-                </div>
-            </div>
-            <div class="panel panel-primary">
-                <div class="panel-heading"><h2 class="panel-title">3. Continua</h2></div>
-                <div class="panel-body">
-                    <p>Controlla che le informazioni che hai inserito sopra siano corrette.</p>
-                    <button type="submit" class="btn btn-primary btn-block btn-lg">
-                        <i class="fa fa-fw fa-check-circle"></i> Crea operazione
-                    </button>
-                </div>
-            </div>
-        </div>
-        <div class="col-md-4">
-            <h4 class="text-success">
-                <i class="fa fa-fw fa-support"></i> Guida alla compilazione
-            </h4>
-            <p>&nbsp;</p>
-            <p class="grassetto">1. Informazioni sull'operazione</p>
-            <p>Inserisci i dettagli del servizio che vuoi organizzare.</p>
-            <p>&nbsp;</p>
-            <p class="grassetto">2. Referenti del servizio</p>
-            <ul>
-                <li><p>
-                    <strong>Sar&ograve; io il referente</strong>: Scegliendo questa opzione, potrai
-                continuare a inserire il resto dei dettagli del servizio, come
-                la posizione geografica, la descrizione e l'elenco dei turni a cui
-                i volontari potranno partecipare.</p>
-                </li>
-                <li><p>
-                    <strong>Fammi scegliere dei referenti</strong>: Scegliendo questa opzione,
-                potrai scegliere uno o pi&ugrave; volontari delle tue Sedi CRI
-                che saranno incaricati come referenti di questa servizio.
-                Saranno informati tramite e-mail di questo incarico e,
-                al prossimo accesso a Gaia, potranno inserire le informazioni
-                mancanti, come i turni e la posizione.</p>
-                </li>
-            </ul>
-            <p class="text-info">
+    <form method="POST">
+        {% csrf_token %}
+        <div class="alert alert-info alert-block">
+            <p>
                 <i class="fa fa-fw fa-info-circle"></i>
-                Potrai cambiare i Referenti del servizio in qualunque momento da
-                "Servizio" > "Gestione" > "Elenco servizi".
+                Per iniziare l'organizzazione di un nuovo servizio, completa i moduli in questa pagina.
             </p>
-            <p>&nbsp;</p>
         </div>
-    </div>
-</form>
+        <div class="row">
+            <div class="col-md-8">
+                <div class="panel panel-primary">
+                    <div class="panel-heading"><h2 class="panel-title">1. Informazioni sull'operazione</h2></div>
+                    <div class="panel-body">{% bootstrap_form modulo %}</div>
+                </div>
+                <div class="panel panel-primary">
+                    <div class="panel-heading"><h2 class="panel-title">2. Referenti Operazione</h2></div>
+                    <div class="panel-body">
+                        <p><strong>Chi è il referente di un servizio?</strong>
+                        <ul>
+                            <li>Punto di riferimento per i volontari che vogliono partecipare sull'operazione;</li>
+                            <li>I suoi contatti verranno divulgati coi volontari interessati al sull'operazione;</li>
+                            <li>Generalmente è presente sul posto sull'operazione e/o conosce chi vi ci si reca;</li>
+                            <li>Potr&agrave; confermare o rifiutare le richieste di partecipazione sull'operazione.</li>
+                        </ul>
+                        {% bootstrap_form modulo_referente %}
+                    </div>
+                </div>
+                <div class="panel panel-primary">
+                    <div class="panel-heading"><h2 class="panel-title">3. Continua</h2></div>
+                    <div class="panel-body">
+                        <p>Controlla che le informazioni che hai inserito sopra siano corrette.</p>
+                        <button type="submit" class="btn btn-primary btn-block btn-lg">
+                            <i class="fa fa-fw fa-check-circle"></i> Crea operazione
+                        </button>
+                    </div>
+                </div>
+            </div>
+            <div class="col-md-4">
+                <h4 class="text-success">
+                    <i class="fa fa-fw fa-support"></i> Guida alla compilazione
+                </h4>
+                <p>&nbsp;</p>
+                <p class="grassetto">1. Informazioni sull'operazione</p>
+                <p>Inserisci i dettagli del servizio che vuoi organizzare.</p>
+                <p>&nbsp;</p>
+                <p class="grassetto">2. Referenti del servizio</p>
+                <ul>
+                    <li><p>
+                        <strong>Sar&ograve; io il referente</strong>: Scegliendo questa opzione, potrai
+                        continuare a inserire il resto dei dettagli del servizio, come
+                        la posizione geografica, la descrizione e l'elenco dei turni a cui
+                        i volontari potranno partecipare.</p>
+                    </li>
+                    <li><p>
+                        <strong>Fammi scegliere dei referenti</strong>: Scegliendo questa opzione,
+                        potrai scegliere uno o pi&ugrave; volontari delle tue Sedi CRI
+                        che saranno incaricati come referenti di questa servizio.
+                        Saranno informati tramite e-mail di questo incarico e,
+                        al prossimo accesso a Gaia, potranno inserire le informazioni
+                        mancanti, come i turni e la posizione.</p>
+                    </li>
+                </ul>
+                <p class="text-info">
+                    <i class="fa fa-fw fa-info-circle"></i>
+                    Potrai cambiare i Referenti del servizio in qualunque momento da
+                    "Servizio" > "Gestione" > "Elenco servizi".
+                </p>
+                <p>&nbsp;</p>
+            </div>
+        </div>
+    </form>
+    <script>
+
+        $('#id_sede_internazionale').parent().hide();
+
+        $("#id_comitato").change(function () {
+            if ($(this).val() === 'NAZIONALI') {
+                $('#id_sede').parent().show();
+                $('#id_sede_internazionale').parent().hide();
+            } else if ($(this).val() === 'INTERNAZIONALI') {
+                $('#id_sede').parent().hide();
+                $('#id_sede_internazionale').parent().show();
+            }
+        });
+
+    </script>
 {% endblock %}

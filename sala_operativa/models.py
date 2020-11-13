@@ -21,6 +21,13 @@ from posta.models import Messaggio
 from social.models import ConGiudizio
 
 
+class SedeInternazionaleSO(ModelloSemplice, ConMarcaTemporale):
+    nome = models.CharField(max_length=50)
+
+    def __str__(self):
+        return self.nome
+
+
 class FunzioneSO(ModelloSemplice, ConMarcaTemporale, ConDelegati):
 
     COORDINAMENTO = 'COORDINAMENTO'
@@ -66,6 +73,9 @@ class FunzioneSO(ModelloSemplice, ConMarcaTemporale, ConDelegati):
     def url_referenti(self):
         return reverse('so:organizza_referenti_funzione', args=[self.pk, ])
 
+    def __str__(self):
+        return self.nome
+
 
 class OperazioneSO(ModelloSemplice, ConMarcaTemporale, ConDelegati):
 
@@ -89,6 +99,14 @@ class OperazioneSO(ModelloSemplice, ConMarcaTemporale, ConDelegati):
         (ALTRO, 'Altro'),
     )
 
+    NAZIONALI = 'NAZIONALI'
+    INTERNAZIONALE = 'INTERNAZIONALI'
+
+    COMITATI = (
+        (NAZIONALI, 'Nazionali'),
+        (INTERNAZIONALE, 'Internazionali'),
+    )
+
     nome = models.CharField(max_length=100, db_index=True)
     # evento = #TODO: da ricevere
     impiego_bdl = models.BooleanField("L'attività prevede l'impiego dei Benefici di Legge", default=False, )
@@ -101,13 +119,14 @@ class OperazioneSO(ModelloSemplice, ConMarcaTemporale, ConDelegati):
         blank=True
     )
     # stato_configurazione_cri = #TODO: da ricevere
-    # funzioni: # TODO: modello
+    funzioni = models.ForeignKey(FunzioneSO, on_delete=models.PROTECT, blank=True, null=True)
     inizio = models.DateTimeField(default=timezone.now, db_index=True)
     fine = models.DateTimeField(db_index=True, blank=True, null=True)
     operazione = models.ForeignKey("self", on_delete=models.PROTECT, blank=True, null=True)
     archivia_emergenza = models.BooleanField(default=False)
-    # area_territoriale = # TODO: anche sedi non in gaia
-    sede = models.ForeignKey('anagrafica.Sede', on_delete=models.PROTECT)
+    comitato = models.CharField(max_length=50, choices=COMITATI, default=NAZIONALI, blank=True, null=True)
+    sede = models.ManyToManyField('anagrafica.Sede', blank=True)
+    sede_internazionale = models.ManyToManyField(SedeInternazionaleSO, blank=True)
 
     def __str__(self):
         return self.nome
@@ -124,9 +143,17 @@ class OperazioneSO(ModelloSemplice, ConMarcaTemporale, ConDelegati):
     def url_cancella(self):
         return reverse('so:operazione_cancella', args=[self.pk, ])
 
-    # @property
-    # def url_referenti(self):
-    #     return reverse('so:servizio_referenti', args=[self.pk, ])
+    @property
+    def url_referenti(self):
+        return reverse('so:organizza_referenti_operazione', args=[self.pk, ])
+
+    @property
+    def sede_allegata(self):
+        return " - ".join(
+            sede.nome for sede in self.sede.all()
+        ) if self.sede.exists() else " - ".join(
+            sede.nome for sede in self.sede_internazionale.all()
+        )
 
 
 class DatoreLavoro(ModelloSemplice, ConMarcaTemporale):

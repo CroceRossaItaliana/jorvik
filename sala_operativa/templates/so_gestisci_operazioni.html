@@ -9,7 +9,8 @@
 
     <div class="alert alert-block alert-info">
         <p>
-            <i class="fa fa-fw fa-info-circle"></i> Da questa pagina puoi accedere a tutti i operazioni che puoi gestire.
+            <i class="fa fa-fw fa-info-circle"></i> Da questa pagina puoi accedere a tutti i operazioni che puoi
+            gestire.
         </p>
     </div>
 
@@ -22,7 +23,8 @@
             <ul class="nav nav-pills">
                 <li role="presentation" {% if stato == "aperte" %}class="active"{% endif %}>
                     <a href="{% url 'so:gestisce_operazione' %}">
-                        <i class="fa fa-fw fa-check-circle"></i> Aperti <span class="badge">{{ operazioni_aperti }}</span>
+                        <i class="fa fa-fw fa-check-circle"></i> Aperti <span
+                            class="badge">{{ operazioni_aperti }}</span>
                     </a>
                 </li>
                 <li role="presentation" {% if stato == "chiuse" %}class="active"{% endif %}>
@@ -81,6 +83,19 @@
                 </div>
                 <div class="panel-body collapse" id="collapseLocale">
                     {% include "so_operazioni_table.html" with attivita=operazioni_l %}
+                </div>
+            </div>
+        {% endif %}
+
+        {% if operazioni_i %}
+            <div class="panel panel-info">
+                <div class="panel-heading" data-toggle="collapse" href="#collapseInternazionale" role="button"
+                     aria-expanded="false"
+                     aria-controls="collapseExample">
+                    <h2 class="panel-title"><i class="fa fa-fw fa-list"></i> Elenco Internazionale</h2>
+                </div>
+                <div class="panel-body collapse" id="collapseInternazionale">
+                    {% include "so_operazioni_table.html" with attivita=operazioni_i %}
                 </div>
             </div>
         {% endif %}
