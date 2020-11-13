@@ -11,34 +11,47 @@
     </div>
 
     <div class="row">
-    <div class="col-md-12">
-    <div class="panel panel-info">
-        <div class="panel-heading">
-            <h2 class="panel-title">
-                <i class="fa fa-fw fa-list"></i> Funzioni
-            </h2>
-        </div>
-        <div class="panel-body">
-            <table class="table table-striped">
-                <thead>
-                <tr>
-                    <th>Nome</th>
-                    <th>Settore</th>
-                    <th>Delegati</th>
-                    <th>Azioni</th>
-                </tr>
-                </thead>
-                <tbody>
-                    {% for f in funzioni %}
+        <div class="col-md-12">
+            <div class="panel panel-info">
+                <div class="panel-heading">
+                    <h2 class="panel-title">
+                        <i class="fa fa-fw fa-list"></i> Funzioni
+                    </h2>
+                </div>
+                <div class="panel-body">
+                    <table class="table table-striped">
+                        <thead>
                         <tr>
-                            <td>{{ f.nome }}</td>
-                            <td>{{ f.settore }}</td>
-                            <td>{{ f.deleghe_attuali }}</td>
-                            <td></td>
+                            <th>Nome</th>
+                            <th>Settore</th>
+                            <th>Delegati</th>
+                            <th>Azioni</th>
                         </tr>
-                    {% endfor %}
-                </tbody>
-            </table>
+                        </thead>
+                        <tbody>
+                        {% for f in funzioni %}
+                            <tr>
+                                <td>{{ f.nome }}</td>
+                                <td>{{ f.settore }}</td>
+                                <td>
+                                    <i class="fa fa-fw fa-info-circle text-muted"></i> {{ f.delegati_attuali|join:", "|default:"(Nessun referente selezionato)" }}<br>
+                                </td>
+                                <td>
+
+                                    <a href="{{ f.url_cancella }}"><i class="far fa-trash-alt"></i> cancella
+                                        funzione</a><br/>
+
+                                    <a href="{{ f.url_modifica }}"><i class="fas fa-pencil-alt"></i> modifica</a><br/>
+
+                                    <a href="{{ f.url_referenti }}"><i class="fas fa-pencil-alt"></i> modifica
+                                        referenti</a><br/>
+                                </td>
+                            </tr>
+                        {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+            </div>
         </div>
     </div>
 {% endblock %}

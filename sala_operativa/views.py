@@ -1406,7 +1406,7 @@ def so_referenti_funzione(request, me, pk=None, nuova=False):
     if not me.permessi_almeno(funzione, MODIFICA):
         return redirect(ERRORE_PERMESSI)
 
-    delega = REFERENTE_OPERAZIONE_SO
+    delega = REFERENTE_FUNZIONE_SO
 
     if nuova:
         continua_url = reverse('so:organizza_funzione_fatto', args=[funzione.pk,])
@@ -1444,6 +1444,48 @@ def so_gestisci_funzione(request, me):
 
     context = {
         "funzioni": funzioni,
-        # "servizio_referenti_modificabili": me.oggetti_permesso(GESTIONE_REFERENTI_FUNZIONI_SO),
+        "funzioni_referenti_modificabili": me.oggetti_permesso(GESTIONE_FUNZIONI),
     }
     return 'so_gestisci_funzioni.html', context
+
+
+@pagina_privata(permessi=(GESTIONE_FUNZIONI,))
+def so_scheda_informazioni_modifica_funzione(request, me, pk=None):
+    funzione = get_object_or_404(FunzioneSO, pk=pk)
+
+    sedi = me.oggetti_permesso(GESTIONE_SO_SEDE)
+    if not sedi:
+        messages.error(request, 'Non hai sedi con la delega SO.')
+        return redirect(reverse('so:index'))
+
+    form = OrganizzaFunzioneForm(request.POST or None, instance=funzione)
+
+    if form.is_valid():
+        form.save()
+        return redirect(reverse('so:gestisce_funzione'))
+
+    context = {
+        "me": me,
+        "funzione": funzione,
+        "puo_modificare": True,
+        "modulo": form,
+    }
+    return 'so_modifica_funzione.html', context
+
+
+@pagina_privata
+def so_scheda_cancella_funzione(request, me, pk):
+    funzione = get_object_or_404(FunzioneSO, pk=pk)
+    if not me and me.permessi_almeno(funzione, MODIFICA):
+        return redirect(ERRORE_PERMESSI)
+
+    titolo_messaggio = "Funzione cancellata"
+    testo_messaggio = "La funzione è stato cancellato con successo."
+
+    funzione.delete()
+
+    return messaggio_generico(request, me,
+                              titolo=titolo_messaggio,
+                              messaggio=testo_messaggio,
+                              torna_titolo="Organizza funzioni",
+                              torna_url=reverse('so:gestisce_funzione'), )

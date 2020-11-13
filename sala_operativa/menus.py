@@ -30,6 +30,7 @@ def sala_operativa(me):
             ('Servizio', (
                 ("Crea servizio", "fa-asterisk", reverse('so:organizza')) if gestione_so else None,
                 ("Organizza Servizio", "fa-list", reverse('so:gestisci')) if gestione_so or gestione_servizi else None,
+                ("Reperibilità dei Volontari", 'fa-user', reverse('so:reperibilita_backup')),
                 ("Materiali e Mezzi", "fas fa-ambulance", reverse('so:mezzi')) if gestione_so else None,
             )) if gestione_so or gestione_servizi else None,
             ('', (

@@ -38,11 +38,8 @@ urlpatterns = [
 
     # Gestisci operazioni
     url(r'^gestisci-funzione/$', views.so_gestisci_funzione, name='gestisce_funzione'),
-    # url(r'^gestisci-funzione/chiusi/$', views.so_gestisci_funzione, {"stato": "chiuse"}, name='gestisce_funzione_chiusi'),
-    # url(r'^gestisci-funzione/%s/modifica/$' % pk, views.so_scheda_informazioni_modifica_funzione, name='funzione_modifica'),
-    # url(r'^gestisci-funzione/%s/info/$' % pk, views.so_scheda_informazioni_info_funzione, name='funzione_info'),
-    # url(r'^gestisci-funzione/%s/cancella/$' % pk, views.so_scheda_cancella_funzione, name='funzione_cancella'),
-
+    url(r'^gestisci-funzione/(?P<pk>[0-9\-]+)/modifica/$', views.so_scheda_informazioni_modifica_funzione, name='funzione_modifica'),
+    url(r'^gestisci-funzione/(?P<pk>[0-9\-]+)/cancella/$', views.so_scheda_cancella_funzione, name='funzione_cancella'),
 
     # Gestisci servizi
     url(r'^servizi/$', views.so_gestisci, {"stato": "aperte"}, name='gestisci'),
