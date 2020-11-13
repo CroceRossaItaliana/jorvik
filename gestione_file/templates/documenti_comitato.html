@@ -38,7 +38,6 @@
                             <th width="24%">Data caricamento</th>
                             <th width="22%">Scadenza</th>
                             <th width="22%">Visualizza</th>
-                            <th width="10%">Cancella</th>
                             </thead>
                             <tbody>
                             {% for d in sede.documenti %}
@@ -52,11 +51,6 @@
                                                 ({{ d.file.size|filesizeformat }})
                                             {% endif %}
                                         </a>
-                                    </td>
-                                    <td style="text-align:center;">
-                                        {#                                        {% if d.can_be_deleted %}#}
-                                        {#                                            <a href="{% url 'utente:remove_document' d.pk %}" title="Cancella il documento"><i class="fa fa-remove"></i></a>#}
-                                        {#                                        {% endif %}#}
                                     </td>
                                 </tr>
 
