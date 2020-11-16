@@ -130,7 +130,7 @@ ESPANSIONE_DELEGHE = {
     # VICE_PRESIDENTE:        espandi_incarichi_presidente,
     COMMISSARIO:            espandi_incarichi_commissario,
     REFERENTE:              espandi_incarichi_referente_attivita,
-    REFERENTE_SERVIZI_SO:           espandi_incarichi_referente_servizio,
+    REFERENTE_SERVIZI_SO:   espandi_incarichi_referente_servizio,
     DIRETTORE_CORSO:        espandi_incarichi_direttore_corso,
     RESPONSABILE_FORMAZIONE:espandi_incarichi_responsabile_formazione,
 }

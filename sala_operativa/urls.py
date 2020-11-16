@@ -36,7 +36,7 @@ urlpatterns = [
     url(r'^funzione/(?P<pk>[0-9\-]+)/referenti/$', views.so_referenti_funzione, {"nuova": True}, name='organizza_referenti_funzione'),
     url(r'^funzione/(?P<pk>[0-9\-]+)/fatto/$', views.so_organizza_funzione_fatto, name='organizza_funzione_fatto'),
 
-    # Gestisci operazioni
+    # Gestisci Funzioni
     url(r'^gestisci-funzione/$', views.so_gestisci_funzione, name='gestisce_funzione'),
     url(r'^gestisci-funzione/(?P<pk>[0-9\-]+)/modifica/$', views.so_scheda_informazioni_modifica_funzione, name='funzione_modifica'),
     url(r'^gestisci-funzione/(?P<pk>[0-9\-]+)/cancella/$', views.so_scheda_cancella_funzione, name='funzione_cancella'),

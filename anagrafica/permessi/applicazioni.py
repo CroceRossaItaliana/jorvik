@@ -102,9 +102,9 @@ RUBRICHE_TITOLI = OrderedDict((
     # ('responsabili_area', (RESPONSABILE_AREA, 'Responsabili d\'Area', False)), rimosso perché non utile al momento
     ('referenti_attivita', (REFERENTE, 'Referenti Attività', False)),
     ('referenti_gruppi', (REFERENTE, 'Referenti Gruppi', False)),
-    ('referenti_servizio_so', (REFERENTE_SERVIZI_SO, 'Referenti Servizi SO', False)),
-    ('referenti_operazione_so', (REFERENTE_OPERAZIONE_SO, 'Referenti Operazione SO', False)),
-    ('referenti_operazione_so', (REFERENTE_FUNZIONE_SO, 'Referenti Funzione SO', False)),
+    # ('referenti_servizio_so', (REFERENTE_SERVIZI_SO, 'Referenti Servizi SO', False)),
+    # ('referenti_operazione_so', (REFERENTE_OPERAZIONE_SO, 'Referenti Operazione SO', False)),
+    # ('referenti_funzioni_so', (REFERENTE_FUNZIONE_SO, 'Referenti Funzione SO', False)),
     ('centrali_operative', (DELEGATO_CO, 'Referenti Centrale Operativa', True)),
     ('sale_operative', (DELEGATO_SO, 'Delegati Sale Operativa', True)),
     ('responsabili_formazione', (RESPONSABILE_FORMAZIONE, 'Referenti Responsabili Formazione', True)),

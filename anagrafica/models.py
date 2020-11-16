@@ -268,7 +268,7 @@ class Persona(ModelloSemplice, ConMarcaTemporale, ConAllegati, ConVecchioID):
             if espandi:
                 pks = [x.pk for x in oggetto.espandi(includi_me=True, pubblici=pubblici)]
             else:
-                pks = [oggetto.pk]
+                pks = [oggetto.pk] if hasattr(oggetto, 'pk') else [s.pk for s in oggetto.all()]
 
             sedi |= Sede.objects.filter(pk__in=pks)
         return sedi

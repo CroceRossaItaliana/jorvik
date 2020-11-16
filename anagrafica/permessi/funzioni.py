@@ -358,18 +358,14 @@ def permessi_delegato_sala_operativa(sede):
     sede_espansa = sede.espandi(includi_me=True, pubblici=True)
     servizi = ServizioSO.objects.filter(sede__in=sede_espansa)
     operazioni = OperazioneSO.objects.filter(sede__in=sede_espansa)
-    # TODO: trovare il modo di agganciare le funzioni corrispettive
-    funzioni = FunzioneSO.objects.all()
 
     return [
         (RUBRICA_SALE_OPERATIVE, sede.espandi(includi_me=True, pubblici=True)),
         (GESTIONE_SERVIZI, servizi),
         (GESTIONE_OPERAZIONI, operazioni),
-        (GESTIONE_FUNZIONI, funzioni),
         (GESTIONE_SO_SEDE, sede_espansa),
         (GESTIONE_REFERENTI_SO, servizi),
         (GESTIONE_REFERENTI_OPERAZIONI_SO, operazioni),
-        (GESTIONE_REFERENTI_FUNZIONI_SO, funzioni),
     ]
 
 

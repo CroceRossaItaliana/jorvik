@@ -167,7 +167,7 @@ DELEGHE_OGGETTI = (
     (REFERENTE,                 ('attivita', 'Attivita', 'sede__in')),
 
     # SO
-    (REFERENTE_SERVIZI_SO,              ('sala_operativa', 'ServizioSO', 'sede__in')),
+    (REFERENTE_SERVIZI_SO,      ('sala_operativa', 'ServizioSO', 'sede__in')),
 
     # FORMAZIONE
     (DIRETTORE_CORSO,           ('formazione', 'CorsoBase', 'sede__in')),

@@ -1384,17 +1384,18 @@ def so_organizza_funzione(request, me):
         cd = form.cleaned_data
         form_referente_cd = form_referente.cleaned_data
 
-        operazione = form.save(commit=False)
-        operazione.save()
+        funzione = form.save(commit=False)
+        funzione.creato_da = me
+        funzione.save()
 
         if form_referente_cd['scelta'] == form_referente.SONO_IO:
             # Io sono il referente.
-            operazione.aggiungi_delegato(REFERENTE_FUNZIONE_SO, me, firmatario=me, inizio=poco_fa())
-            return redirect(operazione.url_gestione)
+            funzione.aggiungi_delegato(REFERENTE_FUNZIONE_SO, me, firmatario=me, inizio=poco_fa())
+            return redirect(funzione.url_gestione)
 
         elif form_referente_cd['scelta'] == form_referente.SCEGLI_REFERENTI:
             # Il referente è qualcun altro.
-            return redirect(reverse('so:organizza_referenti_funzione', args=[operazione.pk, ]))
+            return redirect(reverse('so:organizza_referenti_funzione', args=[funzione.pk, ]))
 
     context = {
         "modulo": form,
@@ -1443,12 +1444,17 @@ def so_organizza_funzione_fatto(request, me, pk=None):
 
 @pagina_privata
 def so_gestisci_funzione(request, me):
+    creati_da = []
 
-    funzioni = me.oggetti_permesso(GESTIONE_FUNZIONI, solo_deleghe_attive=False)
+    for sede in me.oggetti_permesso(GESTIONE_SO_SEDE, solo_deleghe_attive=False):
+        creati_da.append(sede.presidente())
+        creati_da.extend(list(sede.commissari()))
+        creati_da.extend(list(sede.commissari()))
+        creati_da.extend(list(sede.obbiettivo_3()))
+        creati_da.extend(list(sede.delegati_so()))
 
     context = {
-        "funzioni": funzioni,
-        "funzioni_referenti_modificabili": me.oggetti_permesso(GESTIONE_FUNZIONI),
+        "funzioni": FunzioneSO.objects.filter(creato_da__in=creati_da),
     }
     return 'so_gestisci_funzioni.html', context
 
