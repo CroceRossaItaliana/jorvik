@@ -193,12 +193,12 @@ class OrganizzaServizioForm(ModelForm):
 
     class Meta:
         model = ServizioSO
-        fields = ['servizi_standard', 'nome', 'sede', 'inizio', 'fine',
+        fields = ['funzione', 'servizi_standard', 'nome', 'sede', 'inizio', 'fine',
                   'impiego_bdl', ]
 
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
-
+        self.fields['servizi_standard'].label = 'Attività'
         self.fields['impiego_bdl'].help_text = 'Le attività in Convenzione o non legate all’emergenza in corso non possono prevedere l’attivazione dei Benefici di Legge (art. 39 e 40 del dlgs 1/2018)"'
 
         self.fields['nome'].initial = ''

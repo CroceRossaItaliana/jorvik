@@ -199,6 +199,7 @@ class ServizioSO(ModelloSemplice, ConGeolocalizzazione, ConMarcaTemporale,
     impiego_bdl = models.BooleanField("L'attività prevede l'impiego dei Benefici di Legge", default=False, )
     descrizione = models.TextField(blank=True)
     meta = JSONField(null=True, blank=True)
+    funzione = models.ForeignKey(FunzioneSO, on_delete=models.PROTECT, blank=True, null=True)
 
     @staticmethod
     def servizi_standard():

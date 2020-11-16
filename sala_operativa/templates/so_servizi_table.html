@@ -15,6 +15,7 @@
                 <i class="fa fa-fw fa-map-marker text-muted"></i> {{ a.estensione.get_estensione_display }}<br/>
                 <i class="fa fa-fw fa-map-marker text-muted"></i> <a
                     href="{{ a.url_mappa }}">{{ a.locazione|default:"Nessuna posizione" }}</a><br/>
+                <i class="fa fa-fw fa-info-circle text-muted"></i> {{ a.funzione }}<br/>
                 <i class="fa fa-fw fa-info-circle text-muted"></i> {{ a.delegati_attuali|join:", "|default:"(Nessun referente selezionato)" }}<br>
                 L'impiego con i Benefici di legge: <strong>{% if a.impiego_bdl %}Si{% else %}
                 No{% endif %}</strong>
