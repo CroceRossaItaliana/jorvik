@@ -930,7 +930,6 @@ class PartecipazioneSO(ModelloSemplice, ConMarcaTemporale, ConStorico, ConAutori
 
 class MezzoSO(ModelloSemplice, ConMarcaTemporale):
     MEZZO = 'me'
-
     MATERIALE = 'ma'
     MEZZI_E_MATERIALI_CHOICES = (
         (MEZZO, 'Mezzo'),
@@ -966,6 +965,9 @@ class MezzoSO(ModelloSemplice, ConMarcaTemporale):
     creato_da = models.ForeignKey('anagrafica.Persona', null=True, blank=True)
 
     stato = models.CharField(choices=STATO_MM, max_length=2, default=IN_SERVIZIO)
+
+    targa = models.CharField(max_length=10, null=True, blank=True)
+    modello = models.CharField(max_length=50, null=True, blank=True)
 
     @classmethod
     def disponibili_per_sedi(cls, sedi):

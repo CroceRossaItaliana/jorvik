@@ -308,7 +308,7 @@ class CreazioneMezzoSO(ModelForm):
 
     class Meta:
         model = MezzoSO
-        fields = ['nome', 'tipo', 'mezzo_tipo', 'estensione', 'stato']
+        fields = ['nome', 'tipo', 'mezzo_tipo', 'targa', 'modello', 'estensione', 'stato']
 
 
 class AbbinaMezzoMaterialeForm(ModelForm):

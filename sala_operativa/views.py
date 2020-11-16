@@ -1093,8 +1093,11 @@ def so_mezzi(request, me):
             messages.success(request, 'Il %s è stato creato con successo.' % mezzo.get_tipo_display())
             return redirect('so:mezzi')
 
+    mezzi_materiali = MezzoSO.disponibili_per_sedi(mie_sedi)
+
     context = {
-        'mezzi_materiali': MezzoSO.disponibili_per_sedi(mie_sedi),
+        'mezzi': mezzi_materiali.filter(tipo=MezzoSO.MEZZO),
+        'materiali': mezzi_materiali.filter(tipo=MezzoSO.MATERIALE),
         'form': form
     }
     return 'so_mezzi_e_materiali.html', context
