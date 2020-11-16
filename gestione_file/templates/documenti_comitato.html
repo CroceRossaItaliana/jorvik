@@ -22,15 +22,31 @@
 {% endblock %}
 
 {% block app_contenuto %}
+    <div class="alert alert-info">
+        <p><i class="fa fa-info-circle"></i>
+            Da qui puoi gestre i documenti del comitato.
+        </p>
+        <ul>
+            <li>
+                Usa il modulo di detra per aggiungere un documento al tuo comitato.
+            </li>
+            <li>
+                Fai click sul nome del comitato per visualizare i documeti.
+            </li>
+        </ul>
+    </div>
+
+
     <div class="row">
         <div class="col-md-8">
             {% for sede in sedi %}
 
                 <div class="panel panel-info">
-                    <div class="panel-heading" data-toggle="collapse" href="#collapseComitato{{ sede.comitato.id }}" role="button"
+                    <div class="panel-heading" data-toggle="collapse" href="#collapseComitato{{ sede.comitato.id }}"
+                         role="button"
                          aria-expanded="false"
                          aria-controls="collapseComitato{{ sede.comitato.id }}">
-                        <h2 class="panel-title">{{ sede.comitato }}</h2>
+                        <h2 class="panel-title"><i class="fa fa-caret-down"></i>&nbsp;{{ sede.comitato }}</h2>
                     </div>
                     <div class="panel-body collapse" id="collapseComitato{{ sede.comitato.id }}">
                         <table class="table">
@@ -71,7 +87,7 @@
             <div class="panel panel-primary">
                 <div class="panel-heading">
                     <h2 class="panel-title">
-                        Modulo importazione
+                        Modulo documenti
                     </h2>
                 </div>
                 <div class="panel-body">
