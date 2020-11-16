@@ -239,6 +239,10 @@ class ServizioSO(ModelloSemplice, ConGeolocalizzazione, ConMarcaTemporale,
         return reverse('so:servizio_cancella', args=[self.pk, ])
 
     @property
+    def url_chiudi(self):
+        return reverse('so:servizio_chiudi', args=[self.pk, ])
+
+    @property
     def url_mappa(self):
         return reverse('so:servizio_mappa', args=[self.pk, ])
 
@@ -297,6 +301,14 @@ class ServizioSO(ModelloSemplice, ConGeolocalizzazione, ConMarcaTemporale,
     @property
     def cancellabile(self):
         return not self.turni_so.all().exists()
+
+    @property
+    def chiudibile(self):
+        return self.apertura == self.APERTA
+
+    @property
+    def apribile(self):
+        return self.apertura == self.CHIUSA
 
     def referenti_attuali(self, al_giorno=None):
         return self.delegati_attuali(tipo=REFERENTE_SERVIZI_SO, al_giorno=al_giorno)

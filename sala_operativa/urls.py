@@ -62,6 +62,7 @@ urlpatterns = [
     # Servizio
     url(r'^servizio/%s/$' % pk, views.so_scheda_informazioni, name='servizio'),
     url(r'^servizio/%s/cancella/$' % pk, views.so_scheda_cancella, name='servizio_cancella'),
+    url(r'^servizio/%s/chiudi/$' % pk, views.so_scheda_chiudi, name='servizio_chiudi'),
     url(r'^servizio/%s/mappa/$' % pk, views.so_scheda_mappa, name='servizio_mappa'),
     url(r'^servizio/%s/partecipanti/$' % pk, views.so_scheda_partecipanti, name='servizio_partecipanti'),
     url(r'^servizio/%s/modifica/$' % pk, views.so_scheda_informazioni_modifica, name='servizio_modifica'),

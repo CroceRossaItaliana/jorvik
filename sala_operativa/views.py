@@ -1502,3 +1502,22 @@ def so_scheda_cancella_funzione(request, me, pk):
                               messaggio=testo_messaggio,
                               torna_titolo="Organizza funzioni",
                               torna_url=reverse('so:gestisce_funzione'), )
+
+
+@pagina_privata
+def so_scheda_chiudi(request, me, pk):
+
+    servizio = get_object_or_404(ServizioSO, pk=pk)
+
+    titolo_messaggio = "Servizio chiudi"
+    testo_messaggio = "Il Servizio è stato chiuso con successo."
+
+    servizio.apertura = ServizioSO.CHIUSA
+
+    servizio.save()
+
+    return messaggio_generico(request, me,
+                              titolo=titolo_messaggio,
+                              messaggio=testo_messaggio,
+                              torna_titolo="Gestione servizio",
+                              torna_url=reverse('so:gestisci'), )

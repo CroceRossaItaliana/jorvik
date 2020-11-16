@@ -33,6 +33,16 @@
                         servizio</a><br/>
                 {% endif %}
 
+                {% if a in servizio_referenti_modificabili and a.chiudibile %}
+                    <a href="{{ a.url_chiudi }}"><i class="fas fa-pencil-alt"></i> chiudi
+                        servizio</a><br/>
+                {% endif %}
+
+                {% if a in servizio_referenti_modificabili and a.apribile %}
+                    <a href="{{ a.url_riapri }}"><i class="fas fa-pencil-alt"></i> riapri
+                        servizio</a><br/>
+                {% endif %}
+
                 <a href="{{ a.url_modifica }}"><i class="fas fa-pencil-alt"></i> modifica info</a><br/>
 
                 {% if a in servizio_referenti_modificabili %}
