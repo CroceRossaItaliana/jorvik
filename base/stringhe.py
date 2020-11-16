@@ -54,7 +54,7 @@ class GeneratoreNomeFile():
             else os.path.splitext(originale)[1]
 
         return self.prefisso + "{}_{}".format(
-            os.path.splitext(originale)[0], datetime.now().strftime("%d_%m_%Y_%H_%M_%S")
+            os.path.splitext(originale)[0], datetime.now().strftime("%d_%m_%Y_%H_%M_%S_f")
         ) + suffisso
 
 
