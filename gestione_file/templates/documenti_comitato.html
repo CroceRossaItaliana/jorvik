@@ -1,4 +1,5 @@
 {% extends "anagrafica_utente_vuota.html" %}
+{% load tags %}
 
 {% load bootstrap3 %}
 {% load static %}
@@ -24,7 +25,7 @@
 {% block app_contenuto %}
     <div class="alert alert-info">
         <p><i class="fa fa-info-circle"></i>
-            Da qui puoi gestre i documenti del comitato.
+            Da qui puoi gestione i documenti del comitato.
         </p>
         <ul>
             <li>
@@ -51,13 +52,16 @@
                     <div class="panel-body collapse" id="collapseComitato{{ sede.comitato.id }}">
                         <table class="table">
                             <thead>
-                            <th width="24%">Data caricamento</th>
-                            <th width="22%">Scadenza</th>
-                            <th width="22%">Visualizza</th>
+                            <th width="20%">Nome</th>
+                            <th width="20%">Data caricamento</th>
+                            <th width="20%">Scadenza</th>
+                            <th width="20%">Visualizza</th>
+                            <th width="20%">Azioni</th>
                             </thead>
                             <tbody>
                             {% for d in sede.documenti %}
                                 <tr>
+                                    <td style="font-size: 12px;">{{ d.nome }}</td>
                                     <td style="font-size: 12px;">{{ d.creazione|date:"SHORT_DATETIME_FORMAT" }}</td>
                                     <td>{{ d.expires|date:"d/m/Y" }}</td>
                                     <td>
@@ -67,6 +71,14 @@
                                                 ({{ d.file.size|filesizeformat }})
                                             {% endif %}
                                         </a>
+                                    </td>
+                                    <td>
+                                        {% if d.sede|posso_vedere:sede.comitato %}
+                                            <a href="{% url 'documenti:documenti-cancella' d.pk %}"><i
+                                                    class="fa fa-trash"></i>Cancella</a><br>
+                                            <a href="{% url 'documenti:documenti-modifica' d.pk %}"><i
+                                                    class="fa fa-edit"></i>Modifica</a>
+                                        {% endif %}
                                     </td>
                                 </tr>
 

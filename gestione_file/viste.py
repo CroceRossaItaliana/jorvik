@@ -6,6 +6,7 @@ from django.core.exceptions import PermissionDenied
 from django.core.urlresolvers import reverse
 from django.db.models import Q
 from django.http import Http404, HttpResponsePermanentRedirect, HttpResponseRedirect
+from django.shortcuts import redirect
 from django.utils.decorators import method_decorator
 from django.views.generic import ListView
 from filer.models import File, Folder, datetime
@@ -147,7 +148,34 @@ def documenti_comitato(request, me):
 
     contesto = {
         'form': form,
-        'sedi': sedi
+        'sedi': sedi,
+        'sede': sede
     }
 
     return 'documenti_comitato.html', contesto
+
+
+@pagina_privata
+def documenti_comitato_cancella(request, me, pk=None):
+
+    doc = DocumentoComitato.objects.get(pk=pk)
+    doc.delete()
+    return redirect(reverse('documenti:documenti-comitato'))
+
+
+@pagina_privata
+def documenti_comitato_modifica(request, me, pk=None):
+    doc = DocumentoComitato.objects.get(pk=pk)
+    if request.method == 'POST':
+        form = ModuloAggiungiDocumentoComitato(request.POST, request.FILES, instance=doc)
+        if form.is_valid():
+            form.save()
+            return redirect(reverse('documenti:documenti-comitato'))
+    else:
+        form = ModuloAggiungiDocumentoComitato(instance=doc)
+
+    contesto = {
+        'form': form
+    }
+
+    return 'documenti_comitato_modifica.html', contesto
