@@ -119,7 +119,7 @@ class OperazioneSO(ModelloSemplice, ConMarcaTemporale, ConDelegati):
         blank=True
     )
     # stato_configurazione_cri = #TODO: da ricevere
-    funzioni = models.ForeignKey(FunzioneSO, on_delete=models.PROTECT, blank=True, null=True)
+    funzioni = models.ManyToManyField(FunzioneSO, blank=True)
     inizio = models.DateTimeField(default=timezone.now, db_index=True)
     fine = models.DateTimeField(db_index=True, blank=True, null=True)
     operazione = models.ForeignKey("self", on_delete=models.PROTECT, blank=True, null=True)

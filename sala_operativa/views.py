@@ -1263,11 +1263,17 @@ def so_organizza_operazione(request, me):
         form_referente_cd = form_referente.cleaned_data
         operazione = form.save(commit=False)
         operazione.save()
-        for sede in cd['sede']:
-            operazione.sede.add(sede)
 
-        for sede in cd['sede_internazionale']:
-            operazione.sede_internazionale.add(sede)
+        for funzione in cd['funzioni']:
+            operazione.funzioni.add(funzione)
+
+        if cd['comitato'] == OperazioneSO.NAZIONALI:
+            for sede in cd['sede']:
+                operazione.sede.add(sede)
+        elif cd['comitato'] == OperazioneSO.INTERNAZIONALE:
+            for sede in cd['sede_internazionale']:
+                operazione.sede_internazionale.add(sede)
+
         operazione.save()
 
         if form_referente_cd['scelta'] == form_referente.SONO_IO:
