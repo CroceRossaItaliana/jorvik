@@ -1,0 +1,48 @@
+<table style="width: 100%;">
+<tr><!--Reperibilità disponibili-->
+    <td>
+        <h4 class="text-success">
+            <i class="fa fa-fw fa-check"></i> Reperibilità disponibili: {{ reperibilita_disponibili.count }}
+        </h4>
+        <table class="table table-condensed piu-piccolo">
+            <thead>
+            <tr>
+                <th>Persona</th>
+                <th>Reperibilità</th>
+                {% if not turno.passato %}
+                    <th>Azione</th>
+                {% endif %}
+            </tr>
+            </thead>
+            <tbody>
+            {% for reperibilita in reperibilita_disponibili %}
+                <tr>
+                    <td>
+                        {{ reperibilita.persona.link|safe }}<br>
+                        {{ reperibilita.get_estensione_display }}<br>
+                        Attivazione in <strong>{{ reperibilita.attivazione }}</strong>
+                    </td>
+                    <td>
+                        dal {{ reperibilita.inizio|date:"SHORT_DATETIME_FORMAT" }}<br>
+                        al {{ reperibilita.fine|date:"SHORT_DATETIME_FORMAT" }}
+                    </td>
+                    <td>
+                        <a href="{% url 'so:servizio_turno_abbina_volontario' turno.pk reperibilita.pk %}">
+                            <i class="fa fa-fw fa-plus"></i> Abbina
+                        </a>
+                    </td>
+                </tr>
+            {% empty %}
+                <tr>
+                    <td colspan="3" style="text-align:center;">
+                        <i class="fa fa-fw fa-info-circle"></i> Nessuna reperibilità disponibile. <br>
+                        <p>Puoi <a target="_blank" href="{% url 'so:reperibilita_backup' %}">aggiungere nuova
+                            reperibilità </a> per un volontario dei tuoi comitati</p>
+                    </td>
+                </tr>
+            {% endfor %}
+            </tbody>
+        </table>
+    </td>
+</tr>
+</table>

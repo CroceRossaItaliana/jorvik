@@ -1,0 +1,45 @@
+{% extends 'so_vuota.html' %}
+
+{% load so_templatetags %}
+{% load bootstrap3 %}
+
+{% block pagina_titolo %}
+    {% block scheda_titolo %}{% endblock %} {{ operazione.nome }} ({{ operazione.sede.nome_completo }})&mdash; operazione
+{% endblock %}
+
+{% block app_contenuto %}
+    <h2 class="allinea-centro grassetto text-success">{{ operazione.nome }}</h2>
+    <h4 class="allinea-centro">
+        <i class="fa fa-fw fa-map-marker"></i>
+        {{ operazione.sede }}
+    </h4>
+    <ul class="nav nav-tabs">
+        <li role="presentation" {% if request.path == operazione.url %}class="active"{% endif %}>
+            <a href="{{ operazione.url }}">
+                <i class="fa fa-fw fa-info"></i>Informazioni
+                {% if operazione.commenti.count %}&nbsp;
+                    <span class="badge pull-right">
+                    <i class="fa fa-fw fa-comments"></i> {{ operazione.commenti.count }}
+                </span>
+                {% endif %}
+            </a>
+        </li>
+
+        {% if puo_modificare %}
+            <li role="presentation" {% if request.path == operazione.url_modifica %}class="active"{% endif %}>
+                <a href="{{ operazione.url_modifica }}" class="text-danger">
+                    <i class="fas fa-pencil-alt"></i> Gestione operazione
+                </a>
+            </li>
+        {% endif %}
+    </ul>
+
+    <p>&nbsp;</p>
+    {% block scheda_contenuto %}{% endblock %}
+    <p>&nbsp;</p>
+
+    <hr/>
+    <div class="piu-piccolo allinea-centro">
+        <i class="fa fa-fw fa-clock-o"></i> Ultimo aggiornamento {{ operazione.ultima_modifica }}
+    </div>
+{% endblock %}

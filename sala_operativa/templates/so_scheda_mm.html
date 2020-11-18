@@ -1,0 +1,121 @@
+{% extends 'so_scheda.html' %}
+
+{% block scheda_titolo %}Mezzi e materiali prenotati per il servizio{% endblock %}
+
+{% load utils %}
+{% load social %}
+{% load bootstrap3 %}
+{% load so_templatetags %}
+
+{% block scheda_contenuto %}
+    <div class="row">
+        <div class="col-md-12">
+            <div class="panel panel-info">
+                <div class="panel-heading">
+                    <h2 class="panel-title"><i class="fa fa-fw fa-list"></i> Mezzi e materiali prenotati</h2>
+                </div>
+                <div class="panel-body">
+                    <table class="table table-striped">
+                        <thead>
+                        <tr>
+                            <th>Mezzo</th>
+                            <th>Comitato</th>
+                            <th>Prenotazione</th>
+                            <th>Prenotato</th>
+                            <th></th>
+                        </tr>
+                        </thead>
+                        <tbody>
+                        {% for prenotazione in prenotazioni %}
+                            <tr>
+                                <td>
+                                    <div style="margin-bottom:10px;"><i class="fa fas fa-ambulance fa-fw"></i> {{ prenotazione.mezzo.nome }}</div>
+                                    <strong>{{ prenotazione.mezzo.get_tipo_display|default:"" }}</strong>
+                                    <span style="font-size:12px;">{{ prenotazione.mezzo.get_mezzo_tipo_display|default:"" }}</span><br>
+                                </td>
+                                <td><strong>{{ prenotazione.mezzo.estensione }}</strong></td>
+                                <td>
+                                    <strong>Inizio:</strong> {{ prenotazione.inizio|date:"SHORT_DATETIME_FORMAT" }}<br>
+                                    <strong>Fine:</strong> {{ prenotazione.fine|date:"SHORT_DATETIME_FORMAT" }}<br>
+                                    <strong>
+                                        {% if prenotazione.passata %}
+                                            <span style="color:orange;">Passata</span>
+                                        {% else %}
+                                            <span style="color:green;">In corso...</span>
+                                        {% endif %}
+                                    </strong>
+                                </td>
+                                <td>{{ prenotazione.creazione|date:"SHORT_DATETIME_FORMAT" }}</td>
+                                <td><a href="{% url 'so:scheda_mm_cancella' attivita.pk prenotazione.pk %}"
+                                       data-conferma="Vuoi cancellare la prenotazione di questo {{ prenotazione.mezzo.get_tipo_display|lower }}?"><i class="fas fa-minus-circle"></i> Elimina</a></td>
+                            </tr>
+                        {% empty %}
+                            <tr class="alert alert-warning">
+                                <td colspan="5">
+                                    <i class="fa fa-fw fa-warning"></i> Ancora non ci sono mezzi e materiali abbinati
+                                </td>
+                            </tr>
+                        {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="row">
+        <div class="col-md-12">
+            <div class="panel panel-info">
+                <div class="panel-heading">
+                    <h2 class="panel-title">
+                        <i class="fa fa-fw fa-list"></i> Mezzi e materiali disponibili
+                    </h2>
+                </div>
+                <div class="panel-body">
+                    <table class="table table-striped">
+                        <thead>
+                        <tr>
+                            <th>Mezzo</th>
+                            <th>Disponibilità</th>
+                            <th>Comitato</th>
+                            <th></th>
+                        </tr>
+                        </thead>
+                        <tbody>
+                        {% for mezzo in mezzi_disponibili %}
+                            <tr>
+                                <td>
+                                    <div style="margin-bottom:10px;"><i class="fa fas fa-ambulance fa-fw"></i> {{ mezzo.nome }}</div>
+                                    <strong>{{ mezzo.get_tipo_display|default:"" }}</strong>
+                                    <span style="font-size:12px;">{{ mezzo.get_mezzo_tipo_display|default:"" }}</span><br>
+                                </td>
+                                <td>
+{#                                    <strong>Inizio:</strong> {{ mezzo.inizio|date:"SHORT_DATETIME_FORMAT" }}<br>#}
+{#                                    <strong>Fine:</strong> {{ mezzo.fine|date:"SHORT_DATETIME_FORMAT"|default:"Non impostata" }}#}
+                                </td>
+                                <td>
+                                    <strong>{{ mezzo.estensione }}</strong><br>
+                                    <span style="font-size:12px;">{{ mezzo.creato_da.link|safe }}</span>
+                                </td>
+                                <td style="text-align:center;">
+                                    <a href="{% url 'so:scheda_mm_abbina' attivita.pk mezzo.pk %}"> <i class="far fa-caret-square-right"></i> Prenota</a><br>
+                                    {% mezzo_prenotato_per_servizio mezzo attivita as gia_prenotato %}
+                                    {% if gia_prenotato %}
+                                        <span style="font-size:11px;">Già prenotato per questo servizio</span><br>
+                                    {% endif %}
+                                </td>
+                            </tr>
+                        {% empty %}
+                            <tr class="alert alert-warning">
+                                <td colspan="4">
+                                    <i class="fa fa-fw fa-warning"></i> Ancora non ci sono mezzi o materiali disponibili
+                                </td>
+                            </tr>
+                        {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </div>
+{% endblock %}

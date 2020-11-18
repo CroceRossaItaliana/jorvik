@@ -1,0 +1,35 @@
+{% extends 'so_vuota.html' %}
+
+{% load utils %}
+{% load bootstrap3 %}
+
+{% block pagina_titolo %}Referenti servizio{% endblock %}
+
+{% block app_contenuto %}
+<div class="row">
+    <div class="col-md-9">
+        <div class="panel panel-info">
+            <div class="panel-heading">
+                <h2 class="panel-title">
+                    <i class="fa fa-fw fa-users"></i> Referenti per "{{ servizio.nome }}"
+                </h2>
+            </div>
+            <div class="panel-body">
+                {% delegati delega servizio continua_url=continua_url almeno=1 %}
+            </div>
+        </div>
+    </div>
+    <div class="col-md-3">
+            <h4 class="text-success">
+                <i class="far fa-question-circle"></i> Guida alla compilazione
+            </h4>
+            <p>&nbsp;</p>
+          <p><strong>Chi è il referente di un servizio?</strong>
+              <ul>
+                  <li>Punto di riferimento per i volontari che partecipano al servizio;</li>
+                  <li>I suoi contatti verranno divulgati coi volontari interessati al servizio;</li>
+                  <li>Generalmente è presente sul posto al servizio e/o conosce chi vi ci si reca;</li>
+                </ul>
+    </div>
+</div>
+{% endblock %}

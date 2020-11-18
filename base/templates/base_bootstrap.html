@@ -9,15 +9,15 @@
 
     {% block pagina_css %}
         {% compress css %}
-        <link rel="stylesheet" href="{% static 'css/bootstrap.min.css' %}" />
-        <link rel="stylesheet" href="{% static 'css/bootstrap-theme.min.css' %}" />
-        <link rel="stylesheet" href="{% static 'css/font-awesome.min.css' %}" />
-        <link rel="stylesheet" href="{% static 'css/base.css' %}" />
-        <link rel="stylesheet" href="{% static 'css/chartist.min.css' %}" />
-        <link rel="stylesheet" href="{% static 'css/jquery-ui.structure.min.css' %}" />
-        <link rel="stylesheet" href="{% static 'css/jquery-ui.min.css' %}" />
-        <link rel="stylesheet" href="{% static 'css/jquery.datetimepicker.css' %}" />
-        <link rel="stylesheet" href="{% static 'css/gaia.css' %}" />
+        <link href="{% static 'css/bootstrap.min.css' %}" rel="stylesheet" />
+        <link href="{% static 'css/bootstrap-theme.min.css' %}" rel="stylesheet" />
+        <link href="{% static 'css/font-awesome.min.css' %}" rel="stylesheet" />
+        <link href="{% static 'css/base.css' %}" rel="stylesheet" />
+        <link href="{% static 'css/chartist.min.css' %}" rel="stylesheet" />
+        <link href="{% static 'css/jquery-ui.structure.min.css' %}" rel="stylesheet" />
+        <link href="{% static 'css/jquery-ui.min.css' %}" rel="stylesheet" />
+        <link href="{% static 'css/jquery.datetimepicker.css' %}" rel="stylesheet" />
+        <link href="{% static 'css/gaia.css' %}" rel="stylesheet" />
         {% endcompress %}
 
         <script type="text/javascript" src="{% static 'js/jquery.min.js' %}"></script>
@@ -44,15 +44,12 @@
     {% endblock %}
 
     {% block pagina_javascript %}
-
         {% compress js %}
             <script type="text/javascript" src="{% static 'js/bootstrap.min.js' %}"></script>
             <script type="text/javascript" src="{% static 'js/jquery-ui.min.js' %}"></script>
             <script type="text/javascript" src="{% static 'js/chartist.min.js' %}"></script>
             <script type="text/javascript" src="{% static 'js/jquery.datetimepicker.full.min.js' %}"></script>
             <script type="text/javascript" src="{% static 'js/jorvik.js' %}"></script>
-
-
             <script>
               (function(i,s,o,g,r,a,m){i['GoogleAnalyticsObject']=r;i[r]=i[r]||function(){
               (i[r].q=i[r].q||[]).push(arguments)},i[r].l=1*new Date();a=s.createElement(o),

@@ -95,6 +95,12 @@ class Menu:
         return ufficio_soci.menu_us(self.me)
 
     @property
+    def so(self):
+        from sala_operativa.menus import sala_operativa
+
+        return sala_operativa(self.me)
+
+    @property
     def co(self):
         from .menus import centrale_operativa
 
@@ -149,6 +155,11 @@ class Menu:
                 'urls': ['/us/'],
                 'method': 'us',
                 'name_for_template': 'us',
+            }),
+            ({
+                'urls': ['/so/'],
+                'method': 'so',
+                'name_for_template': 'so',
             }),
             ({
                 'urls': ['/veicoli/', '/veicolo/', '/autoparco/'],

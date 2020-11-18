@@ -1,0 +1,89 @@
+{% extends 'so_vuota.html' %}
+
+{% load utils %}
+{% load bootstrap3 %}
+
+{% block pagina_titolo %}Gestisci Servizi{% endblock %}
+
+{% block app_contenuto %}
+
+    <div class="alert alert-block alert-info">
+        <p>
+            <i class="fa fa-fw fa-info-circle"></i> Da questa pagina puoi accedere a tutti i servizi che puoi gestire.
+        </p>
+    </div>
+
+    <div class="panel panel-info">
+        <div class="panel-heading">
+            <h2 class="panel-title"><i class="fa fa-fw fa-list"></i> Elenco servizi gestiti</h2>
+        </div>
+        <div class="panel-body">
+            <p>
+            <ul class="nav nav-pills">
+                <li role="presentation" {% if stato == "aperte" %}class="active"{% endif %}>
+                    <a href="{% url 'so:gestisci' %}">
+                        <i class="fa fa-fw fa-check-circle"></i> Aperti <span class="badge">{{ servizi_aperti }}</span>
+                    </a>
+                </li>
+                <li role="presentation" {% if stato == "chiuse" %}class="active"{% endif %}>
+                    <a href="{% url 'so:gestisci_chiuse' %}">
+                        <i class="fa fa-fw fa-folder"></i> Chiusi <span class="badge">{{ servizi_chiusi }}</span>
+                    </a>
+                </li>
+            </ul>
+            </p>
+        </div>
+
+        {% if servizi_n %}
+            <div class="panel panel-info">
+                <div class="panel-heading" data-toggle="collapse" href="#collapseNazionele" role="button"
+                     aria-expanded="false"
+                     aria-controls="collapseExample">
+                    <h2 class="panel-title"><i class="fa fa-fw fa-list"></i> Elenco Nazionale</h2>
+                </div>
+                <div class="panel-body collapse" id="collapseNazionele">
+                    {% include "so_servizi_table.html" with attivita=servizi_n %}
+                </div>
+            </div>
+        {% endif %}
+
+        {% if servizi_r %}
+            <div class="panel panel-info">
+                <div class="panel-heading" data-toggle="collapse" href="#collapseRegionale" role="button"
+                     aria-expanded="false"
+                     aria-controls="collapseExample">
+                    <h2 class="panel-title"><i class="fa fa-fw fa-list"></i> Elenco Regionale</h2>
+                </div>
+                <div class="panel-body collapse" id="collapseRegionale">
+                    {% include "so_servizi_table.html" with attivita=servizi_r %}
+                </div>
+            </div>
+        {% endif %}
+
+        {% if servizi_p %}
+            <div class="panel panel-info">
+                <div class="panel-heading" data-toggle="collapse" href="#collapseProvinciale" role="button"
+                     aria-expanded="false"
+                     aria-controls="collapseExample">
+                    <h2 class="panel-title"><i class="fa fa-fw fa-list"></i> Elenco Provinciale</h2>
+                </div>
+                <div class="panel-body collapse" id="collapseProvinciale">
+                    {% include "so_servizi_table.html" with attivita=servizi_p %}
+                </div>
+            </div>{% endif %}
+
+        {% if servizi_l %}
+            <div class="panel panel-info">
+                <div class="panel-heading" data-toggle="collapse" href="#collapseLocale" role="button"
+                     aria-expanded="false"
+                     aria-controls="collapseExample">
+                    <h2 class="panel-title"><i class="fa fa-fw fa-list"></i> Elenco Locale</h2>
+                </div>
+                <div class="panel-body collapse" id="collapseLocale">
+                    {% include "so_servizi_table.html" with attivita=servizi_l %}
+                </div>
+            </div>
+        {% endif %}
+    </div>
+
+{% endblock %}

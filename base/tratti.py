@@ -125,7 +125,7 @@ class ConStorico(models.Model):
 
     @classmethod
     @concept
-    def query_attuale_tra_date(cls, inizio, fine, **kwargs):
+    def query_attuale_tra_date(cls, inizio, fine, *args, **kwargs):
         """
         Restituisce l'oggetto Q per filtrare le entita' che sono state
          attuali in qualsiasi momento in un periodo compreso tra due date.
