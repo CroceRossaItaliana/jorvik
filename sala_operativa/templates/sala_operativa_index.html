@@ -1,0 +1,102 @@
+{% extends 'so_vuota.html' %}
+
+{% load bootstrap3 %}
+
+{% block pagina_titolo %}Sala Operativa{% endblock %}
+{% block base_head_extra %}
+    {% if not reperibilita %}<meta http-equiv="refresh" content="60">{% endif %}
+{% endblock %}
+
+{% block app_contenuto %}
+    <h2 class="allinea-centro text-success">Sala Operativa</h2>
+    <p class="allinea-centro">
+        <img alt="Emblema CRI" src="https://upload.wikimedia.org/wikipedia/it/thumb/4/4a/Emblema_CRI.svg/300px-Emblema_CRI.svg.png" width="180" height="180" />
+    </p>
+    <div class="row">
+        <div class="col-md-6">
+            <div class="alert alert-info">
+                <p><i class="fa fa-info-circle"></i> Da qui puoi vedere i dettailg dei Volontari che hanno segnalato la propria reperibilità per la giornata di oggi su Gaia, alle ore:</p>
+                <p class="allinea-centro piu-grande"><i class="fa fa-fw fa-clock-o"></i> <span class="monospace">{{ ora|time:"TIME_FORMAT" }}</span></p>
+                <p> <a href="{% url 'so:index' %}?refresh" class="btn btn-sm btn-block btn-info"><i class="fas fa-sync"></i> Aggiorna questa pagina</a></p>
+            </div>
+        </div>
+        <div class="col-md-6">
+            <div class="alert alert-info">
+                <p><i class="fa fa-info-circle"></i> I Volontari possono segnalare la propria disponibilità dal menu "SO", cliccando quindi su "Reperibilità".</p>
+                <p>La funzionalità è anche disponibile da dispositivi mobile.</p>
+                <p>Sei abilitato alla gestione della Sala Operativa per le seguenti sedi:</p>
+                <ul>
+                    {% for sede in sedi %}
+                        <li>{{ sede.link|safe }}</li>
+                    {% endfor %}
+                </ul>
+            </div>
+        </div>
+        <div class="col-md-12">
+            <div class="panel panel-info">
+                <div class="panel-heading">
+                    <h2 class="panel-title">
+                        <i class="fa fa-fw fa-list"></i> Reperibilit&agrave; segnalate
+                    </h2>
+                </div>
+
+                <div class="panel-body">
+                    <p class="text-info">
+                        <i class="fa fa-fw fa-info-circle"></i> Le reperibilit&agrave; sono mostrate in ordine di tempo di attivazione.
+                    </p>
+                    <table class="table table-striped">
+                        <thead>
+                        <tr>
+                            <th>Informazioni</th>
+                            <th>Reperibilit&agrave;</th>
+                            <th>Attivazione</th>
+                            <th>Cellulare</th>
+                            <th>E-Mail</th>
+                        </tr>
+                        </thead>
+
+                        {% for r in reperibilita %}
+                            <tr>
+                                <td>
+                                    <span class="grassetto">{{ r.persona.link|safe }}</span><br />
+                                    {{ r.persona.sede_riferimento.link|safe }}<br>
+                                    <div style="margin:8px 0 0; font-size:12px;">
+                                        Applicazione dei<br>Benefici di Legge: <strong>{% if r.applicazione_bdl %}Si{% else %}No{% endif %}</strong>
+                                    </div>
+                                </td>
+                                <td>
+                                    <strong>{{ r.get_estensione_display }}</strong><br>
+                                    {{ r.inizio|date:"SHORT_DATETIME_FORMAT" }} (inizio)<br />
+                                    {{ r.fine|date:"SHORT_DATETIME_FORMAT" }} (fine)
+                                </td>
+                                <td>in {{ r.attivazione }}</td>
+                                <td>
+                                    {% for t in r.persona.numeri_telefono.all %}
+                                            {{ t }} ({% if t.servizio %}Servizio{% else %}Personale{% endif %})<br />
+                                    {% empty %}
+                                        Nessun numero di telefono.
+                                    {% endfor %}
+                                </td>
+                                <td>{% if r.persona.email_contatto %}
+                                        {{ r.persona.email_contatto }}
+                                    {% else %}
+                                        {{ r.persona.email }}
+                                    {% endif %}
+                                </td>
+                            </tr>
+
+                        {% empty %}
+                            <tr class="alert alert-warning allinea-centro">
+                                <td colspan="5">
+                                    <p><i class="fa fa-fw fa-info-circle"></i> Nessuna reperibilit&agrave; segnalata in questo momento ({{ ora|time:"TIME_FORMAT" }}).</p>
+                                    <p><a href="{% url 'so:index' %}?refresh" class="btn btn-warning btn-sm"><i class="fas fa-sync"></i> Ricontrolla</a></p>
+                                </td>
+                            </tr>
+                        {% endfor %}
+                    </table>
+                </div>
+            </div>
+        </div>
+    </div>
+
+{% endblock %}

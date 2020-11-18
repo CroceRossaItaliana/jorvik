@@ -19,7 +19,7 @@ from django.utils.functional import cached_property
 from django_countries.fields import CountryField
 
 from .costanti import (ESTENSIONE, TERRITORIALE, LOCALE, PROVINCIALE, REGIONALE, NAZIONALE)
-from .permessi.applicazioni import DELEGATO_AREA
+from .permessi.applicazioni import DELEGATO_AREA, DELEGATO_SO
 from .validators import (valida_codice_fiscale, ottieni_genere_da_codice_fiscale,
     valida_dimensione_file_8mb, valida_partita_iva, valida_dimensione_file_5mb,
     valida_iban, valida_email_personale) # valida_almeno_14_anni, crea_validatore_dimensione_file)
@@ -268,7 +268,7 @@ class Persona(ModelloSemplice, ConMarcaTemporale, ConAllegati, ConVecchioID):
             if espandi:
                 pks = [x.pk for x in oggetto.espandi(includi_me=True, pubblici=pubblici)]
             else:
-                pks = [oggetto.pk]
+                pks = [oggetto.pk] if hasattr(oggetto, 'pk') else [s.pk for s in oggetto.all()]
 
             sedi |= Sede.objects.filter(pk__in=pks)
         return sedi
@@ -511,6 +511,7 @@ class Persona(ModelloSemplice, ConMarcaTemporale, ConAllegati, ConVecchioID):
 
     @property
     def applicazioni_disponibili(self):
+        from sala_operativa.utils import visibilita_menu_top
         from formazione.models import CorsoBase
 
         # Personalizzare il menu "Utente" secondo il suo ruolo
@@ -540,9 +541,10 @@ class Persona(ModelloSemplice, ConMarcaTemporale, ConAllegati, ConVecchioID):
             [('/presidente/', 'Sedi', 'fa-home'), self.ha_permesso(GESTIONE_SEDE)],
             [('/us/', 'Soci', 'fa-users'), self.ha_permesso(GESTIONE_SOCI) or self.ha_permesso(GESTIONE_SOCI_CM) or self.ha_permesso(GESTIONE_SOCI_IIVV)],
             [('/veicoli/', "Veicoli", "fa-car"), self.ha_permesso(GESTIONE_AUTOPARCHI_SEDE)],
+            [(reverse('so:index'), "SO", "fa-compass"), visibilita_menu_top(self)],
             [('/centrale-operativa/', "CO", "fa-compass"), self.ha_permesso(GESTIONE_CENTRALE_OPERATIVA_SEDE)],
             [('/formazione/', 'Formazione', 'fa-graduation-cap'), self.ha_permesso(GESTIONE_CORSO) or self.ha_permesso(GESTIONE_CORSI_SEDE)],
-            [('/articoli/', 'Articoli', 'fa-newspaper-o'), True],
+            [('/articoli/', 'Articoli', 'fa-newspaper'), True],
             [('/documenti/', 'Documenti', 'fa-folder'), True],
         ]
 
@@ -1569,6 +1571,9 @@ class Appartenenza(ModelloSemplice, ConStorico, ConMarcaTemporale, ConAutorizzaz
     # Quale tipo di membro puo' partecipare alle attivita'?
     MEMBRO_ATTIVITA = (VOLONTARIO, ESTESO, SEVIZIO_CIVILE_UNIVERSALE)
 
+    # Quale tipo di membro può partecipare al servizio?
+    MEMBRO_SERVIZIO = (VOLONTARIO, ESTESO, DIPENDENTE, )
+
     # Membri sotto il diretto controllo della Sede
     MEMBRO_DIRETTO = (VOLONTARIO, ORDINARIO, DIPENDENTE, INFERMIERA, MILITARE, DONATORE, SOSTENITORE, SEVIZIO_CIVILE_UNIVERSALE,)
 
@@ -1812,7 +1817,7 @@ class Sede(ModelloAlbero, ConMarcaTemporale, ConGeolocalizzazione, ConVecchioID,
     tipo = models.CharField("Tipologia", max_length=1, choices=TIPO, default=COMITATO, db_index=True)
 
     # GAIA-280
-    sede_operativa = models.ManyToManyField(Locazione)
+    sede_operativa = models.ManyToManyField(Locazione, blank=True)
     indirizzo_per_spedizioni = models.ForeignKey(Locazione, null=True, blank=True,
                                                  related_name="locazione_indirizzo_spedizioni")
     persona_di_riferimento = models.CharField("Persona da contattare di riferimento", max_length=250, null=True,
@@ -1998,6 +2003,12 @@ class Sede(ModelloAlbero, ConMarcaTemporale, ConGeolocalizzazione, ConVecchioID,
 
     def commissari(self):
         return self.comitato.delegati_attuali(tipo=COMMISSARIO, solo_deleghe_attive=True)
+
+    def obbiettivo_3(self):
+        return self.comitato.delegati_attuali(tipo=DELEGATO_OBIETTIVO_3, solo_deleghe_attive=True)
+
+    def delegati_so(self):
+        return self.comitato.delegati_attuali(tipo=DELEGATO_SO, solo_deleghe_attive=True)
 
     def vice_presidente(self):
         delega_vice_presidenziale = self.comitato.delegati_attuali(tipo=VICE_PRESIDENTE, solo_deleghe_attive=True).first()
@@ -3048,3 +3059,6 @@ class Nominativo(ModelloSemplice, ConStorico, ConMarcaTemporale):
 
     class Meta:
         verbose_name_plural = "Nominativi"
+
+
+

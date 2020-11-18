@@ -22,8 +22,8 @@ from sangue.models import Donatore, Donazione
 from formazione.models import Corso
 from .costanti import REGIONALE
 from .models import (Sede, Persona, Appartenenza, Documento, Estensione,
-    ProvvedimentoDisciplinare, Delega, Fototessera, Trasferimento, Riserva,
-    Nominativo,)
+                     ProvvedimentoDisciplinare, Delega, Fototessera, Trasferimento, Riserva,
+                     Nominativo)
 from .validators import valida_almeno_14_anni, valida_data_nel_passato
 from .permessi.applicazioni import (PRESIDENTE, COMMISSARIO,
     CONSIGLIERE, CONSIGLIERE_GIOVANE, VICE_PRESIDENTE)
@@ -249,6 +249,7 @@ class ModuloProfiloModificaAnagrafica(ModelForm):
             if user.sede_riferimento != self.instance.sede_riferimento:
                 for f in ['codice_fiscale', 'nome', 'cognome', 'data_nascita']:
                     self.fields[f].disabled = True
+
 
 
 class ModuloProfiloModificaAnagraficaDomicilio(ModelForm):

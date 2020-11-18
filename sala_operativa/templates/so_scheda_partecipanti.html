@@ -1,0 +1,37 @@
+{% extends 'so_scheda.html' %}
+
+{% load utils %}
+
+{% block scheda_titolo %}Elenco partecipanti{% endblock %}
+
+{% block scheda_contenuto %}
+    <div class="panel panel-info">
+        <div class="panel-heading">
+            <h2 class="panel-title">
+                <i class="fa fa-fw fa-list"></i> Tutte le partecipazioni all'attivit&agrave;
+            </h2>
+        </div>
+        <div class="panel-body">
+            <div class="row">
+                <div class="col-md-6">
+                    <div class="alert alert-block alert-info">
+                        <h4><i class="fa fa-fw fa-search"></i> Prova a cercare un volontario</h4>
+                        <p>Sapevi che cercando un volontario per nome, cognome o codice fiscale, puoi ottenere
+                            l'elenco di tutti i turni a cui questo ha partecipato?
+                        </p>
+                    </div>
+                </div>
+                <div class="col-md-6">
+                    <div class="alert alert-block alert-info">
+                        <h4><i class="fa fa-fw fa-info-circle"></i> Per una migliore visualizzazione</h4>
+                        <p>Clicca sul pulsante <strong><i class="fa fa-fw fa-download"></i> Scarica</strong> per
+                            scaricare l'elenco in formato Excel, per una pi&ugrave; rapida esplorazione dei partecipanti
+                            all'attivit&agrave;.
+                        </p>
+                    </div>
+                </div>
+            </div>
+            {% elenco elenco %}
+        </div>
+    </div>
+{% endblock %}

@@ -21,8 +21,12 @@ DELEGATO_OBIETTIVO_5 = 'O5'
 DELEGATO_OBIETTIVO_6 = 'O6'
 RESPONSABILE_AREA = 'RA'
 REFERENTE = 'RE'
+REFERENTE_SERVIZI_SO = 'RS'
+REFERENTE_OPERAZIONE_SO = 'RO'
+REFERENTE_FUNZIONE_SO = 'RU'
 REFERENTE_GRUPPO = 'GR'
 DELEGATO_CO = 'CO'
+DELEGATO_SO = 'SO'
 RESPONSABILE_FORMAZIONE = 'RF'
 RESPONSABILE_AUTOPARCO = 'AP'
 RESPONSABILE_PATENTI = 'PA'
@@ -58,8 +62,12 @@ PERMESSI_NOMI = (
     (DELEGATO_OBIETTIVO_6,      "Delegato Obiettivo VI (Sviluppo)"),
     (RESPONSABILE_AREA,         "Responsabile d'Area"),
     (REFERENTE,                 "Referente Attività"),
+    (REFERENTE_SERVIZI_SO,      "Referente Servizio SO"),
+    (REFERENTE_OPERAZIONE_SO,   "Referente Operazione SO"),
+    (REFERENTE_FUNZIONE_SO,   "Referente Operazione SO"),
     (REFERENTE_GRUPPO,          "Referente Gruppo"),
     (DELEGATO_CO,               "Delegato Centrale Operativa"),
+    (DELEGATO_SO,               "Delegato Sala Operativa"),
     (RESPONSABILE_FORMAZIONE,   "Responsabile Formazione"),
     (DIRETTORE_CORSO,           "Direttore Corso"),
     (RESPONSABILE_AUTOPARCO,    "Responsabile Autoparco"),
@@ -71,7 +79,7 @@ DELEGHE_RUBRICA = (
     PRESIDENTE, COMMISSARIO, CONSIGLIERE_GIOVANE, UFFICIO_SOCI, UFFICIO_SOCI_UNITA,
     DELEGATO_OBIETTIVO_1, DELEGATO_OBIETTIVO_2, DELEGATO_OBIETTIVO_3,
     DELEGATO_OBIETTIVO_4, DELEGATO_OBIETTIVO_5, DELEGATO_OBIETTIVO_6,
-    RESPONSABILE_FORMAZIONE, DELEGATO_CO, RESPONSABILE_AUTOPARCO,
+    RESPONSABILE_FORMAZIONE, DELEGATO_CO, DELEGATO_SO, RESPONSABILE_AUTOPARCO,
 )
 
 PERMESSI_NOMI_DICT = dict(PERMESSI_NOMI)
@@ -94,7 +102,11 @@ RUBRICHE_TITOLI = OrderedDict((
     # ('responsabili_area', (RESPONSABILE_AREA, 'Responsabili d\'Area', False)), rimosso perché non utile al momento
     ('referenti_attivita', (REFERENTE, 'Referenti Attività', False)),
     ('referenti_gruppi', (REFERENTE, 'Referenti Gruppi', False)),
+    # ('referenti_servizio_so', (REFERENTE_SERVIZI_SO, 'Referenti Servizi SO', False)),
+    # ('referenti_operazione_so', (REFERENTE_OPERAZIONE_SO, 'Referenti Operazione SO', False)),
+    # ('referenti_funzioni_so', (REFERENTE_FUNZIONE_SO, 'Referenti Funzione SO', False)),
     ('centrali_operative', (DELEGATO_CO, 'Referenti Centrale Operativa', True)),
+    ('sale_operative', (DELEGATO_SO, 'Delegati Sale Operativa', True)),
     ('responsabili_formazione', (RESPONSABILE_FORMAZIONE, 'Referenti Responsabili Formazione', True)),
     ('direttori_corsi', (DIRETTORE_CORSO, 'Direttori Corsi', True)),
     ('responsabili_autoparco', (RESPONSABILE_AUTOPARCO, 'Responsabili Autoparco', True)),

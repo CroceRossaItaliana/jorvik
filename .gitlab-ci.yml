@@ -165,36 +165,36 @@ dump_db:
     - release
   when: manual
   tags:
-    - gaia-app01,prod  
+    - gaia-app01,prod
 
 .maintenance_template: &maintenance_definition
   stage: maintenance
   script:
-    - sudo service jorvik stop 
+    - sudo service jorvik stop
     - sudo service nginx stop
   only:
     - release
   allow_failure: false
-  when: manual 
+  when: manual
 
 stop_service_app01:
     tags:
-      - gaia-app01,prod 
+      - gaia-app01,prod
     <<: *maintenance_definition
 
 stop_service_app02:
     tags:
-      - gaia-app02,prod 
+      - gaia-app02,prod
     <<: *maintenance_definition
 
 stop_service_app03:
     tags:
-    - gaia-app03,prod 
+    - gaia-app03,prod
     <<: *maintenance_definition
 
 stop_service_app04:
     tags:
-    - gaia-app04,prod 
+    - gaia-app04,prod
     <<: *maintenance_definition
 
 migrate_db:
@@ -203,7 +203,7 @@ migrate_db:
     - whoami
     - cd /home/appserver/jorvik
     - git pull --rebase origin release
-  script:  
+  script:
     - /home/appserver/venv/bin/python /home/appserver/jorvik/manage.py makemigrations
     - /home/appserver/venv/bin/python /home/appserver/jorvik/manage.py migrate
     - /home/appserver/venv/bin/python /home/appserver/jorvik/manage.py collectstatic --no-input
@@ -213,7 +213,7 @@ migrate_db:
     - release
   when: manual
   tags:
-    - gaia-app01,prod  
+    - gaia-app01,prod
 
 .deploy_template: &deploy_definition
   stage: release
@@ -222,7 +222,7 @@ migrate_db:
     - git status
   script:
     - git pull --rebase origin release
-  after_script:    
+  after_script:
     - sudo service jorvik restart
     - sudo service nginx restart
   only:
@@ -238,7 +238,7 @@ release_app02:
   tags:
     - gaia-app02,prod
   <<: *deploy_definition
-  
+
 release_app03:
   tags:
     - gaia-app03,prod

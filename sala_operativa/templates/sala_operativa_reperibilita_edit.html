@@ -1,0 +1,23 @@
+{% extends 'so_vuota.html' %}
+
+{% load bootstrap3 %}
+{% load humanize %}
+
+{% block pagina_titolo %}Sala Operativa - Modifica reperibilit&agrave;{% endblock %}
+
+{% block app_contenuto %}
+  <div class="panel panel-primary">
+      <div class="panel-heading">
+          <h2 class="panel-title"><i class="fa fa-fw fa-plus-circle"></i> Reperibilità di {{ reperibilita.persona }}</h2>
+      </div>
+      <div class="panel-body">
+          <form method="POST" action=".">
+              {% bootstrap_form form %}
+              <button type="submit" class="btn btn-block btn-primary">
+                  <i class="fa fa-fw fa-check"></i> Salva modifiche
+              </button>
+              {% csrf_token %}
+          </form>
+      </div>
+  </div>
+{% endblock %}

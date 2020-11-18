@@ -1,0 +1,88 @@
+{% extends 'so_vuota.html' %}
+
+{% load bootstrap3 %}
+{% load humanize %}
+
+{% block pagina_titolo %}Datore di lavoro{% endblock %}
+
+{% block app_contenuto %}
+    <div class="alert bg-info">
+        <p>
+            <i class="fa fa-info-circle fa-fw"></i> Da questa pagina potrai gestire i dati riguardanti i datori di
+            lavoro.
+            di lavoro.
+        </p>
+    </div>
+    <div class="row">
+    <div class="col-md-9">
+        <div class="panel panel-info">
+            <div class="panel-heading">
+                <h2 class="panel-title">
+                    <i class="fa fa-fw fa-list"></i> Datori di lavoro
+                </h2>
+            </div>
+            <div class="panel-body">
+                <table class="table table-striped">
+                    <thead>
+                    <tr>
+                        <th>Nominativo</th>
+                        <th>Dati</th>
+                        <th>Azioni</th>
+                    </tr>
+                    </thead>
+                    <tbody>
+                    {% for datore in datori %}
+                        <tr>
+                            <td>{{ datore.nominativo }}</td>
+                            <td>
+                                <div style="margin-bottom:15px;"><i class="fa fas fa-circle"></i> {{ datore.ragione_sociale }}</div>
+                                <div style="margin-bottom:15px;"><i class="fa fas fa-circle"></i> {{ datore.referente }}</div>
+                                <div style="margin-bottom:15px;"><i class="fa fas fa-at"></i> {{ datore.email }}</div>
+                                <div style="margin-bottom:15px;"><i class="fa fas fa-at"></i> {{ datore.pec }}</div>
+                                <div style="margin-bottom:15px;"><i class="fa fas fa-phone-alt"></i> {{ datore.telefono }}</div>
+                                <div style="margin-bottom:15px;"><i class="fa fas fa-circle"></i> {{ datore.partita_iva }}</div>
+                            </td>
+                            <td>
+                                <a href="{% url 'so:datore_di_lavoro_cancella' datore.pk %}"
+                                   data-conferma="Vuoi cancellare questo mezzo/materiale?">
+                                    <i class="fa fa-fw fa-trash"></i> Cancella</a><br>
+                                <a href="{% url 'so:datore_di_lavoro_modifica' datore.pk %}"><i class="fa fa-fw fa-edit"></i>
+                                    Modifica</a>
+                            </td>
+                        </tr>
+                    {% empty %}
+                        <tr class="alert alert-warning">
+                            <td colspan="3">
+                                <i class="fa fa-fw fa-warning"></i> Ancora non ci sono datori di lavoro
+                            </td>
+                        </tr>
+                    {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+
+
+    <div class="row">
+        <div class="col-md-3">
+            <div class="panel panel-primary">
+                <div class="panel-heading">
+                    <h4 class="panel-title"><i class="fa fa-edit fa-fw"></i> Dati datore di lavoro</h4>
+                </div>
+                <div class="panel-body">
+                    <form method="POST" enctype="multipart/form-data">
+                        {% bootstrap_form form %}
+                        {% csrf_token %}
+                        <button class="btn btn-block btn-primary" type="submit">
+                            <i class="fa fa-save fa-fw"></i>
+                            Aggiungi
+                        </button>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+
+{% endblock %}
+

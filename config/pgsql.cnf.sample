@@ -3,4 +3,4 @@ host = db
 port = 5432
 database = jorvik
 user = postgres
-password = 
+password =

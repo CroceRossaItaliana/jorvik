@@ -1,0 +1,46 @@
+{% extends 'sala_operativa_index.html' %}
+
+{% load bootstrap3 %}
+{% load humanize %}
+
+{% block pagina_titolo %}Modifica mezzi e materiali{% endblock %}
+
+{% block app_contenuto %}
+  <div class="panel panel-primary">
+      <div class="panel-heading">
+          <h2 class="panel-title"><i class="fa fa-fw fa-plus-circle"></i> Modifica il {{ mezzo.get_tipo_display|lower }} </h2>
+      </div>
+      <div class="panel-body">
+          <form method="POST" action=".">
+              {% bootstrap_form form %}
+              <button type="submit" class="btn btn-block btn-primary">
+                  <i class="fa fa-fw fa-check"></i> Salva modifiche
+              </button>
+              {% csrf_token %}
+          </form>
+      </div>
+  </div>
+    <script>
+        $('#id_tipo').on('change', function (e) {
+            if ($(this).val() === 'me') {
+                $('#id_mezzo_tipo').parent().show();
+                $('#id_stato').parent().show();
+            } else {
+                $('#id_mezzo_tipo').parent().hide();
+                $('#id_stato').parent().hide();
+                $('#id_targa').parent().hide();
+                $('#id_modello').parent().hide();
+            }
+        });
+
+        $('#id_mezzo_tipo').on('change', function (e) {
+            if ($(this).val() === 'm3') {
+                $('#id_targa').parent().show();
+                $('#id_modello').parent().show();
+            } else {
+                $('#id_targa').parent().hide();
+                $('#id_modello').parent().hide();
+            }
+        });
+    </script>
+{% endblock %}

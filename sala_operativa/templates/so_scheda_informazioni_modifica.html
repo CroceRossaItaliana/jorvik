@@ -1,0 +1,68 @@
+{% extends 'so_scheda.html' %}
+
+{% load social %}
+{% load utils %}
+{% load bootstrap3 %}
+
+{% block scheda_titolo %}Gestisci Servizio{% endblock %}
+
+{% block scheda_contenuto %}
+    <div class="row">
+        <div class="col-md-7">
+            <div class="panel panel-primary">
+                <div class="panel-heading">
+                    <h2 class="panel-title"><i class="fas fa-pencil-alt"></i> Modifica dettagli servizio</h2>
+                </div>
+                <div class="panel-body">
+                    <form method="POST">
+                        {% csrf_token %}
+                        {% bootstrap_form modulo %}
+                        <button type="submit" class="btn btn-lg btn-success"><i class="fa fa-fw fa-save"></i> Salva modifiche</button>
+                    </form>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-5">
+            <h3 class="text-info"><i class="fa fa-fw fa-support"></i> Guida alla compilazione</h3>
+            <p>&nbsp;</p>
+            <h4>Apertura</h4>
+            <ul>
+                <li><strong>Aperta</strong> &mdash; il servizio accetta nuove richieste di partecipazione da parte dei volontari,</li>
+                <li><strong>Chiusa</strong> &mdash; non &egrave; possibile richiedere di partecipare ai turni di questo servizio</li>
+            </ul>
+
+            <h4>Estensione</h4>
+            <p>Permetti di partecipare ai volontari che sono appartenenti ad una Sede uguale o sottostante quella selezionata.</p>
+            <p>Ad esempio, selezionando un Comitato Regionale, il servizio sar&agrave; aperto ai volontari del Comitato e di tutti i C.L. sottostanti.</p>
+
+            <h4>Descrizione</h4>
+            <p>Dai informazioni sul servizio ai volontari che sono interessati a parteciparvi, come una breve descrizione
+                del servizio stesso, eventuali informazioni sul come raggiungere il luogo e cosa aspettarsi una volta arrivati sul posto.</p>
+            <h4>Stato</h4>
+            <ul>
+                <li>
+                    <strong>Visibile</strong> &mdash; il servizio &egrave; pronto e, se ha turni futuri,
+                    questi vengono mostrati sul calendario dei volontari,
+                </li>
+                <li>
+                    <strong>Bozza</strong> &mdash; questa scheda non &egrave; ancora completa,
+                    i turni non vengono mostrati sul calendario dei volontari.
+                </li>
+            </ul>
+        </div>
+    </div>
+    <div class="row">
+        <div class="col-md-12">
+            <div class="panel panel-primary">
+                <div class="panel-heading">
+                    <h2 class="panel-title">
+                        <i class="fa fa-fw fa-globe"></i> Indirizzo del servizio
+                    </h2>
+                </div>
+                <div class="panel-body">
+                    {% localizzatore attivita %}
+                </div>
+            </div>
+        </div>
+    </div>
+{% endblock %}

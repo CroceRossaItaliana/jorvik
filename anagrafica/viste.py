@@ -34,30 +34,39 @@ from .api_trippus import trippus_oauth, trippus_booking
 from .costanti import TERRITORIALE, REGIONALE
 from .elenchi import ElencoDelegati
 from .utils import _conferma_email, _richiesta_conferma_email
-from .permessi.applicazioni import (PRESIDENTE, UFFICIO_SOCI, PERMESSI_NOMI_DICT,
-                                    DELEGATO_OBIETTIVO_1, COMMISSARIO, DELEGATO_OBIETTIVO_2, DELEGATO_OBIETTIVO_3,
-                                    DELEGATO_OBIETTIVO_4, DELEGATO_OBIETTIVO_5, DELEGATO_OBIETTIVO_6,
+from .permessi.applicazioni import (PRESIDENTE, UFFICIO_SOCI,
+                                    PERMESSI_NOMI_DICT,
+                                    DELEGATO_OBIETTIVO_1, COMMISSARIO,
+                                    DELEGATO_OBIETTIVO_2, DELEGATO_OBIETTIVO_3,
+                                    DELEGATO_OBIETTIVO_4, DELEGATO_OBIETTIVO_5,
+                                    DELEGATO_OBIETTIVO_6,
                                     RESPONSABILE_FORMAZIONE,
-                                    RESPONSABILE_AUTOPARCO, DELEGATO_CO, UFFICIO_SOCI_UNITA, DELEGHE_RUBRICA, REFERENTE,
-                                    RESPONSABILE_AREA, DIRETTORE_CORSO, DELEGATO_AREA, REFERENTE_GRUPPO,
-                                    PERMESSI_NOMI, RUBRICHE_TITOLI, CONSIGLIERE, VICE_PRESIDENTE, CONSIGLIERE_GIOVANE,
-                                    UFFICIO_SOCI_CM, UFFICIO_SOCI_IIVV)
+                                    RESPONSABILE_AUTOPARCO, DELEGATO_CO,
+                                    UFFICIO_SOCI_UNITA, DELEGHE_RUBRICA,
+                                    REFERENTE,
+                                    RESPONSABILE_AREA, DIRETTORE_CORSO,
+                                    DELEGATO_AREA, REFERENTE_GRUPPO,
+                                    PERMESSI_NOMI, RUBRICHE_TITOLI, CONSIGLIERE,
+                                    VICE_PRESIDENTE, CONSIGLIERE_GIOVANE,
+                                    DELEGATO_SO, UFFICIO_SOCI_CM,
+                                    UFFICIO_SOCI_IIVV,)
 from .permessi.costanti import (ERRORE_PERMESSI, MODIFICA, LETTURA, GESTIONE_SEDE,
     GESTIONE, ELENCHI_SOCI, GESTIONE_ATTIVITA, GESTIONE_ATTIVITA_AREA, GESTIONE_CORSO)
 from .permessi.incarichi import (INCARICO_GESTIONE_RISERVE, INCARICO_GESTIONE_TITOLI,
     INCARICO_GESTIONE_FOTOTESSERE)
 from .importa import (VALIDAZIONE_ERRORE, VALIDAZIONE_AVVISO, VALIDAZIONE_OK, import_import_volontari)
 from .forms import (ModuloStepComitato, ModuloStepCredenziali, ModuloStepFine,
-    ModuloModificaAnagrafica, ModuloModificaAvatar, ModuloCreazioneDocumento,
-    ModuloModificaEmailAccesso, ModuloModificaEmailContatto,
-    ModuloCreazioneTelefono, ModuloCreazioneEstensione, ModuloCreazioneTrasferimento,
-    ModuloCreazioneDelega, ModuloDonatore, ModuloDonazione, ModuloNuovaFototessera,
-    ModuloCreazioneRiserva, ModuloModificaPrivacy, ModuloPresidenteSede,
-    ModuloImportVolontari, ModuloImportPresidenti, ModuloPulisciEmail,
-    ModuloReportFederazione, ModuloStepCodiceFiscale, ModuloStepAnagrafica,
-    ModuloPresidenteSedePersonaDiRiferimento, ModuloPresidenteSedeNominativo,)
+                    ModuloModificaAnagrafica, ModuloModificaAvatar, ModuloCreazioneDocumento,
+                    ModuloModificaEmailAccesso, ModuloModificaEmailContatto,
+                    ModuloCreazioneTelefono, ModuloCreazioneEstensione, ModuloCreazioneTrasferimento,
+                    ModuloCreazioneDelega, ModuloDonatore, ModuloDonazione, ModuloNuovaFototessera,
+                    ModuloCreazioneRiserva, ModuloModificaPrivacy, ModuloPresidenteSede,
+                    ModuloImportVolontari, ModuloImportPresidenti, ModuloPulisciEmail,
+                    ModuloReportFederazione, ModuloStepCodiceFiscale, ModuloStepAnagrafica,
+                    ModuloPresidenteSedePersonaDiRiferimento, ModuloPresidenteSedeNominativo,)
+
 from .models import (Persona, Documento, Telefono, Estensione, Delega, Trasferimento,
-    Appartenenza, Sede, Riserva, Dimissione, Nominativo)
+                     Appartenenza, Sede, Riserva, Dimissione, Nominativo, )
 
 
 TIPO_VOLONTARIO = 'volontario'
@@ -1122,6 +1131,11 @@ def strumenti_delegati(request, me):
                 torna_url=reverse('strumenti_delegati'),
             )
 
+        if model == 'corsobase' and oggetto.online:
+            from formazione.training_api import TrainingApi
+            api = TrainingApi()
+            api.aggiugi_ruolo(persona=d.persona, corso=oggetto, ruolo=TrainingApi.DIRETTORE)
+
         d.inizio = poco_fa()
         d.firmatario = me
         d.tipo = delega
@@ -1311,7 +1325,6 @@ def presidente(request, me):
 
 
 def _presidente_sede_ruoli(sede):
-
     sezioni = OrderedDict()
 
     sezioni.update({
@@ -1335,6 +1348,7 @@ def _presidente_sede_ruoli(sede):
             (RESPONSABILE_FORMAZIONE, "Formazione", sede.delegati_attuali(tipo=RESPONSABILE_FORMAZIONE).count(), []),
             (RESPONSABILE_AUTOPARCO, "Autoparco", sede.delegati_attuali(tipo=RESPONSABILE_AUTOPARCO).count(), []),
             (DELEGATO_CO, "Centrale Operativa", sede.delegati_attuali(tipo=DELEGATO_CO).count(), []),
+            (DELEGATO_SO, "Sala Operativa", sede.delegati_attuali(tipo=DELEGATO_SO).count(), []),
         ]
     })
 

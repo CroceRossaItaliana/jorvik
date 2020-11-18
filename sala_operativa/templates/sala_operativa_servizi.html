@@ -1,0 +1,74 @@
+{% extends 'so_vuota.html' %}
+
+{% load bootstrap3 %}
+{% load humanize %}
+
+{% block pagina_titolo %}Sala Operativa - Servizi{% endblock %}
+
+{% block app_contenuto %}
+<div class="row">
+    <div class="col-md-8">
+        <div class="panel panel-info">
+            <div class="panel-heading">
+                <h2 class="panel-title">
+                    <i class="fa fa-fw fa-list"></i> Lista servizi miei e regionali
+                </h2>
+            </div>
+            <div class="panel-body">
+                <table class="table table-striped">
+                    <thead>
+                      <tr>
+                          <th>Nome</th>
+                          <th>Estensione</th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                    {% for servizio in servizi %}
+                        <tr>
+                            <td>
+                                <strong><a href="{% url 'so:servizio_dettagli' servizio.pk %}">{{ servizio.name }} <i class="fas fa-user-plus"></i></a></strong><br>
+                                <div style="font-size:12px;">
+                                    Volontari abbinati: {{ servizio.reperibilitaso_set.all.count|default:"0" }}<br>
+                                    Inizio: {{ servizio.inizio|date:"SHORT_DATETIME_FORMAT" }}<br>
+                                    Fine: {{ servizio.fine|date:"SHORT_DATETIME_FORMAT" }}</div>
+                            </td>
+                            <td>{{ servizio.get_estensione_display|default:"-" }}</td>
+                            <td>
+                                {% if servizio.creato_da == me %}
+                                    <a href="{% url 'so:servizio_cancella' servizio.pk %}" data-conferma="Vuoi cancellare il serivizo selezionato?">
+                                        <i class="fa fa-fw fa-trash"></i> Cancella
+                                    </a>
+                                {% endif %}
+                            </td>
+                        </tr>
+                    {% empty %}
+                        <tr class="alert alert-warning">
+                            <td colspan="3">
+                                <i class="fa fa-fw fa-warning"></i> Nessun servizio.
+                            </td>
+                        </tr>
+                    {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+
+    <div class="col-md-4">
+        <div class="panel panel-primary">
+            <div class="panel-heading">
+                <h2 class="panel-title">
+                    <i class="fa fa-fw fa-plus-circle"></i> Aggiungi un servizio
+                </h2>
+            </div>
+            <div class="panel-body">
+                <form method="POST" action="{% url 'so:servizio_aggiungi' %}">
+                    {% bootstrap_form form %}
+                    <button type="submit" class="btn btn-block btn-primary"><i class="fa fa-fw fa-check"></i> Aggiungi</button>
+                    {% csrf_token %}
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

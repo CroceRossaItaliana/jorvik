@@ -28,7 +28,9 @@ def genera_uuid_casuale():
     """
     return str(uuid.uuid4()).upper()
 
+
 from django.utils.deconstruct import deconstructible
+
 
 @deconstructible
 class GeneratoreNomeFile():
@@ -51,7 +53,11 @@ class GeneratoreNomeFile():
         suffisso = self.forza_suffisso if self.forza_suffisso is not None \
             else os.path.splitext(originale)[1]
 
-        return self.prefisso + genera_uuid_casuale() + suffisso
+        return self.prefisso + "{}_{}".format(
+            os.path.splitext(originale)[0], datetime.now().strftime("%d_%m_%Y_%H_%M_%S_f")
+        ) + suffisso
+
+
 
 def domani():
     """
