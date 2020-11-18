@@ -209,7 +209,10 @@ class OrganizzaServizioForm(ModelForm):
 class OrganizzaOperazioneForm(ModelForm):
     class Meta:
         model = OperazioneSO
-        fields = ["nome", "archivia_emergenza", "impiego_bdl", "attivatore", "funzioni", "inizio", "fine", "operazione", "comitato", "sede", "sede_internazionale"]
+        fields = [
+            "nome", "archivia_emergenza", "impiego_bdl", "attivatore", "funzioni", "inizio",
+            "fine", "operazione", "comitato", "sede", "sede_internazionale"
+        ]
 
 
 class OrganizzaFunzioneForm(ModelForm):

@@ -1247,43 +1247,57 @@ def utente_datore_di_lavoro_cancella(request, me, pk=None):
 
 @pagina_privata
 def so_organizza_operazione(request, me):
+    if request.POST:
+        form_referente = OrganizzaOperazioneReferenteForm(request.POST)
 
-    sedi = me.oggetti_permesso(GESTIONE_SO_SEDE)
-    if not sedi:
-        messages.error(request, 'Non hai sedi con la delega SO.')
-        return redirect(reverse('so:index'))
+        form = OrganizzaOperazioneForm(request.POST)
 
-    form_referente = OrganizzaOperazioneReferenteForm(request.POST or None)
+        if form.is_valid() and form_referente.is_valid():
+            cd = form.cleaned_data
+            form_referente_cd = form_referente.cleaned_data
+            operazione = form.save(commit=False)
+            operazione.save()
 
-    form = OrganizzaOperazioneForm(request.POST or None)
-    form.fields['sede'].queryset = sedi
+            for funzione in cd['funzioni']:
+                operazione.funzioni.add(funzione)
 
-    if form.is_valid() and form_referente.is_valid():
-        cd = form.cleaned_data
-        form_referente_cd = form_referente.cleaned_data
-        operazione = form.save(commit=False)
-        operazione.save()
+            if cd['comitato'] == OperazioneSO.NAZIONALI:
+                for sede in cd['sede']:
+                    operazione.sede.add(sede)
+            elif cd['comitato'] == OperazioneSO.INTERNAZIONALE:
+                for sede in cd['sede_internazionale']:
+                    operazione.sede_internazionale.add(sede)
 
-        for funzione in cd['funzioni']:
-            operazione.funzioni.add(funzione)
+            operazione.save()
 
-        if cd['comitato'] == OperazioneSO.NAZIONALI:
-            for sede in cd['sede']:
-                operazione.sede.add(sede)
-        elif cd['comitato'] == OperazioneSO.INTERNAZIONALE:
-            for sede in cd['sede_internazionale']:
-                operazione.sede_internazionale.add(sede)
+            if form_referente_cd['scelta'] == form_referente.SONO_IO:
+                # Io sono il referente.
+                operazione.aggiungi_delegato(REFERENTE_OPERAZIONE_SO, me, firmatario=me, inizio=poco_fa())
+                return redirect(operazione.url_modifica)
 
-        operazione.save()
+            elif form_referente_cd['scelta'] == form_referente.SCEGLI_REFERENTI:
+                # Il referente è qualcun altro.
+                return redirect(reverse('so:organizza_referenti_operazione', args=[operazione.pk, ]))
+    else:
+        sedi = me.oggetti_permesso(GESTIONE_SO_SEDE, solo_deleghe_attive=True)
+        if not sedi:
+            messages.error(request, 'Non hai sedi con la delega SO.')
+            return redirect(reverse('so:index'))
+        creati_da = []
 
-        if form_referente_cd['scelta'] == form_referente.SONO_IO:
-            # Io sono il referente.
-            operazione.aggiungi_delegato(REFERENTE_OPERAZIONE_SO, me, firmatario=me, inizio=poco_fa())
-            return redirect(operazione.url_modifica)
+        for sede in sedi:
+            creati_da.append(sede.presidente())
+            creati_da.extend(list(sede.commissari()))
+            creati_da.extend(list(sede.commissari()))
+            creati_da.extend(list(sede.obbiettivo_3()))
+            creati_da.extend(list(sede.delegati_so()))
 
-        elif form_referente_cd['scelta'] == form_referente.SCEGLI_REFERENTI:
-            # Il referente è qualcun altro.
-            return redirect(reverse('so:organizza_referenti_operazione', args=[operazione.pk, ]))
+        form_referente = OrganizzaOperazioneReferenteForm(request.POST or None)
+
+        form = OrganizzaOperazioneForm(request.POST or None)
+        form.fields['sede'].queryset = sedi
+        form.fields['funzioni'].queryset = FunzioneSO.objects.filter(creato_da__in=creati_da)
+
 
     context = {
         "modulo": form,
@@ -1296,7 +1310,7 @@ def so_organizza_operazione(request, me):
 def so_gestisci_operazione(request, me, stato="aperte"):
 
     operazioni_tutti = me.oggetti_permesso(GESTIONE_OPERAZIONI, solo_deleghe_attive=False)
-
+    print(operazioni_tutti[1].sede)
     operazioni_aperti = operazioni_tutti.filter(archivia_emergenza=False)
     operazioni_chiusi = operazioni_tutti.filter(archivia_emergenza=True)
 
