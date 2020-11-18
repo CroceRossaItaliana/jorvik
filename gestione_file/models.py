@@ -67,7 +67,67 @@ class Documento(InterfacciaJorvik, File):
 
 class DocumentoComitato(ModelloSemplice, ConMarcaTemporale):
 
-    nome = models.CharField(max_length=150, db_index=True)
+    ASSEMBLEA = 'ASSEMBLEA'
+    ASSEMBLEA_AVVISO_CONVOCAZIONE = 'A-A1'
+    ASSEMBLEA_DELIBERA = 'A-A2'
+    ASSEMBLEA_VERBALI = 'A-A3'
+
+    CONSIGLIO_DIRETTIVO = 'CONSIGLIO DIRETTIVO'
+    CONSIGLIO_DIRETTIVO_AVVISO_CONVOCAZIONE = 'B-B1'
+    CONSIGLIO_DIRETTIVO_DELIBERA = 'B-B2'
+    CONSIGLIO_DIRETTIVO_VERBALI = 'B-B3'
+
+    PRESIDENTI_DIRETTORI = 'PRESIDENTI DIRETTORI'
+    PRESIDENTI_DIRETTORI_PROVVEDIMENTI_ORDINANZE = 'C-C1'
+
+    REVISIONE_DEI_CONTI = 'REVISIONE DEI CONTI'
+    REVISIONE_DEI_CONTI_VERBALI_COMUNICAZIONI = 'D-D1'
+
+    EVENTUALE_ORGANO_DI_CONTROLLO = 'EVENTUALE ORGANO DI CONTROLLO'
+    EVENTUALE_ORGANO_DI_CONTROLLO_CERBALI_COMUNICAZIONI = 'E-E1'
+
+    CATEGORIE = {
+        "A": ASSEMBLEA,
+        "B": CONSIGLIO_DIRETTIVO,
+        "C": PRESIDENTI_DIRETTORI,
+        "D": REVISIONE_DEI_CONTI,
+        "E": EVENTUALE_ORGANO_DI_CONTROLLO,
+    }
+
+    NOME = (
+        (ASSEMBLEA,
+         (
+             (ASSEMBLEA_AVVISO_CONVOCAZIONE, 'Avviso convocazione'),
+             (ASSEMBLEA_DELIBERA, 'Delibere'),
+             (ASSEMBLEA_VERBALI, 'Verbali'),
+         )
+         ),
+        (CONSIGLIO_DIRETTIVO,
+         (
+             (CONSIGLIO_DIRETTIVO_AVVISO_CONVOCAZIONE, 'Avviso convocazione'),
+             (CONSIGLIO_DIRETTIVO_DELIBERA, 'Delibere'),
+             (CONSIGLIO_DIRETTIVO_VERBALI, 'Verbali'),
+         )
+         ),
+        (PRESIDENTI_DIRETTORI,
+         (
+             (PRESIDENTI_DIRETTORI_PROVVEDIMENTI_ORDINANZE, 'Provvedimenti/Ordinanze'),
+         )
+         ),
+        (REVISIONE_DEI_CONTI,
+         (
+             (REVISIONE_DEI_CONTI_VERBALI_COMUNICAZIONI, 'Verbali, Relazioni e/o altre Comunicazioni del revisore'),
+         )
+         ),
+        (EVENTUALE_ORGANO_DI_CONTROLLO,
+         (
+             (EVENTUALE_ORGANO_DI_CONTROLLO_CERBALI_COMUNICAZIONI, 'Verbali, Relazioni e/o Comunicazioni del revisore'),
+         )
+         ),
+    )
+
+    nome = models.CharField(max_length=50, choices=NOME)
+
     file = models.FileField("File", upload_to=GeneratoreNomeFile('documenti/'),
                             validators=[valida_dimensione_file_8mb])
     sede = models.ForeignKey('anagrafica.Sede', db_index=True, on_delete=models.PROTECT)
@@ -77,6 +137,10 @@ class DocumentoComitato(ModelloSemplice, ConMarcaTemporale):
         verbose_name = 'Documenti Comitato'
         verbose_name_plural = "Documenti Comitato"
         app_label = 'gestione_file'
+
+    @property
+    def categoria(self):
+        return self.CATEGORIE[self.nome.split('-')[0]]
 
 
 class Immagine(InterfacciaJorvik, BaseImage):

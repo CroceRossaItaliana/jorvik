@@ -25,7 +25,7 @@
 {% block app_contenuto %}
     <div class="alert alert-info">
         <p><i class="fa fa-info-circle"></i>
-            Da qui puoi gestione i documenti del comitato.
+            Da qui puoi gestire i documenti del comitato.
         </p>
         <ul>
             <li>
@@ -61,7 +61,10 @@
                             <tbody>
                             {% for d in sede.documenti %}
                                 <tr>
-                                    <td style="font-size: 12px;">{{ d.nome }}</td>
+                                    <td style="font-size: 12px;">
+                                        <strong>{{ d.categoria }}</strong><br>
+                                        {{ d.get_nome_display }}
+                                    </td>
                                     <td style="font-size: 12px;">{{ d.creazione|date:"SHORT_DATETIME_FORMAT" }}</td>
                                     <td>{{ d.expires|date:"d/m/Y" }}</td>
                                     <td>
@@ -84,7 +87,7 @@
 
                             {% empty %}
                                 <tr>
-                                    <td colspan="4" class="alert-warning">
+                                    <td colspan="5" class="alert-warning">
                                         <i class="fa fa-info-circle"></i> Nessun documento caricato.
                                     </td>
                                 </tr>
@@ -119,3 +122,4 @@
         </div>
     </div>
 {% endblock %}
+

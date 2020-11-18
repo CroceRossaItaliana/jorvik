@@ -5,7 +5,7 @@ from django.conf import settings
 from django.core.exceptions import PermissionDenied
 from django.core.urlresolvers import reverse
 from django.db.models import Q
-from django.http import Http404, HttpResponsePermanentRedirect, HttpResponseRedirect
+from django.http import Http404, HttpResponsePermanentRedirect, HttpResponseRedirect, JsonResponse
 from django.shortcuts import redirect
 from django.utils.decorators import method_decorator
 from django.views.generic import ListView
@@ -142,7 +142,7 @@ def documenti_comitato(request, me):
                     Q(expires__gt=datetime.now())|
                     Q(expires=None),
                     sede=sede,
-                )
+                ).order_by('creazione')
             }
         )
 
