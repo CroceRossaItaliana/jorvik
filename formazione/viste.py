@@ -33,6 +33,8 @@ from .forms import (ModuloCreazioneCorsoBase, ModuloModificaLezione,
     FormVerbaleCorso, FormRelazioneDelDirettoreCorso)
 from .classes import GeneraReport, GestioneLezioni
 from .utils import costruisci_titoli
+from .training_api import TrainingApi
+
 
 
 @pagina_privata
@@ -292,6 +294,12 @@ def aspirante_corso_base_informazioni(request, me=None, pk=None):
     context['can_activate'] = corso.can_activate(me)
     context['puoi_partecipare'] = puoi_partecipare
 
+    if corso.online:
+        api = TrainingApi()
+        r = api.core_course_get_courses_by_field_shortname(corso.titolo_cri.sigla)
+        context['link'] = 'https://training.cri.it/course/view.php?id={}'.format(r['id'])
+
+
     return 'aspirante_corso_base_scheda_informazioni.html', context
 
 
@@ -321,7 +329,7 @@ def aspirante_corso_base_iscriviti(request, me=None, pk=None):
     p = PartecipazioneCorsoBase(persona=me, corso=corso)
     p.save()
     p.richiedi()
-    print(p)
+
     return messaggio_generico(request, me,
         titolo="Sei iscritt%s al corso" % me.genere_o_a,
         messaggio="Complimenti! La tua richiesta di iscrizione è stata registrata ed inviata al Direttore di Corso. "
@@ -648,11 +656,24 @@ def aspirante_corso_base_termina(request, me, pk):
 
     # Validazione delle form
     for partecipante in partecipanti_qs:
-        form = FormVerbaleCorso(request.POST or None,
-            prefix="part_%d" % partecipante.pk,
-            instance=partecipante,
-            generazione_verbale=generazione_verbale
-        )
+        if corso.online:
+            api = TrainingApi()
+            form = FormVerbaleCorso(request.POST or None,
+                prefix="part_%d" % partecipante.pk,
+                instance=partecipante,
+                generazione_verbale=generazione_verbale,
+                initial={
+                    'ammissione': PartecipazioneCorsoBase.AMMESSO
+                    if api.ha_ottenuto_competenze(persona=partecipante.persona, corso=corso) else ''
+                }
+            )
+        else:
+            form = FormVerbaleCorso(
+                request.POST or None,
+                prefix="part_%d" % partecipante.pk,
+                instance=partecipante,
+                generazione_verbale=generazione_verbale
+            )
 
         if corso.tipo == Corso.BASE:
             if corso.titolo_cri and corso.titolo_cri.scheda_prevede_esame:
@@ -730,6 +751,10 @@ def aspirante_corso_base_termina(request, me, pk):
         corso.termina(mittente=me,
                       partecipanti_qs=partecipanti_qs,
                       data_ottenimento=data_ottenimento)
+
+        if corso.online:
+            api = TrainingApi()
+            api.cancellazione_iscritto(persona=partecipante.persona, corso=corso)
 
         if corso.is_nuovo_corso:
             torna_titolo = "Vai al Report del Corso"
@@ -914,6 +939,11 @@ def aspirante_corso_base_iscritti_aggiungi(request, me, pk):
                         mittente=me,
                         destinatari=[persona]
                     )
+
+                if corso.online:
+                    from formazione.training_api import TrainingApi
+                    api = TrainingApi()
+                    api.aggiugi_ruolo(persona=persona, corso=corso, ruolo=TrainingApi.DISCENTE)
 
                 Log.crea(me, partecipazione)
 
