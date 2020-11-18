@@ -204,6 +204,9 @@ class Menu:
         return (
             ("Documenti", (
                 ("Elenco", "fa-newspaper-o", reverse('documenti:lista_documenti')),
+                (
+                    "Documenti comitato", "fa-newspaper-o", reverse('documenti:documenti-comitato')
+                ) if self.me.is_presidente or self.me.is_comissario else None
             )),
         )
 

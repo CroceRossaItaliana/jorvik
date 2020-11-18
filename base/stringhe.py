@@ -58,6 +58,7 @@ class GeneratoreNomeFile():
         ) + suffisso
 
 
+
 def domani():
     """
     Ritorna la data di domani. Scorciatoia (generalmente usata per scadenza automatica Allegati).

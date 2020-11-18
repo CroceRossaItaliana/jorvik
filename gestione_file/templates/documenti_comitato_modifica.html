@@ -1,0 +1,56 @@
+{% extends "anagrafica_utente_vuota.html" %}
+
+{% load bootstrap3 %}
+{% load static %}
+
+{% block pagina_titolo %}Documenti{% endblock %}
+
+{% block menu_laterale %}
+    <div class="col-md-2 well well-sm">
+        <ul id="sezione" role="navigation" class="nav nav-pills nav-stacked navbar-collapse collapse">
+            {% for sezione_nome, sezione_pagine in menu.documenti %}
+                <li class="dropdown-header grassetto piu-grande">{{ sezione_nome }}</li>
+                {% for link_nome, link_icona, link_url, link_contatore in sezione_pagine %}
+                    <li role="presentation" {% if link_url == request.path %}class="active"{% endif %}>
+                        <a href="{{ link_url|urlencode }}"><i class="fa {{ link_icona }} fa-fw"></i> {{ link_nome }}</a>
+                    </li>
+                {% endfor %}
+                <hr/>
+            {% endfor %}
+        </ul>
+    </div>
+{% endblock %}
+
+{% block app_contenuto %}
+    <div class="alert alert-info">
+        <p><i class="fa fa-info-circle"></i>
+            Da qui puoi gestione i documenti del comitato.
+        </p>
+    </div>
+
+
+    <div class="row">
+        <div class="col-md-4">
+            <div class="panel panel-primary">
+                <div class="panel-heading">
+                    <h2 class="panel-title">
+                        Modulo documenti
+                    </h2>
+                </div>
+                <div class="panel-body">
+
+                    <form method="post" enctype="multipart/form-data">
+                        {% csrf_token %}
+
+                        {% bootstrap_form form %}
+
+                        <button type="submit" class="btn btn-block btn-primary">
+                            <i class="fa fa-send"></i>
+                            Aggiungi
+                        </button>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+{% endblock %}
