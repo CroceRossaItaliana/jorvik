@@ -316,6 +316,10 @@ class CorsoBase(Corso, ConVecchioID, ConPDF):
         return self.tipo == self.CORSO_ONLINE
 
     @property
+    def moodle(self):
+        return self.tipo == self.CORSO_ONLINE and self.titolo_cri.moodle
+
+    @property
     def prossimo(self):
         """
         Ritorna True il corso e' prossimo (inizia tra meno di due settimane).

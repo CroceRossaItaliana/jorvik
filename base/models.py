@@ -193,7 +193,7 @@ class Autorizzazione(ModelloSemplice, ConMarcaTemporale):
             return
 
         from formazione.models import PartecipazioneCorsoBase
-        if isinstance(self.oggetto, PartecipazioneCorsoBase) and self.oggetto.corso.online:
+        if isinstance(self.oggetto, PartecipazioneCorsoBase) and self.oggetto.corso.online and self.oggetto.corso.moodle:
             from formazione.training_api import TrainingApi
             api = TrainingApi()
             api.aggiugi_ruolo(persona=self.oggetto.persona, corso=self.oggetto.corso, ruolo=TrainingApi.DISCENTE)

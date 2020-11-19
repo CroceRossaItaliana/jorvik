@@ -1131,7 +1131,7 @@ def strumenti_delegati(request, me):
                 torna_url=reverse('strumenti_delegati'),
             )
 
-        if model == 'corsobase' and oggetto.online:
+        if model == 'corsobase' and oggetto.online and oggetto.moodle:
             from formazione.training_api import TrainingApi
             api = TrainingApi()
             api.aggiugi_ruolo(persona=d.persona, corso=oggetto, ruolo=TrainingApi.DIRETTORE)

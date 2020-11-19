@@ -294,7 +294,7 @@ def aspirante_corso_base_informazioni(request, me=None, pk=None):
     context['can_activate'] = corso.can_activate(me)
     context['puoi_partecipare'] = puoi_partecipare
 
-    if corso.online:
+    if corso.online and corso.moodle:
         api = TrainingApi()
         r = api.core_course_get_courses_by_field_shortname(corso.titolo_cri.sigla)
         context['link'] = 'https://training.cri.it/course/view.php?id={}'.format(r['id'])
@@ -656,7 +656,7 @@ def aspirante_corso_base_termina(request, me, pk):
 
     # Validazione delle form
     for partecipante in partecipanti_qs:
-        if corso.online:
+        if corso.online and corso.moodle:
             api = TrainingApi()
             form = FormVerbaleCorso(request.POST or None,
                 prefix="part_%d" % partecipante.pk,
@@ -752,7 +752,7 @@ def aspirante_corso_base_termina(request, me, pk):
                       partecipanti_qs=partecipanti_qs,
                       data_ottenimento=data_ottenimento)
 
-        if corso.online:
+        if corso.online and corso.moodle:
             api = TrainingApi()
             api.cancellazione_iscritto(persona=partecipante.persona, corso=corso)
 
@@ -940,7 +940,7 @@ def aspirante_corso_base_iscritti_aggiungi(request, me, pk):
                         destinatari=[persona]
                     )
 
-                if corso.online:
+                if corso.online and corso.moodle:
                     from formazione.training_api import TrainingApi
                     api = TrainingApi()
                     api.aggiugi_ruolo(persona=persona, corso=corso, ruolo=TrainingApi.DISCENTE)

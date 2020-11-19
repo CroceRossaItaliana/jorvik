@@ -214,7 +214,7 @@ class GestioneLezioni:
             initial={
                 "inizio": self.corso.data_inizio,
                 "fine": self.corso.data_esame
-            } if self.corso.online else None
+            } if self.corso.online and self.corso.moodle else None
         )
 
     def presenze_assenze(self, per_singola_lezione=False):
@@ -250,7 +250,7 @@ class GestioneLezioni:
         if self.AZIONE_NUOVA:
             form_args.append(self.request.POST)
         else:
-            if self.corso.online:
+            if self.corso.online and self.corso.moodle:
                 form_kwargs['initial'] = {
                     "inizio": self.corso.data_inizio,
                     "fine": self.corso.data_esame
@@ -276,7 +276,7 @@ class GestioneLezioni:
             lezione.save()
 
             lezione.docente = cd['docente']
-            if self.corso.online:
+            if self.corso.online and self.corso.moodle:
                 from formazione.training_api import TrainingApi
                 api = TrainingApi()
                 for docente in cd['docente']:
@@ -315,7 +315,7 @@ class GestioneLezioni:
 
             self.avvisare_docente_e_presidente(lezione)
 
-            if self.corso.online:
+            if self.corso.online and self.corso.moodle:
                 from formazione.training_api import TrainingApi
                 api = TrainingApi()
                 for docente in form.cleaned_data['docente']:
