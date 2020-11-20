@@ -66,7 +66,7 @@ class TrainingApi:
                 "users[0][password]": Utenza.objects.get(persona=persona).password,
                 "users[0][firstname]": persona.nome,
                 "users[0][lastname]": persona.cognome,
-                "users[0][email]": persona.email,
+                "users[0][email]": self._persona_mail(persona),
                 "users[0][auth]": "saml",
             }
         )
