@@ -188,6 +188,13 @@ class CorsoBase(Corso, ConVecchioID, ConPDF):
 
     NON_PUOI_ISCRIVERTI_SOLO_SE_IN_AUTONOMIA = (NON_PUOI_ISCRIVERTI_TROPPO_TARDI,)
 
+    @property
+    def annullabile(self):
+        if self.stato == self.PREPARAZIONE or self.stato == self.ATTIVO:
+            if not self.lezioni.filter(inizio__lte=datetime.datetime.now()).exists():
+                return True
+        return False
+
     def persona(self, persona):
         # Validazione per Nuovi Corsi (Altri Corsi)
         if self.is_nuovo_corso or self.online:
@@ -513,6 +520,10 @@ class CorsoBase(Corso, ConVecchioID, ConPDF):
     @property
     def url_direttori(self):
         return "/formazione/corsi-base/%d/direttori/" % (self.pk,)
+
+    @property
+    def url_annulla(self):
+        return reverse('aspirante:annulla', args=[self.pk])
 
     @property
     def url_commissione_esame(self):
@@ -1236,6 +1247,45 @@ class CorsoBase(Corso, ConVecchioID, ConPDF):
                 allegati=[self.delibera_file,]
             )
 
+    def inform_presidency_with_delibera_file(self):
+        sede = self.sede.estensione
+        oggetto = "Delibera nuovo corso: %s" % self
+        email_destinatari = ['formazione@cri.it',]
+
+        if self.livello in [Titolo.CDF_LIVELLO_I, Titolo.CDF_LIVELLO_II]:
+            # Se indicato, l'indirizzo invia una copia sulla mail della sede regionale
+            sede_regionale = self.sede.sede_regionale
+            sede_regionale_email = sede_regionale.email if hasattr(sede_regionale, 'email') else None
+            if sede_regionale_email:
+                email_destinatari.append(sede_regionale_email)
+
+        elif self.livello in [Titolo.CDF_LIVELLO_III, Titolo.CDF_LIVELLO_IV]:
+            pass
+
+        if sede == REGIONALE:
+            # Invia e-mail
+            Messaggio.invia_raw(
+                oggetto=oggetto,
+                corpo_html="""<p>E' stato attivato un nuovo corso. La delibera si trova in allegato.</p>""",
+                email_mittente=Messaggio.NOREPLY_EMAIL,
+                lista_email_destinatari=email_destinatari,
+                allegati=self.delibera_file
+            )
+
+        if not sede == NAZIONALE:
+            email_to = self.sede.sede_regionale.presidente()
+
+            # Invia posta
+            Messaggio.costruisci_e_accoda(
+                oggetto=oggetto,
+                modello='email_corso_invia_delibera_al_presidente.html',
+                corpo={
+                    'corso': self,
+                },
+                destinatari=[email_to,],
+                allegati=[self.delibera_file,]
+            )
+
     @property
     def presidente_corso(self):
         """Restituisce <Persona> che aveva la delega di PRESIDENTE al giorno dell'esame."""
@@ -1507,6 +1557,20 @@ class InvitoCorsoBase(ModelloSemplice, ConAutorizzazioni, ConMarcaTemporale, mod
             notifiche_attive=notifiche_attive,
         )
 
+    def annulla(self, mittente=None):
+        self.autorizzazioni_ritira()
+        Messaggio.costruisci_e_accoda(
+            oggetto="Notifica Annullamento corso",
+            modello="email_corso_annullamento.html",
+            corpo={
+                "persona": self.persona,
+                "mittente": mittente,
+                "corso": self.corso.nome
+            },
+            mittente=mittente,
+            destinatari=[self.persona]
+        )
+
     def disiscrivi(self, mittente=None):
         """
         Disiscrive partecipante dal corso base.
@@ -1686,6 +1750,20 @@ class PartecipazioneCorsoBase(ModelloSemplice, ConMarcaTemporale, ConAutorizzazi
             },
             mittente=mittente,
             destinatari=[self.persona],
+        )
+
+    def annulla(self, mittente=None):
+        self.autorizzazioni_ritira()
+        Messaggio.costruisci_e_accoda(
+            oggetto="Notifica Annullamento corso",
+            modello="email_corso_annullamento.html",
+            corpo={
+                "persona": self.persona,
+                "mittente": mittente,
+                "corso": self.corso.nome
+            },
+            mittente=mittente,
+            destinatari=[self.persona]
         )
 
     def disiscrivi(self, mittente=None):

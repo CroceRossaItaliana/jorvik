@@ -48,7 +48,14 @@
 
         {% for corso in corsi %}
             <tr>
-                <td>{{ corso.get_stato_display }}</td>
+                <td>
+                    {{ corso.get_stato_display }}<br>
+                    {% if posso_annullare %}
+                        {% if corso.annullabile %}
+                            <a href="{{ corso.url_annulla }}">Annulla</a>
+                        {% endif %}
+                    {% endif %}
+                </td>
                 <td>
                     <i class="fa fa-fw fa-pencil"></i> <strong>{{ corso.link|safe }}</strong><br />
                     <i class="fa fa-fw fa-home"></i> {{ corso.sede.link|safe }}

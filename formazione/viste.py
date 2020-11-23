@@ -56,6 +56,7 @@ def formazione(request, me):
         "corsi": corsi,
         "sedi": me.oggetti_permesso(GESTIONE_CORSI_SEDE),
         "puo_pianificare": me.ha_permesso(GESTIONE_CORSI_SEDE),
+        "posso_annullare": me.is_presidente or me.is_comissario or me.is_responsabile_formazione
     }
     return 'formazione.html', context
 
@@ -1533,3 +1534,30 @@ def catalogo_corsi(request, me):
     context['titoli_total'] = qs.count()
 
     return 'catalogo_corsi.html', context
+
+
+@pagina_privata
+def aspirante_corso_base_annulla(request, me, pk):
+    corso = get_object_or_404(CorsoBase, pk=pk)
+
+    if not me.permessi_almeno(corso, MODIFICA):
+        return redirect(ERRORE_PERMESSI)
+
+    corso.stato = CorsoBase.ANNULLATO
+
+    for partecipazione in corso.partecipazioni_confermate_o_in_attesa():
+        partecipazione.annulla(me)
+        if corso.online and corso.moodle:
+            api = TrainingApi()
+            api.cancellazione_iscritto(persona=partecipazione.persona, corso=corso)
+
+    # corso.save()
+    # TODO: invio mail destinatario delibera
+    Messaggio.invia_raw(
+        oggetto="oggetto",
+        corpo_html="""<p>E' stato attivato un nuovo corso. La delibera si trova in allegato.</p>""",
+        email_mittente=Messaggio.NOREPLY_EMAIL,
+        lista_email_destinatari=['vittorio.dargenio@citelgroup.it'],
+        # allegati=self.delibera_file
+    )
+    return redirect(reverse('formazione:index'))
