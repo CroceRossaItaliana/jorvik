@@ -9,6 +9,7 @@ from django.db.models import Q
 from django.db.transaction import atomic
 from django.contrib.contenttypes.models import ContentType
 from django.shortcuts import get_object_or_404
+from django.template.loader import get_template
 from django.utils import timezone
 from django.utils.timezone import now
 from django.utils.translation import ugettext_lazy as _
@@ -30,6 +31,7 @@ from curriculum.areas import OBBIETTIVI_STRATEGICI
 from posta.models import Messaggio
 from social.models import ConCommenti, ConGiudizio
 from survey.models import Survey
+from .training_api import TrainingApi
 from .validators import (course_file_directory_path, validate_file_extension,
                          delibera_file_upload_path)
 
@@ -795,6 +797,22 @@ class CorsoBase(Corso, ConVecchioID, ConPDF):
             torna_titolo="Torna al Corso",
             torna_url=self.url)
 
+    def annulla(self, persona):
+        if not self.annullabile:
+            raise ValueError("Questo corso non è annullabile.")
+
+        self.stato = self.ANNULLATO
+
+        for partecipazione in self.partecipazioni_confermate_o_in_attesa():
+            partecipazione.annulla(persona)
+            if self.online and self.moodle:
+                api = TrainingApi()
+                api.cancellazione_iscritto(persona=partecipazione.persona, corso=self)
+
+        self.save()
+
+        self.notifica_annullamento_corso()
+
     def _corso_activation_recipients_for_email(self):
         """
         Trovare destinatari aspiranti o volontari da avvisare di un nuovo corso attivato.
@@ -1234,8 +1252,9 @@ class CorsoBase(Corso, ConVecchioID, ConPDF):
             )
 
         if not sede == NAZIONALE:
-            email_to = self.sede.sede_regionale.presidente()
+            sede_regionale = self.sede.sede_regionale
 
+            email_to = sede_regionale.presidente()
             # Invia posta
             Messaggio.costruisci_e_accoda(
                 oggetto=oggetto,
@@ -1247,10 +1266,37 @@ class CorsoBase(Corso, ConVecchioID, ConPDF):
                 allegati=[self.delibera_file,]
             )
 
-    def inform_presidency_with_delibera_file(self):
+            delegato_fomazione = sede_regionale.delegato_formazione()
+
+            # Invia e-mail delegato_fomazione
+            Messaggio.invia_raw(
+                oggetto=oggetto,
+                corpo_html=get_template('email_corso_invia_delibera_al_delegati_formazione.html').render(
+                    {
+                        'nome': delegato_fomazione.nome_completo
+                    }
+                ),
+                email_mittente=Messaggio.NOREPLY_EMAIL,
+                lista_email_destinatari=[delegato_fomazione.email],
+                allegati=self.delibera_file
+            )
+
+            # Invia posta delegato_fomazione
+            Messaggio.costruisci_e_accoda(
+                oggetto=oggetto,
+                modello='email_corso_invia_delibera_al_delegati_formazione.html',
+                corpo={
+                     'nome': delegato_fomazione.nome_completo
+                },
+                destinatari=[delegato_fomazione, ],
+                allegati=[self.delibera_file, ]
+            )
+
+    def notifica_annullamento_corso(self):
         sede = self.sede.estensione
-        oggetto = "Delibera nuovo corso: %s" % self
-        email_destinatari = ['formazione@cri.it',]
+        oggetto = "Annullamanto corso: %s" % self
+
+        email_destinatari = ['formazione@cri.it', ]
 
         if self.livello in [Titolo.CDF_LIVELLO_I, Titolo.CDF_LIVELLO_II]:
             # Se indicato, l'indirizzo invia una copia sulla mail della sede regionale
@@ -1266,25 +1312,53 @@ class CorsoBase(Corso, ConVecchioID, ConPDF):
             # Invia e-mail
             Messaggio.invia_raw(
                 oggetto=oggetto,
-                corpo_html="""<p>E' stato attivato un nuovo corso. La delibera si trova in allegato.</p>""",
+                corpo_html="""<p>Il corso {} è stato annullato</p>""".format(self),
                 email_mittente=Messaggio.NOREPLY_EMAIL,
-                lista_email_destinatari=email_destinatari,
-                allegati=self.delibera_file
+                lista_email_destinatari=email_destinatari
             )
 
         if not sede == NAZIONALE:
-            email_to = self.sede.sede_regionale.presidente()
+            sede_regionale = self.sede.sede_regionale
 
+            email_to = sede_regionale.presidente()
             # Invia posta
             Messaggio.costruisci_e_accoda(
                 oggetto=oggetto,
-                modello='email_corso_invia_delibera_al_presidente.html',
+                modello='email_corso_annullamento_al_presidente.html',
                 corpo={
                     'corso': self,
                 },
-                destinatari=[email_to,],
-                allegati=[self.delibera_file,]
+                destinatari=[email_to,]
             )
+
+            delegato_fomazione = sede_regionale.delegato_formazione()
+
+            # Invia e-mail delegato_fomazione
+            Messaggio.invia_raw(
+                oggetto=oggetto,
+                corpo_html=get_template('email_corso_annullamanto_al_delegati_formazione.html').render(
+                    {
+                        'nome': delegato_fomazione.nome_completo,
+                        'corso': self
+                    }
+                ),
+                email_mittente=Messaggio.NOREPLY_EMAIL,
+                lista_email_destinatari=[delegato_fomazione.email]
+            )
+
+            # Invia posta delegato_fomazione
+            Messaggio.costruisci_e_accoda(
+                oggetto=oggetto,
+                modello='email_corso_annullamanto_al_delegati_formazione.html',
+                corpo={
+                    'nome': delegato_fomazione.nome_completo,
+                    'corso': self
+                },
+                destinatari=[delegato_fomazione, ]
+            )
+
+
+
 
     @property
     def presidente_corso(self):

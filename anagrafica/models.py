@@ -2005,6 +2005,9 @@ class Sede(ModelloAlbero, ConMarcaTemporale, ConGeolocalizzazione, ConVecchioID,
             delega_presidenziale = self.comitato.delegati_attuali(tipo=COMMISSARIO, solo_deleghe_attive=True).first()
         return delega_presidenziale
 
+    def delegato_formazione(self):
+        return self.comitato.delegati_attuali(tipo=RESPONSABILE_FORMAZIONE, solo_deleghe_attive=True).first()
+
     def commissari(self):
         return self.comitato.delegati_attuali(tipo=COMMISSARIO, solo_deleghe_attive=True)
 
