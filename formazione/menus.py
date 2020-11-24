@@ -28,6 +28,8 @@ def formazione_menu(menu_name, me=None):
             ("Domanda formativa", "fa-area-chart", reverse('formazione:domanda')) if to_show(me, GESTIONE_CORSI_SEDE) else None,
             ('Catalogo Corsi', 'fa-list-alt', reverse('courses:catalog')),
             ('Acronimi', 'fa-book', '/page/glossario-corsi/'),
+            # link in base/js/formazione/link_formazione.js perche il mapping  del touting elimina il http:// ai link esterni
+            ('Regolamento Formazione', 'fa-book', 'link'),
             ('Albo Informatizzato', 'fa-list', reverse(
                 'formazione:albo_info')) if to_show(me, RUBRICA_DELEGATI_OBIETTIVO_ALL + [GESTIONE_CORSI_SEDE]) else None,
         )),
