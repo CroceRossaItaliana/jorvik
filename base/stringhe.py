@@ -50,6 +50,7 @@ class GeneratoreNomeFile():
                  {MEDIA_ROOT}/prefisso/C22AF346-8D6B-429B-B518-F85F7E69281F.suffisso
         """
 
+        originale = originale.encode('ascii', 'ignore').decode()
         suffisso = self.forza_suffisso if self.forza_suffisso is not None \
             else os.path.splitext(originale)[1]
 
