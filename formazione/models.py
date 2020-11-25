@@ -803,13 +803,39 @@ class CorsoBase(Corso, ConVecchioID, ConPDF):
 
         self.stato = self.ANNULLATO
 
+        self.save()
+
         for partecipazione in self.partecipazioni_confermate_o_in_attesa():
             partecipazione.annulla(persona)
             if self.online and self.moodle:
                 api = TrainingApi()
                 api.cancellazione_iscritto(persona=partecipazione.persona, corso=self)
 
-        self.save()
+        direttori_deleghe = self.direttori_corso(as_delega=True)
+        for direttore in direttori_deleghe:
+            p = direttore.persona
+            direttore.termina(mittente=persona)
+            Messaggio.costruisci_e_accoda(
+                oggetto="Annullamento corso: {}".format(self),
+                modello='email_corso_annullamanto_direttore.html',
+                corpo={
+                    'nome': p.nome_completo,
+                    "persona": persona.nome_completo
+                },
+                destinatari=[p, ]
+            )
+
+        docenti = self.docenti_corso()
+        for docente in docenti:
+            Messaggio.costruisci_e_accoda(
+                oggetto="Annullamento corso: {}".format(self),
+                modello='email_corso_annullamanto_docenti.html',
+                corpo={
+                    'nome': docente.nome_completo,
+                    "persona": persona.nome_completo
+                },
+                destinatari=[docente, ]
+            )
 
         self.notifica_annullamento_corso()
 

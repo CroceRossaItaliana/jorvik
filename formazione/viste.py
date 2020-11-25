@@ -137,6 +137,7 @@ def formazione_corsi_base_elenco(request, me):
     context = {
         "corsi": me.oggetti_permesso(GESTIONE_CORSO),
         "puo_pianificare": puo_modificare,
+        "posso_annullare": me.is_presidente or me.is_comissario or me.is_responsabile_formazione
     }
     return 'formazione_corsi_base_elenco.html', context
 
