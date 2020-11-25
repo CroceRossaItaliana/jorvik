@@ -1524,9 +1524,9 @@ def catalogo_corsi(request, me):
     if search_query:
         qs = Titolo.objects.filter(
             Q(Q(sigla__icontains=search_query) | Q(nome__icontains=search_query)),
-            tipo=Titolo.TITOLO_CRI, sigla__isnull=False)
+            tipo=Titolo.TITOLO_CRI, sigla__isnull=False).order_by('sigla')
     else:
-        qs = Titolo.objects.filter(tipo=Titolo.TITOLO_CRI, sigla__isnull=False)
+        qs = Titolo.objects.filter(tipo=Titolo.TITOLO_CRI, sigla__isnull=False).order_by('sigla')
 
     context = costruisci_titoli(context, qs.filter(online=False), search_query, 'titoli')
     context = costruisci_titoli(context, qs.filter(online=True), search_query, 'titoli_online')
