@@ -1293,30 +1293,30 @@ class CorsoBase(Corso, ConVecchioID, ConPDF):
             )
 
             delegato_fomazione = sede_regionale.delegato_formazione()
+            if delegato_fomazione:
+                # Invia e-mail delegato_fomazione
+                Messaggio.invia_raw(
+                    oggetto=oggetto,
+                    corpo_html=get_template('email_corso_invia_delibera_al_delegati_formazione.html').render(
+                        {
+                            'nome': delegato_fomazione.nome_completo
+                        }
+                    ),
+                    email_mittente=Messaggio.NOREPLY_EMAIL,
+                    lista_email_destinatari=[delegato_fomazione.email],
+                    allegati=self.delibera_file
+                )
 
-            # Invia e-mail delegato_fomazione
-            Messaggio.invia_raw(
-                oggetto=oggetto,
-                corpo_html=get_template('email_corso_invia_delibera_al_delegati_formazione.html').render(
-                    {
-                        'nome': delegato_fomazione.nome_completo
-                    }
-                ),
-                email_mittente=Messaggio.NOREPLY_EMAIL,
-                lista_email_destinatari=[delegato_fomazione.email],
-                allegati=self.delibera_file
-            )
-
-            # Invia posta delegato_fomazione
-            Messaggio.costruisci_e_accoda(
-                oggetto=oggetto,
-                modello='email_corso_invia_delibera_al_delegati_formazione.html',
-                corpo={
-                     'nome': delegato_fomazione.nome_completo
-                },
-                destinatari=[delegato_fomazione, ],
-                allegati=[self.delibera_file, ]
-            )
+                # Invia posta delegato_fomazione
+                Messaggio.costruisci_e_accoda(
+                    oggetto=oggetto,
+                    modello='email_corso_invia_delibera_al_delegati_formazione.html',
+                    corpo={
+                         'nome': delegato_fomazione.nome_completo
+                    },
+                    destinatari=[delegato_fomazione, ],
+                    allegati=[self.delibera_file, ]
+                )
 
     def notifica_annullamento_corso(self):
         sede = self.sede.estensione
@@ -1360,28 +1360,29 @@ class CorsoBase(Corso, ConVecchioID, ConPDF):
             delegato_fomazione = sede_regionale.delegato_formazione()
 
             # Invia e-mail delegato_fomazione
-            Messaggio.invia_raw(
-                oggetto=oggetto,
-                corpo_html=get_template('email_corso_annullamanto_al_delegati_formazione.html').render(
-                    {
+            if delegato_fomazione:
+                Messaggio.invia_raw(
+                    oggetto=oggetto,
+                    corpo_html=get_template('email_corso_annullamanto_al_delegati_formazione.html').render(
+                        {
+                            'nome': delegato_fomazione.nome_completo,
+                            'corso': self
+                        }
+                    ),
+                    email_mittente=Messaggio.NOREPLY_EMAIL,
+                    lista_email_destinatari=[delegato_fomazione.email]
+                )
+
+                # Invia posta delegato_fomazione
+                Messaggio.costruisci_e_accoda(
+                    oggetto=oggetto,
+                    modello='email_corso_annullamanto_al_delegati_formazione.html',
+                    corpo={
                         'nome': delegato_fomazione.nome_completo,
                         'corso': self
-                    }
-                ),
-                email_mittente=Messaggio.NOREPLY_EMAIL,
-                lista_email_destinatari=[delegato_fomazione.email]
-            )
-
-            # Invia posta delegato_fomazione
-            Messaggio.costruisci_e_accoda(
-                oggetto=oggetto,
-                modello='email_corso_annullamanto_al_delegati_formazione.html',
-                corpo={
-                    'nome': delegato_fomazione.nome_completo,
-                    'corso': self
-                },
-                destinatari=[delegato_fomazione, ]
-            )
+                    },
+                    destinatari=[delegato_fomazione, ]
+                )
 
 
 
