@@ -53,7 +53,7 @@
                     {{ corso.get_stato_display }}<br>
                     {% if posso_annullare %}
                         {% if corso.annullabile %}
-                            <a href="{{ corso.url_annulla }}">Annulla</a>
+                            <strong><a href="{{ corso.url_annulla }}" data-conferma="Vuoi annullare questo corso?">Annulla</a></strong>
                         {% endif %}
                     {% endif %}
                 </td>

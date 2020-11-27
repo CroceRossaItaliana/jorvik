@@ -820,7 +820,8 @@ class CorsoBase(Corso, ConVecchioID, ConPDF):
                 modello='email_corso_annullamanto_direttore.html',
                 corpo={
                     'nome': p.nome_completo,
-                    "persona": persona.nome_completo
+                    "persona": persona.nome_completo,
+                    "corso": self
                 },
                 destinatari=[p, ]
             )
@@ -832,7 +833,8 @@ class CorsoBase(Corso, ConVecchioID, ConPDF):
                 modello='email_corso_annullamanto_docenti.html',
                 corpo={
                     'nome': docente.nome_completo,
-                    "persona": persona.nome_completo
+                    "persona": persona.nome_completo,
+                    "corso": self
                 },
                 destinatari=[docente, ]
             )
@@ -1338,7 +1340,11 @@ class CorsoBase(Corso, ConVecchioID, ConPDF):
             # Invia e-mail
             Messaggio.invia_raw(
                 oggetto=oggetto,
-                corpo_html="""<p>Il corso {} è stato annullato</p>""".format(self),
+                corpo_html=get_template('email_corso_annullamento_al_presidente_responsavile_formazione.html').render(
+                    {
+                        'corso': self
+                    }
+                ),
                 email_mittente=Messaggio.NOREPLY_EMAIL,
                 lista_email_destinatari=email_destinatari
             )
@@ -1350,7 +1356,7 @@ class CorsoBase(Corso, ConVecchioID, ConPDF):
             # Invia posta
             Messaggio.costruisci_e_accoda(
                 oggetto=oggetto,
-                modello='email_corso_annullamento_al_presidente.html',
+                modello='email_corso_annullamento_al_presidente_responsavile_formazione.html',
                 corpo={
                     'corso': self,
                 },
@@ -1363,9 +1369,8 @@ class CorsoBase(Corso, ConVecchioID, ConPDF):
             if delegato_fomazione:
                 Messaggio.invia_raw(
                     oggetto=oggetto,
-                    corpo_html=get_template('email_corso_annullamanto_al_delegati_formazione.html').render(
+                    corpo_html=get_template('email_corso_annullamento_al_presidente_responsavile_formazione.html').render(
                         {
-                            'nome': delegato_fomazione.nome_completo,
                             'corso': self
                         }
                     ),
@@ -1376,9 +1381,8 @@ class CorsoBase(Corso, ConVecchioID, ConPDF):
                 # Invia posta delegato_fomazione
                 Messaggio.costruisci_e_accoda(
                     oggetto=oggetto,
-                    modello='email_corso_annullamanto_al_delegati_formazione.html',
+                    modello='email_corso_annullamento_al_presidente_responsavile_formazione.html',
                     corpo={
-                        'nome': delegato_fomazione.nome_completo,
                         'corso': self
                     },
                     destinatari=[delegato_fomazione, ]
