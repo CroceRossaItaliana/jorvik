@@ -1363,10 +1363,10 @@ class CorsoBase(Corso, ConVecchioID, ConPDF):
                 destinatari=[email_to,]
             )
 
-            delegato_fomazione = sede_regionale.delegato_formazione()
+            delegato_fomazione = sede_regionale.delegati_formazione()
 
             # Invia e-mail delegato_fomazione
-            if delegato_fomazione:
+            for delegato in delegato_fomazione:
                 Messaggio.invia_raw(
                     oggetto=oggetto,
                     corpo_html=get_template('email_corso_annullamento_al_presidente_responsavile_formazione.html').render(
@@ -1375,7 +1375,7 @@ class CorsoBase(Corso, ConVecchioID, ConPDF):
                         }
                     ),
                     email_mittente=Messaggio.NOREPLY_EMAIL,
-                    lista_email_destinatari=[delegato_fomazione.email]
+                    lista_email_destinatari=[delegato.email]
                 )
 
                 # Invia posta delegato_fomazione
@@ -1385,7 +1385,7 @@ class CorsoBase(Corso, ConVecchioID, ConPDF):
                     corpo={
                         'corso': self
                     },
-                    destinatari=[delegato_fomazione, ]
+                    destinatari=[delegato, ]
                 )
 
 
