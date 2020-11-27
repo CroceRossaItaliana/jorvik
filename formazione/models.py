@@ -1322,7 +1322,7 @@ class CorsoBase(Corso, ConVecchioID, ConPDF):
 
     def notifica_annullamento_corso(self):
         sede = self.sede.estensione
-        oggetto = "Annullamanto corso: %s" % self
+        oggetto = "Annullamento corso: %s" % self
 
         email_destinatari = ['formazione@cri.it', ]
 

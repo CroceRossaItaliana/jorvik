@@ -56,7 +56,7 @@ def formazione(request, me):
         "corsi": corsi,
         "sedi": me.oggetti_permesso(GESTIONE_CORSI_SEDE),
         "puo_pianificare": me.ha_permesso(GESTIONE_CORSI_SEDE),
-        "posso_annullare": me.is_presidente or me.is_comissario or me.is_responsabile_formazione
+        "me": me,
     }
     return 'formazione.html', context
 

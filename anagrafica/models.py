@@ -1229,6 +1229,7 @@ class Persona(ModelloSemplice, ConMarcaTemporale, ConAllegati, ConVecchioID):
         excel.genera_e_salva("Foglio di servizio.xlsx")
         return excel
 
+
     @property
     def is_presidente(self):
         return self.deleghe_attuali(tipo=PRESIDENTE).exists()
@@ -1244,6 +1245,10 @@ class Persona(ModelloSemplice, ConMarcaTemporale, ConAllegati, ConVecchioID):
     @property
     def is_responsabile_formazione(self):
         return self.deleghe_attuali(tipo=RESPONSABILE_FORMAZIONE).exists()
+
+    @property
+    def delega_responsabile_formazione(self):
+        return self.deleghe_attuali(tipo=RESPONSABILE_FORMAZIONE).first()
 
     @property
     def delega_commissario(self):
