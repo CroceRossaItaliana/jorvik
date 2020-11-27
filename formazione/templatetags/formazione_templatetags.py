@@ -34,7 +34,7 @@ def posso_annullare_corso(persona, corso):
         if delega.oggetto == corso.sede:
             return True
 
-    if persona.delega_responsabile_formazione:
+    if persona.is_responsabile_formazione:
         delega = persona.delega_responsabile_formazione
         if delega.oggetto == corso.sede:
             return True
