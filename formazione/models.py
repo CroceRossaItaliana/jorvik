@@ -1294,18 +1294,18 @@ class CorsoBase(Corso, ConVecchioID, ConPDF):
                 allegati=[self.delibera_file,]
             )
 
-            delegato_fomazione = sede_regionale.delegato_formazione()
-            if delegato_fomazione:
+            delegato_fomazione = sede_regionale.delegati_formazione()
+            for delegato in delegato_fomazione:
                 # Invia e-mail delegato_fomazione
                 Messaggio.invia_raw(
                     oggetto=oggetto,
                     corpo_html=get_template('email_corso_invia_delibera_al_delegati_formazione.html').render(
                         {
-                            'nome': delegato_fomazione.nome_completo
+                            'nome': delegato.nome_completo
                         }
                     ),
                     email_mittente=Messaggio.NOREPLY_EMAIL,
-                    lista_email_destinatari=[delegato_fomazione.email],
+                    lista_email_destinatari=[delegato.email],
                     allegati=self.delibera_file
                 )
 
@@ -1314,9 +1314,9 @@ class CorsoBase(Corso, ConVecchioID, ConPDF):
                     oggetto=oggetto,
                     modello='email_corso_invia_delibera_al_delegati_formazione.html',
                     corpo={
-                         'nome': delegato_fomazione.nome_completo
+                         'nome': delegato.nome_completo
                     },
-                    destinatari=[delegato_fomazione, ],
+                    destinatari=[delegato, ],
                     allegati=[self.delibera_file, ]
                 )
 
