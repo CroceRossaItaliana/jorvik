@@ -50,10 +50,10 @@
             <tr>
                 <td>{{ corso.get_stato_display }}</td>
                 <td>
-                    <i class="fa fa-fw fa-pencil"></i> <strong>{{ corso.link|safe }}</strong><br />
+                    <i class="fas fa-pencil-alt"></i> <strong>{{ corso.link|safe }}</strong><br />
                     <i class="fa fa-fw fa-home"></i> {{ corso.sede.link|safe }}
                     {% if puo_pianificare %}
-                        <br /><i class="fa fa-fw fa-group"></i> <a href="{{ corso.url_direttori }}">{{ corso.deleghe.count }} direttori</a>
+                        <br /><i class="fas fa-users"></i> <a href="{{ corso.url_direttori }}">{{ corso.deleghe.count }} direttori</a>
                     {% endif %}
                 </td>
 
@@ -87,7 +87,7 @@
                     <br>
                     <span class="piu-piccolo text-muted">
                         <i class="fa fa-fw fa-check"></i> {{ corso.partecipazioni_confermate.count }} confermate<br>
-                        <i class="fa fa-fw fa-clock-o"></i> {{ corso.partecipazioni_in_attesa.count }} in attesa<br>
+                        <i class="fas fa-clock"></i> {{ corso.partecipazioni_in_attesa.count }} in attesa<br>
                         <i class="fa fa-fw fa-times"></i> {{ corso.partecipazioni_negate.count }} neg./rit.<br>
                     </span>
                 </td>
