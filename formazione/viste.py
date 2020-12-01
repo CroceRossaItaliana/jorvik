@@ -56,6 +56,7 @@ def formazione(request, me):
         "corsi": corsi,
         "sedi": me.oggetti_permesso(GESTIONE_CORSI_SEDE),
         "puo_pianificare": me.ha_permesso(GESTIONE_CORSI_SEDE),
+        "me": me,
     }
     return 'formazione.html', context
 
@@ -136,6 +137,7 @@ def formazione_corsi_base_elenco(request, me):
     context = {
         "corsi": me.oggetti_permesso(GESTIONE_CORSO),
         "puo_pianificare": puo_modificare,
+        "posso_annullare": me.is_presidente or me.is_comissario or me.is_responsabile_formazione
     }
     return 'formazione_corsi_base_elenco.html', context
 
@@ -1533,3 +1535,15 @@ def catalogo_corsi(request, me):
     context['titoli_total'] = qs.count()
 
     return 'catalogo_corsi.html', context
+
+
+@pagina_privata
+def aspirante_corso_base_annulla(request, me, pk):
+    corso = get_object_or_404(CorsoBase, pk=pk)
+
+    if not me.permessi_almeno(corso, MODIFICA):
+        return redirect(ERRORE_PERMESSI)
+
+    corso.annulla(me)
+
+    return redirect(reverse('formazione:index'))
