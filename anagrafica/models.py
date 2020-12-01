@@ -1229,6 +1229,7 @@ class Persona(ModelloSemplice, ConMarcaTemporale, ConAllegati, ConVecchioID):
         excel.genera_e_salva("Foglio di servizio.xlsx")
         return excel
 
+
     @property
     def is_presidente(self):
         return self.deleghe_attuali(tipo=PRESIDENTE).exists()
@@ -1240,6 +1241,14 @@ class Persona(ModelloSemplice, ConMarcaTemporale, ConAllegati, ConVecchioID):
     @property
     def is_comissario(self):
         return self.deleghe_attuali(tipo=COMMISSARIO).exists()
+
+    @property
+    def is_responsabile_formazione(self):
+        return self.deleghe_attuali(tipo=RESPONSABILE_FORMAZIONE).exists()
+
+    @property
+    def delega_responsabile_formazione(self):
+        return self.deleghe_attuali(tipo=RESPONSABILE_FORMAZIONE).first()
 
     @property
     def delega_commissario(self):
@@ -2000,6 +2009,9 @@ class Sede(ModelloAlbero, ConMarcaTemporale, ConGeolocalizzazione, ConVecchioID,
         if not delega_presidenziale:
             delega_presidenziale = self.comitato.delegati_attuali(tipo=COMMISSARIO, solo_deleghe_attive=True).first()
         return delega_presidenziale
+
+    def delegati_formazione(self):
+        return self.comitato.delegati_attuali(tipo=RESPONSABILE_FORMAZIONE, solo_deleghe_attive=True)
 
     def commissari(self):
         return self.comitato.delegati_attuali(tipo=COMMISSARIO, solo_deleghe_attive=True)
