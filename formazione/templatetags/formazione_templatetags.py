@@ -180,3 +180,10 @@ def lezione_durata(lezione):
         if splitted:
             return "%s ore %s min" % tuple(splitted[:2])
     return ''
+
+
+@register.simple_tag
+def formazione_menu_link_pdf_target_blank(url):
+    if url.endswith('.pdf'):
+        return "target=_blank"
+    return ''
