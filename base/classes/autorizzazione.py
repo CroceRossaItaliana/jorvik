@@ -1,3 +1,5 @@
+from anagrafica.models import Trasferimento
+from posta.models import Messaggio
 from ..errori import errore_generico
 
 
@@ -82,6 +84,20 @@ class AutorizzazioneProcess:
                     self.richiesta.concedi(self.me, modulo=self.form)
                 else:
                     self.richiesta.nega(self.me, modulo=self.form)
+
+                if isinstance(self.richiesta.oggetto, Trasferimento):
+                    destinatari = [self.richiesta.oggetto.destinazione.sede_regionale.presidente()]
+                    destinatari.extend(self.richiesta.oggetto.destinazione.sede_regionale.delegati_ufficio_soci())
+                    Messaggio.costruisci_e_accoda(
+                        oggetto="Trasferimento {}".format("Confermato" if concedi else "Negato"),
+                        modello="email_richiesta_trasferimento_regionale.html",
+                        corpo={
+                            "persona": self.richiesta.oggetto.richiedente.nome_completo,
+                            "comitato": self.richiesta.oggetto.destinazione,
+                            "stato": "Confermata" if concedi else "Negata"
+                        },
+                        destinatari=set(destinatari),
+                    )
         else:
             try:
                 self.form = self._autorizzazione_form(**form_kwargs)
