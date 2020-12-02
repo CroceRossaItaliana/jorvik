@@ -42,10 +42,12 @@ class Corso(ModelloSemplice, ConDelegati, ConMarcaTemporale,
     CORSO_NUOVO = 'C1'
     BASE = 'BA'
     CORSO_ONLINE = 'CO'
+    CORSO_EQUIPOLLENZA = 'CE'
     TIPO_CHOICES = (
         (BASE, 'Corso di Formazione per Volontari CRI'),
         (CORSO_NUOVO, 'Altri Corsi'),
         (CORSO_ONLINE, 'Corsi online'),
+        (CORSO_EQUIPOLLENZA, 'Corsi equipollenza'),
     )
 
     # Stato del corso
@@ -326,7 +328,7 @@ class CorsoBase(Corso, ConVecchioID, ConPDF):
 
     @property
     def moodle(self):
-        return self.tipo == self.CORSO_ONLINE and self.titolo_cri.moodle
+        return self.titolo_cri.moodle
 
     @property
     def prossimo(self):
@@ -1241,7 +1243,7 @@ class CorsoBase(Corso, ConVecchioID, ConPDF):
 
     @property
     def is_nuovo_corso(self):
-        return self.tipo == Corso.CORSO_NUOVO or self.tipo == Corso.CORSO_ONLINE
+        return self.tipo == Corso.CORSO_NUOVO or self.tipo == Corso.CORSO_ONLINE or self.tipo == Corso.CORSO_EQUIPOLLENZA
 
     def get_course_links(self):
         return self.corsolink_set.filter(is_enabled=True)

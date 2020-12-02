@@ -35,12 +35,24 @@ class Titolo(ModelloSemplice, ConVecchioID):
         (CDF_LIVELLO_IV, 'IV Livello'),
     )
 
+    CORSO_BASE = 'CB'
+    CORSO_ONLINE = 'CO'
+    CORSO_MOODLE = 'CM'
+    CORSO_EQUIPOLLENZA = 'CE'
+    MODALITA = (
+        (CORSO_BASE, 'Corso base'),
+        (CORSO_ONLINE, 'Corso online'),
+        (CORSO_EQUIPOLLENZA, 'Corso equipollenza'),
+    )
+
     goal = models.ForeignKey('TitleGoal', null=True, blank=True,
         verbose_name="Obbiettivo", on_delete=models.PROTECT)
     nome = models.CharField(max_length=255, db_index=True)
     area = models.CharField(max_length=5, null=True, blank=True, db_index=True,
         choices=OBBIETTIVI_STRATEGICI)
     tipo = models.CharField(max_length=2, choices=TIPO, db_index=True)
+    modalita_titoli_cri = models.CharField(max_length=2, choices=MODALITA, db_index=True, null=True, blank=True)
+    moodle = models.BooleanField(default=False, blank=True)
     sigla = models.CharField(max_length=50, null=True, blank=True)
     description = models.CharField(max_length=255, null=True, blank=True)
     is_active = models.BooleanField(default=True)
@@ -61,10 +73,6 @@ class Titolo(ModelloSemplice, ConVecchioID):
     richiede_data_scadenza = models.BooleanField(default=False)
     richiede_codice = models.BooleanField(default=False)
     inseribile_in_autonomia = models.BooleanField(default=True)
-
-    online = models.BooleanField(default=False, blank=True)
-
-    moodle = models.BooleanField(default=False, blank=True)
 
     class Meta:
         verbose_name_plural = "Titoli: Elenco"

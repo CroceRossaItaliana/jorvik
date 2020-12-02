@@ -73,7 +73,7 @@ class ModuloCreazioneCorsoBase(ModelForm):
                 if field in cd:
                     del cd[field]
 
-        if tipo == Corso.CORSO_NUOVO or tipo == Corso.CORSO_ONLINE:
+        if tipo == Corso.CORSO_NUOVO or tipo == Corso.CORSO_ONLINE or tipo == Corso.CORSO_EQUIPOLLENZA:
             cd_titolo_cri = cd.get('titolo_cri')
 
             if not cd_titolo_cri:
@@ -134,7 +134,6 @@ class ModuloCreazioneCorsoBase(ModelForm):
                 tipo=Titolo.TITOLO_CRI,
                 is_active=True,
             ).order_by('nome')]
-
         # Sort area options 'ASC'
         self.fields['area'].choices = sorted(self.fields['area'].choices, key=lambda x: x[1])
 
