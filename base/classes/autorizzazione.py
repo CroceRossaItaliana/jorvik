@@ -1,4 +1,6 @@
+from anagrafica.api_trippus import COMMISSARIO
 from anagrafica.models import Trasferimento
+from anagrafica.permessi.applicazioni import PRESIDENTE, UFFICIO_SOCI
 from posta.models import Messaggio
 from ..errori import errore_generico
 
@@ -86,8 +88,9 @@ class AutorizzazioneProcess:
                     self.richiesta.nega(self.me, modulo=self.form)
 
                 if isinstance(self.richiesta.oggetto, Trasferimento):
-                    destinatari = [self.richiesta.oggetto.destinazione.sede_regionale.presidente()]
-                    destinatari.extend(self.richiesta.oggetto.destinazione.sede_regionale.delegati_ufficio_soci())
+                    delega = self.me.deleghe_attuali(tipo__in=[PRESIDENTE, COMMISSARIO, UFFICIO_SOCI]).first()
+                    destinatari = [delega.oggetto.sede_regionale.presidente()]
+                    destinatari.extend(delega.oggetto.sede_regionale.delegati_ufficio_soci())
                     Messaggio.costruisci_e_accoda(
                         oggetto="Trasferimento {}".format("Confermato" if concedi else "Negato"),
                         modello="email_richiesta_trasferimento_regionale.html",
