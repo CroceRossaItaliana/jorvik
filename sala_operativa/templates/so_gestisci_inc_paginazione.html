@@ -1,0 +1,20 @@
+    <nav aria-label="Navigazione pagine" class="allinea-centro">
+
+      <ul class="pagination">
+        <li>
+            {% if attivita.has_previous %}
+                <a href="?pagina={{ attivita.previous_page_number }}">
+                    Precedente
+                </a>
+            {% endif %}
+        </li>
+        <li class="disabled"><a class="disabled">
+            Pagina {{ attivita.number }} di {{ attivita.paginator.num_pages }}
+        </a></li>
+        <li>
+            {% if attivita.has_next %}
+                <a href="?pagina={{ attivita.next_page_number }}">Successiva</a>
+            {% endif %}
+        </li>
+      </ul>
+    </nav>

@@ -48,20 +48,20 @@
             {% if not secondo_verbale %}
                 <p>
                     Nel giorno {{ corso.data_esame|date:"j" }} del mese di {{ corso.data_esame|date:"F" }} dell'anno {{ corso.data_esame|date:"Y" }},
-                    {% verbale_indirizzo corso %}, <em>ai sensi del Regolamento dei Corsi di Formazione per Volontari e Dipendenti
+                    {% if not corso.online %}{% verbale_indirizzo corso %}{% endif %}, <em>ai sensi del Regolamento dei Corsi di Formazione per Volontari e Dipendenti
                     della Croce Rossa Italiana</em> attualmente vigente, si è riunita la Commissione d’Esame convocata e composta da:
                 </p>
             {% else %}
                 {% if corso.tipo == corso.BASE %}
                     <p>
                         Nel giorno {{ corso.data_esame|date:"j" }} del mese di {{ corso.data_esame|date:"F" }} dell'anno {{ corso.data_esame|date:"Y" }},
-                        {% verbale_indirizzo corso %}, <em>ai sensi del Regolamento dei Corsi di Formazione per Volontari e Dipendenti
+                        {% if not corso.online %}{% verbale_indirizzo corso %}{% endif %}, <em>ai sensi del Regolamento dei Corsi di Formazione per Volontari e Dipendenti
                         della Croce Rossa Italiana</em> attualmente vigente, la Commissione d’Esame convocata per la seconda volta composta da:
                     </p>
                 {% elif corso.tipo == corso.CORSO_NUOVO %}
                     <p>
                         Nel giorno {{ corso.data_esame|date:"j" }} del mese di {{ corso.data_esame|date:"F" }} dell&#39;anno {{ corso.data_esame|date:"Y" }},
-                        {% verbale_indirizzo corso %}, <em>ai sensi del Regolamento dei Corsi di Formazione per Volontari e Dipendenti
+                        {% if not corso.online %}{% verbale_indirizzo corso %}{% endif %}, <em>ai sensi del Regolamento dei Corsi di Formazione per Volontari e Dipendenti
                         della Croce Rossa Italiana</em> attualmente vigente, la Commissione d’Esame è stata convocata per la seconda volta
                         per n.____ candidato/i che, per giustificati e comprovati motivi di impedimento non ha/hanno potuto svolgere l’esame
                         nel giorno_______________ ed è composta da:
@@ -70,7 +70,7 @@
             {% endif %}
 
             <p>&mdash; Presidente del Comitato CRI o suo delegato:<br>
-                &nbsp;&nbsp;&nbsp; {{ corso.sede.presidente }}</p>
+                &nbsp;&nbsp;&nbsp; {{ corso.presidente_corso.nome_completo|default:"" }}</p>
             <p>
                 &mdash; Direttore del Corso<br>
                 {% for direttore in corso.direttori_corso %}
@@ -134,7 +134,10 @@
                     <p>Gli esaminandi vengono sottoposti ad un esame teorico-pratico inerente gli argomenti trattati nonché le capacità e competenze acquisite.</p>
                     <p>
                         Sono stati esaminati n. {{ numero_aspiranti }}, come risulta dagli atti allegati, e, ad insindacabile giudizio della Commissione d’Esame,
-                        sono stati dichiarati NON IDONEI n. {{ numero_non_idonei }} candidati mentre sono stati dichiarati IDONEI n. {{ numero_idonei }} candidati.</p>
+                        sono stati dichiarati NON IDONEI n. {{ numero_non_idonei }} candidati mentre sono stati dichiarati IDONEI n. {{ numero_idonei }} candidati
+                        {% if numero_assenti_no_esame.count %}, ASSENTI n. {{ numero_assenti_no_esame.count }} candidati{% endif %}.
+                    </p>
+
                 {% else %}
                     <p>
                         La Commissione si riunisce in data odierna per sottoporre ad esame finale n._____ candidato/i, del Corso di Formazione ({{ corso.titolo_cri }})
@@ -145,7 +148,8 @@
                     </p>
                     <p>
                         Sono stati esaminati n. {{ numero_aspiranti }}, come risulta dagli atti allegati, e, ad insindacabile giudizio della Commissione d’Esame,
-                        sono stati dichiarati NON IDONEI n. {{ numero_non_idonei }} candidati mentre sono stati dichiarati IDONEI n. {{ numero_idonei }} candidati.
+                        sono stati dichiarati NON IDONEI n. {{ numero_non_idonei }} candidati mentre sono stati dichiarati IDONEI n. {{ numero_idonei }} candidati
+                        {% if numero_assenti_no_esame.count %}, ASSENTI n. {{ numero_assenti_no_esame.count }} candidati{% endif %}.
                     </p>
                 {% endif %}
 
@@ -179,7 +183,7 @@
                 <tr>
                     <td class="table-elenco-col-name">Cognome e Nome</td>
                     <td class="table-elenco-col-name">Luogo di Nascita</td>
-                    <td class="table-elenco-col-name">Data di Nasciata</td>
+                    <td class="table-elenco-col-name">Data di Nascita</td>
                     <td class="table-elenco-col-name">Codice Fiscale</td>
                     <td class="table-elenco-col-name">Esito</td>
                 </tr>
@@ -192,7 +196,13 @@
                     <td>{{ p.persona.codice_fiscale }}</td>
                     <td><b>
                         {% if corso.titolo_cri.scheda_prevede_esame %}
-                            {{ p.get_esito_esame_display|default:"N/D" }}
+
+                            {% if not p.get_esito_esame_display %}
+                                <span style="color:red;">{{ p.get_ammissione_display }}</span>
+                            {% else %}
+                                {{ p.get_esito_esame_display|default:"N/D" }}
+                            {% endif %}
+
                         {% else %}
                             {{ p.get_ammissione_display|default:"Esame non previsto" }}
                         {% endif %}
@@ -205,7 +215,7 @@
             Letto approvato e sottoscritto<br><br>
 
             &ndash;	Presidente del Comitato CRI o suo delegato:<br>
-            &nbsp;&nbsp;&nbsp; {{ corso.sede.presidente }}<br><br>
+            &nbsp;&nbsp;&nbsp; {{ corso.presidente_corso.nome_completo|default:"" }}<br><br>
 
             &ndash;	Direttore del Corso<br>
             {% for direttore in corso.direttori_corso %}

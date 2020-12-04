@@ -83,8 +83,8 @@ class GestionePresenza:
 
 
 class GeneraReport:
-    ATTESTATO_FILENAME = "%s - Attestato.pdf"
-    SCHEDA_FILENAME = "%s - Scheda di Valutazione.pdf"
+    ATTESTATO_FILENAME = "%s %s - Attestato.pdf"
+    SCHEDA_FILENAME = "%s %s - Scheda di Valutazione.pdf"
 
     def __init__(self, request, corso, single_attestato=False):
         self.request = request
@@ -116,7 +116,7 @@ class GeneraReport:
             return redirect(reverse('utente:cv_tipo', args=[Titolo.TITOLO_CRI,]))
 
         attestato = self._attestato(partecipazione)
-        filename = self.ATTESTATO_FILENAME % partecipazione.titolo_ottenuto.last()
+        filename = self.ATTESTATO_FILENAME % (partecipazione.titolo_ottenuto.last(), '')
 
         with open(attestato.file.path, 'rb') as f:
             pdf = f.read()
@@ -137,18 +137,20 @@ class GeneraReport:
         """ Genera la scheda di valutazione """
 
         scheda = partecipante.genera_scheda_valutazione(request=self.request)
+        persona = partecipante.persona
         self.archive.aggiungi_file(
             scheda.file.path,
-            self.SCHEDA_FILENAME % partecipante.persona.nome_completo
+            self.SCHEDA_FILENAME % (persona.cognome, persona.nome)
         )
         return scheda
 
     def _attestato(self, partecipante):
         attestato = partecipante.genera_attestato(request=self.request)
+        persona = partecipante.persona
 
         self.archive.aggiungi_file(
             attestato.file.path,
-            self.ATTESTATO_FILENAME % partecipante.persona.nome_completo
+            self.ATTESTATO_FILENAME % (persona.cognome, persona.nome)
         )
         return attestato
 
@@ -193,7 +195,7 @@ class GestioneLezioni:
 
         lezioni = self.corso.lezioni
         q = lezioni.filter(pk=self.lezione_pk) if self.lezione_pk else lezioni.all()
-        return q.order_by('inizio', 'fine')
+        return q.order_by('inizio', 'fine', 'scheda_lezione_num',)
 
     def get_partecipanti_senza_esonero(self, lezione):
         return self.partecipanti.exclude(
@@ -208,7 +210,11 @@ class GestioneLezioni:
             request_data,
             instance=lezione,
             prefix="%s" % lezione.pk,
-            corso=self.corso
+            corso=self.corso,
+            initial={
+                "inizio": self.corso.data_inizio,
+                "fine": self.corso.data_esame
+            } if self.corso.online and self.corso.moodle else None
         )
 
     def presenze_assenze(self, per_singola_lezione=False):
@@ -244,10 +250,16 @@ class GestioneLezioni:
         if self.AZIONE_NUOVA:
             form_args.append(self.request.POST)
         else:
-            form_kwargs['initial'] = {
-                "inizio": timezone.now(),
-                "fine": timezone.now() + timedelta(hours=2)
-            }
+            if self.corso.online and self.corso.moodle:
+                form_kwargs['initial'] = {
+                    "inizio": self.corso.data_inizio,
+                    "fine": self.corso.data_esame
+                }
+            else:
+                form_kwargs['initial'] = {
+                    "inizio": timezone.now(),
+                    "fine": timezone.now() + timedelta(hours=2)
+                }
         return ModuloModificaLezione(*form_args, **form_kwargs)
 
     @property
@@ -264,6 +276,12 @@ class GestioneLezioni:
             lezione.save()
 
             lezione.docente = cd['docente']
+            if self.corso.online and self.corso.moodle:
+                from formazione.training_api import TrainingApi
+                api = TrainingApi()
+                for docente in cd['docente']:
+                    api.aggiugi_ruolo(docente, self.corso, TrainingApi.DOCENTE)
+
             lezione.save()
 
             self.avvisare_docente_e_presidente(lezione)
@@ -281,7 +299,6 @@ class GestioneLezioni:
 
         lezione = self.lezioni.get(pk=self.lezione_pk, corso=self.corso)
         form = self._lezione_form(lezione)
-
         if self.AZIONE_SALVA_PRESENZE:
             GestionePresenza(self.request, lezione, self.me, self.partecipanti)
 
@@ -297,6 +314,12 @@ class GestioneLezioni:
                 return self.dividi(lezione)
 
             self.avvisare_docente_e_presidente(lezione)
+
+            if self.corso.online and self.corso.moodle:
+                from formazione.training_api import TrainingApi
+                api = TrainingApi()
+                for docente in form.cleaned_data['docente']:
+                    api.aggiugi_ruolo(docente, self.corso, TrainingApi.DOCENTE)
 
             messages.success(self.request, "La lezione è stata salvata correttamente.")
             return redirect("%s#%d" % (self.corso.url_lezioni, lezione.pk))

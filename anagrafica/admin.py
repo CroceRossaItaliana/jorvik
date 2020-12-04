@@ -1,3 +1,7 @@
+import csv
+import io
+from datetime import datetime
+
 from django import forms
 from django.conf.urls import url
 from django.contrib import admin, messages
@@ -18,7 +22,7 @@ from gruppi.readonly_admin import ReadonlyAdminMixin
 from formazione.models import PartecipazioneCorsoBase
 from .models import (Persona, Sede, Appartenenza, Delega, Documento,
     Fototessera, Estensione, Trasferimento, Riserva, Dimissione, Telefono,
-    ProvvedimentoDisciplinare)
+    ProvvedimentoDisciplinare, Nominativo)
 
 
 
@@ -116,13 +120,98 @@ class AdminPersona(ReadonlyAdminMixin, admin.ModelAdmin):
             url(r'^trasferisci_azione/$',
                 self.admin_site.admin_view(self.sposta_persone_post),
                 name='anagrafica_persona_trasferisci_post'),
+            url(r'^serviziocivile/$',
+                self.admin_site.admin_view(self.import_servizio_civile),
+                name='anagrafica_persona_import_servizio_civile'),
             url(r'^report/conoscenza/$',
                 self.admin_site.admin_view(self.conoscneza_report),
                 name='anagrafica_persona_report_conoscneza'),
         ]
 
-
         return custom_urls + urls
+
+    def _import_servizio_civile(self, request, file):
+        fieldnames = (
+            'Cognome',
+            'Nome',
+            'Mail',
+            'Comitato o Unità Territoriale titolare del Progetto di SCU',
+            'Sesso',
+            'CodiceFiscale',
+            'ComuneNascita',
+            'Data Nascita',
+            'ComuneResidenza',
+            'Provincia Residenza',
+            'Titolo Progetto',
+            'Provincia Sede Progetto',
+            'Regione Sede Progetto',
+        )
+
+        reader = csv.DictReader(io.StringIO(file.read().decode('utf-8')), delimiter=',', fieldnames=fieldnames)
+
+        next(reader)
+        for row in reader:
+            query = {}
+            print(row)
+            if row['CodiceFiscale']:
+                print('Codice fiscale', row['CodiceFiscale'])
+                query['codice_fiscale__iexact'] = row['CodiceFiscale']
+
+            persona = Persona.objects.filter(**query)
+            if len(persona) > 1:
+                messages.error(request, "Il file contiene valori ambigui su {}".format(persona))
+                continue
+
+            if persona:# Esiste! creo l'appartenenza servizio civile universale
+                if not Appartenenza.objects.filter(
+                    persona=persona[0],
+                    membro=Appartenenza.SEVIZIO_CIVILE_UNIVERSALE,
+                    sede=Sede.objects.filter(nome=row['Comitato o Unità Territoriale titolare del Progetto di SCU']).first(),
+                    fine__isnull=True
+                ).exists():
+                    Appartenenza(
+                        persona=persona[0],
+                        sede=Sede.objects.filter(nome=row['Comitato o Unità Territoriale titolare del Progetto di SCU']).first(),
+                        membro=Appartenenza.SEVIZIO_CIVILE_UNIVERSALE,
+                        inizio=datetime.now()
+                    ).save()
+            else: # Non esiste, crea persone e appartenenza come servizio civile universale
+                p = Persona(
+                    nome=row['Nome'],
+                    cognome=row['Cognome'],
+                    email_contatto=row['Mail'],
+                    genere=row['Sesso'],
+                    codice_fiscale=row['CodiceFiscale'],
+                    data_nascita=datetime.strptime(row['Data Nascita'], '%d/%m/%Y').strftime('%Y-%m-%d'),
+                    comune_nascita=row['ComuneNascita'],
+                    comune_residenza=row['ComuneResidenza'],
+                    provincia_residenza=row['Provincia Residenza']
+                )
+                p.save()
+
+                Appartenenza(
+                    persona=p,
+                    sede=Sede.objects.filter(
+                        nome=row['Comitato o Unità Territoriale titolare del Progetto di SCU']).first(),
+                    membro=Appartenenza.SEVIZIO_CIVILE_UNIVERSALE,
+                    inizio=datetime.now()
+                ).save()
+
+    def import_servizio_civile(self, request):
+
+        if request.POST:
+            files = request.FILES.getlist('file')
+            for file in files:
+                if not file.name.split('.')[1] == 'csv':
+                    messages.error(request, "Il file deve avere un fomato .csv")
+
+            self._import_servizio_civile(request, files[0])
+
+        contesto = {
+            'opts': self.model._meta
+        }
+
+        return render(request, 'admin/anagrafica/import_servizio_civile.html', contesto)
 
     def conoscneza_report(self, request):
         import csv
@@ -271,7 +360,7 @@ class AdminSede(ReadonlyAdminMixin, MPTTModelAdmin):
     search_fields = ['nome', 'genitore__nome']
     list_display = ('nome', 'genitore', 'tipo', 'estensione', 'creazione', 'ultima_modifica', )
     list_filter = ('tipo', 'estensione', 'creazione', )
-    raw_id_fields = ('genitore', 'locazione',)
+    raw_id_fields = ('genitore', 'locazione', 'sede_operativa', 'indirizzo_per_spedizioni',)
     list_display_links = ('nome', 'estensione',)
     inlines = [InlineDelegaSede,]
 
@@ -359,4 +448,12 @@ class AdminTelefono(ReadonlyAdminMixin, admin.ModelAdmin):
 @admin.register(ProvvedimentoDisciplinare)
 class AdminProvvedimentoDisciplinare(ReadonlyAdminMixin, admin.ModelAdmin):
     raw_id_fields = ['persona', 'registrato_da', 'sede',]
+    list_display = ['persona', 'inizio', 'fine', 'tipo',]
+    list_filter = ['tipo',]
 
+
+@admin.register(Nominativo)
+class AdminNominativo(ReadonlyAdminMixin, admin.ModelAdmin):
+    list_display = ['nome', 'tipo', 'sede', 'inizio', 'fine',]
+    list_filter = ['tipo',]
+    raw_id_fields = ['sede', ]

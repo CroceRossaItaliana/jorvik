@@ -1,0 +1,83 @@
+{% load survey_templatetags %}
+
+{% for risposta in risposte %}
+  <div style="page-break-after: always;">
+  <h2 style="text-align:center; font-size:24px;">Persona {{ forloop.counter }} <!--{{ risposta.user }}--></h2>
+
+  {% for k,v in risposta.response_json.items %}
+    {% if k == 'utilita_lezioni' %}
+      {% questionario_pdf_utilita_lezioni v as utilita_lezioni %}
+      <h3 style="text-align:center; font-size:20px;">Utilità lezioni</h3>
+      <table style="width:100%; border:1px solid #333; padding:2px;">
+        <tr style="font-weight:bold;">
+          <td width="50%">Lezione</td>
+          <td align="center" width="50%">Voto</td>
+        </tr>
+        {% for lezione, voto in utilita_lezioni.items %}
+        <tr>
+          <td width="50%">{{ lezione }}</td>
+          <td align="center" width="50%">{{ voto }}</td>
+        </tr>
+        {% empty %}
+        <tr>
+          <td align="center" colspan="2">No data</td>
+        </tr>
+        {% endfor %}
+      </table>
+
+    {% elif k == 'direttori' %}
+      {% questionario_pdf_direttori v as direttori %}
+      <h3 style="text-align:center; font-size:20px;">Direttori</h3>
+      <table style="width:100%; border:1px solid #333; padding:2px;">
+        {% for direttore, lezioni in direttori.items %}
+          <tr>
+            <td colspan="2" style="font-size:18px; font-weight:bold; text-align:center;">{{ direttore }}</td>
+          </tr>
+
+          <tr style="font-weight:bold;">
+            <td width="50%">Domanda</td>
+            <td align="center" width="50%">Voto</td>
+          </tr>
+          {% for lezione, voto in lezioni.items %}
+            <tr>
+                <td width="50%">{{ lezione }}</td>
+                <td align="center" width="50%">{{ voto }}</td>
+            </tr>
+          {% endfor %}
+        {% endfor %}
+      </table>
+      <br>
+
+    {% elif k == 'lezioni' %}
+    {% questionario_pdf_valutazione_lezioni v as valutazione_lezioni %}
+      <h3 style="text-align:center; font-size:20px;">Valutazione lezioni</h3>
+      <table style="width:100%; border:1px solid #333; padding:2px;">
+        {% for docente, lezioni in valutazione_lezioni.items %}
+          <tr>
+            <td colspan="2" style="font-size:18px; font-weight:bold; text-align:center;">Docente: {{ docente }}</td>
+          </tr>
+          {% for lezione, domande_risposte in lezioni.items %}
+            <tr>
+                <td width="25%">{{ lezione.nome }} <!-- {{ lezione.pk }} --></td>
+                <td width="75%">
+                  <table width="100%">
+                    <tr>
+                      <td width="90%"><strong>Domanda</strong></td>
+                      <td width="10%" align="center"><strong>Voto</strong></td>
+                    </tr>
+                    {% for domanda, risposta in domande_risposte.items %}
+                    <tr>
+                      <td width="90%">{{ domanda }}</td>
+                      <td width="10%" align="center">{{ risposta }}</td>
+                    </tr>
+                    {% endfor %}
+                  </table>
+                </td>
+            </tr>
+          {% endfor %}
+        {% endfor %}
+      </table>
+    {% endif %}
+  {% endfor %}
+  </div>
+{% endfor %}

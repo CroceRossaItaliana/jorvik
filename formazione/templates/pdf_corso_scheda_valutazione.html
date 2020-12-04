@@ -45,19 +45,37 @@
           <td>
             <strong><u>Parte teorica:</u></strong>
           </td>
-          <td>{{ partecipazione.get_esito_parte_1_display }}</td>
+          <td style="text-align:center;">
+            {% if corso.titolo_cri and not corso.titolo_cri.scheda_prevede_esame %}
+              Esame non previsto
+            {% else %}
+              {{ partecipazione.get_esito_parte_1_display }}
+            {% endif %}
+          </td>
       </tr>
       <tr style="font-size:10px;">
           <td>
             <strong><u>Parte pratica:</u></strong>
           </td>
-          <td>{{ partecipazione.get_esito_parte_2_display }}</td>
+          <td style="text-align:center;">
+            {% if corso.titolo_cri and not corso.titolo_cri.scheda_prevede_esame %}
+              Esame non previsto
+            {% else %}
+              {{ partecipazione.get_esito_parte_2_display }}
+            {% endif %}
+          </td>
       </tr>
       <tr style="font-size:10px;">
           <td>
             <strong><u>Eventuale tirocinio/affiancamento:</u></strong>
           </td>
-          <td>{{ partecipazione.get_eventuale_tirocinio_display }}</td>
+          <td style="text-align:center;">
+            {% if corso.titolo_cri and not corso.titolo_cri.scheda_prevede_esame %}
+              Esame non previsto
+            {% else %}
+              {{ partecipazione.get_eventuale_tirocinio_display }}
+            {% endif %}
+          </td>
       </tr>
     </table>
     <table class="table-elenco" style="margin-bottom:30px;">
@@ -81,7 +99,7 @@
   </div>
 
   <div>
-    <div style="margin-bottom:10px; text-align:right;">Luogo e data della valutazione:</div>
+    <!-- <div style="margin-bottom:10px; text-align:right;">Luogo e data della valutazione:</div> -->
     <table>
       <tr>
         <td style="width:50%; vertical-align: top;">
@@ -91,7 +109,7 @@
           {% endfor %}
         </td>
         <td style="width:50%; vertical-align: top;">
-          <div style="margin-bottom:10px;">Il Presidente della Commissione</div> {{ corso.sede.presidente }}
+          <div style="margin-bottom:10px;">Il Presidente della Commissione</div> {{ corso.presidente_corso.nome_completo|default:"" }}
         </td>
       </tr>
     </table>

@@ -31,6 +31,8 @@ urlpatterns = [
         name='activate'),
     url(r'^%s/termina/$' % url_shortcut, v.aspirante_corso_base_termina,
         name='terminate'),
+    url(r'^%s/annulla/$' % url_shortcut, v.aspirante_corso_base_annulla,
+        name='annulla'),
     url(r'^%s/lezioni/$' % url_shortcut, v.aspirante_corso_base_lezioni,
         name='lessons'),
     url(r'^%s/lezioni/(?P<lezione_pk>[0-9]+)/cancella/$' % url_shortcut,

@@ -2,9 +2,7 @@
 
 {% load bootstrap3 %}
 
-{% block pagina_titolo %}
-    Reclama {{ persona.nome_completo }}
-{% endblock %}
+{% block pagina_titolo %}Reclama {{ persona.nome_completo }}{% endblock %}
 
 {% block app_contenuto %}
 
@@ -27,8 +25,6 @@
     <div class="row">
         <div class="col-md-6">
         <form method="POST">
-
-
             <div class="panel panel-primary">
                 <div class="panel-heading">
                     1. Appartenenza al Comitato
@@ -36,7 +32,6 @@
                 <div class="panel-body">
                             {% csrf_token %}
                             {% bootstrap_form modulo_appartenenza %}
-
                 </div>
             </div>
 
@@ -47,7 +42,6 @@
                 <div class="panel-body">
                             {% csrf_token %}
                             {% bootstrap_form modulo_quota %}
-
                 </div>
             </div>
 
@@ -61,10 +55,8 @@
                         <i class="fa fa-fw fa-check"></i>
                         Completa e vai alla scheda di {{ persona.nome }}
                     </button>
-
                 </div>
             </div>
-
         </div>
 
         <div class="col-md-6">
@@ -95,14 +87,22 @@
             </ul>
             <p>Nota che se vuoi personalizzare la causale per la quota versata,
                 dovrai selezionare "No" e inserirla manualmente dal pannello Quote.</p>
-
-
         </div>
-
-
     </form>
-
     </div>
 
+    <script>
+        $('#id_app-fine').parent().hide();
+        $('#id_app-membro').on('change', function(e){
+            let membro = $(this).find('option:selected').val();
+            if (membro == "DI") {
+                $('#id_app-fine').parent().toggle();
+            }
+            else {
+                $('#id_app-fine').parent().hide();
+                $('#id_app-fine').prop('value', '');
+            }
+        });
+    </script>
 
 {% endblock %}

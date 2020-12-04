@@ -1,13 +1,12 @@
+from anagrafica.permessi.applicazioni import (UFFICIO_SOCI, UFFICIO_SOCI_UNITA,
+    DIRETTORE_CORSO, RESPONSABILE_FORMAZIONE, REFERENTE, REFERENTE_SERVIZI_SO,
+    COMMISSARIO, VICE_PRESIDENTE, PRESIDENTE, )
+
+
 """
 Qui vengono definiti gli incarichi.
 Gli incarichi vengono risolti in modo simile ai permessi.
 """
-from datetime import date
-
-from django.contrib.contenttypes.models import ContentType
-
-from anagrafica.permessi.applicazioni import UFFICIO_SOCI, PRESIDENTE, UFFICIO_SOCI_UNITA, REFERENTE, DIRETTORE_CORSO, \
-    RESPONSABILE_FORMAZIONE, COMMISSARIO, VICE_PRESIDENTE
 
 INCARICO_PRESIDENZA = "PRES"
 INCARICO_COMMISSARIO = "COM"
@@ -21,6 +20,7 @@ INCARICO_GESTIONE_APPARTENENZE = "US-APP"
 INCARICO_GESTIONE_SANGUE = "SA-SAN"
 INCARICO_GESTIONE_CORSOBASE_PARTECIPANTI = "CB-PART"
 INCARICO_GESTIONE_ATTIVITA_PARTECIPANTI = "ATT-PART"
+INCARICO_GESTIONE_SO_SERVIZI_PARTECIPANTI = "SOS-PART"
 INCARICO_ASPIRANTE = "ASP"
 
 
@@ -34,6 +34,7 @@ INCARICHI = (
     (INCARICO_GESTIONE_TITOLI,                  "Gestione dei Titoli nella Sede"),
     (INCARICO_GESTIONE_RISERVE,                 "Gestione delle Riserve"),
     (INCARICO_GESTIONE_ATTIVITA_PARTECIPANTI,   "Gestione dei Partecipanti all'Attività"),
+    (INCARICO_GESTIONE_SO_SERVIZI_PARTECIPANTI, "Gestione dei Partecipanti al Servizio SO"),
     (INCARICO_GESTIONE_CORSOBASE_PARTECIPANTI,  "Gestione dei Partecipanti al Corso Base"),
     (INCARICO_GESTIONE_APPARTENENZE,            "Gestione degli Appartenenti alla Sede"),
     (INCARICO_GESTIONE_SANGUE,                  "Gestione delle Donazioni Sangue"),
@@ -51,6 +52,7 @@ INCARICHI_TIPO = (
     (INCARICO_GESTIONE_TITOLI,                  "anagrafica.Sede"),
     (INCARICO_GESTIONE_RISERVE,                 "anagrafica.Sede"),
     (INCARICO_GESTIONE_ATTIVITA_PARTECIPANTI,   "attivita.Attivita"),
+    (INCARICO_GESTIONE_SO_SERVIZI_PARTECIPANTI, "sala_operativa.ServizioSO"),
     (INCARICO_GESTIONE_CORSOBASE_PARTECIPANTI,  "formazione.CorsoBase"),
     (INCARICO_GESTIONE_APPARTENENZE,            "anagrafica.Sede"),
     (INCARICO_GESTIONE_SANGUE,                  "anagrafica.Sede"),
@@ -83,6 +85,11 @@ def espandi_incarichi_referente_attivita(attivita, al_giorno=None):
         (INCARICO_GESTIONE_ATTIVITA_PARTECIPANTI,       attivita),
     ]
 
+def espandi_incarichi_referente_servizio(servizio, al_giorno=None):
+    return [
+        (INCARICO_GESTIONE_SO_SERVIZI_PARTECIPANTI,       servizio),
+    ]
+
 
 def espandi_incarichi_direttore_corso(corso, al_giorno=None):
     return [
@@ -106,6 +113,7 @@ def espandi_incarichi_presidente(sede, al_giorno=None):
     ] \
         + espandi_incarichi_ufficio_soci(sede, al_giorno=al_giorno)
 
+
 def espandi_incarichi_commissario(sede, al_giorno=None):
     return [
        (INCARICO_GESTIONE_SANGUE,                       sede),
@@ -120,12 +128,12 @@ ESPANSIONE_DELEGHE = {
     UFFICIO_SOCI_UNITA:     espandi_incarichi_ufficio_soci_unita,
     UFFICIO_SOCI:           espandi_incarichi_ufficio_soci,
     PRESIDENTE:             espandi_incarichi_presidente,
-    VICE_PRESIDENTE:             espandi_incarichi_presidente,
+    # VICE_PRESIDENTE:        espandi_incarichi_presidente,
     COMMISSARIO:            espandi_incarichi_commissario,
     REFERENTE:              espandi_incarichi_referente_attivita,
+    REFERENTE_SERVIZI_SO:   espandi_incarichi_referente_servizio,
     DIRETTORE_CORSO:        espandi_incarichi_direttore_corso,
     RESPONSABILE_FORMAZIONE:espandi_incarichi_responsabile_formazione,
-
 }
 
 
@@ -161,4 +169,3 @@ for incarico_chiave in TUTTE_CHIAVI:
     #                      "notifica in modo efficiente. Per favore definisci una funzione di "
     #                      "reverse e associala in anagrafica.permessi.incarichi.ESPANSIONE_INCARICHI_APPROSSIMATIVA"
     #                      % (incarico_chiave,))
-

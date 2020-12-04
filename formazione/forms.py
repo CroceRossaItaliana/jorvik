@@ -19,9 +19,11 @@ from .models import (Corso, CorsoBase, CorsoFile, CorsoEstensione,
 class ModuloCreazioneCorsoBase(ModelForm):
     PRESSO_SEDE = "PS"
     ALTROVE = "AL"
+    ONLINE = "OL"
     LOCAZIONE = (
         (PRESSO_SEDE, "Il corso si svolgerà presso la Sede"),
-        (ALTROVE, "Il corso si svolgerà altrove")
+        (ALTROVE, "Il corso si svolgerà altrove"),
+        (ONLINE, "Modalità online"),
     )
 
     DEFAULT_BLANK_LEVEL = ('', '---------'),
@@ -71,7 +73,7 @@ class ModuloCreazioneCorsoBase(ModelForm):
                 if field in cd:
                     del cd[field]
 
-        if tipo == Corso.CORSO_NUOVO:
+        if tipo == Corso.CORSO_NUOVO or tipo == Corso.CORSO_ONLINE:
             cd_titolo_cri = cd.get('titolo_cri')
 
             if not cd_titolo_cri:
@@ -178,7 +180,7 @@ class ModuloModificaLezione(ModelForm):
                 # hours = days * 24 + seconds // 3600
                 # hours = datetime.timedelta(hours=hours)
 
-                if duration > lezione_ore.seconds:
+                if duration > lezione_ore.seconds and not self.corso.online:
                     self.add_error('fine', 'La durata della lezione non può essere '
                         'maggiore della durata impostata nella scheda per questa lezione (%s). '
                         'Hai indicato %s' % (lezione_ore, datetime.timedelta(seconds=duration)))
@@ -407,6 +409,23 @@ class CorsoExtensionForm(ModelForm):
 
 class ModuloConfermaIscrizioneCorso(forms.Form):
     IS_CORSO_NUOVO = True
+    MAX_ISCRIZIONI_CONFERMABILI = 30
+
+    def clean(self):
+        cd = self.cleaned_data
+
+        corso = self.instance.corso
+        max_iscrizioni = ModuloConfermaIscrizioneCorso.MAX_ISCRIZIONI_CONFERMABILI
+
+        if corso.partecipazioni_confermate().count() >= max_iscrizioni:
+            raise ValidationError('Come da regolamento non si possono iscrivere più di %s partecipanti. '
+                                  'É raggiunto il limite massimo.' % max_iscrizioni)
+        return cd
+
+    def __init__(self, *args, **kwargs):
+        self.instance = kwargs.pop('instance')
+
+        super().__init__(*args, *kwargs)
 
 
 class ModuloConfermaIscrizioneCorsoBase(forms.Form):
@@ -504,7 +523,10 @@ class FormVerbaleCorso(ModelForm):
                 # Per i corsi senza esami nascondi i campi non necessari e mostra solo una voce nel campo Ammissione
 
                 # Mostra solo una voca
-                self.fields['ammissione'].choices = [(PartecipazioneCorsoBase.ESAME_NON_PREVISTO, "Esame non previsto"),]
+                self.fields['ammissione'].choices = [
+                    (PartecipazioneCorsoBase.ESAME_NON_PREVISTO, "Esame non previsto"),
+                    (PartecipazioneCorsoBase.ESAME_NON_PREVISTO_ASSENTE, "Esame non previsto (partecipante assente)"),
+                ]
 
                 # Nascondi campi che non servono quando il corso non prevede esame
                 for field in self.fields.copy():
@@ -609,13 +631,23 @@ class FormCreateDirettoreDelega(ModelForm):
     has_nulla_osta = forms.BooleanField(label='Responsabilità di aver ricevuto nulla osta dal presidente del comitato di appartenenza',
                                         initial=True)
 
+    def clean(self):
+        cd = self.cleaned_data
+        corso = self.oggetto
+
+        if corso.titolo_cri and corso.titolo_cri.cdf_livello != Titolo.CDF_LIVELLO_IV:
+            if corso.direttori_corso().count() >= 1:
+                self.add_error('persona', 'I corsi di questo livello possono avere uno ed un solo direttore')
+
+        return cd
+
     class Meta:
         model = Delega
         fields = ['persona', 'has_nulla_osta',]
 
     def __init__(self, *args, **kwargs):
         # These attrs are passed in anagrafica.viste.strumenti_delegati()
-        for attr in ['me', 'course']:
+        for attr in ['me', 'oggetto']:
             if attr in kwargs:
                 setattr(self, attr, kwargs.pop(attr))
         super().__init__(*args, **kwargs)

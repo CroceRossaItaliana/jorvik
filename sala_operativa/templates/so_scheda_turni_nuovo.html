@@ -1,0 +1,52 @@
+{% extends 'so_scheda.html' %}
+
+{% load humanize %}
+{% load gravatar %}
+{% load bootstrap3 %}
+
+{% block scheda_titolo %}Turni{% endblock %}
+
+{% block scheda_contenuto %}
+    <form method="POST">
+        {% csrf_token %}
+
+        <div class="row">
+            <div class="col-md-7">
+                <div class="panel panel-primary">
+                    <div class="panel-heading">
+                        <h2 class="panel-title">
+                            <i class="fa fa-fw fa-info-circle"></i> Crea nuovo turno
+                        </h2>
+                    </div>
+                    <div class="panel-body">
+                        <div class="alert alert-info">
+                            <i class="fa fa-fw fa-info-circle"></i> Inserisci qui i dati del turno che vuoi creare.
+                        </div>
+                        {% bootstrap_form modulo %}
+                        <button type="submit" name="ripeti" value="no" class="btn btn-block btn-primary">
+                            <i class="fa fa-fw fa-save"></i> Crea il nuovo turno
+                        </button>
+                    </div>
+                </div>
+            </div>
+            <div class="col-md-5">
+                <div class="panel panel-warning">
+                    <div class="panel-heading">
+                        <h2 class="panel-title">
+                            <i class="fas fa-redo"></i> Ripeti il turno
+                        </h2>
+                    </div>
+                    <div class="panel-body">
+                        <div class="alert alert-warning">
+                            <i class="fa fa-fw fa-info-circle"></i> Turni periodici? Completa anche questo modulo per creare rapidamente fino a 60 turni in una sola volta.
+                        </div>
+                        {% bootstrap_form modulo_ripeti %}
+                        <button type="submit" name="ripeti" value="si" class="btn btn-block btn-warning">
+                            <i class="fa fa-fw fa-save"></i> Crea turni ripetitivi
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </form>
+{% endblock %}

@@ -50,6 +50,13 @@ parser.add_argument('--aggiorna-province', dest='province', action='store_const'
 args = parser.parse_args()
 
 
+# Creare utente con i privilegi di superuser
+superuser = Utenza.objects.create_superuser('provami@provami.gaia.cri.it',
+                                            'hZ4hK5uL5tE8gG2u')
+if superuser:
+    print("Utente <%s> con privilegi di superuser creato."  % str(superuser))
+
+
 def ottieni_random():  # Ottiene una persona a caso.
     numero = Persona.objects.aggregate(count=Count('id'))['count']
     while True:
@@ -369,8 +376,8 @@ if args.esempio:
                         from formazione.models import CorsoBase
 
                         test_direttore_corso = persona
-                        corso = CorsoBase.nuovo(sede=sede, data_inizio=poco_fa(), data_esame=poco_fa())
-                        d = Delega.objects.create(persona=persona, tipo=DIRETTORE_CORSO, oggetto=corso, inizio=poco_fa())
+                        #corso = CorsoBase.nuovo(sede=sede, data_inizio=poco_fa(), data_esame=poco_fa())
+                        #d = Delega.objects.create(persona=persona, tipo=DIRETTORE_CORSO, oggetto=corso, inizio=poco_fa())
 
     print(" - Creo utenze di accesso...")
     for idx, persona in enumerate(nuove):

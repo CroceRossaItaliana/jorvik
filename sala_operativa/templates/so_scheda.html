@@ -1,0 +1,109 @@
+{% extends 'so_vuota.html' %}
+
+{% load so_templatetags %}
+{% load bootstrap3 %}
+
+{% block pagina_titolo %}
+    {% block scheda_titolo %}{% endblock %} {{ attivita.nome }} ({{ attivita.sede.nome_completo }})&mdash; Servizio
+{% endblock %}
+
+{% block app_contenuto %}
+    <h2 class="allinea-centro grassetto text-success">{{ attivita.nome }}</h2>
+    <h4 class="allinea-centro">
+        <i class="fa fa-fw fa-map-marker"></i>
+        {% if attivita.locazione %}
+            <a href="{{ attivita.url_mappa }}">{{ attivita.locazione }}</a>
+        {% else %}
+            Posizione non impostata
+        {% endif %}
+    </h4>
+    {% if attivita.apertura == attivita.CHIUSA %}
+        {% load utils %}
+        {% permessi_almeno attivita "modifica" deleghe="tutte" as puo_riabilitare %}
+        {% if puo_riabilitare %}
+            <div class="alert alert-info">
+                <h4><i class="fa fa-fw fa-warning"></i> Servizio chiuso</h4>
+                <p>Il servizio è stato chiusa. Questo vuol dire che non puoi gestire i partecipanti,
+                    e i volontari non possono chiedere di parteciparvi.
+                    Puoi riaprire il servizio in qualunque momento usando il pulsante seguente.</p>
+                <p><a href="{{ attivita.url_riapri }}" class="btn btn-info">Riapri servizio</a></p>
+            </div>
+        {% endif %}
+    {% endif %}
+    <p>&nbsp;</p>
+    <ul class="nav nav-tabs">
+        <li role="presentation" {% if request.path == attivita.url %}class="active"{% endif %}>
+            <a href="{{ attivita.url }}">
+                <i class="fa fa-fw fa-info"></i>Informazioni
+                {% if attivita.commenti.count %}&nbsp;
+                    <span class="badge pull-right">
+                    <i class="fa fa-fw fa-comments"></i> {{ attivita.commenti.count }}
+                </span>
+                {% endif %}
+            </a>
+        </li>
+        {% if attivita.locazione %}
+            <li role="presentation" {% if attivita.url_mappa in request.path %}class="active"{% endif %}>
+                <a href="{{ attivita.url_mappa }}"><i class="fa fa-fw fa-globe"></i> Mappa</a>
+            </li>
+        {% endif %}
+        <li role="presentation"
+            {% if attivita.url_turni in request.path and not attivita.url_turni_modifica in request.path %}class="active"{% endif %}>
+            <a href="{{ attivita.url_turni }}"><i class="fa fa-fw fa-calendar"></i> Turni</a>
+        </li>
+        {% if puo_modificare %}
+            <li role="presentation" {% if request.path == attivita.url_modifica %}class="active"{% endif %}>
+                <a href="{{ attivita.url_modifica }}" class="text-danger">
+                    <i class="fas fa-pencil-alt"></i> Gestione servizio
+                </a>
+            </li>
+            <li role="presentation" {% if attivita.url_turni_modifica in request.path %}class="active"{% endif %}>
+                <a href="{{ attivita.url_turni_modifica }}" class="text-danger">
+                    <i class="fa fa-fw fa-calendar"></i> Gestione turni
+                </a>
+            </li>
+            <li role="presentation" {% if attivita.url_mezzi_materiali in request.path %}class="active"{% endif %}>
+                <a href="{{ attivita.url_mezzi_materiali }}" class="text-danger">
+                    <i class="fas fa-ambulance"></i> Mezzi e Materiali
+                </a>
+            </li>
+            {% if attivita|da_confermare %}
+                {% if attivita.estensione|posso_confermare:me %}
+                    <li role="presentation">
+                        <a href="{{ attivita.url_conferma }}" class="text-danger">
+                            <i class="fa fa-check"></i> Conferma Servizio
+                        </a>
+                    </li>
+                {% else %}
+                    {% if not attivita.email_inviata %}
+                        <li role="presentation">
+                            <a href="{{ attivita.url_richiedi_conferma }}" class="text-danger" data-conferma="Inviare la richiesta di approvazione?">
+                                <i class="fa fa-check"></i> Richiedi Conferma Servizio
+                            </a>
+                        </li>
+                    {% endif %}
+                {% endif %}
+            {% endif %}
+            <!--            <li role="presentation" {% if attivita.url_report in request.path %}
+                class="active"{% endif %}>-->
+            <!--                <a href="{{ attivita.url_report }}" class="text-danger">-->
+            <!--                    <i class="far fa-chart-bar"></i> Statistiche e report-->
+            <!--                </a>-->
+            <!--            </li>-->
+        {% endif %}
+        {% if attivita.attestato_scaricabile %}
+            <li role="presentation" {% if attivita.url_attestato in request.path %}class="active"{% endif %}>
+                <a href="{{ attivita.url_attestato }}"><i class="fas fa-scroll"></i> Scarica attestato</a>
+            </li>
+        {% endif %}
+    </ul>
+
+    <p>&nbsp;</p>
+    {% block scheda_contenuto %}{% endblock %}
+    <p>&nbsp;</p>
+
+    <hr/>
+    <div class="piu-piccolo allinea-centro">
+        <i class="fa fa-fw fa-clock-o"></i> Ultimo aggiornamento {{ attivita.ultima_modifica }}
+    </div>
+{% endblock %}

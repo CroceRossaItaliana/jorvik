@@ -275,16 +275,14 @@ def informazioni_sedi(request, me):
 @xframe_options_exempt
 @pagina_pubblica(permetti_embed=True)
 def informazioni_sede(request, me, slug):
-    """
-    Mostra dettagli sul comitato.
-    """
+    """Mostra dettagli sul comitato."""
     vicini_km = 15
     sede = get_object_or_404(Sede, slug=slug)
     vicini = sede.vicini(queryset=Sede.objects.filter(attiva=True), km=vicini_km)\
         .exclude(pk__in=sede.unita_sottostanti().values_list('id', flat=True))\
         .exclude(pk=sede.pk)
 
-    contesto = {
+    context = {
         'sede': sede,
         'vicini': vicini,
         'da_mostrare': vicini | sede.ottieni_discendenti(includimi=True),
@@ -294,7 +292,7 @@ def informazioni_sede(request, me, slug):
         'consigliere_giovane': sede.consigliere_giovane(),
         'vicini_km': vicini_km,
     }
-    return 'base_informazioni_sede.html', contesto
+    return 'base_informazioni_sede.html', context
 
 
 def pulisci_autorizzazioni(richieste):
@@ -399,9 +397,10 @@ def autorizzazioni_storico(request, me):
 
 @pagina_privata
 def geo_localizzatore(request, me):
-    app_label = request.session['app_label']
-    model = request.session['model']
-    pk = int(request.session['pk'])
+    context = dict(show_locazione_block=True)
+    app_label, model, pk = request.session['app_label'], \
+                           request.session['model'], \
+                           int(request.session['pk'])
     oggetto = apps.get_model(app_label, model)
     oggetto = oggetto.objects.get(pk=pk)
 
@@ -420,14 +419,26 @@ def geo_localizzatore(request, me):
         risultati = Locazione.cerca(stringa)
         ricerca = True
 
-    context = {
-        "locazione": oggetto.locazione,
+    # Cambia il campo da modificare secondo il modulo richiesto
+    locazione_da_cambiare = oggetto.locazione
+    if 'modifica_indirizzo_sede' in request.session:
+        modifica_indirizzo_sede = request.session['modifica_indirizzo_sede']
+        model_field = getattr(oggetto, modifica_indirizzo_sede)
+
+        if modifica_indirizzo_sede == 'sede_operativa':
+            locazione_da_cambiare = model_field.all()
+            context['show_locazione_block'] = False
+        elif modifica_indirizzo_sede == 'indirizzo_per_spedizioni':
+            locazione_da_cambiare = model_field
+
+    context.update({
+        "locazione": locazione_da_cambiare,
         "continua_url": request.session['continua_url'],
         "modulo": form,
         "ricerca": ricerca,
         "risultati": risultati,
         "oggetto": oggetto,
-    }
+    })
 
     if app_label == 'formazione' and model == 'corsobase':
         context['is_corsobase'] = 1  # instead of True
@@ -440,10 +451,19 @@ def geo_localizzatore_imposta(request, me):
     session = request.session
     app_label, model, pk = session['app_label'], session['model'], int(session['pk'])
 
+    modifica_indirizzo_sede = None
+    if 'modifica_indirizzo_sede' in request.session:
+        modifica_indirizzo_sede = request.session['modifica_indirizzo_sede']
+
     oggetto = apps.get_model(app_label, model)
     oggetto = oggetto.objects.get(pk=pk)
+    locazione_aggiunta = oggetto.imposta_locazione(request.POST['indirizzo'],
+                                                   modifica_indirizzo_sede)
 
-    oggetto.imposta_locazione(request.POST['indirizzo'])
+    if modifica_indirizzo_sede:
+        del request.session['modifica_indirizzo_sede']
+        request.session['reload_locazione'] = (modifica_indirizzo_sede,
+                                               locazione_aggiunta)
 
     return redirect("/geo/localizzatore/")
 

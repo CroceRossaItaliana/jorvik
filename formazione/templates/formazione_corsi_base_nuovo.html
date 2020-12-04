@@ -45,6 +45,11 @@
     const url_cv_cdf_titolo_json = "{% url 'cv:cdf_titolo_json' %}";
     const _csrf_token = "{{ csrf_token }}";
 </script>
+<script>
+    $('#id_delibera_file').on('click', function(e){
+        alert("Non inserire file con nominativo contenente spazi, lettere accentate e caratteri speciali");
+    });
+</script>
 <script src="{% static 'js/formazione/formazione.js' %}"></script>
 
 {% endblock %}

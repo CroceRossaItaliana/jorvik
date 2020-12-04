@@ -17,10 +17,10 @@ from django.utils.safestring import mark_safe
 
 from anagrafica.costanti import NAZIONALE, REGIONALE
 from anagrafica.forms import ModuloNuovoProvvedimento
-from anagrafica.models import Appartenenza, Persona, Estensione, Sede, Riserva
+from anagrafica.models import Appartenenza, Persona, Estensione, Sede, Riserva, Dimissione
 from anagrafica.permessi.costanti import (GESTIONE_SOCI, ELENCHI_SOCI,
                                           ERRORE_PERMESSI, MODIFICA,
-                                          EMISSIONE_TESSERINI)
+                                          EMISSIONE_TESSERINI, GESTIONE_SOCI_CM, GESTIONE_SOCI_IIVV)
 from autenticazione.funzioni import pagina_privata, pagina_pubblica
 from base.errori import (errore_generico, errore_nessuna_appartenenza,
                          messaggio_generico, messaggio_avvertimento)
@@ -39,11 +39,18 @@ from .forms import (ModuloCreazioneEstensione, ModuloAggiungiPersona,
     ModuloScaricaTesserini, ModuloDimissioniSostenitore)
 
 
-@pagina_privata(permessi=(GESTIONE_SOCI,))
+@pagina_privata
 def us(request, me):
     """ Ritorna la home page per la gestione dei soci. """
 
+    if not me.ha_permessi([GESTIONE_SOCI]) and \
+            not me.ha_permessi([GESTIONE_SOCI_CM]) and \
+            not me.ha_permessi([GESTIONE_SOCI_IIVV]):
+        return redirect(ERRORE_PERMESSI)
+
     sedi = me.oggetti_permesso(GESTIONE_SOCI)
+    if not sedi:
+        sedi = me.oggetti_permesso(GESTIONE_SOCI_CM)
 
     persone = Persona.objects.filter(
         Appartenenza.query_attuale(sede__in=sedi).via("appartenenze")
@@ -126,7 +133,6 @@ def us_reclama(request, me):
 
 @pagina_privata(permessi=(GESTIONE_SOCI,))
 def us_reclama_persona(request, me, persona_pk):
-
     persona = get_object_or_404(Persona, pk=persona_pk)
     volontario = False
 
@@ -138,10 +144,9 @@ def us_reclama_persona(request, me, persona_pk):
             volontario = volontario or persona.appartenenze_attuali()\
                 .filter(sede=s, membro=Appartenenza.VOLONTARIO).exists()
 
+    messaggio_extra = ""
     if persona.appartenenze_attuali().filter(membro=Appartenenza.SOSTENITORE).exists():
         messaggio_extra = "<br>Questa persona è già registrata come sostenitore. Prima di poterla reclamare deve essere dimessa dal ruolo di sostenitore"
-    else:
-        messaggio_extra = ""
 
     if not sedi:  # Se non posso reclamarlo in nessuna sede
         return errore_generico(request, me, titolo="Impossibile reclamare appartenenza",
@@ -150,14 +155,14 @@ def us_reclama_persona(request, me, persona_pk):
                                torna_titolo="Torna indietro",
                                torna_url="/us/reclama/")
 
-
     questo_anno = poco_fa().year
 
     tesseramento = Tesseramento.objects.get(anno=questo_anno)
 
     sedi_qs = Sede.objects.filter(pk__in=[x.pk for x in sedi])
 
-    modulo_appartenenza = ModuloReclamaAppartenenza(request.POST or None, sedi=sedi_qs, prefix="app")
+    modulo_appartenenza = ModuloReclamaAppartenenza(request.POST or None, sedi=sedi_qs, prefix="app",
+                                                    initial={'membro': Appartenenza.VOLONTARIO})
     modulo_appartenenza.fields['membro'].choices = ((k, v) for k, v in dict(Appartenenza.MEMBRO).items()
                                                     if k in Appartenenza.MEMBRO_RECLAMABILE)
 
@@ -204,6 +209,9 @@ def us_reclama_persona(request, me, persona_pk):
                                                             "cambio appartenenza.")
                     continua = False
 
+        if appartenenza_dipendente and membro == Appartenenza.SEVIZIO_CIVILE_UNIVERSALE: # Se dipendene e vuole diventare servizio civile
+            modulo_appartenenza.add_error('membro', "La persona ha gia un ruolo come dipendete")
+            continua = False
 
         sede = modulo_appartenenza.cleaned_data.get('sede')
         appartenenza_volontario = Appartenenza.query_attuale(persona=persona, membro=Appartenenza.VOLONTARIO).first()
@@ -222,12 +230,18 @@ def us_reclama_persona(request, me, persona_pk):
                 modulo_appartenenza.add_error('membro', "La persona e' gia dipendente nel tuo comitato")
                 continua = False
 
-        # Controllo eta' minima socio
-        if modulo_appartenenza.cleaned_data.get('membro') in Appartenenza.MEMBRO_SOCIO \
-                and persona.eta < Persona.ETA_MINIMA_SOCIO:
-            modulo_appartenenza.add_error('membro', "I soci di questo tipo devono avere almeno "
-                                                    "%d anni. " % Persona.ETA_MINIMA_SOCIO)
-            continua = False
+        appartenenza_servizio_civile = Appartenenza.query_attuale(persona=persona, membro=Appartenenza.SEVIZIO_CIVILE_UNIVERSALE).first()
+        if appartenenza_servizio_civile:
+            if membro == Appartenenza.DIPENDENTE:
+                modulo_appartenenza.add_error(
+                    'membro',
+                    "La persona è appartenente come servizio civile universale non può essere reclamata come dipendente"
+                )
+                continua = False
+            elif hasattr(persona, 'aspirante'):
+                from formazione.models import Aspirante
+                # delattr(me, 'aspirante')
+                Aspirante.objects.filter(persona=persona).delete()
 
         # Controllo eta' minima socio
         if modulo_appartenenza.cleaned_data.get('membro') in Appartenenza.MEMBRO_SOCIO \
@@ -236,12 +250,18 @@ def us_reclama_persona(request, me, persona_pk):
                                                     "%d anni. " % Persona.ETA_MINIMA_SOCIO)
             continua = False
 
-
+        # Controllo eta' minima socio
+        if modulo_appartenenza.cleaned_data.get('membro') in Appartenenza.MEMBRO_SOCIO \
+                and persona.eta < Persona.ETA_MINIMA_SOCIO:
+            modulo_appartenenza.add_error('membro', "I soci di questo tipo devono avere almeno "
+                                                    "%d anni. " % Persona.ETA_MINIMA_SOCIO)
+            continua = False
 
         if continua:
             with transaction.atomic():
                 app = modulo_appartenenza.save(commit=False)
                 app.persona = persona
+
                 app.save()
 
                 # Termina app. ordinario - I dipendenti rimangono tali
@@ -255,6 +275,7 @@ def us_reclama_persona(request, me, persona_pk):
                         and (appartenenza_volontario.riserve.exclude(fine__isnull=True).exists() or not appartenenza_volontario.riserve.exclude(fine__isnull=True)) \
                         and appartenenza_volontario.appartiene_a(sede=sede) and appartenenza_volontario.sede == app.sede:
                     Riserva.objects.create(inizio=mezzanotte_24_ieri(app.inizio),
+                                           fine=app.fine,
                                            persona=persona,
                                            motivo="Adozione come dipendente",
                                            appartenenza=appartenenza_volontario)
@@ -286,11 +307,10 @@ def us_reclama_persona(request, me, persona_pk):
                     )
 
                 m = modulo_appartenenza.cleaned_data.get('membro')
+                oggetto = 'Inserimento come {}'.format(
+                    Appartenenza.MENBRO_DICT[m]
+                )
                 if m == Appartenenza.DIPENDENTE:
-                    oggetto = 'Inserimento come {}'.format(
-                        Appartenenza.MENBRO_DICT[modulo_appartenenza.cleaned_data.get('membro')]
-                    )
-
                     Messaggio.costruisci_e_accoda(
                         oggetto=oggetto,
                         modello="email_reclama.html",
@@ -300,18 +320,27 @@ def us_reclama_persona(request, me, persona_pk):
                             "persona": persona.nome_completo
                         }
                     )
+                if m == Appartenenza.SEVIZIO_CIVILE_UNIVERSALE:
+                    Messaggio.costruisci_e_invia(
+                        oggetto=oggetto,
+                        modello="email_reclama_servizio_civile.html",
+                        corpo={
+                            "persona": persona.nome_completo,
+                            "codice_fiscale": persona.genere_codice_fiscale,
+                            "comitato": sede
+                        }
+                    )
 
                 return redirect(persona.url)
 
-
-    contesto = {
+    context = {
         "modulo_appartenenza": modulo_appartenenza,
         "modulo_quota": modulo_quota,
         "persona": persona,
         "volontario": volontario
     }
 
-    return 'us_reclama_persona.html', contesto
+    return 'us_reclama_persona.html', context
 
 
 @pagina_privata
@@ -339,6 +368,20 @@ def us_dimissioni(request, me, pk):
             messaggio = "Le dimissioni sono state registrate con successo"
 
         dim.save()
+
+        if modulo.cleaned_data['motivo'] == Dimissione.FINE_SERVIZIO_CIVILE:
+            oggetto = 'Dimissioni {}'.format(
+                Appartenenza.MENBRO_DICT[Appartenenza.SEVIZIO_CIVILE_UNIVERSALE]
+            )
+            Messaggio.costruisci_e_invia(
+                oggetto=oggetto,
+                modello="email_dimissioni_servizio_civile.html",
+                corpo={
+                    "persona": persona.nome_completo,
+                    "codice_fiscale": persona.genere_codice_fiscale,
+                    "comitato": dim.appartenenza.sede
+                }
+            )
 
         if persona.appartenenze_attuali().exclude(id=dim.appartenenza.id).exists():
             presidenti_da_contattare = set()

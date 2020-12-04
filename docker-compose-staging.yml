@@ -1,0 +1,81 @@
+version: '3'
+
+services:
+  db:
+    container_name: ${CI_MERGE_REQUEST_ID}_db
+    image: mdillon/postgis
+    environment:
+      - POSTGRES_DB=jorvik
+    command: [ "postgres", "-c", "full_page_writes=off", "-c", "autovacuum=off" ]
+
+  web:
+    container_name: ${CI_MERGE_REQUEST_ID}_web
+    image: gaia:${CI_MERGE_REQUEST_ID}
+    volumes:
+      - /tmp/media:/tmp/media
+    links:
+      - db
+      - broker
+    depends_on:
+      - db
+    hostname: web
+    environment:
+      - WAIT_HOSTS=db:5432
+      - WAIT_HOSTS_TIMEOUT=1200
+      - WAIT_SLEEP_INTERVAL=60
+      - WAIT_HOST_CONNECT_TIMEOUT=60
+      - SKIP_REQUIREMENTS_CHECK=1
+      - GOOGLE_KEY=${GOOGLE_KEY}
+      - TRIPPUS_USERNAME=${TRIPPUS_USERNAME}
+      - TRIPPUS_PASSWORD=${TRIPPUS_PASSWORD}
+      - MOODLE_KEY=${MOODLE_KEY}
+    networks:
+      - "default"
+
+  broker:
+    container_name: ${CI_MERGE_REQUEST_ID}_broker
+    image: redis
+
+  celery:
+    container_name: ${CI_MERGE_REQUEST_ID}_celery
+    image: gaia:${CI_MERGE_REQUEST_ID}
+    volumes:
+      - /tmp/media:/tmp/media
+    depends_on:
+      - broker
+    environment:
+      - SKIP_DJANGO_COLLECSTATIC=1
+      - SKIP_DJANGO_MIGRATE=1
+      - SKIP_REQUIREMENTS_CHECK=1
+      - WAIT_HOSTS=db:5432
+      - WAIT_HOSTS_TIMEOUT=1200
+      - WAIT_SLEEP_INTERVAL=60
+      - WAIT_HOST_CONNECT_TIMEOUT=60
+    command: "celery worker -b redis://broker -A jorvik -l info -Q queue_monitoraggio,queue_formazione,coda_email_rischedula,coda_email_invio,queue_monitoraggio,periodic_ufficio_soci,shared_ufficio_soci -B"
+
+  proxy:
+    build:
+      context: ./
+      dockerfile: DockerfileWeb
+    container_name: ${CI_MERGE_REQUEST_ID}_proxy
+    environment:
+      - WAIT_HOSTS=web:8000
+      - WAIT_HOSTS_TIMEOUT=600
+      - WAIT_SLEEP_INTERVAL=60
+      - WAIT_HOST_CONNECT_TIMEOUT=60
+    labels:
+      - "traefik.enable=true"
+      - "traefik.http.routers.pr${CI_MERGE_REQUEST_ID}.rule=Host(`pr${CI_MERGE_REQUEST_ID}.staging.gaia.cri.it`)"
+      - "traefik.http.routers.pr${CI_MERGE_REQUEST_ID}.entrypoints=websecure"
+      - "traefik.http.routers.pr${CI_MERGE_REQUEST_ID}.tls.certresolver=myresolver"
+    networks:
+      - "traefik-public"
+      - "default"
+
+  pdf:
+    container_name: ${CI_MERGE_REQUEST_ID}_pdf
+    build: https://github.com/CroceRossaItaliana/gaia-dompdf.git#master
+
+networks:
+  traefik-public:
+      external: true

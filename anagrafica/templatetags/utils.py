@@ -1,27 +1,38 @@
+from datetime import timezone, datetime
+
 from django import template
 from django.core.urlresolvers import reverse
 from django.contrib.contenttypes.models import ContentType
 from django.db.models import QuerySet, Max
 from django.template import Library
 from django.template.loader import render_to_string
+from django.utils import timezone
 from django.utils.safestring import mark_safe
 from django.utils.encoding import force_text
 
+from jorvik import settings
 from jorvik.settings import GOOGLE_KEY
-from anagrafica.models import Persona, Delega
-from anagrafica.permessi.applicazioni import UFFICIO_SOCI
-from anagrafica.permessi.costanti import PERMESSI_TESTO, NESSUNO
+from ..models import Persona, Delega
+from ..permessi.applicazioni import PRESIDENTE
+from ..permessi.applicazioni import UFFICIO_SOCI
+from ..permessi.costanti import PERMESSI_TESTO, NESSUNO
 from base.geo import ConGeolocalizzazione
 from base.stringhe import genera_uuid_casuale
 from base.tratti import ConDelegati
 from base.utils import testo_euro
 from ufficio_soci.elenchi import Elenco
-from anagrafica.permessi.applicazioni import PRESIDENTE
-from datetime import timezone
-from django.utils import timezone
 
 
 register = Library()
+
+
+@register.filter
+def partecipazione_riunione(persona):
+
+    start_date = datetime.strptime(settings.INIZIO_ASSEMBLEA_NAZIONALE, '%m/%d/%Y %H:%M:%S')
+    finish_date = datetime.strptime(settings.FINE_ASSEMBLEA_NAZIONALE, '%m/%d/%Y %H:%M:%S')
+
+    return persona.utenza.groups.filter(name='Assemblea').exists() and start_date < datetime.now() < finish_date
 
 
 @register.filter
@@ -104,7 +115,28 @@ def checkbox(booleano, extra_classe='', con_testo=1):
 
 
 @register.simple_tag(takes_context=True)
-def localizzatore(context, oggetto_localizzatore=None, continua_url=None, solo_italia=False):
+def reload_locazione(context):
+    request = context.request
+    locazione = context['locazione']
+
+    if 'reload_locazione' in request.session:
+        reload_locazione = request.session['reload_locazione']
+        locazione_field, locazione_object = reload_locazione
+        locazione = getattr(context['oggetto'], locazione_field)
+
+        if locazione_field == 'sede_operativa':
+            locazione = locazione_object
+        del request.session['reload_locazione']
+
+    return locazione
+
+
+@register.simple_tag(takes_context=True)
+def localizzatore(context,
+                  oggetto_localizzatore=None,
+                  continua_url=None,
+                  solo_italia=False, **kwargs):
+
     if not isinstance(oggetto_localizzatore, ConGeolocalizzazione):
         raise ValueError("Il tag localizzatore puo' solo essere usato con un oggetto ConGeolocalizzazione, ma e' stato usato con un oggetto %s." % (oggetto_localizzatore.__class__.__name__,))
 
@@ -114,6 +146,17 @@ def localizzatore(context, oggetto_localizzatore=None, continua_url=None, solo_i
     context.request.session['model'] = oggetto_tipo.model
     context.request.session['pk'] = oggetto_localizzatore.pk
     context.request.session['continua_url'] = continua_url
+
+    if 'modifica_indirizzo_sede' in context.request.session:
+        del context.request.session['modifica_indirizzo_sede']
+
+    # (GAIA-280) Modifica degli indirizzi dei campi aggiuntivi di una <Sede>
+    modifica_indirizzo_sede = None
+    if 'modifica_indirizzo_sede' in kwargs:
+        modifica_indirizzo_sede = kwargs.pop('modifica_indirizzo_sede')
+
+    if modifica_indirizzo_sede is not None:
+        context.request.session['modifica_indirizzo_sede'] = modifica_indirizzo_sede
 
     url = reverse('geo_localizzatore')
     if solo_italia:
@@ -354,8 +397,19 @@ def get_top_navbar(context):
 
     return ""
 
+
 @register.filter
 def is_rifiutato(id):
     from ufficio_soci.models import Tesserino
     return False if Tesserino.objects.filter(persona=id, stato_richiesta=Tesserino.RIFIUTATO).count() else True
 
+
+@register.simple_tag(takes_context=True)
+def add_session_flag_to_profile_urls(context):
+    request = context['request']
+
+    if 'us' in request.session.keys():
+        return '?us'
+    elif 'ea' in request.session.keys():
+        return '?ea'
+    return ''

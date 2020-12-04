@@ -249,8 +249,8 @@ body, p, span, div {
     margin-bottom: 0;
 }
 
-.typeform_widget {display:flex; justify-content:space-around; margin:25px 0 25px; padding:0; list-style:none;}
-.typeform_widget li {}
+.typeform_widget {display:flex;  margin:25px 0 25px; padding:0; list-style:none;}
+.typeform_widget li {margin-right: 10px;}
 .typeform_widget li a {background-color: #c00; color: #fff; padding: 7px 9px; border-radius: 3px;}
 .typeform_widget li a.done {background-color: #309f30;}
 .typeform_widget__wrapper {margin-bottom:25px;}
@@ -259,3 +259,18 @@ body, p, span, div {
 .typeform_widget-tools li {padding: 0 15px;}
 .typeform_widget-loading {position:absolute; z-index:100; width:100%; height:auto; min-height:100%; background-color:rgba(0,0,0,0.5);}
 .typeform_widget-loading .text {text-align:center;margin: -20% 0 0 0; font-size:32px; color: #fff; font-weight: bold; padding-top: 40%;}
+
+
+.testi-lunghi {
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+.hand:hover {
+    cursor: pointer;
+}
+
+.wait:hover {
+    cursor: wait;
+}

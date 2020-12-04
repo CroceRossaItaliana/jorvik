@@ -23,7 +23,14 @@
     <h4 class="course__name {% if not corso.titolo_cri %}course__name-without-title-cri{%endif%}">{{ corso.nome }} ({{ corso.sede.nome_completo }})</h4>
 
     <h4 class="allinea-centro">
-        <i class="fa fa-fw fa-map-marker"></i> {% if corso.locazione %}<a href="{{ corso.url_mappa }}">{{ corso.locazione }}</a>{% else %} Posizione non impostata{% endif %} &mdash;
+        <i class="fa fa-fw fa-map-marker"></i>
+        {% if corso.online %}
+            Modalità online
+        {% elif corso.locazione %}
+            <a href="{{ corso.url_mappa }}">{{ corso.locazione }}</a>
+        {% else %}
+            Posizione non impostata
+        {% endif %} &mdash;
         <i class="fa fa-fw fa-info-circle"></i> {{ corso.get_stato_display }}
     </h4>
 
@@ -36,17 +43,21 @@
             {% endif %}
         {% endif %}
 
+
         <li role="presentation"><a data-tab-id="#tabDettagliCorso" href="{{ corso.url }}" class="dettagli tabSelectorLink"><i class="fa fa-fw fa-info"></i> Dettagli corso ed iscrizione</a></li>
 
-        {% if puo_modificare %}
-            {% now "U" as today_ts %}
-            <li role="presentation"><a data-tab-id="#tabLezioni" href="{{ corso.url_lezioni }}" class="lezioni tabSelectorLink"><i class="fa fa-fw fa-calendar"></i> Lezioni</a></li>
-            {% if today_ts >= corso.data_esame|date:"U" %}<li role="presentation"><a data-tab-id="#tabEsami" href="{{ corso.url_report }}" class="esami tabSelectorLink"><i class="fa fa-fw fa-file-excel-o"></i> Documentazione Esame</a></li>{% endif %}
-        {% endif %}
+{#        {% if not corso.online %}#}
+            {% if puo_modificare %}
+                {% now "U" as today_ts %}
+                <li role="presentation"><a data-tab-id="#tabLezioni" href="{{ corso.url_lezioni }}" class="lezioni tabSelectorLink"><i class="fa fa-fw fa-calendar"></i> Lezioni</a></li>
+                {% if today_ts >= corso.data_esame|date:"U" %}<li role="presentation"><a data-tab-id="#tabEsami" href="{{ corso.url_report }}" class="esami tabSelectorLink"><i class="fa fa-fw fa-file-excel-o"></i> Documentazione Esame</a></li>{% endif %}
+            {% endif %}
+{#        {% endif %}#}
+
 
         {% can_show_tab_questionario as show_tab_questionario %}
         {% if show_tab_questionario %}
-            <li role="presentation"><a data-tab-id="#tabQuestionario" href="{% url 'survey:course' corso.pk %}" class="questionario tabSelectorLink"><i class="fa fa-fw fa-thumbs-up"></i> Questionario</a></li>
+            <li role="presentation"><a data-tab-id="#tabQuestionario" href="#" class="questionario tabSelectorLink"><i class="fa fa-fw fa-thumbs-up"></i> Questionario</a></li>
         {% endif %}
     </ul>
 
@@ -56,7 +67,7 @@
             <li role="presentation"><a href="{% url 'formazione:new_course' %}"><i class="fa fa-fw fa-info"></i> Nuovo</a></li>
             <li {% if request.path == corso.url_direttori %}class="active_link"{% endif %} role="presentation"><a href="{{ corso.url_direttori }}"><i class="fa fa-fw fa-group"></i> Direttore ({{ corso.deleghe.count }})</a></li>
 
-            {% if corso.tipo == 'C1' and me.is_presidente %}
+            {% if corso.is_base and me.is_presidente %}
                 <li {% if request.path == corso.url_estensioni %}class="active_link"{% endif %} role="presentation"><a href="{% url 'aspirante:estensioni_modifica' corso.pk %}"><i class="fa fa-fw fa-pencil"></i> Destinatari e sede</a></li>
             {% endif %}
         </ul>
@@ -68,7 +79,7 @@
                 <li {% if request.path == corso.url_modifica %}class="active_link"{% endif %} role="presentation"><a href="{{ corso.url_modifica }}"><i class="fa fa-fw fa-pencil"></i> Pubblicizza il corso</a></li>
 
                 {# link doppione per visualizzarlo solo ai direttore che non vedono la sezione "Attivazione" #}
-                {% if corso.tipo == 'C1' and not me.is_presidente %}
+                {% if corso.is_nuovo_corso and not me.is_presidente %}
                     <li {% if request.path == corso.url_estensioni %}class="active_link"{% endif %} role="presentation"><a href="{% url 'aspirante:estensioni_modifica' corso.pk %}"><i class="fa fa-fw fa-globe"></i> Destinatari e sede</a></li>
                 {% endif %}
 
@@ -98,11 +109,26 @@
             <li {% if 'survey/course' in request.path %}class="active_link"{% endif %} role="presentation"><a href="{% url 'survey:course' corso.pk %}"><i class="fa fa-fw fa-thumbs-up"></i> Compila il Questionario di gradimento</a></li>
             {% if puo_modificare %}
                 <li {% if 'questionnaire/send-to-participants' in request.path %}class="active_link"{% endif %} role="presentation"><a href="{% url 'courses:send_questionnaire_to_participants' corso.pk %}"><i class="fa fa-fw fa-thumbs-up"></i> Invia il Questionario di gradimento</a></li>
+                <li {% if 'survey/course' in request.path %}class="active_link"{% endif %} role="presentation"><a data-toggle="modal" data-target="#surveyDownloadFormat" href="#"><i class="fa fa-fw fa-thumbs-up"></i> Scarica i risultati</a></li>
             {% endif %}
         </ul>
+
+        <div class="modal" id="surveyDownloadFormat" tabindex="-1" role="dialog" aria-labelledby="modalLabelLarge" aria-hidden="true">
+            <div class="modal-dialog modal-sm">
+                <div class="modal-content">
+                    <div class="modal-header">
+                        <h4 class="modal-title" id="modalLabelLarge">Scegli il formato dei risultati del questionario da scaricare</h4>
+                    </div>
+                    <div class="modal-body" style="text-align:center;">
+                        <a href="{% url 'survey:course_download_results' corso.pk %}?excel">Excel</a>  &ndash;
+                        <a href="{% url 'survey:course_download_results' corso.pk %}?pdf">Pdf</a>
+                    </div>
+                </div>
+            </div>
+        </div>
     </div>
 
-    {% if puo_modificare and corso.stato == corso.PREPARAZIONE and corso.prossimo and not corso.is_nuovo_corso %}
+    {% if puo_modificare and corso.stato == corso.PREPARAZIONE and corso.prossimo and not corso.is_nuovo_corso and not corso.online %}
         <div class="alert alert-danger">
             <h4><i class="fa fa-warning"></i> Non c'è tempo da perdere!</h4>
             <p>Questo corso inizier&agrave; a breve, ma non hai ancora attivato il Corso su Gaia.</p>
@@ -144,7 +170,7 @@
                 <a class="btn btn-warning {% if not corso.attivabile %}disabled{% endif %}" {% if corso.attivabile %}href="{{ corso.url_attiva }}"{% endif %}>
                     <i class="fa fa-fw fa-check-circle"></i>
 
-                    {% if corso.is_nuovo_corso %}
+                    {% if corso.is_nuovo_corso or corso.online %}
                         {% if corso.extension_type == corso.EXT_MIA_SEDE %}
                             Avvia il corso e informa i volontari della mia sede
                         {% elif corso.extension_type == corso.EXT_LVL_REGIONALE %}
@@ -160,32 +186,43 @@
         </div>
     {% endif %}
 
-    {% if puo_modificare and corso.terminabile %}
+    {% if puo_modificare and corso.stato == corso.ATTIVO and not corso.terminabile %}
+        <div class="alert alert-success alert-block">
+            <p>
+                <h4><i class="fa fa-fw fa-check"></i> Vuoi partecipare a questo corso?</h4>
+                Sei amministratore del corso <strong>(Responsabile della formazione, Direttore del corso, Commissario o Presidente)</strong> e vorresti partecipare a questo corso?
+                Per partecipare puoi <a style="text-decoration:underline;" href="{{ corso.url_iscritti_aggiungi }}#id_persone-autocomplete">invitarti</a> cliccando sulla pagina iscrizioni ed inserendo il tuo Codice Fiscale.
+            </p>
+        </div>
+    {% endif %}
+
+    {% if puo_modificare and corso.stato != corso.TERMINATO %}
         <div class="alert alert-success alert-block">
             <h4><i class="fa fa-fw fa-warning"></i> Terminazione corso</h4>
-            <p>Il corso si &egrave; concluso, ma &egrave; ancora necessario generare il verbale del corso e compilare la relazione.</p>
-            <p>Una volta generato il verbale e compilata la relazione, tutti i partecipanti verranno informati dell'esito e,
-                coloro che saranno stati promossi,
-                {% if corso.is_nuovo_corso %}
-                    otterranno la qualifica prevista dal corso.
-                {% else %}
-                    verranno trasformati automaticamente in volontari.
-                {% endif %}
-            </p>
-            <p style="margin-top:25px; text-align:center; font-weight:bold;">Il presente verbale è da chiudere immediatamente dopo la sessione d’esame</p>
 
+            {% if corso.terminabile %}
+                <p>Il corso si &egrave; concluso, ma &egrave; ancora necessario generare il verbale del corso e compilare la relazione.</p>
+                <p>Una volta generato il verbale e compilata la relazione, tutti i partecipanti verranno informati dell'esito e,
+                    coloro che saranno stati promossi,
+                    {% if corso.is_nuovo_corso %}
+                        otterranno la qualifica prevista dal corso.
+                    {% else %}
+                        verranno trasformati automaticamente in volontari.
+                    {% endif %}
+                </p>
+                <p style="margin-top:25px; text-align:center; font-weight:bold;">Il presente verbale è da chiudere immediatamente dopo la sessione d’esame</p>
+            {% endif %}
+
+            {% if corso.terminabile %}
             <table class="verbale__table">
                 <tr>
-                    {% if corso.esame_previsto %}
-                        <td>
-                            <a class="btn {% if corso.relazione_direttore.is_completed %}btn-success{%else%}btn-default{%endif%}" href="{% url 'courses:compila_relazione_direttore' corso.pk %}"><i class="fa fa-fw fa-pencil"></i> Inserire la relazione</a>
-                        </td>
-                    {% endif %}
+                    <td>{% if corso.esame_previsto %}{% endif %}
+                        <a class="btn {% if corso.relazione_direttore.is_completed %}btn-success{%else%}btn-default{%endif%}" href="{% url 'courses:compila_relazione_direttore' corso.pk %}"><i class="fa fa-fw fa-pencil"></i> Inserire la relazione</a>
+                    </td>
 
-                    {% if corso.esame_previsto and corso.relazione_direttore.is_completed %}
-                        {% if corso.corso_vecchio or corso.titolo_cri.scheda_prevede_esame %}
+                    {% if corso.relazione_direttore.is_completed %}
+                        {% if corso.corso_vecchio or corso.titolo_cri.scheda_prevede_esame %}{% endif %}
                             <td><a class="btn btn-default" href="{{ corso.url_termina }}?v1"><i class="fa fa-fw fa-check-circle"></i> Compila il verbale</a></td>
-                        {% endif %}
                     {% endif %}
 
                     {% if corso.relazione_direttore and corso.relazione_direttore.is_completed %}
@@ -211,13 +248,14 @@
                     </tr>
                 </table>
             {% endif %}
+            {% endif %}{# endif corso.terminabile #}
 
             {% if corso.esame_previsto %}
-                {% if me == corso.sede.presidente or corso.sede.presidente in corso.direttori_corso  %}
+                {% if me == corso.sede.presidente or corso.sede.presidente in corso.direttori_corso or me.is_responsabile_formazione %}
                     <hr><p>Per generare il verbale è necessario <strong><a href="{% url 'courses:commissione_esame' corso.pk %}">compilare i nominativi e caricare delibera</a></strong> della commissione esame.</p>
                 {% elif not me.is_presidente and me.is_direttore %}
                     {% if not corso.ha_compilato_commissione_esame %}
-                        <hr><p>Per generare il verbale è necessario che il presidente <strong>compila i nominativi e carica delibera</strong> della commissione esame.</p>
+                        <hr><p>Per generare il verbale è necessario che il Presidente <strong>compili i nominativi e carichi la delibera</strong> della commissione esame.</p>
                     {% endif %}
                 {% endif %}
             {% endif %}

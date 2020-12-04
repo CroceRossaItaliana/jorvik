@@ -5,6 +5,7 @@ from celery import uuid
 from smtplib import (SMTPException, SMTPRecipientsRefused,
                      SMTPResponseException, SMTPAuthenticationError)
 
+
 from django.core.mail import EmailMessage, EmailMultiAlternatives, get_connection
 from django.db import transaction, DatabaseError
 from django.db import models
@@ -40,6 +41,7 @@ class Messaggio(ModelloSemplice, ConMarcaTemporale, ConGiudizio, ConAllegati):
 
     SUPPORTO_NOME = 'Supporto Gaia'
     SUPPORTO_EMAIL = 'supporto@gaia.cri.it'
+    SERVIZIO_CIVILE_EMAIL = 'servizio.civile@cri.it'
     NOREPLY_EMAIL = 'noreply@gaia.cri.it'
 
     LUNGHEZZA_MASSIMA_OGGETTO = 256
@@ -138,7 +140,7 @@ class Messaggio(ModelloSemplice, ConMarcaTemporale, ConGiudizio, ConAllegati):
         if self.logging:
             logger.debug(*args, **kwargs)
 
-    def _genera_email_da_inviare(self, connessione=None):
+    def _genera_email_da_inviare(self, connessione=None, forced=False):
         """
         Genera gli oggetti EmailMultiAlternatives per le email ancora da inviare per questo
          messaggio di posta.
@@ -148,6 +150,7 @@ class Messaggio(ModelloSemplice, ConMarcaTemporale, ConGiudizio, ConAllegati):
                     (ad esempio, senza un indirizzo email) e marcarli come "inviato".
 
         :param connessione:         Opzionale. Una connessione al backed di posta da riutilizzare.
+        :param forced: Opzionale. Serve per saltare alcune verifiche (tasks.invia_mail_forzato)
         :return: Un generatore di tuple (Destinatario, EmailMultiAlternatives). Il primo oggetto
                  della tupla e' un oggetto Destinatario collegato a questo messaggio, oppure None
                  per un messaggio destinato al supporto di Gaia.
@@ -179,9 +182,13 @@ class Messaggio(ModelloSemplice, ConMarcaTemporale, ConGiudizio, ConAllegati):
         connessione = connessione or get_connection()
 
         # Per ogni destinatario a cui abbiamo non e' stato inviato il messaggio
-        for destinatario in self.oggetti_destinatario.all().filter(inviato=False):
+        if forced:
+            destinatari = self.oggetti_destinatario.all()
+        else:
+            destinatari = self.oggetti_destinatario.all().filter(inviato=False)
 
-            if destinatario.inviato:
+        for destinatario in destinatari:
+            if destinatario.inviato and not forced:
                 continue
 
             # Se la persona non ha un indirizzo di posta, segna questo oggetto Destinatario
@@ -216,21 +223,29 @@ class Messaggio(ModelloSemplice, ConMarcaTemporale, ConGiudizio, ConAllegati):
 
         # Se questo messaggio non ha oggetti destinatario
         if self.oggetti_destinatario.count() == 0:
+            from anagrafica.models import Appartenenza
+
+            to = []
+
+            if Appartenenza.MENBRO_DICT[Appartenenza.SEVIZIO_CIVILE_UNIVERSALE] in self.oggetto:
+                to = [Messaggio.SERVIZIO_CIVILE_EMAIL]
+            else:
+                to = [Messaggio.SUPPORTO_EMAIL]
 
             # Questo e' un messaggio per il supporto di Gaia.
             email = EmailMultiAlternatives(subject=self.oggetto,
                                            body=corpo_plain,
                                            from_email=mittente,
                                            reply_to=[rispondi_a],
-                                           to=[Messaggio.SUPPORTO_EMAIL],
+                                           to=to,
                                            attachments=self.allegati_pronti(),
                                            connection=connessione)
             email.attach_alternative(self.corpo, "text/html")
-
+            logger.debug("{} {} {} {}".format(email.subject, email.from_email, email.to, email.body))
             # Ritorna questo oggetto
             yield None, email
 
-    def invia(self, connessione=None):
+    def invia(self, connessione=None, forced=False):
         """
         Effettua un tentativo di invio del messaggio, utilizzando il backend di posta configurato.
 
@@ -239,15 +254,18 @@ class Messaggio(ModelloSemplice, ConMarcaTemporale, ConGiudizio, ConAllegati):
         "terminato".
 
         :param connessione:         Opzionale. Una connessione al backend di posta da riutilizzare.
+        :param forced: Opzionale. Serve per saltare alcune verifiche (tasks.invia_mail_forzato)
+
         :return:                    True se l'invio e' terminato per questo messaggio, False se
                                      e' necessario provare nuovamente.
         """
         # Assicurati che il contenuto di questo messaggio sia aggiornato dal database.
         self.refresh_from_db()
 
-        # Se il messaggio e' gia' stato inviato
-        if self.terminato:
-            return
+        if not forced:
+            # Se il messaggio è già stato inviato
+            if self.terminato:
+                return
 
         # Incrementa il contatore dei tentativi
         self.ultimo_tentativo = timezone.now()
@@ -256,9 +274,9 @@ class Messaggio(ModelloSemplice, ConMarcaTemporale, ConGiudizio, ConAllegati):
         invio_terminato = True
 
         # Per ognuna delle email da inviare
-        email_da_inviare = self._genera_email_da_inviare(connessione=connessione)
+        email_da_inviare = self._genera_email_da_inviare(connessione=connessione,
+                                                         forced=True)
         for destinatario, email in email_da_inviare:
-
             # Email al supporto di Gaia (nessun destinatario)
             if destinatario is None:
                 try:

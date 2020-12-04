@@ -1,0 +1,250 @@
+stages:
+  - dump_db
+  - maintenance
+  - migrations
+  - release
+  - build
+  - setup
+  - restore_db
+  - deploy
+
+cache:
+  key: ${CI_MERGE_REQUEST_ID}
+  paths:
+    - .cache/pip
+    - venv/
+
+variables:
+    GIT_CLONE_PATH: '$CI_BUILDS_DIR/$CI_PROJECT_NAME/$CI_COMMIT_BRANCH/$CI_MERGE_REQUEST_ID'
+    GIT_SSL_NO_VERIFY: '1'
+
+build_containers:
+  stage: build
+  tags:
+    - staging
+  before_script:
+    - chown -R gitlab-runner:gitlab-runner /home/gitlab-runner
+    - docker-compose -f docker-compose-staging.yml ps
+  script:
+    - pwd
+    - docker build -t gaia:${CI_MERGE_REQUEST_ID} .
+  only:
+    - merge_requests
+
+build_release_containers:
+  stage: build
+  tags:
+    - staging
+  script:
+    - pwd
+    - docker build -t gaia:release .
+  only:
+    - release
+
+setup_pr:
+  stage: setup
+  tags:
+    - staging
+  script:
+    - echo $CI_MERGE_REQUEST_ID
+    - docker-compose -f docker-compose-staging.yml down -v
+    - sleep 30
+    - docker-compose -f docker-compose-staging.yml up -d db
+  after_script:
+    - docker-compose -f docker-compose-staging.yml ps
+  only:
+    - merge_requests
+
+restore_db:
+  stage: restore_db
+  tags:
+    - staging
+  before_script:
+    - chown -R gitlab-runner:gitlab-runner /home/gitlab-runner
+  script:
+    - docker-compose -f docker-compose-staging.yml stop
+    - sleep 30
+    - ls -alh /opt/gaia_dumps
+    - docker-compose -f docker-compose-staging.yml up -d db
+    - docker-compose -f docker-compose-staging.yml ps
+    - sleep 30
+    - docker cp /opt/gaia_dumps/smalldump "$(docker-compose ps -q db)":/tmp/smalldump
+    - echo "SELECT pg_terminate_backend(pid) FROM pg_stat_activity WHERE datname = 'jorvik';" | docker-compose -f docker-compose-staging.yml exec -T db psql -U postgres
+    - docker-compose -f docker-compose-staging.yml exec -T db pg_restore -C --clean --no-acl --no-owner -j 8 -U postgres -d postgres /tmp/smalldump
+    #- cat /opt/gaia_dumps/smalldump | docker-compose -f docker-compose-staging.yml exec -T db psql -U postgres -d jorvik
+  only:
+    - merge_requests
+  allow_failure: true
+
+fire_pr:
+  stage: deploy
+  tags:
+    - staging
+  script:
+    - echo $CI_MERGE_REQUEST_ID
+    - env
+    - docker-compose -f docker-compose-staging.yml up -d
+    - sleep 10
+    - docker-compose -f docker-compose-staging.yml restart proxy
+  after_script:
+    - docker-compose -f docker-compose-staging.yml ps
+  environment:
+    name: pr$CI_MERGE_REQUEST_ID
+    url: https://pr$CI_MERGE_REQUEST_ID.staging.gaia.cri.it
+  only:
+    - merge_requests
+
+
+restore_db_release:
+  stage: restore_db
+  tags:
+    - staging
+  before_script:
+    - export CI_MERGE_REQUEST_ID=release
+    - chown -R gitlab-runner:gitlab-runner /home/gitlab-runner
+  script:
+    - docker-compose -f docker-compose-staging.yml stop
+    - sleep 30
+    - ls -alh /opt/gaia_dumps
+    - docker-compose -f docker-compose-staging.yml up -d db
+    - docker-compose -f docker-compose-staging.yml ps
+    - sleep 30
+    - docker cp /opt/gaia_dumps/smalldump "$(docker-compose ps -q db)":/tmp/smalldump
+    - echo "SELECT pg_terminate_backend(pid) FROM pg_stat_activity WHERE datname = 'jorvik';" | docker-compose -f docker-compose-staging.yml exec -T db psql -U postgres
+    - docker-compose -f docker-compose-staging.yml exec -T db pg_restore --disable-triggers -C --clean --no-acl --no-owner -j 8 -U postgres -d postgres /tmp/smalldump
+  only:
+    - release
+  allow_failure: true
+
+deploy_release:
+  stage: deploy
+  tags:
+    - staging
+  before_script:
+    - export CI_MERGE_REQUEST_ID=release
+  script:
+    - docker-compose -f docker-compose-staging.yml down
+    - sleep 30
+    - docker-compose -f docker-compose-staging.yml up -d db
+    - sleep 10
+    - docker-compose -f docker-compose-staging.yml up -d
+    - sleep 30
+    - docker-compose -f docker-compose-staging.yml restart proxy
+  environment:
+    name: release
+    url: https://release.staging.gaia.cri.it
+  only:
+    - release
+
+deploy_provami:
+  stage: deploy
+  tags:
+    - staging
+  before_script:
+    - export CI_MERGE_REQUEST_ID=provami
+  script:
+    - docker-compose -f docker-compose-staging.yml -f docker-compose-provami.yml up -d
+    - sleep 30
+    - docker-compose -f docker-compose-staging.yml -f docker-compose-provami.yml exec -T web pip3 install python-barcode==0.10.0
+    - docker-compose -f docker-compose-staging.yml -f docker-compose-provami.yml exec -T web python manage.py makemigrations
+    - docker-compose -f docker-compose-staging.yml -f docker-compose-provami.yml exec -T web python manage.py migrate
+    - docker-compose -f docker-compose-staging.yml -f docker-compose-provami.yml exec -T web python scramble.py --dati-di-esempio
+    - docker-compose -f docker-compose-staging.yml -f docker-compose-provami.yml exec -T web python manage.py loaddata fixtures_data/formazione_titoli_cri_con_sigle.json
+    - docker-compose -f docker-compose-staging.yml -f docker-compose-provami.yml restart proxy
+  environment:
+    name: provami
+    url: https://provami.gaia.cri.it
+  only:
+    - release
+
+dump_db:
+  stage: dump_db
+  script:
+    - echo "dump..."
+  only:
+    - release
+  when: manual
+  tags:
+    - gaia-app01,prod
+
+.maintenance_template: &maintenance_definition
+  stage: maintenance
+  script:
+    - sudo service jorvik stop
+    - sudo service nginx stop
+  only:
+    - release
+  allow_failure: false
+  when: manual
+
+stop_service_app01:
+    tags:
+      - gaia-app01,prod
+    <<: *maintenance_definition
+
+stop_service_app02:
+    tags:
+      - gaia-app02,prod
+    <<: *maintenance_definition
+
+stop_service_app03:
+    tags:
+    - gaia-app03,prod
+    <<: *maintenance_definition
+
+stop_service_app04:
+    tags:
+    - gaia-app04,prod
+    <<: *maintenance_definition
+
+migrate_db:
+  stage: migrations
+  before_script:
+    - whoami
+    - cd /home/appserver/jorvik
+    - git pull --rebase origin release
+  script:
+    - /home/appserver/venv/bin/python /home/appserver/jorvik/manage.py makemigrations
+    - /home/appserver/venv/bin/python /home/appserver/jorvik/manage.py migrate
+    - /home/appserver/venv/bin/python /home/appserver/jorvik/manage.py collectstatic --no-input
+  after_script:
+    - sudo service jorvik start
+  only:
+    - release
+  when: manual
+  tags:
+    - gaia-app01,prod
+
+.deploy_template: &deploy_definition
+  stage: release
+  before_script:
+    - cd /home/appserver/jorvik
+    - git status
+  script:
+    - git pull --rebase origin release
+  after_script:
+    - sudo service jorvik restart
+    - sudo service nginx restart
+  only:
+    - release
+  when: manual
+
+release_app01:
+  tags:
+    - gaia-app01,prod
+  <<: *deploy_definition
+
+release_app02:
+  tags:
+    - gaia-app02,prod
+  <<: *deploy_definition
+
+release_app03:
+  tags:
+    - gaia-app03,prod
+  <<: *deploy_definition
+
+release_app04:
+  tags:
+    - gaia-app04,prod
+  <<: *deploy_definition

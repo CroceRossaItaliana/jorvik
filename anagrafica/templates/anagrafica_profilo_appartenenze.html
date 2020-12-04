@@ -54,9 +54,14 @@
                         <td>
                             Inizio: {{ app.inizio|date:"SHORT_DATE_FORMAT" }}
 
-                            {% if modulo %}
+                            <br />
+                            Fine: {% if app.fine %} {{ app.fine|date:"SHORT_DATE_FORMAT" }} {% else %} Indeterminata {% endif %}
+                            {% if app.terminazione %}<br />
+                                Fine per {{ app.get_terminazione_display }}
+                            {% endif %}
 
-                                <!-- Button trigger modal -->
+                            {% if modulo %}
+                                <!-- Modulo modifica data inizio appartenenza -->
                                 <button type="button" class="btn btn-default btn-xs" data-toggle="modal" data-target="#mod{{ app.pk }}">
                                   <i class="fa fa-fw fa-pencil"></i>
                                 </button>
@@ -74,35 +79,16 @@
                                               {% bootstrap_form modulo %}
                                           </div>
                                           <div class="modal-footer">
-                                            <button type="button" class="btn btn-default" data-dismiss="modal">
-                                                Chiudi
-                                            </button>
-                                            <button type="submit" class="btn btn-primary">
-                                                <i class="fa fa-fw fa-save"></i> Salva modifica
-                                            </button>
+                                            <button type="button" class="btn btn-default" data-dismiss="modal">Chiudi</button>
+                                            <button type="submit" class="btn btn-primary"><i class="fa fa-fw fa-save"></i> Salva modifica</button>
                                           </div>
                                         </div>
                                       </div>
                                     </div>
-                                </form>
-
+                                </form><!--/Modulo modifica data inizio appartenenza -->
                                 {% if modulo.errors %}
-                                    <script>
-                                    moduli.push('#mod{{ app.pk }}');
-                                    </script>
+                                    <script>moduli.push('#mod{{ app.pk }}');</script>
                                 {% endif %}
-
-                            {% endif %}
-
-
-                            <br />
-                            Fine:   {% if app.fine %}
-                                        {{ app.fine|date:"SHORT_DATE_FORMAT" }}
-                                    {% else %}
-                                        Indeterminata
-                                    {% endif %}
-                            {% if app.terminazione %}<br />
-                                Fine per {{ app.get_terminazione_display }}
                             {% endif %}
                         </td>
                         <td>

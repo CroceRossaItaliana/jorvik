@@ -175,7 +175,7 @@ class ConGeolocalizzazione(models.Model):
         """
         pass
 
-    def imposta_locazione(self, indirizzo):
+    def imposta_locazione(self, indirizzo, field=None):
         """
         Imposta la locazione dell'oggetto dato un indirizzo.
         Se l'indirizzo e' in database, associa e ritorna la referenza
@@ -188,11 +188,18 @@ class ConGeolocalizzazione(models.Model):
         l = Locazione.oggetto(indirizzo)
         if l is None:
             return None
-        self.locazione = l
+
+        if field is not None:
+            # sviluppato e testato solo con il modello <Sede> (presidente)
+            if field == 'sede_operativa':
+                self.sede_operativa.add(l)  # campo esistente del modello <Sede>
+            else:
+                setattr(self, field, l)
+        else:
+            self.locazione = l
         self.save()
         self.post_locazione()
         return l
-
 
     def vicini(self, queryset, km):
         """

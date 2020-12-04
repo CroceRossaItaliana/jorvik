@@ -1,0 +1,76 @@
+{% extends 'so_vuota.html' %}
+
+{% load bootstrap3 %}
+{% load humanize %}
+
+{% block pagina_titolo %}Sala Operativa - Servizi{% endblock %}
+
+{% block app_contenuto %}
+<div class="row">
+    <div class="col-md-12">
+      <div class="panel-heading">
+        <h2 class="panel-title"><i class="fas fa-cogs"></i> Dettagli servizio <strong>{{ servizio.name }}</strong></h2>
+        <p>
+          Inizio: <strong>{{ servizio.inizio|date:"SHORT_DATETIME_FORMAT" }}</strong><br>
+          Fine: <strong>{{ servizio.fine|date:"SHORT_DATETIME_FORMAT" }}</strong>
+        </p>
+      </div>
+        <div class="panel panel-info">
+            <div class="panel-heading">
+                <h2 class="panel-title">
+                    <i class="fa fa-fw fa-list"></i> Gestione volontari per il servizio
+                </h2>
+            </div>
+            <div class="panel-body">
+                <table class="table table-striped">
+                    <thead>
+                      <tr>
+                          <th>Nome</th>
+                          <th>Estensione</th>
+                          <th>Attivazione</th>
+                          <th>Stato</th>
+                          <th>Azioni</th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                    {% for reperibilita in reperibilita_volontari %}
+                        <tr>
+                            <td>
+                              <strong><a href="{% url 'so:servizio_dettagli' servizio.pk %}">{{ reperibilita.persona }}</a></strong><br>
+                              Inizio: {{ reperibilita.inizio|date:"SHORT_DATETIME_FORMAT" }}<br />
+                              Fine: {{ reperibilita.fine|date:"SHORT_DATETIME_FORMAT" }}<br>
+                              {{ reperibilita.get_estensione_display }}
+                            </td>
+                            <td>
+                              {{ reperibilita.persona.sede_riferimento.link|safe }}<br>
+                            </td>
+                            <td>in {{ reperibilita.attivazione }}</td>
+                            <td>
+                              {% if servizio in reperibilita.servizio.all  %}
+                                <span style="background-color:green; color: #fff; padding: 2px 4px;">In servizio</span>
+                              {% else %}
+                                <span style="background-color:#c00; color: #fff; padding: 2px 4px;">Fuori servizio</span>
+                              {% endif %}
+                            </td>
+                            <td>
+                              {% if servizio in reperibilita.servizio.all  %}
+                                <a href="{% url 'so:togli_dal_servizio' servizio.pk reperibilita.pk %}" data-conferma="Vuoi togliere il volontario dal serivizo?"><i class="fas fa-minus"></i> Rimuovi dal servizio</a>
+                              {% else %}
+                                <a href="{% url 'so:servizio_add_vo' servizio.pk reperibilita.pk %}" data-conferma="Vuoi abbinare il volontario al serivizo?"><i class="fas fa-plus"></i> Abbina al servizio</a><br>
+                              {% endif %}
+                            </td>
+                        </tr>
+                    {% empty %}
+                        <tr class="alert alert-warning">
+                            <td colspan="5">
+                                <i class="fa fa-fw fa-warning"></i> Nessun volontario disponibile.
+                            </td>
+                        </tr>
+                    {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

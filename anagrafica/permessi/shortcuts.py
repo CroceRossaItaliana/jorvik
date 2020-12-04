@@ -9,8 +9,8 @@ from ..permessi.applicazioni import (PRESIDENTE, PERMESSI_NOMI, COMMISSARIO,
 from ..permessi.applicazioni import UFFICIO_SOCI, PERMESSI_NOMI_DICT
 
 from ..permessi.costanti import (GESTIONE_ATTIVITA, PERMESSI_OGGETTI_DICT,
-    GESTIONE_SOCI, GESTIONE_CORSI_SEDE, GESTIONE_CORSO, GESTIONE_SEDE,
-    GESTIONE_AUTOPARCHI_SEDE, GESTIONE_CENTRALE_OPERATIVA_SEDE)
+                                 GESTIONE_SOCI, GESTIONE_CORSI_SEDE, GESTIONE_CORSO, GESTIONE_SEDE,
+                                 GESTIONE_AUTOPARCHI_SEDE, GESTIONE_CENTRALE_OPERATIVA_SEDE, GESTIONE_SO_SEDE)
 
 from ..permessi.delega import delega_permessi, delega_incarichi
 

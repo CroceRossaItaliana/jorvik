@@ -100,12 +100,12 @@
 
       <footer class="row">
       {% block pagina_footer %}
-          <div class="col-md-6 text-center">
+          <div class="col-md-8 text-center">
             <p class="margine-nullo-sotto">
                 &copy;{% now "Y" %} <strong>Il Progetto Gaia</strong>
             </p>
             <p class="piu-piccolo">
-                <strong class="rosso-scuro">Croce Rossa Italiana</strong></p>
+                <strong class="rosso-scuro">Croce Rossa Italiana</strong>
             </p>
             <a href="/supporto/" class="grassetto">
                 <i class="fa fa-support"></i> Supporto
@@ -116,13 +116,15 @@
             <a href="/informazioni/verifica-tesserino/">
                 Verifica un tesserino CRI
             </a> |
-            <a href="https://wiki.gaia.cri.it/" target="_blank">
+            <a href="https://training.cri.it/course/view.php?id=12" target="_blank">
                 Manuale d'uso
+            </a> |
+            <a href="/informazioni/sedi/" target="_blank">
+                Elenco Comitati CRI
             </a>
-
           </div>
 
-          <div class="col-md-6 allinea-destra">
+          <div class="col-md-4 allinea-destra">
             <img src="{% static 'img/uica.png' %}" alt="CRI" class="logo-uica"/>
           </div>
       {% endblock %}

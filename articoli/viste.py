@@ -5,7 +5,7 @@ from django.shortcuts import redirect
 from django.utils.decorators import method_decorator
 from django.views.generic import DetailView, ListView
 
-from anagrafica.models import Persona
+from anagrafica.models import Persona, Appartenenza
 from anagrafica.permessi.costanti import ERRORE_PERMESSI
 from articoli.models import Articolo, ArticoloSegmento
 from autenticazione.funzioni import pagina_privata, pagina_pubblica, VistaDecorata
@@ -24,6 +24,7 @@ def get_articoli(persona, anno=None, mese=None, query=None):
         articoli = articoli_segmenti.oggetti_collegati().pubblicati()
     else:
         articoli = Articolo.objects.pubblicati()
+
     return articoli.filter(**filtri_extra)
 
 

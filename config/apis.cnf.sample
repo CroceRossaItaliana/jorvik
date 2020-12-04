@@ -10,3 +10,12 @@
 [dompdf]
 
 endpoint = http://pdf/www/render.php
+
+[moodle]
+domain=http://training.cri.it/webservice/rest/server.php
+
+
+[trippus]
+domain=https://api.trippus.se
+username=abb151387cd147aa9507ef4ff9de28cd
+password=083a7da7aead4b35a487

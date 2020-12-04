@@ -9,6 +9,7 @@ from django.contrib import messages
 from django.contrib.auth import login
 from django.contrib.contenttypes.models import ContentType
 from django.core.urlresolvers import reverse
+from django.http import JsonResponse
 from django.shortcuts import render_to_response, redirect, get_object_or_404
 from django.template.loader import get_template
 from django.utils import timezone
@@ -27,31 +28,44 @@ from curriculum.models import TitoloPersonale
 from posta.models import Messaggio
 from posta.utils import imposta_destinatari_e_scrivi_messaggio
 from sangue.models import Donazione
+from .api_trippus import trippus_oauth, trippus_booking
 
 from .costanti import TERRITORIALE, REGIONALE
 from .elenchi import ElencoDelegati
 from .utils import _conferma_email, _richiesta_conferma_email
-from .permessi.applicazioni import (PRESIDENTE, UFFICIO_SOCI, PERMESSI_NOMI_DICT,
-    DELEGATO_OBIETTIVO_1, COMMISSARIO, DELEGATO_OBIETTIVO_2, DELEGATO_OBIETTIVO_3,
-    DELEGATO_OBIETTIVO_4, DELEGATO_OBIETTIVO_5, DELEGATO_OBIETTIVO_6, RESPONSABILE_FORMAZIONE,
-    RESPONSABILE_AUTOPARCO, DELEGATO_CO, UFFICIO_SOCI_UNITA, DELEGHE_RUBRICA, REFERENTE,
-    RESPONSABILE_AREA, DIRETTORE_CORSO, DELEGATO_AREA, REFERENTE_GRUPPO,
-    PERMESSI_NOMI, RUBRICHE_TITOLI, CONSIGLIERE, VICE_PRESIDENTE, CONSIGLIERE_GIOVANE)
+from .permessi.applicazioni import (PRESIDENTE, UFFICIO_SOCI,
+                                    PERMESSI_NOMI_DICT,
+                                    DELEGATO_OBIETTIVO_1, COMMISSARIO,
+                                    DELEGATO_OBIETTIVO_2, DELEGATO_OBIETTIVO_3,
+                                    DELEGATO_OBIETTIVO_4, DELEGATO_OBIETTIVO_5,
+                                    DELEGATO_OBIETTIVO_6,
+                                    RESPONSABILE_FORMAZIONE,
+                                    RESPONSABILE_AUTOPARCO, DELEGATO_CO,
+                                    UFFICIO_SOCI_UNITA, DELEGHE_RUBRICA,
+                                    REFERENTE,
+                                    RESPONSABILE_AREA, DIRETTORE_CORSO,
+                                    DELEGATO_AREA, REFERENTE_GRUPPO,
+                                    PERMESSI_NOMI, RUBRICHE_TITOLI, CONSIGLIERE,
+                                    VICE_PRESIDENTE, CONSIGLIERE_GIOVANE,
+                                    DELEGATO_SO, UFFICIO_SOCI_CM,
+                                    UFFICIO_SOCI_IIVV,)
 from .permessi.costanti import (ERRORE_PERMESSI, MODIFICA, LETTURA, GESTIONE_SEDE,
     GESTIONE, ELENCHI_SOCI, GESTIONE_ATTIVITA, GESTIONE_ATTIVITA_AREA, GESTIONE_CORSO)
 from .permessi.incarichi import (INCARICO_GESTIONE_RISERVE, INCARICO_GESTIONE_TITOLI,
     INCARICO_GESTIONE_FOTOTESSERE)
 from .importa import (VALIDAZIONE_ERRORE, VALIDAZIONE_AVVISO, VALIDAZIONE_OK, import_import_volontari)
 from .forms import (ModuloStepComitato, ModuloStepCredenziali, ModuloStepFine,
-    ModuloModificaAnagrafica, ModuloModificaAvatar, ModuloCreazioneDocumento,
-    ModuloModificaEmailAccesso, ModuloModificaEmailContatto,
-    ModuloCreazioneTelefono, ModuloCreazioneEstensione, ModuloCreazioneTrasferimento,
-    ModuloCreazioneDelega, ModuloDonatore, ModuloDonazione, ModuloNuovaFototessera,
-    ModuloCreazioneRiserva, ModuloModificaPrivacy, ModuloPresidenteSede,
-    ModuloImportVolontari, ModuloImportPresidenti, ModuloPulisciEmail,
-    ModuloReportFederazione, ModuloStepCodiceFiscale, ModuloStepAnagrafica)
+                    ModuloModificaAnagrafica, ModuloModificaAvatar, ModuloCreazioneDocumento,
+                    ModuloModificaEmailAccesso, ModuloModificaEmailContatto,
+                    ModuloCreazioneTelefono, ModuloCreazioneEstensione, ModuloCreazioneTrasferimento,
+                    ModuloCreazioneDelega, ModuloDonatore, ModuloDonazione, ModuloNuovaFototessera,
+                    ModuloCreazioneRiserva, ModuloModificaPrivacy, ModuloPresidenteSede,
+                    ModuloImportVolontari, ModuloImportPresidenti, ModuloPulisciEmail,
+                    ModuloReportFederazione, ModuloStepCodiceFiscale, ModuloStepAnagrafica,
+                    ModuloPresidenteSedePersonaDiRiferimento, ModuloPresidenteSedeNominativo,)
+
 from .models import (Persona, Documento, Telefono, Estensione, Delega, Trasferimento,
-    Appartenenza, Sede, Riserva, Dimissione)
+                     Appartenenza, Sede, Riserva, Dimissione, Nominativo, )
 
 
 TIPO_VOLONTARIO = 'volontario'
@@ -635,6 +649,22 @@ def utente_rubrica_volontari(request, me):
     }
     return 'anagrafica_utente_rubrica_volontari.html', contesto
 
+@pagina_privata
+def utente_rubrica_servizio_civile(request, me):
+    sedi_servizio_civile = Sede.objects.filter(pk__in=me.sedi_attuali().values_list("id", flat=True))
+    servizio_civile = Persona.objects.filter(
+        Appartenenza.query_attuale(membro=Appartenenza.SEVIZIO_CIVILE_UNIVERSALE, sede__in=sedi_servizio_civile).via("appartenenze")
+    )
+
+    servizio_civile = servizio_civile \
+        .prefetch_related('appartenenze', 'fototessere') \
+        .order_by('nome', 'cognome', 'codice_fiscale') \
+        .distinct('nome', 'cognome', 'codice_fiscale')
+    contesto = {
+        "servizio_civile": servizio_civile,
+    }
+    return 'anagrafica_utente_rubrica_servizio_civile.html', contesto
+
 
 def _rubrica_delegati(me, delega, sedi_delega):
     return ElencoDelegati(sedi_delega.values_list('pk', flat=True), deleghe=[delega], me_id=me.pk)
@@ -759,18 +789,19 @@ def utente_estensione(request, me):
     if not me.volontario:
         return errore_no_volontario(request, me)
     storico = me.estensioni.all()
-    modulo = ModuloCreazioneEstensione(request.POST or None)
-    if modulo.is_valid():
-        est = modulo.save(commit=False)
+    form = ModuloCreazioneEstensione(request.POST or None)
+    if form.is_valid():
+        est = form.save(commit=False)
         if est.destinazione in me.sedi_attuali():
-            modulo.add_error('destinazione', 'Sei già appartenente a questa sede.')
+            form.add_error('destinazione', 'Sei già appartenente a questa sede.')
         elif est.destinazione in [x.destinazione for x in me.estensioni_attuali_e_in_attesa()]:
-            modulo.add_error('destinazione', 'Estensione già richiesta a questa sede.')
+            form.add_error('destinazione', 'Estensione già richiesta a questa sede.')
         else:
             est.richiedente = me
             est.persona = me
             est.save()
             est.richiedi()
+
             # Messaggio.costruisci_e_invia(
             #     oggetto="Richiesta di estensione",
             #     modello="email_richiesta_estensione.html",
@@ -793,22 +824,23 @@ def utente_estensione(request, me):
             #         ##presidente sede di estensione
             #     ]
             # )
-            # Messaggio.costruisci_e_invia(
-            #     oggetto="Richiesta di estensione",
+            # Avviso al Presidente dove è Volontario
+            # Messaggio.costruisci_e_accoda(
+            #     oggetto="Richiesta di estensione di un membro diretto",
             #     modello="email_richiesta_estensione_presidente.html",
             #     corpo={
-            #         "trasferimento": est,
+            #         "estensione": est,
             #     },
             #     mittente=None,
             #     destinatari=[
-            #         ##presidente sede riferimento
+            #         est.persona.sede_riferimento(membro=[Appartenenza.VOLONTARIO]).presidente()
             #     ]
             # )
 
     in_attesa, delegati = estensioni_pending(me)
 
     contesto = {
-        "modulo": modulo,
+        "modulo": form,
         "storico": storico,
         "attuali": me.estensioni_attuali(),
         "in_attesa": in_attesa,
@@ -882,11 +914,11 @@ def utente_trasferimento(request, me):
         return errore_no_volontario(request, me)
     storico = me.trasferimenti.all()
 
-    modulo = ModuloCreazioneTrasferimento(request.POST or None)
-    if modulo.is_valid():
-        trasf = modulo.save(commit=False)
+    form = ModuloCreazioneTrasferimento(request.POST or None)
+    if form.is_valid():
+        trasf = form.save(commit=False)
         if trasf.destinazione in me.sedi_attuali(membro=Appartenenza.VOLONTARIO):
-            modulo.add_error('destinazione', 'Sei già appartenente a questa sede.')
+            form.add_error('destinazione', 'Sei già appartenente a questa sede.')
         #elif trasf.destinazione.comitato != me.sede_riferimento().comitato and True:##che in realta' e' il discriminatore delle elezioni
         #    return errore_generico(request, me, messaggio="Non puoi richiedere un trasferimento tra comitati durante il periodo elettorale")
         elif me.trasferimento:
@@ -896,7 +928,9 @@ def utente_trasferimento(request, me):
             trasf.richiedente = me
             trasf.save()
             trasf.richiedi()
-            Messaggio.costruisci_e_invia(
+
+            # Avviso a se stesso
+            Messaggio.costruisci_e_accoda(
                 oggetto="Richiesta di trasferimento",
                 modello="email_richiesta_trasferimento.html",
                 corpo={
@@ -907,8 +941,10 @@ def utente_trasferimento(request, me):
                     trasf.persona,
                 ]
             )
-            Messaggio.costruisci_e_invia(
-                oggetto="Richiesta di trasferimento",
+
+            # Avviso al Presidente di Sede Destinazione
+            Messaggio.costruisci_e_accoda(
+                oggetto="Richiesta di trasferimento in entrata",
                 modello="email_richiesta_trasferimento_cc.html",
                 corpo={
                     "trasferimento": trasf,
@@ -918,22 +954,24 @@ def utente_trasferimento(request, me):
                     trasf.destinazione.presidente()
                 ]
             )
-            Messaggio.costruisci_e_invia(
-                oggetto="Richiesta di trasferimento",
-                modello="email_richiesta_trasferimento_presidente.html",
-                corpo={
-                    "trasferimento": trasf,
-                },
-                mittente=None,
-                destinatari=[
-                    trasf.persona.sede_riferimento().presidente()
-                ]
-            )
+
+            # Avviso al Presidente dove è Dipendente (o MEMBRO_DIRETTO)
+            # Messaggio.costruisci_e_accoda(
+            #     oggetto="Richiesta di trasferimento",
+            #     modello="email_richiesta_trasferimento_presidente.html",
+            #     corpo={
+            #         "trasferimento": trasf,
+            #     },
+            #     mittente=None,
+            #     destinatari=[
+            #         trasf.persona.sede_riferimento().presidente()
+            #     ]
+            # )
 
     trasferimenti_auto_pending, trasferimenti_manuali_pending, delegati = trasferimenti_pending(me)
 
     contesto = {
-        "modulo": modulo,
+        "modulo": form,
         "storico": storico,
         "trasferimenti_auto_pending": trasferimenti_auto_pending,
         "trasferimenti_manuali_pending": trasferimenti_manuali_pending,
@@ -949,24 +987,33 @@ def utente_riserva(request, me):
     if not me.appartenenze_attuali() or not me.sede_riferimento():
         return errore_generico(titolo="Errore", messaggio="Si è verificato un errore generico.", request=request)
     storico = me.riserve.all()
-    modulo = ModuloCreazioneRiserva(request.POST or None)
-    if modulo.is_valid():
-        r = modulo.save(commit=False)
+    form = ModuloCreazioneRiserva(request.POST or None)
+    if form.is_valid():
+        r = form.save(commit=False)
+
         r.persona = me
-        r.appartenenza = me.appartenenze_attuali().first()
+        r.appartenenza = me.appartenenze_attuali(membro=Appartenenza.VOLONTARIO).first()
         r.save()
-        r.invia_mail()
-        r.autorizzazione_richiedi_sede_riferimento(
-            me, INCARICO_GESTIONE_RISERVE,
-            invia_notifica_presidente=True,
-        )
+        r.richiedi()
+
+        # Messaggio.costruisci_e_accoda(
+        #     oggetto="Richiesta di riserva di un membro diretto",
+        #     modello="email_richiesta_riserva_presidente.html",
+        #     corpo={
+        #         "riserva": r,
+        #     },
+        #     mittente=None,
+        #     destinatari=[
+        #         r.persona.sede_riferimento().presidente()
+        #     ]
+        # )
 
         return messaggio_generico(request, me, titolo="Riserva registrata",
                                       messaggio="La riserva è stato registrata con successo",
                                       torna_titolo="Torna alla dash",
                                       torna_url="/utente/")
     contesto = {
-        "modulo": modulo,
+        "modulo": form,
         "storico": storico,
     }
     return "anagrafica_utente_riserva.html", contesto
@@ -1068,7 +1115,6 @@ def strumenti_delegati(request, me):
     }
     form = ModuloCreazioneDelega(request.POST or None, **form_data)
     if model == 'corsobase':
-        # if oggetto.is_nuovo_corso:
         form = FormCreateDirettoreDelega(request.POST or None, **form_data)
 
     # Check form is valid
@@ -1083,6 +1129,11 @@ def strumenti_delegati(request, me):
                 torna_titolo="Torna indietro",
                 torna_url=reverse('strumenti_delegati'),
             )
+
+        if model == 'corsobase' and oggetto.online and oggetto.moodle:
+            from formazione.training_api import TrainingApi
+            api = TrainingApi()
+            api.aggiugi_ruolo(persona=d.persona, corso=oggetto, ruolo=TrainingApi.DIRETTORE)
 
         d.inizio = poco_fa()
         d.firmatario = me
@@ -1180,7 +1231,6 @@ def presidente(request, me):
 
 
 def _presidente_sede_ruoli(sede):
-
     sezioni = OrderedDict()
 
     sezioni.update({
@@ -1199,9 +1249,12 @@ def _presidente_sede_ruoli(sede):
         "Responsabili": [
             (UFFICIO_SOCI, "Ufficio Soci", sede.delegati_attuali(tipo=UFFICIO_SOCI).count(), []),
             (UFFICIO_SOCI_UNITA, "Ufficio Soci per Unità territoriale", sede.delegati_attuali(tipo=UFFICIO_SOCI_UNITA).count(), []),
+            (UFFICIO_SOCI_CM, "Ufficio Soci Corpo militare", sede.delegati_attuali(tipo=UFFICIO_SOCI_CM).count(), []),
+            (UFFICIO_SOCI_IIVV, "Ufficio Soci Infermiere volontarie", sede.delegati_attuali(tipo=UFFICIO_SOCI_IIVV).count(), []),
             (RESPONSABILE_FORMAZIONE, "Formazione", sede.delegati_attuali(tipo=RESPONSABILE_FORMAZIONE).count(), []),
             (RESPONSABILE_AUTOPARCO, "Autoparco", sede.delegati_attuali(tipo=RESPONSABILE_AUTOPARCO).count(), []),
             (DELEGATO_CO, "Centrale Operativa", sede.delegati_attuali(tipo=DELEGATO_CO).count(), []),
+            (DELEGATO_SO, "Sala Operativa", sede.delegati_attuali(tipo=DELEGATO_SO).count(), []),
         ]
     })
 
@@ -1222,18 +1275,145 @@ def presidente_sede(request, me, sede_pk):
     if not me.permessi_almeno(sede, MODIFICA):
         return redirect(ERRORE_PERMESSI)
 
-    modulo = ModuloPresidenteSede(request.POST or None, instance=sede)
-    if modulo.is_valid():
-        modulo.save()
+    form = ModuloPresidenteSede(request.POST or None, instance=sede)
+    if form.is_valid():
+        form.save()
 
-    sezioni = _presidente_sede_ruoli(sede)
-
-    contesto = {
+    context = {
         "sede": sede,
-        "modulo": modulo,
-        "sezioni": sezioni,
+        "modulo": form,
+        "sezioni": _presidente_sede_ruoli(sede),
     }
-    return 'anagrafica_presidente_sede.html', contesto
+    return 'anagrafica_presidente_sede.html', context
+
+
+@pagina_privata
+def presidente_sede_indirizzi(request, me, sede_pk):
+    sede = get_object_or_404(Sede, pk=sede_pk)
+    if not me.permessi_almeno(sede, MODIFICA):
+        return redirect(ERRORE_PERMESSI)
+
+    form = ModuloPresidenteSede(request.POST or None, instance=sede)
+    if form.is_valid():
+        form.save()
+
+    pdr_form = ModuloPresidenteSedePersonaDiRiferimento(request.POST or None,
+                                                        instance=sede)
+    if pdr_form.is_valid():
+        pdr_form.save()
+
+    context = {
+        "sede": sede,
+        "modulo": form,
+    }
+
+    # GAIA-280. Inizio della logica. La vista riceve un parametro GET.
+    # Tutto il resto procede attraverso lo scambio di dati fra: templatetags, session
+    # (commit 74347d34fe)
+    modifica_indirizzo_sede = request.GET.get('f')
+    if modifica_indirizzo_sede and modifica_indirizzo_sede in ['sede_operativa',
+                                                               'indirizzo_per_spedizioni']:
+        context['modifica_indirizzo_sede'] = modifica_indirizzo_sede
+
+        if modifica_indirizzo_sede == "indirizzo_per_spedizioni":
+            context['persona_di_riferimento_form'] = pdr_form
+
+    else:
+        return redirect(reverse('presidente:sedi_panoramico', args=[sede.pk,]))
+
+    return 'anagrafica_presidente_sede_indirizzi.html', context
+
+
+@pagina_privata
+def presidente_sede_operativa_indirizzo(request, me, sede_pk, sede_operativa_pk):
+    sede = get_object_or_404(Sede, pk=sede_pk)
+    if not me.permessi_almeno(sede, MODIFICA):
+        return redirect(ERRORE_PERMESSI)
+
+    action = request.GET.get('a')
+    if action and action == 'cancella':
+        sedi_operative = sede.sede_operativa
+        sede_operativa = sedi_operative.get(pk=sede_operativa_pk)
+        sedi_operative.remove(sede_operativa)
+        sede.save()
+
+        messages.success(request, "La sede operativa è stata cancellata.")
+        return redirect(sede.presidente_url)
+
+    return 'anagrafica_presidente_sede_operativa_indirizzo.html', {}
+
+
+@pagina_privata
+def presidente_sede_nominativi(request, me, sede_pk):
+    redirect_to_sede = redirect(reverse('presidente:sedi_panoramico', args=[sede_pk,]))
+    sede = get_object_or_404(Sede, pk=sede_pk)
+    if not me.permessi_almeno(sede, MODIFICA):
+        return redirect(ERRORE_PERMESSI)
+
+    tipo = None
+    add_tipo = request.GET.get('add') or request.POST['tipo']
+    if add_tipo in [Nominativo.REVISORE_DEI_CONTI,
+                    Nominativo.ORGANO_DI_CONTROLLO]:
+        tipo = add_tipo
+
+    if not tipo:
+        return redirect_to_sede
+
+    form = ModuloPresidenteSedeNominativo(request.POST or None, tipo=tipo)
+    if form.is_valid():
+        cd = form.cleaned_data
+        nominativo = form.save(commit=False)
+        nominativo.tipo = cd['tipo']
+        nominativo.sede = sede
+        nominativo.inizio = timezone.now()
+        nominativo.save()
+
+        return redirect_to_sede
+
+    context = {
+        'form': form,
+    }
+
+    return 'anagrafica_presidente_sede_nominativi.html', context
+
+
+@pagina_privata
+def sede_nominativo_modifica(request, me, sede_pk, nominativo_pk):
+    sede = get_object_or_404(Sede, pk=sede_pk)
+    if not me.permessi_almeno(sede, MODIFICA):
+        return redirect(ERRORE_PERMESSI)
+
+    nominativo = Nominativo.objects.get(pk=nominativo_pk)
+
+    form = ModuloPresidenteSedeNominativo(request.POST or None, instance=nominativo)
+    if form.is_valid():
+        form.save()
+        return redirect(nominativo.url())
+
+    context = {
+        'form': form,
+        'nominativo': nominativo,
+    }
+    return 'anagrafica_sede_nominativo_modifica.html', context
+
+
+@pagina_privata
+def sede_nominativo_termina(request, me, sede_pk, nominativo_pk):
+    sede = get_object_or_404(Sede, pk=sede_pk)
+    nominativo = Nominativo.objects.get(pk=nominativo_pk)
+
+    if not me.permessi_almeno(sede, MODIFICA):
+        return redirect(ERRORE_PERMESSI)
+
+    # if nominativo.tipo == Nominativo.REVISORE_DEI_CONTI:
+    #     tutti_nominativi_per_sede = Nominativo.objects.filter(sede=sede)
+    #     if tutti_nominativi_per_sede.count() == 1:
+    #         messages.error("")
+    #         return sede.presidente_url
+
+    nominativo.termina()
+
+    return redirect(sede.presidente_url)
 
 
 @pagina_privata
@@ -1247,6 +1427,8 @@ def presidente_checklist(request, me, sede_pk):
 
     deleghe_da_processare = [
         (UFFICIO_SOCI, sede),
+        (UFFICIO_SOCI_CM, sede),
+        (UFFICIO_SOCI_IIVV, sede),
         # (CONSIGLIERE, sede),
         (DELEGATO_OBIETTIVO_1, sede),
         (DELEGATO_OBIETTIVO_2, sede),
@@ -1805,3 +1987,12 @@ def admin_pulisci_email(request, me):
         "modulo": modulo
     }
     return "admin_pulisci_email.html", contesto
+
+
+@pagina_privata
+def inscrizione_evento(request, me):
+    if request.is_ajax:
+        access_token = trippus_oauth()['access_token']
+        res = trippus_booking(me, access_token)
+        return JsonResponse({'link': res['url']})
+    return JsonResponse({})

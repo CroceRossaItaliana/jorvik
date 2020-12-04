@@ -1,5 +1,6 @@
 {% extends "base_vuota.html" %}
 
+{% load static %}
 {% load bootstrap3  %}
 {% load base_tags %} {# base.templatetsgs #}
 {% load utils %} {# anagrafica.templatetsgs #}
@@ -60,7 +61,6 @@
         </div>
     </div>
 </div>
-
 <script>
     $('#id_area').on('change', function(e) {
         let data = $('#id_titolo-autocomplete');

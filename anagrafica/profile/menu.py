@@ -1,25 +1,65 @@
 from collections import OrderedDict
 
+from formazione.elenchi import ElencoPartecipantiCorsiBase
+from formazione.models import Corso
+from ..permessi.costanti import LETTURA
 from ..models import Delega
 from ..profile import views
 
 
-def filter_per_role(me, persona, sezioni):
-    sezioni = OrderedDict(sezioni)
+def filter_per_role(request, me, persona, sezioni):
+    puo_leggere = me.permessi_almeno(persona, LETTURA)
+    if not puo_leggere:
+        return OrderedDict()
 
     # GAIA-213 (filtro aggiuntivo per direttori)
-    SEZIONI_VISIBILI_PER_DIRETTORE = ['appartenenze', 'curriculum']
-    if me.is_direttore:
-        menu_items = OrderedDict()
-        # Trova corsi del direttore e corsi della persona
-        corsi_in_comune = Delega.corsi(me) & persona.corsi
+    corsi_direttore = Delega.corsi(me).filter(stato__in=[Corso.ATTIVO, Corso.PREPARAZIONE])
+    corsi_persona = persona.corsi(corso_stato=[Corso.ATTIVO, Corso.PREPARAZIONE])
+    corsi_in_comune = corsi_direttore & corsi_persona
 
-        # Se c'è almeno uno in comune - direttore potra vedere alcune sezioni
+    def delete_sessions(request):
+        session_names = ['us', 'ea',]
+        for n in session_names:
+            if n in request.session.keys():
+                # print(n)
+                del request.session[n]
+
+    def elenco_shortname_in_get():
+        for i in [ElencoPartecipantiCorsiBase.SHORT_NAME,]:
+            if i in request.GET and not corsi_in_comune:
+                return False
+        return True
+
+    sezioni = OrderedDict(sezioni)
+    if 'us' in request.GET or 'ea' in request.GET:
+        if 'us' in request.GET:
+            request.session['us'] = ''
+        elif 'ea' in request.GET:
+            request.session['ea'] = ''
+        return sezioni
+
+    elif 'us' in request.session.keys() and not elenco_shortname_in_get():
+        delete_sessions(request)
+        return sezioni
+
+    elif 'ea' in request.session.keys() and not elenco_shortname_in_get():
+        delete_sessions(request)
+        return sezioni
+
+    elif ElencoPartecipantiCorsiBase.SHORT_NAME in request.GET or corsi_in_comune:
+        delete_sessions(request)
+
+        SEZIONI_VISIBILI_PER_DIRETTORE = ['appartenenze', 'curriculum',]
+
+        # Trova corsi del direttore e corsi della persona
         if corsi_in_comune:
+            menu_items = OrderedDict()
             for k, v in sezioni.items():
                 if k in SEZIONI_VISIBILI_PER_DIRETTORE:
                     menu_items[k] = v
-        return menu_items
+            return menu_items
+        return OrderedDict()
+
     return sezioni
 
 

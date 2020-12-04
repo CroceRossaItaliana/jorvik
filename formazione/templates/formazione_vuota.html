@@ -1,6 +1,7 @@
 {% extends "anagrafica_utente_vuota.html" %}
 
 {% load bootstrap3 %}
+{% load formazione_templatetags %}
 
 {% block pagina_titolo %}Benvenuto in Gaia{% endblock %}
 
@@ -11,7 +12,7 @@
             <li class="dropdown-header grassetto piu-grande">{{ sezione_nome }}</li>
             {% for link_nome, link_icona, link_url, link_contatore in sezione_pagine %}
                 <li role="presentation" {% if link_url in request.path %}class="active"{% endif %}>
-                    <a href="{{ link_url|urlencode }}">
+                    <a class="menu-link" href='{{ link_url|urlencode:"https://datafiles.gaia.cri.it" }}' {% formazione_menu_link_pdf_target_blank link_url %}>
                         <i class="fa {{ link_icona }} fa-fw"></i>
                         {{ link_nome }}
                     </a>

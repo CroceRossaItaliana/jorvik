@@ -23,6 +23,7 @@ from .stringhe import GeneratoreNomeFile, genera_uuid_casuale
 from .tratti import ConMarcaTemporale
 
 
+
 class ModelloSemplice(models.Model):
     """ Questa classe astratta rappresenta un Modello generico. """
 
@@ -191,6 +192,12 @@ class Autorizzazione(ModelloSemplice, ConMarcaTemporale):
             if self.oggetto.INVIA_NOTIFICA_NEGATA and notifiche_attive:
                 self.notifica_negata(auto=auto)
             return
+
+        from formazione.models import PartecipazioneCorsoBase
+        if isinstance(self.oggetto, PartecipazioneCorsoBase) and self.oggetto.corso.online and self.oggetto.corso.moodle:
+            from formazione.training_api import TrainingApi
+            api = TrainingApi()
+            api.aggiugi_ruolo(persona=self.oggetto.persona, corso=self.oggetto.corso, ruolo=TrainingApi.DISCENTE)
 
         # Questa concessa, di questo progressivo non e' piu' necessaria
         # alcuna auutorizzazione.

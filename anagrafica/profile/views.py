@@ -28,7 +28,7 @@ def profilo(request, me, pk, sezione=None):
 
     # Controlla permessi di visualizzazione
     sezioni = profile_sections(puo_leggere, puo_modificare)
-    sezioni = filter_per_role(me, persona, sezioni)
+    sezioni = filter_per_role(request, me, persona, sezioni)
 
     context = {
         "persona": persona,
@@ -82,44 +82,51 @@ def _profilo_anagrafica(request, me, persona):
 
 def _profilo_appartenenze(request, me, persona):
     puo_modificare = me.permessi_almeno(persona, MODIFICA)
-    alredy_valid = False
-    moduli = []
+
+    already_valid = False
+    forms = []
     terminabili = []
+
     for app in persona.appartenenze.all():
-        modulo = None
+        form = None
         terminabile = me.permessi_almeno(app.estensione.first(), MODIFICA)
-        for modulo in moduli:
-            if not modulo is None and modulo.is_valid:
-                alredy_valid = True
-        if app.attuale() and app.modificabile() and puo_modificare and not alredy_valid:
-            modulo = ModuloModificaDataInizioAppartenenza(request.POST or None,
-                                                          instance=app,
-                                                          prefix="%d" % (app.pk,))
-            if ("%s-inizio" % (app.pk,)) in request.POST and modulo.is_valid():
+
+        for form in forms:
+            if not form is None and form.is_valid():
+                already_valid = True
+
+        if app.attuale() and app.modificabile() and puo_modificare and not already_valid:
+            form = ModuloModificaDataInizioAppartenenza(request.POST or None, instance=app, prefix="%d" % app.pk)
+
+            inizio_pk = "%s-inizio" % app.pk
+            fine_pk = "%s-fine" % app.pk
+
+            if inizio_pk in request.POST or fine_pk in request.POST and form.is_valid():
                 with transaction.atomic():
                     if app.membro == Appartenenza.DIPENDENTE:
                         app_volontario = persona.appartenenze_attuali(membro=Appartenenza.VOLONTARIO).first()
                         if app_volontario:
                             try:
                                 riserva = Riserva.objects.get(appartenenza=app_volontario)
-                            except Exception:
+                            except Riserva.DoesNotExist:
                                 pass
                             else:
-                                riserva.inizio = modulo.cleaned_data['inizio']
+                                riserva.inizio = form.cleaned_data['inizio']
+                                riserva.fine = form.cleaned_data['fine']
                                 riserva.save()
-                    modulo.save()
+                    form.save()
 
-        moduli += [modulo]
+        forms += [form]
         terminabili += [terminabile]
 
-    appartenenze = zip(persona.appartenenze.all(), moduli, terminabili)
+    appartenenze = zip(persona.appartenenze.all(), forms, terminabili)
 
-    contesto = {
+    context = {
         "appartenenze": appartenenze,
         "es": Appartenenza.ESTESO
     }
 
-    return 'anagrafica_profilo_appartenenze.html', contesto
+    return 'anagrafica_profilo_appartenenze.html', context
 
 
 def _profilo_fototessera(request, me, persona):

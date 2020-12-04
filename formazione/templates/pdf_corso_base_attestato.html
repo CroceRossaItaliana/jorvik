@@ -9,6 +9,8 @@
     body {padding: 0; margin: 0; }
     *, html, body {font-family: "Arial", sans-serif;}
     .front-page-logo {display:block; margin:0 auto; width: 100%; max-width: 125px;}
+    .firme-cri {margin-bottom:40px;}
+    .firme-cri span {display:inline-block; width:45%; text-align:center;}
 </style>
 
 {% get_url_for_staticfiles as SITE_URL %}
@@ -91,17 +93,12 @@
     <p class="western" style="margin-bottom: 0cm; line-height: 100%">
         <br/>
     </p>
-    <table width="100%">
-        <tr>
-            <td align="center">
-                Il Direttore del Corso
-            </td>
-            <td align="center">
-                Il Presidente del Comitato
-            </td>
-        </tr>
-    </table>
-    <br/>
+
+    <p class="firme-cri">
+        <span>Il Direttore del Corso</span>
+        <span>Il Presidente del Comitato</span>
+    </p>
+
     <p class="western" style="margin-bottom: 0cm; line-height: 100%">
         <font face="Arial, sans-serif">
             {{ corso.locazione.comune }}, li {{ corso.data_esame }}

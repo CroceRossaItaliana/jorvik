@@ -8,7 +8,7 @@
     <div class="panel panel-primary">
         <div class="panel-heading"><h2 class="panel-title"><i class="fa fa-fw fa-pencil"></i> Commissione esame</h2></div>
         <div class="panel-body">
-          {% if me.is_presidente or me.is_comissario %}
+          {% if me.is_presidente or me.is_comissario or me.is_responsabile_formazione %}
             <form action="{% url 'courses:commissione_esame' corso.pk %}" method="post" enctype="multipart/form-data">
                 {% csrf_token %}
                 {% bootstrap_form commissione_esame_form %}

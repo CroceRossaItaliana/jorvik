@@ -1,6 +1,6 @@
 from django.core.urlresolvers import reverse
 from formazione.menus import formazione_menu
-
+from anagrafica.models import Appartenenza
 
 class Menu:
     def __init__(self, request):
@@ -12,6 +12,14 @@ class Menu:
         return self.me and self.me.volontario
 
     @property
+    def is_aspirante(self):
+        return self.me and hasattr(self.me, 'aspirante') and not self.me.appartenenze_attuali(membro=Appartenenza.SEVIZIO_CIVILE_UNIVERSALE).exists()
+
+    @property
+    def is_sevizio_civile(self):
+        return self.me.appartenenze_attuali(membro=Appartenenza.SEVIZIO_CIVILE_UNIVERSALE).exists()
+
+    @property
     def gestione_corsi_sede(self):
         from anagrafica.permessi.costanti import GESTIONE_CORSI_SEDE
 
@@ -19,7 +27,7 @@ class Menu:
 
     @property
     def elementi_anagrafica(self):
-        if self.me and hasattr(self.me, 'aspirante'):
+        if self.is_aspirante:
             return self.aspirante
         else:
             return self.utente
@@ -87,6 +95,12 @@ class Menu:
         return ufficio_soci.menu_us(self.me)
 
     @property
+    def so(self):
+        from sala_operativa.menus import sala_operativa
+
+        return sala_operativa(self.me)
+
+    @property
     def co(self):
         from .menus import centrale_operativa
 
@@ -98,7 +112,7 @@ class Menu:
 
     @property
     def aspirante(self):
-        return formazione_menu('aspirante') if self.me and hasattr(self.me, 'aspirante') else self.formazione
+        return formazione_menu('aspirante') if self.is_aspirante else self.formazione
 
     def mapping(self):
         """
@@ -143,6 +157,11 @@ class Menu:
                 'name_for_template': 'us',
             }),
             ({
+                'urls': ['/so/'],
+                'method': 'so',
+                'name_for_template': 'so',
+            }),
+            ({
                 'urls': ['/veicoli/', '/veicolo/', '/autoparco/'],
                 'method': 'veicoli',
                 'name_for_template': 'veicoli',
@@ -185,6 +204,9 @@ class Menu:
         return (
             ("Documenti", (
                 ("Elenco", "fa-newspaper-o", reverse('documenti:lista_documenti')),
+                (
+                    "Documenti comitato", "fa-newspaper-o", reverse('documenti:documenti-comitato')
+                ) if self.me.is_presidente or self.me.is_comissario else None
             )),
         )
 

@@ -19,14 +19,15 @@ from django.utils.functional import cached_property
 from django_countries.fields import CountryField
 
 from .costanti import (ESTENSIONE, TERRITORIALE, LOCALE, PROVINCIALE, REGIONALE, NAZIONALE)
+from .permessi.applicazioni import DELEGATO_AREA, DELEGATO_SO
 from .validators import (valida_codice_fiscale, ottieni_genere_da_codice_fiscale,
     valida_dimensione_file_8mb, valida_partita_iva, valida_dimensione_file_5mb,
     valida_iban, valida_email_personale) # valida_almeno_14_anni, crea_validatore_dimensione_file)
 from .permessi.shortcuts import *
-from .permessi.costanti import RUBRICA_DELEGATI_OBIETTIVO_ALL
+from .permessi.costanti import RUBRICA_DELEGATI_OBIETTIVO_ALL, GESTIONE_SOCI_CM, GESTIONE_SOCI_IIVV
 from attivita.models import Turno, Partecipazione
 from base.files import PDF, Excel, FoglioExcel
-from base.geo import ConGeolocalizzazione
+from base.geo import ConGeolocalizzazione, Locazione
 from base.stringhe import normalizza_nome, GeneratoreNomeFile
 from base.models import (ModelloSemplice, ModelloAlbero, ConAutorizzazioni,
     ConAllegati, Autorizzazione, ConVecchioID)
@@ -267,7 +268,7 @@ class Persona(ModelloSemplice, ConMarcaTemporale, ConAllegati, ConVecchioID):
             if espandi:
                 pks = [x.pk for x in oggetto.espandi(includi_me=True, pubblici=pubblici)]
             else:
-                pks = [oggetto.pk]
+                pks = [oggetto.pk] if hasattr(oggetto, 'pk') else [s.pk for s in oggetto.all()]
 
             sedi |= Sede.objects.filter(pk__in=pks)
         return sedi
@@ -309,6 +310,10 @@ class Persona(ModelloSemplice, ConMarcaTemporale, ConAllegati, ConVecchioID):
         Ottiene la prima appartenenza, se esistente.
         """
         return self.appartenenze.filter(confermata=True, **kwargs).order_by('inizio').first()
+
+    @property
+    def appartenenza_volontario(self):
+        return self.appartenenze_attuali(membro=Appartenenza.VOLONTARIO)
 
     def appartenenze_per_presidente(self, presidente):
         """
@@ -452,6 +457,13 @@ class Persona(ModelloSemplice, ConMarcaTemporale, ConAllegati, ConVecchioID):
         return self.membro(Appartenenza.VOLONTARIO, **kwargs)
 
     @property
+    def servizio_civile(self, **kwargs):
+        """
+        Controlla se membro Servizio civile universale
+        """
+        return self.membro(Appartenenza.SEVIZIO_CIVILE_UNIVERSALE, **kwargs)
+
+    @property
     def ordinario(self, **kwargs):
         """
         Controlla se membro ordinario
@@ -494,11 +506,22 @@ class Persona(ModelloSemplice, ConMarcaTemporale, ConAllegati, ConVecchioID):
         return self.membro(Appartenenza.SOSTENITORE, **kwargs)
 
     @property
+    def operatore_villa_maraini(self):
+        return self.appartenenze_attuali(membro=Appartenenza.OPERATORE_VILLA_MARAINI)
+
+    @property
     def applicazioni_disponibili(self):
+        from sala_operativa.utils import visibilita_menu_top
         from formazione.models import CorsoBase
 
         # Personalizzare il menu "Utente" secondo il suo ruolo
         utente_url, utente_label, utente_count = ('/utente/', 'Volontario', None)
+
+        # GAIA-246
+        if self.operatore_villa_maraini and not self.volontario:
+            return [
+                (utente_url, 'Operatore Villa Maraini', 'fa-user', utente_count),
+            ]
 
         if not self.volontario:
             utente_label = 'Utente'
@@ -516,11 +539,12 @@ class Persona(ModelloSemplice, ConMarcaTemporale, ConAllegati, ConVecchioID):
             [('/posta/in-arrivo/', 'Posta', 'fa-envelope'), True],
             [('/autorizzazioni/', 'Richieste', 'fa-user-plus', self.autorizzazioni_in_attesa().count()), self.ha_pannello_autorizzazioni],
             [('/presidente/', 'Sedi', 'fa-home'), self.ha_permesso(GESTIONE_SEDE)],
-            [('/us/', 'Soci', 'fa-users'), self.ha_permesso(GESTIONE_SOCI)],
+            [('/us/', 'Soci', 'fa-users'), self.ha_permesso(GESTIONE_SOCI) or self.ha_permesso(GESTIONE_SOCI_CM) or self.ha_permesso(GESTIONE_SOCI_IIVV)],
             [('/veicoli/', "Veicoli", "fa-car"), self.ha_permesso(GESTIONE_AUTOPARCHI_SEDE)],
+            # [(reverse('so:index'), "SO", "fa-compass"), visibilita_menu_top(self)],
             [('/centrale-operativa/', "CO", "fa-compass"), self.ha_permesso(GESTIONE_CENTRALE_OPERATIVA_SEDE)],
             [('/formazione/', 'Formazione', 'fa-graduation-cap'), self.ha_permesso(GESTIONE_CORSO) or self.ha_permesso(GESTIONE_CORSI_SEDE)],
-            [('/articoli/', 'Articoli', 'fa-newspaper-o'), True],
+            [('/articoli/', 'Articoli', 'fa-newspaper'), True],
             [('/documenti/', 'Documenti', 'fa-folder'), True],
         ]
 
@@ -686,12 +710,15 @@ class Persona(ModelloSemplice, ConMarcaTemporale, ConAllegati, ConVecchioID):
 
         return requests_to_courses.filter(persona=self, corso__stato__in=corso_stato)
 
-    @property
-    def corsi(self):
+    def corsi(self, **richieste_di_partecipazione_kwargs):
         from formazione.models import CorsoBase
 
-        richieste_di_partecipazione = self.richieste_di_partecipazione().values_list('corso_id', flat=True)
+        richieste_di_partecipazione = self.richieste_di_partecipazione(
+            **richieste_di_partecipazione_kwargs
+        ).values_list('corso_id', flat=True)
+
         corsi_in_attesa_o_confermati = CorsoBase.objects.filter(id__in=richieste_di_partecipazione)
+
         return corsi_in_attesa_o_confermati | self.corsi_frequentati
 
     @property
@@ -1154,6 +1181,14 @@ class Persona(ModelloSemplice, ConMarcaTemporale, ConAllegati, ConVecchioID):
         ).exists():
             return True
 
+        if self.appartenenze_attuali().filter(
+                membro=Appartenenza.SEVIZIO_CIVILE_UNIVERSALE
+        ).exists() and not self.appartenenze_attuali().exclude(
+            membro__in=[Appartenenza.ESTESO,Appartenenza.SEVIZIO_CIVILE_UNIVERSALE]
+        ).exists():
+            return True
+
+
         return False
 
     def genera_foglio_di_servizio(self):
@@ -1194,6 +1229,7 @@ class Persona(ModelloSemplice, ConMarcaTemporale, ConAllegati, ConVecchioID):
         excel.genera_e_salva("Foglio di servizio.xlsx")
         return excel
 
+
     @property
     def presidente_di(self):
         return self.deleghe_attuali(tipo=PRESIDENTE).last()
@@ -1203,8 +1239,63 @@ class Persona(ModelloSemplice, ConMarcaTemporale, ConAllegati, ConVecchioID):
         return self.deleghe_attuali(tipo=PRESIDENTE).exists()
 
     @property
+    def delega_presidente(self):
+        return self.deleghe_attuali(tipo=PRESIDENTE).first()
+
+    @property
     def is_comissario(self):
         return self.deleghe_attuali(tipo=COMMISSARIO).exists()
+
+    @property
+    def is_responsabile_formazione(self):
+        return self.deleghe_attuali(tipo=RESPONSABILE_FORMAZIONE).exists()
+
+    @property
+    def delega_responsabile_formazione(self):
+        return self.deleghe_attuali(tipo=RESPONSABILE_FORMAZIONE).first()
+
+    @property
+    def delega_commissario(self):
+        return self.deleghe_attuali(tipo=COMMISSARIO).first()
+
+    @property
+    def is_delegato_assemblea_nazionale(self):
+        return self.deleghe_attuali(tipo=VICE_PRESIDENTE).exists() or \
+               self.deleghe_attuali(tipo=CONSIGLIERE).exists() or \
+               self.deleghe_attuali(tipo=CONSIGLIERE_GIOVANE).exists()
+
+    @property
+    def delega_delegato_assemblea_nazionale(self):
+        return self.deleghe_attuali(tipo=VICE_PRESIDENTE).first() or \
+               self.deleghe_attuali(tipo=CONSIGLIERE).first() or \
+               self.deleghe_attuali(tipo=CONSIGLIERE_GIOVANE).first()
+
+    @property
+    def is_responsabile_area_delegato_assemblea_nazionale(self):
+        delegato_area = False
+        for delega in self.deleghe_attuali(tipo=RESPONSABILE_AREA):
+            if 'CM'.lower() in delega.oggetto.__str__().lower():
+                delegato_area = True
+            if 'IIVV'.lower() in delega.oggetto.__str__().lower():
+                delegato_area = True
+        return delegato_area
+
+    @property
+    def delegato_tempo_della_gentilezza(self):
+        obbiettivi = self.deleghe_attuali(
+            tipo__in=[DELEGATO_OBIETTIVO_1, DELEGATO_OBIETTIVO_2, DELEGATO_OBIETTIVO_3]
+        ).exists()
+        itdg_meds = False
+        for delega in self.deleghe_attuali(tipo=DELEGATO_AREA):
+            if 'ITDG'.lower() in delega.oggetto.__str__().lower():
+                itdg_meds = True
+            if 'MEDS'.lower() in delega.oggetto.__str__().lower():
+                itdg_meds = True
+        return self.is_presidente or self.is_comissario or obbiettivi or itdg_meds
+
+    @property
+    def is_responsabile_formazione(self):
+        return self.deleghe_attuali(tipo=RESPONSABILE_FORMAZIONE).exists()
 
     @property
     def is_direttore(self):
@@ -1487,27 +1578,33 @@ class Appartenenza(ModelloSemplice, ConStorico, ConMarcaTemporale, ConAutorizzaz
     MILITARE = 'MI'
     DONATORE = 'DO'
     SOSTENITORE = 'SO'
+    OPERATORE_VILLA_MARAINI = 'VM'  # GAIA-246
+    SEVIZIO_CIVILE_UNIVERSALE = 'SC'
 
     # Quale tipo di membro puo' partecipare alle attivita'?
-    MEMBRO_ATTIVITA = (VOLONTARIO, ESTESO,)
+    MEMBRO_ATTIVITA = (VOLONTARIO, ESTESO, SEVIZIO_CIVILE_UNIVERSALE)
+
+    # Quale tipo di membro può partecipare al servizio?
+    MEMBRO_SERVIZIO = (VOLONTARIO, ESTESO, DIPENDENTE, )
 
     # Membri sotto il diretto controllo della Sede
-    MEMBRO_DIRETTO = (VOLONTARIO, ORDINARIO, DIPENDENTE, INFERMIERA, MILITARE, DONATORE, SOSTENITORE)
+    MEMBRO_DIRETTO = (VOLONTARIO, ORDINARIO, DIPENDENTE, INFERMIERA, MILITARE, DONATORE, SOSTENITORE, SEVIZIO_CIVILE_UNIVERSALE,)
 
     # Membro che puo' essere reclamato da una Sede
-    MEMBRO_RECLAMABILE = (VOLONTARIO, ORDINARIO, DIPENDENTE, SOSTENITORE,)
+    MEMBRO_RECLAMABILE = (VOLONTARIO, ORDINARIO, DIPENDENTE, SOSTENITORE, SEVIZIO_CIVILE_UNIVERSALE,)
 
     # Membro che puo' accedere alla rubrica di una Sede
-    MEMBRO_RUBRICA = (VOLONTARIO, ORDINARIO, ESTESO, DIPENDENTE,)
+    MEMBRO_RUBRICA = (VOLONTARIO, ORDINARIO, ESTESO, DIPENDENTE)
 
     # Membri che possono richiedere il tesserino
-    MEMBRO_TESSERINO = (VOLONTARIO,)
+    MEMBRO_TESSERINO = (VOLONTARIO, SEVIZIO_CIVILE_UNIVERSALE)
 
     # Membri soci
     MEMBRO_SOCIO = (VOLONTARIO, ORDINARIO,)
     MEMBRO_ANZIANITA = MEMBRO_SOCIO
     MEMBRO_ANZIANITA_ANNI = 2
     MEMBRO_ANZIANITA_ELETTORATO_ATTIVO = 1
+    MEMBRO_ANZIANITA_MESI = 3
 
     # Membri sotto il diretto controllo di una altra Sede
     MEMBRO_ESTESO = (ESTESO,)
@@ -1521,6 +1618,8 @@ class Appartenenza(ModelloSemplice, ConStorico, ConMarcaTemporale, ConAutorizzaz
         (ORDINARIO, 'Socio Ordinario'),
         (SOSTENITORE, 'Sostenitore'),
         (DIPENDENTE, 'Dipendente'),
+        (OPERATORE_VILLA_MARAINI, 'Operatore Villa Maraini'),
+        (SEVIZIO_CIVILE_UNIVERSALE, 'Volontario in servizio civile universale'),
         #(INFERMIERA, 'Infermiera Volontaria'),
         #(MILITARE, 'Membro Militare'),
         #(DONATORE, 'Donatore Finanziario'),
@@ -1593,6 +1692,8 @@ class Appartenenza(ModelloSemplice, ConStorico, ConMarcaTemporale, ConAutorizzaz
             return 'Donatore, '+self.sede.nome_completo
         elif self.membro == self.SOSTENITORE:
             return 'Sostenitore, '+self.sede.nome_completo
+        elif self.membro == self.SEVIZIO_CIVILE_UNIVERSALE:
+            return 'Servizio civile universale, ' + self.sede.nome_completo
 
     def richiedi(self, notifiche_attive=True):
         """
@@ -1728,6 +1829,15 @@ class Sede(ModelloAlbero, ConMarcaTemporale, ConGeolocalizzazione, ConVecchioID,
     estensione = models.CharField("Estensione", max_length=1, choices=ESTENSIONE, db_index=True)
     tipo = models.CharField("Tipologia", max_length=1, choices=TIPO, default=COMITATO, db_index=True)
 
+    # GAIA-280
+    sede_operativa = models.ManyToManyField(Locazione, blank=True)
+    indirizzo_per_spedizioni = models.ForeignKey(Locazione, null=True, blank=True,
+                                                 related_name="locazione_indirizzo_spedizioni")
+    persona_di_riferimento = models.CharField("Persona da contattare di riferimento", max_length=250, null=True,
+                                              blank=True)
+    persona_di_riferimento_telefono = models.CharField("Numero telefonico della persona di riferimento", max_length=20,
+                                                       null=True, blank=True)
+
     # Dati del comitato
     # Nota: indirizzo e' gia' dentro per via di ConGeolocalizzazione
     telefono = models.CharField("Telefono", max_length=64, blank=True)
@@ -1740,6 +1850,12 @@ class Sede(ModelloAlbero, ConMarcaTemporale, ConGeolocalizzazione, ConVecchioID,
                             help_text="Coordinate bancarie internazionali del "
                                       "C/C della Sede.",
                             validators=[valida_iban])
+
+    rea = models.CharField("Numero REA", max_length=20, blank=True, null=True)
+    cciaa = models.CharField("Iscrizione CCIAA", max_length=20, blank=True, null=True)
+    runts = models.CharField("N. Iscrizione Registro del Volontario",
+                             max_length=20, blank=True, null=True)
+
     codice_fiscale = models.CharField("Codice Fiscale", max_length=32, blank=True)
     partita_iva = models.CharField("Partita IVA", max_length=32, blank=True,
                                    validators=[valida_partita_iva])
@@ -1773,6 +1889,10 @@ class Sede(ModelloAlbero, ConMarcaTemporale, ConGeolocalizzazione, ConVecchioID,
     @property
     def ha_checklist(self):
         return self.tipo == self.COMITATO and self.estensione in [NAZIONALE, REGIONALE, PROVINCIALE, LOCALE]
+
+    @property
+    def presidente_url(self):
+        return reverse('presidente:sedi_panoramico', args=[self.pk, ])
 
     @property
     def richiede_revisione_dati(self):
@@ -1894,8 +2014,17 @@ class Sede(ModelloAlbero, ConMarcaTemporale, ConGeolocalizzazione, ConVecchioID,
             delega_presidenziale = self.comitato.delegati_attuali(tipo=COMMISSARIO, solo_deleghe_attive=True).first()
         return delega_presidenziale
 
+    def delegati_formazione(self):
+        return self.comitato.delegati_attuali(tipo=RESPONSABILE_FORMAZIONE, solo_deleghe_attive=True)
+
     def commissari(self):
         return self.comitato.delegati_attuali(tipo=COMMISSARIO, solo_deleghe_attive=True)
+
+    def obbiettivo_3(self):
+        return self.comitato.delegati_attuali(tipo=DELEGATO_OBIETTIVO_3, solo_deleghe_attive=True)
+
+    def delegati_so(self):
+        return self.comitato.delegati_attuali(tipo=DELEGATO_SO, solo_deleghe_attive=True)
 
     def vice_presidente(self):
         delega_vice_presidenziale = self.comitato.delegati_attuali(tipo=VICE_PRESIDENTE, solo_deleghe_attive=True).first()
@@ -2054,6 +2183,28 @@ class Sede(ModelloAlbero, ConMarcaTemporale, ConGeolocalizzazione, ConVecchioID,
                 regione_sigla = REGIONI_CON_SIGLE.get(sede_regionale_id, "")
 
         return regione_sigla['sigla'] if regione_sigla else None
+
+    def nominativi(self, tipo=None):
+        """
+        Restituisce i nominativi NON terminati associati a questa sede/
+        :param tipo:
+        :return: Nominativo<QeurySet>
+        """
+        if tipo is None:
+            return Nominativo.objects.none()
+        return Nominativo.objects.filter(
+            tipo=tipo,
+            sede=self,
+            fine__isnull=True,
+        )
+
+    @property
+    def nominativi_rdc(self):
+        return self.nominativi(tipo=Nominativo.REVISORE_DEI_CONTI)
+
+    @property
+    def nominativi_odc(self):
+        return self.nominativi(tipo=Nominativo.ORGANO_DI_CONTROLLO)
 
     def __init__(self, *args, **kwargs):
         super(Sede, self).__init__(*args, **kwargs)
@@ -2481,7 +2632,6 @@ class Trasferimento(ModelloSemplice, ConMarcaTemporale, ConAutorizzazioni, ConPD
                 autorizzazione.notifica_sede_autorizzazione_concessa(app.sede, testo_extra)
 
     def richiedi(self, notifiche_attive=True):
-
         app_trasferibile = self.persona.appartenenze_attuali(membro=Appartenenza.VOLONTARIO).first()
         if not app_trasferibile:
             raise ValueError("Impossibile richiedere estensione: Nessuna appartenenza attuale.")
@@ -2491,6 +2641,7 @@ class Trasferimento(ModelloSemplice, ConMarcaTemporale, ConAutorizzazioni, ConPD
             self.persona,
             INCARICO_GESTIONE_TRASFERIMENTI,
             invia_notifica_presidente=notifiche_attive,
+            invia_notifica_ufficio_soci=True,
             auto=Autorizzazione.AP_AUTO,
             scadenza=self.APPROVAZIONE_AUTOMATICA,
             forza_sede_riferimento=sede,
@@ -2583,20 +2734,21 @@ class Estensione(ModelloSemplice, ConMarcaTemporale, ConAutorizzazioni, ConPDF):
             self.persona,
             INCARICO_GESTIONE_ESTENSIONI,
             invia_notifica_presidente=notifiche_attive,
+            invia_notifica_ufficio_soci=True,
             auto=Autorizzazione.MANUALE,
             forza_sede_riferimento=sede,
         )
         if self.destinazione.presidente():
-            Messaggio.costruisci_e_invia(
-               oggetto="Notifica di Estensione in entrata",
-               modello="email_richiesta_estensione_cc.html",
-               corpo={
-                   "estensione": self,
-               },
-               mittente=None,
-               destinatari=[
+            Messaggio.costruisci_e_accoda(
+                oggetto="Notifica di Estensione in entrata",
+                modello="email_richiesta_estensione_cc.html",
+                corpo={
+                    "estensione": self,
+                },
+                mittente=None,
+                destinatari=[
                     self.destinazione.presidente(),
-               ]
+                ]
             )
 
     def termina(self, data=None):
@@ -2644,10 +2796,18 @@ class Riserva(ModelloSemplice, ConMarcaTemporale, ConStorico, ConProtocollo,
     appartenenza = models.ForeignKey(Appartenenza, related_name="riserve", on_delete=models.PROTECT)
 
     def richiedi(self, notifiche_attive=True):
+        app = self.persona.appartenenze_attuali(membro=Appartenenza.VOLONTARIO).first()
+        if not app:
+            raise ValueError("Impossibile richiedere estensione: Nessuna appartenenza attuale.")
+        sede = app.sede
+
         self.autorizzazione_richiedi_sede_riferimento(
             self.persona,
             INCARICO_GESTIONE_RISERVE,
-            invia_notifica_presidente=notifiche_attive
+            invia_notifica_ufficio_soci=notifiche_attive,
+            invia_notifica_presidente=notifiche_attive,
+            auto=Autorizzazione.MANUALE,
+            forza_sede_riferimento=sede,
         )
         if notifiche_attive:
             self.invia_mail()
@@ -2672,8 +2832,7 @@ class Riserva(ModelloSemplice, ConMarcaTemporale, ConStorico, ConProtocollo,
         self.save()
 
     def invia_mail(self):
-
-        Messaggio.costruisci_e_invia(
+        Messaggio.costruisci_e_accoda(
            oggetto="Richiesta di riserva",
            modello="email_richiesta_riserva.html",
            corpo={
@@ -2705,10 +2864,12 @@ class ProvvedimentoDisciplinare(ModelloSemplice, ConMarcaTemporale, ConProtocoll
     AMMONIZIONE = "A"
     SOSPENSIONE = "S"
     ESPULSIONE = "E"
+    RADIAZIONE = "R"
     TIPO = (
         (AMMONIZIONE, "Ammonizione",),
         (SOSPENSIONE, "Sospensione",),
         (ESPULSIONE, "Esplusione",),
+        (RADIAZIONE, "Radiazione",),
     )
 
     persona = models.ForeignKey(Persona, related_name="provvedimenti", on_delete=models.CASCADE)
@@ -2766,6 +2927,7 @@ class Dimissione(ModelloSemplice, ConMarcaTemporale):
     TRASFORMAZIONE = 'TRA'
     SCADENZA = 'SCA'
     ALTRO = 'ALT'
+    FINE_SERVIZIO_CIVILE = 'FSC'
 
     MOTIVI_VOLONTARI = (
         (VOLONTARIE, 'Dimissioni Volontarie'),
@@ -2775,6 +2937,7 @@ class Dimissione(ModelloSemplice, ConMarcaTemporale):
         (RADIAZIONE, 'Radiazione da Croce Rossa Italiana'),
         (SCADENZA, 'Scadenza contratto o altro'),
         (DECEDUTO, 'Decesso'),
+        (FINE_SERVIZIO_CIVILE, 'Fine progetto/Interruzione servizio civile'),
     )
 
     MOTIVI_ALTRI = (
@@ -2866,4 +3029,52 @@ class Dimissione(ModelloSemplice, ConMarcaTemporale):
                         self.persona
                     ]
                 )
+
+
+class Nominativo(ModelloSemplice, ConStorico, ConMarcaTemporale):
+    """Modello che viene utilizzato con il modello <Sede>"""
+    REVISORE_DEI_CONTI = 'rc'
+    ORGANO_DI_CONTROLLO = 'oc'
+    TIPI_NOMINATIVO = [
+        (REVISORE_DEI_CONTI, "Revisore dei Conti"),
+        (ORGANO_DI_CONTROLLO, "Organo di Controllo"),
+    ]
+
+    nome = models.CharField("Nome e Cognome", max_length=250)
+    tipo = models.CharField(choices=TIPI_NOMINATIVO, max_length=3)
+    sede = models.ForeignKey(Sede, null=True, blank=True)
+    email = models.EmailField("E-mail", null=True, blank=True)
+    PEC = models.EmailField(null=True, blank=True)
+    telefono = models.CharField("Telefono", max_length=64, blank=True)
+
+    @property
+    def terminata(self):
+        return self.fine is not None
+
+    def termina(self):
+        self.fine = timezone.now()
+        self.save()
+
+    def url(self, name=None):
+        if name is None:
+            return self.sede.presidente_url
+        else:
+            return reverse('presidente:sede_nominativo_%s' % name,
+                           args=[self.sede.pk, self.pk, ])
+
+    @property
+    def modifica_url(self):
+        return self.url('modifica')
+
+    @property
+    def termina_url(self):
+        return self.url('termina')
+
+    def __str__(self):
+        return self.nome
+
+    class Meta:
+        verbose_name_plural = "Nominativi"
+
+
 

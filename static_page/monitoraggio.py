@@ -13,7 +13,7 @@ from django.core.urlresolvers import reverse
 
 from anagrafica.models import Persona, Sede
 from anagrafica.permessi.applicazioni import COMMISSARIO, PRESIDENTE
-from static_page.tasks import send_mail
+from .tasks import send_mail
 
 
 class TypeForm:
@@ -296,25 +296,16 @@ class TypeForm:
 
 
 class TypeFormResponses(TypeForm):
-
     form_ids = OrderedDict([
-        ('by6gIZ', 'Sezione A – servizi di carattere sociale'),
-        ('AX0Rjm',
-         'Sezione B – telefonia sociale, telesoccorso, teleassistenza e telemedicina'),
-        ('FZlCpn', 'Sezione C – salute'),
-        ('artG8g', 'Sezione D – ''''"ambiente", "sviluppo economico e coesione sociale",
-                "cultura, sport e ricreazione", "cooperazione e solidarietà internazionale",
-                "protezione civile"'''),
-        ('r3IRy8', 'Sezione E – relazioni'),
-        ('DhH3Mk', 'Sezione F – organizzazione'),
-        ('W6G6cD', 'Sezione G – risorse economiche e finanziarie'),
+        ('jG811ueg', 'Servizi sanitari'),
+        ('vlnVkzY4', 'Servizi di inclusione sociale'),
     ])
-    email_body = """Grazie per aver completato il Monitoraggio 2019 (dati 2018).\n
+    email_body = """Grazie per aver completato il Monitoraggio 2020 (dati 2019).\n
         Nell'apprezzare la collaborazione prestata, a breve restituiremo i dati 
         aggregati a livello nazionale e regionale per i seguiti di competenza.\n
         Per qualsiasi informazione contattare l'area sociale all'indirizzo mail: sociale@cri.it"""
 
-    email_object = 'Risposte monitoraggio 2019 (dati 2018) di %s'
+    email_object = 'Risposte monitoraggio 2020 (dati 2019) di %s'
 
 
 class TypeFormNonSonoUnBersaglio(TypeForm):

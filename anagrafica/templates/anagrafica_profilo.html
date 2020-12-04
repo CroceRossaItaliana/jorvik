@@ -1,6 +1,7 @@
 {% extends "base_vuota.html" %}
 
 {% load bootstrap3 %}
+{% load utils %}
 
 {% block pagina_titolo %}{{ persona.nome_completo }}{% endblock %}
 
@@ -17,7 +18,7 @@
                 {% for chiave, sezione in sezioni.items %}
                     {% if sezione|length_is:4 or sezione.3 %}
                         <li role="presentation" {% if attuale == chiave %}class="active"{% endif %}>
-                            <a href="/profilo/{{ persona.pk }}/{{ chiave }}/" class="">
+                            <a href="/profilo/{{ persona.pk }}/{{ chiave }}/{% add_session_flag_to_profile_urls %}" class="">
                                 <i class="fa fa-fw {{ sezione.1 }}"></i> {{ sezione.0 }}
                             </a>
                         </li>

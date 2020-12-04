@@ -1,0 +1,115 @@
+{% extends 'so_vuota.html' %}
+
+{% load bootstrap3 %}
+
+{% block pagina_titolo %}Aree di Intervento{% endblock %}
+
+{% block app_contenuto %}
+    <div class="alert alert-info alert-block">
+        <p>
+            <i class="fa fa-fw fa-info-circle"></i>
+            Da qui puoi gestire le aree di intervento per il <strong>{{ sede.nome_completo }}</strong>.
+        </p>
+    </div>
+
+    <div class="row">
+        <div class="col-md-9">
+            <div class="panel panel-info">
+                <div class="panel-heading">
+                    <h2 class="panel-title">
+                        <i class="fa fa-fw fa-list"></i> Elenco Aree {{ sede.nome_completo }}
+                    </h2>
+                </div>
+                <div class="panel-body">
+                   <table class="table table-striped">
+                        <thead>
+                            <tr>
+                                <th>Ob.#</th>
+                                <th>Nome Area</th>
+                                <th>Responsabili</th>
+                                <th>Attivit&agrave;</th>
+                                <th>Azioni</th>
+                            </tr>
+                        </thead>
+
+                        <tbody>
+                            {% for area in aree %}
+                                <tr>
+                                    <td class="piu-grande">
+                                        {{ area.obiettivo }}
+                                    </td>
+                                    <td class="grassetto">
+                                        {{ area.nome }}
+                                    </td>
+                                    <td class="piu-piccolo">
+                                        {% for r in area.delegati_attuali %}
+                                            {{ r.link|safe }}<br />
+                                        {% empty %}
+                                            Nessun responsabile
+                                        {% endfor %}
+                                    </td>
+                                    <td>
+                                        {{ area.attivita.count }} attivit&agrave;
+                                    </td>
+                                    <th>
+                                        <div class="btn-group-vertical btn-block">
+                                            <a href="{% url 'so:sede_area_responsabili' sede.pk area.pk %}" class="btn btn-sm btn-default">
+                                                <i class="fa fa-fw fa-users"></i> Responsabili
+                                            </a>
+                                            {% if not area.attivita.exists %}
+                                               <a href="{% url 'so:sede_area_cancella' sede.pk area.pk %}"
+                                                   class="btn btn-xs btn-danger"
+                                                   data-conferma="Sei sicuro di voler cancellare questa area?">
+                                                    <i class="fa fa-fw fa-trash"></i> Cancella
+                                                </a>
+                                            {% endif %}
+                                        </div>
+                                    </th>
+                                </tr>
+                            {% empty %}
+                                <tr class="alert alert-warning">
+                                    <td colspan="5">
+                                        <p><i class="fa fa-fw fa-warning"></i> Nessuna area di intervento creata.</p>
+                                        <p>Crea la prima area di intervento per poter inserire delle attivit&agrave;</p>
+                                    </td>
+                                </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+
+        <div class="col-md-3">
+            <div class="panel panel-primary">
+                <div class="panel-heading">
+                    <h2 class="panel-title"><i class="fa fa-fw fa-plus-circle"></i> Nuova Area</h2>
+                </div>
+                <div class="panel-body">
+                    <form method="POST">
+                        {% csrf_token %}
+                        {% bootstrap_form modulo %}
+                        <button type="submit" class="btn btn-block btn-primary">
+                            <i class="fa fa-fw fa-check"></i> Crea area
+                        </button>
+                    </form>
+                </div>
+            </div>
+
+            <div class="panel panel-success">
+                <div class="panel-heading">
+                    <h2 class="panel-title">
+                        <i class="fa fa-fw fa-question-circle"></i> Vuoi creare un servizio?
+                    </h2>
+                </div>
+                <div class="panel-body">
+                    <p>Prima, assicurati di aver creato un'area di intervento correlata all'attivit&agrave; che vuoi creare.</p>
+                    <p>Quando hai fatto, clicca sul pulsante seguente.</p>
+                    <a href="{% url 'so:organizza' %}" class="btn btn-block btn-success">
+                        <i class="fa fa-fw fa-asterisk"></i> Nuova attivit&agrave;
+                    </a>
+                </div>
+            </div>
+        </div>
+    </div>
+{% endblock %}

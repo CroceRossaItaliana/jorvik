@@ -4,13 +4,9 @@
 {% load mptt_tags %}
 {% load utils %}
 
-{% block pagina_titolo %}
-    Gestione {{ sede.nome_completo }}
-{% endblock %}
+{% block pagina_titolo %}Gestione {{ sede.nome_completo }}{% endblock %}
 
 {% block app_contenuto %}
-
-
     <div class="alert alert-info">
         <p><i class="fa fa-fw fa-info-circle"></i>
         Da questa pagina puoi gestire le informazioni relative
@@ -30,85 +26,105 @@
     {% endif %}
 
     <div class="row">
-
         <div class="col-md-6">
-
             <div class="panel panel-primary">
                 <div class="panel-heading">
                     <h2 class="panel-title">
-                        <i class="fa fa-fw fa-info-circle"></i>
-                        Informazioni
+                        <i class="fa fa-fw fa-info-circle"></i> Informazioni
                     </h2>
                 </div>
                 <div class="panel-body">
-
                     <form method="POST">
                         {% csrf_token %}
                         {% bootstrap_form modulo %}
-                        <button type="submit"
-                        class="btn btn-primary btn-block">
-                            <i class="fa fa-fw fa-save"></i>
-                            Salva informazioni
+                        <button type="submit" class="btn btn-primary btn-block">
+                            <i class="fa fa-fw fa-save"></i> Salva informazioni
                         </button>
                     </form>
-
                 </div>
                 <div class="panel-footer">
-                    <i class="fa fa-fw fa-info-circle"></i>
-                    Ultimo aggiornamento {{ sede.ultima_modifica }}.
+                    <i class="fa fa-fw fa-info-circle"></i> Ultimo aggiornamento {{ sede.ultima_modifica }}.
                 </div>
             </div>
-
         </div>
 
         <div class="col-md-6">
-
             <div class="panel panel-info">
                 <div class="panel-heading">
                     <h2 class="panel-title">
-                        <i class="fa fa-fw fa-list"></i>
-                        Delegati e Responsabili
+                        <i class="fa fa-fw fa-list"></i> Delegati e Responsabili
                     </h2>
                 </div>
                 <div class="panel-body">
-
-                    <p>Seleziona il ruolo per il quale vuoi vedere, creare o
-                        terminare una delega.</p>
+                    <p>Seleziona il ruolo per il quale vuoi vedere, creare o terminare una delega.</p>
 
                     {% for sezione, ruoli in sezioni.items %}
-
                         <h4>{{ sezione }}</h4>
                         <ul>
                         {% for chiave, valore, numero, sotto_sezione in ruoli %}
-
                             <li>
-                                <span class="badge">
-                                    {{ numero }}
-                                </span>
+                                <span class="badge">{{ numero }}</span>
                                 {% if sezione == 'Cariche elettive' %}
                                     <span>{{ valore }}</span>
                                     {% if sotto_sezione %}
                                         <ul>
                                             {% for nomina in sotto_sezione %}
-                                                <li>
-                                                    {{ nomina }}
-                                                </li>
+                                                <li>{{ nomina }}</li>
                                             {% endfor %}
                                         </ul>
                                     {% endif %}
                                 {% else %}
-                                    <a href="/presidente/sedi/{{ sede.pk }}/delegati/{{ chiave }}/">
-                                        {{ valore }}
-                                    </a>
+                                    <a href="/presidente/sedi/{{ sede.pk }}/delegati/{{ chiave }}/">{{ valore }}</a>
                                 {% endif %}
 
+                                {% if valore == 'Consigliere giovane' %}
+                                     <p style="padding-top:8px;">Per l'inserimento o modifica delle cariche elettive inviare mail a
+                                        <a href="gaia@cri.it">gaia@cri.it</a> allegando la proclamazione.
+                                     </p>
+                                {% endif %}
                             </li>
-
                         {% endfor %}
                         </ul>
-
                     {% endfor %}
 
+                    <h4>Altri organi statutari</h4>
+                    <ul>
+                        <li>
+                            <span class="badge">{{ sede.nominativi_rdc.count }}</span> <span>Revisore dei Conti (obbligatorio)
+                                {% if not sede.nominativi_rdc %}
+                                    <a href="{% url 'presidente:sede_nominativi' sede.pk %}?add=rc">[+]</a>
+                                {% endif %}
+                            </span>
+                            <ul>
+                                {% for revisore in sede.nominativi_rdc %}
+                                    <li>
+                                        <a href="{{ revisore.modifica_url }}">{{ revisore }}</a> [<a class="cancellaSedeNominativo" href="{{ revisore.termina_url }}">Termina</a>]
+                                        <span style="display:block;">E-mail: <a href="mailto:{{ revisore.email }}">{{ revisore.email }}</a></span>
+                                        <span style="display:block;">PEC: <a href="mailto:{{ revisore.PEC }}">{{ revisore.PEC }}</a></span>
+                                        <span style="display:block;">Telefono: <strong>{{ revisore.telefono }}</strong></span>
+                                    </li>
+                                {% endfor %}
+                            </ul>
+                        </li>
+
+                        <li>
+                            <span class="badge">{{ sede.nominativi_odc.count }}</span> <span>Organo di Controllo (max. 3)
+                                {% if not sede.nominativi_odc or sede.nominativi_odc.count < 3 %}
+                                    <a href="{% url 'presidente:sede_nominativi' sede.pk %}?add=oc">[+]</a>
+                                {% endif %}
+                            </span>
+                            <ul>
+                                {% for organo_di_controllo in sede.nominativi_odc %}
+                                    <li>
+                                        <a href="{{ organo_di_controllo.modifica_url }}">{{ organo_di_controllo }}</a> [<a class="cancellaSedeNominativo" href="{{ organo_di_controllo.termina_url }}">Termina</a>]
+                                        <span style="display:block;">E-mail: <a href="mailto:{{ organo_di_controllo.email }}">{{ organo_di_controllo.email }}</a></span>
+                                        <span style="display:block;">PEC: <a href="mailto:{{ organo_di_controllo.PEC }}">{{ organo_di_controllo.PEC }}</a></span>
+                                        <span style="display:block;">Telefono: <strong>{{ organo_di_controllo.telefono }}</strong></span>
+                                    </li>
+                                {% endfor %}
+                            </ul>
+                        </li>
+                    </ul>
                 </div>
             </div>
 
@@ -130,35 +146,54 @@
                     <p>Le richieste inviate dai Presidenti sono considerate prioritarie.</p>
                 </div>
             </div>
-
         </div>
-
-
-
     </div>
 
-    <div class="row">
+    <div id="sedi_list" class="row">
         <div class="col-md-12">
-
             <div class="panel panel-primary">
                 <div class="panel-heading">
                     <h2 class="panel-title">
-                        <i class="fa fa-fw fa-map-marker"></i>
-                        Indirizzo e posizione geografica
+                        <i class="fa fa-fw fa-map-marker"></i> Indirizzo e posizione geografica
                     </h2>
                 </div>
                 <div class="panel-body">
+                    <h3>Sede Operativa</h3>
+                    {% for sede_operativa in sede.sede_operativa.all %}
+                        {{ sede_operativa }} <strong><a class="cancellaSedeIndirizzo" href="{% url 'presidente:sede_operativa' sede.pk sede_operativa.pk %}?a=cancella"><i class="fa fa-fw fa-remove"></i></a></strong>
+                    <br>
+                    {% empty %}
+                        <p>Nessun indirizzo impostato.</p>
+                    {% endfor %}
 
+
+                    <a href="{% url 'presidente:sede_indirizzi' sede.pk %}?f=sede_operativa"><i class="fa fa-fw fa-plus"></i> Aggiungi un nuovo indirizzo</a></strong>
+
+                    <h3>Indirizzo per spedizioni</h3>
+                    {{ sede.indirizzo_per_spedizioni|default:"Non impostato" }}
+                    [<strong><a href="{% url 'presidente:sede_indirizzi' sede.pk %}?f=indirizzo_per_spedizioni">modifica o imposta l'indirizzo per spedizioni</a></strong>]<br>
+                    {% if sede.persona_di_riferimento %}
+                        Persona di riferimento: <strong>{{ sede.persona_di_riferimento }}</strong><br>
+                        Numero telefonico: <strong>{{ sede.persona_di_riferimento_telefono }}</strong>
+                    {% endif %}
+
+                    <h3>Sede Legale</h3>
                     {% localizzatore sede solo_italia=1 %}
-
                 </div>
             </div>
-
         </div>
-
     </div>
 
-
-
-
+    <script>
+        function confirmAction(selector, message) {
+            $(selector).on('click', function(e) {
+                var confirmed = confirm(message);
+                if (!confirmed) {
+                    e.preventDefault();
+                }
+            });
+        }
+        confirmAction('.cancellaSedeNominativo', "Sei sicuro di voler terminare questo nominativo?");
+        confirmAction('.cancellaSedeIndirizzo', "Sei sicuro di voler cancellare questo inidizzo della sede operativa?");
+    </script>
 {% endblock %}

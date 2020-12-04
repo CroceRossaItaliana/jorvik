@@ -21,6 +21,12 @@
           </a>
         </li>
         <li>
+            {% url "admin:anagrafica_persona_import_servizio_civile" as url_sevizio_civile %}
+          <a href="{% add_preserved_filters url_sevizio_civile is_popup to_field %}" class="customlink">
+            {% blocktrans with cl.opts.verbose_name_plural as name %}Import {{ name }} Servizio Civile{% endblocktrans %}
+          </a>
+        </li>
+        <li>
           {% url cl.opts|admin_urlname:'report_conoscneza' as report_conoscenza_url %}
           <a href="{% add_preserved_filters report_conoscenza_url is_popup to_field %}" class="customlink" target="_blank">Report Conoscenza</a>
         </li>

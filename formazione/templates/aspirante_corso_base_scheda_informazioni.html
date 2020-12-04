@@ -30,9 +30,9 @@
                 <p>Se sei interessat{{ me.genere_o_a }} a iscriverti a questo corso, clicca sul pulsante seguente.
                     La tua richiesta di iscrizione verrà inviata al Direttore del Corso.
 
-                    {% if not corso.is_nuovo_corso %}
-                        <label for="autocert_assenza_condanne_penali">
-                            <input type="checkbox" id="autocert_assenza_condanne_penali" style="display: inline-block;">
+                    {% if not corso.is_nuovo_corso%}
+                        <label for="autocert_assenza_condanne_penali" {% if corso.online %}hidden{% endif %}>
+                            <input type="checkbox" id="autocert_assenza_condanne_penali" style="display: inline-block;" {% if corso.online %}checked{% endif %}>
                             Autocertificare l’assenza di condanne penali, con sentenza passata in giudicato, per uno dei reati comportanti la destituzione di diritto dal pubblico impiego
                         </label>
                     {% endif %}
@@ -168,14 +168,29 @@
             <div class="panel-body">{{ corso.data_esame }}</div>
         </div>
     </div>
+
+
 </div>
+
+    {% if corso.online and corso.moodle%}
+<div class="row">
+    <div class="col-md-3">
+        <div class="panel panel-primary">
+            <div class="panel-heading">
+                <h3 class="panel-title"><i class="fa fa-fw fa-language"></i>Training</h3>
+            </div>
+            <div class="panel-body"><a href="{{ link }}" target="_blank">Link al corso</a></div>
+        </div>
+    </div>
+</div>
+    {% endif %}
 
 <div class="row">
     <div class="col-md-6">
         <h3><i class="fa fa-fw fa-info-circle"></i> Informazioni</h3>
         {{ corso.descrizione|default:"<p>Ancora non disponibili</p>"|safe }}
 
-        {% if puoi_partecipare == corso.SEI_ISCRITTO_CONFERMATO_PUOI_RITIRARTI or puo_modificare %}
+        {% if puoi_partecipare == corso.SEI_ISCRITTO_CONFERMATO_PUOI_RITIRARTI or puoi_partecipare == corso.SEI_ISCRITTO_PUOI_RITIRARTI or puo_modificare %}
             <h3>Materiale didattico</h3>
 
             {% if corso.get_course_links %}
@@ -201,7 +216,7 @@
         <p>
             <strong>Regolamenti:</strong>
             <ul>
-                <li><a href="https://datafiles.gaia.cri.it/media/filer_public/94/12/94127b9a-b049-45bc-ae82-b326707528bf/statuto_dell__associazione_della_croce_rossa_italiana_odv_versione_grafica.pdf" target="_blank">Lo Statuto</a></li>
+                <li><a href="https://datafiles.gaia.cri.it/media/filer_public/7c/9b/7c9b44ce-5c82-453d-aa34-c4d34933d379/statuto_dellassociazione_della_croce_rossa_italiana-odv_aggiornato_al_30112019.pdf" target="_blank">Lo Statuto</a></li>
                 <li><a href="https://datafiles.gaia.cri.it/media/filer_public/5b/4b/5b4ba0cb-239f-40e7-a414-a49023e5eb36/codice_etico_provvedimenti_disciplinari_e_collegi_disciplinari.pdf" target="_blank">Il Codice Etico</a></li>
             </ul>
         </p>
@@ -249,7 +264,11 @@
                             {% if lezione.fine %} &mdash; {{ lezione.fine.time|date:"TIME_FORMAT" }}{% endif %}
                             {% if lezione.lezione_ore and not lezione.divisa %}(<strong>{% lezione_durata lezione %}</strong>){% endif %}
                             {% if lezione.luogo %}<br>{{ lezione.luogo }}{% endif %}
-                            {% if lezione.docente %}<br>{{ lezione.docente.cognome }} {{ lezione.docente.nome }}{% endif %}
+                            {% if lezione.docente.all %}<br>
+                                {% for docente in lezione.docente.all %}
+                                    {{ docente.nome_completo }}{% if not forloop.last %}, {% endif %}
+                                {% endfor %}
+                            {% endif %}
                         </td>
                     </tr>
                 {% empty %}

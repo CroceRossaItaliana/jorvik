@@ -32,7 +32,7 @@
                                 <td class="grassetto">
                                     {% if corso.titolo_cri %}
                                         {% if not corso.titolo_cri.scheda_prevede_esame %}
-                                            Idoneo
+                                            {{ p.get_esito_esame_display }}
                                         {% else %}
                                             {{ p.get_esito_esame_display|default:"N/D" }}
                                         {% endif %}

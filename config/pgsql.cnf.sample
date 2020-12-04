@@ -1,6 +1,6 @@
 [client]
 host = db
 port = 5432
-database = qq
+database = jorvik
 user = postgres
 password =

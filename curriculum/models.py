@@ -53,6 +53,7 @@ class Titolo(ModelloSemplice, ConVecchioID):
     scheda_competenze_in_uscita = models.TextField('Competenze_in_uscita', null=True, blank=True)
     scheda_prevede_esame = models.NullBooleanField(default=True, null=True, blank=True)
     scheda_esame_facoltativo = models.BooleanField('Esame facoltativo', default=False)
+    scheda_verifica_finale = models.TextField('Tipologia di verifica finale', null=True, blank=True)
     scheda_url = models.URLField('Scheda originale', null=True, blank=True)
     cdf_livello = models.CharField(max_length=3, choices=CDF_LIVELLI, null=True, blank=True)
     cdf_durata_corso = models.CharField(max_length=255, null=True, blank=True)
@@ -62,7 +63,11 @@ class Titolo(ModelloSemplice, ConVecchioID):
     richiede_data_scadenza = models.BooleanField(default=False)
     richiede_codice = models.BooleanField(default=False)
     inseribile_in_autonomia = models.BooleanField(default=True)
-    
+
+    online = models.BooleanField(default=False, blank=True)
+
+    moodle = models.BooleanField(default=False, blank=True)
+
     class Meta:
         verbose_name_plural = "Titoli: Elenco"
         permissions = (

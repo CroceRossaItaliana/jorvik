@@ -1,0 +1,44 @@
+{% extends 'presidente_vuota.html' %}
+
+{% load bootstrap3 %}
+{% load mptt_tags %}
+{% load utils %}
+
+{% block pagina_titolo %}Gestione {{ sede.nome_completo }}{% endblock %}
+
+{% block app_contenuto %}
+    <div class="alert alert-info">
+      <p><i class="fa fa-fw fa-info-circle"></i>
+        Da questa pagina puoi gestire le informazioni relative agli indirizzi della Sede CRI:
+        <strong>{{ sede.nome_completo }}</strong>.</p>
+    </div>
+
+    <div class="row">
+        <div class="col-md-12">
+            <div class="panel panel-primary">
+                <div class="panel-heading">
+                    <h2 class="panel-title">
+                        <i class="fa fa-fw fa-map-marker"></i> Indirizzo e posizione geografica
+                    </h2>
+                </div>
+                <div class="panel-body">
+                    <p style="margin-bottom:25px; font-weight:bold;">Modulo per modificare l'indirizzo
+                        {% if modifica_indirizzo_sede == "sede_operativa" %}
+                            della <span style="text-transform:uppercase;">sede operativa</span>
+                        {% elif modifica_indirizzo_sede == "indirizzo_per_spedizioni" %}
+                            <span style="text-transform:uppercase;">per spedizioni</span>
+
+                            <form style="max-width:350px;" action="." method="post">
+                                {% csrf_token %}
+                                {% bootstrap_form persona_di_riferimento_form %}
+                                 <button class="btn btn-success" type="submit">Salva modifiche <i class="fa fa-save"></i></button>
+                            </form>
+                        {% endif %}
+                    </p>
+
+                    {% localizzatore sede solo_italia=1 modifica_indirizzo_sede=modifica_indirizzo_sede continua_url=sede.presidente_url %}
+                </div>
+            </div>
+        </div>
+    </div>
+{% endblock %}

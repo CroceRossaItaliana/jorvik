@@ -135,3 +135,11 @@ def richiesta_autorizzazione_button_text(context):
     if str(richiesta.oggetto_tipo) == 'Titolo personale':
         return 'Presa visione'
     return "Conferma"
+
+
+@register.simple_tag(takes_context=True)
+def add_flag_to_profile_url(context):
+    elenco = context['elenco']
+    elenco_short_name = elenco.SHORT_NAME if hasattr(elenco, 'SHORT_NAME') else ''
+    return elenco_short_name
+

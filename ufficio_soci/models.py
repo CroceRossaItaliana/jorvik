@@ -535,7 +535,10 @@ class Quota(ModelloSemplice, ConMarcaTemporale, ConVecchioID, ConPDF):
 class ReportElenco(ConMarcaTemporale):
     VOLONTARI = 'vol'
     VOLONTARI_GIOVANI = 'vog'
+    SERVIZIO_CIVILE = 'civ'
     IV_E_CM = 'ivcm'
+    CM = 'cm'
+    IV = 'iv'
     DIMESSI = 'dim'
     VOLONTARI_IN_RISERVA = 'vir'
     TRASFERITI = 'tra'
@@ -557,6 +560,8 @@ class ReportElenco(ConMarcaTemporale):
         (VOLONTARI, 'Volontari'),
         (VOLONTARI_GIOVANI, 'Volontari Giovani'),
         (IV_E_CM, 'IV e CM'),
+        (CM, 'Corpo militare'),
+        (IV, 'Infermiere volontarie'),
         (DIMESSI, 'Dimessi'),
         (VOLONTARI_IN_RISERVA, 'Volontari in Riserva'),
         (TRASFERITI, 'Trasferiti'),
@@ -574,6 +579,7 @@ class ReportElenco(ConMarcaTemporale):
         (TESSERINI_SENZA_FOTOTESSERA, 'Tesserini senza fototessera'),
         (TESSERINI_RIFIUTATI, 'Tesserini Rifiutati'),
         (GENERICO, 'Generico'),
+        (SERVIZIO_CIVILE, 'Volontari Serivzio Civile')
     )
 
     user = models.ForeignKey(Persona)

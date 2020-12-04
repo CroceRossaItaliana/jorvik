@@ -7,18 +7,11 @@
 # before starting the Django development server.
 #
 
-
 if [ "$SKIP_ALL" ]
 then
-    SKIP_REQUIREMENTS_CHECK=1
     SKIP_CONFIGURATION=1
     SKIP_DJANGO_COLLECTSTATIC=1
     SKIP_DJANGO_MIGRATE=1
-fi
-
-if [ -z "$SKIP_REQUIREMENTS_CHECK" ]
-then
-    pip install --upgrade -r requirements.txt
 fi
 
 if [ -z "$SKIP_CONFIGURATION" ]
@@ -33,6 +26,7 @@ fi
 
 if [ -z "$SKIP_DJANGO_MIGRATE" ]
 then
+    python manage.py makemigrations --noinput
     python manage.py migrate --noinput
 fi
 

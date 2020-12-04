@@ -14,6 +14,8 @@ urlpatterns = [
     url(r'^estensione/$', views.utente_estensione, name='estensione'),
     url(r'^trasferimento/$', views.utente_trasferimento, name='trasferimento'),
     url(r'^storico/$', views.utente_storico, name='storico'),
+
+    # Fotografia
     url(r'^fotografia/$', views.utente_fotografia, name='foto'),
     url(r'^fotografia/avatar/$', views.utente_fotografia_avatar, name='avatar'),
     url(r'^fotografia/fototessera/$', views.utente_fotografia_fototessera, name='fototessera'),
@@ -26,6 +28,7 @@ urlpatterns = [
     # Rubrica
     url(r'^rubrica/referenti/$', views.utente_rubrica_referenti),
     url(r'^rubrica/volontari/$', views.utente_rubrica_volontari),
+    url(r'^rubrica/servizio-civile/$', views.utente_rubrica_servizio_civile),
     url(r'^rubrica/(?P<rubrica>.*)/$', views.rubrica_delegati, name='rubrica'),
 
     # Curriculum
@@ -39,6 +42,8 @@ urlpatterns = [
 
     url(r'^contatti/$', views.utente_contatti, name='contatti'),
     url(r'^contatti/cancella-numero/(?P<pk>.*)/$', views.utente_contatti_cancella_numero),
+
+    # Estensioni
     url(r'^estensione/(?P<pk>.*)/estendi/$', views.utente_estensione_estendi),
     url(r'^estensione/(?P<pk>.*)/termina/$', views.utente_estensione_termina),
     url(r'^riserva/(?P<pk>.*)/termina/$', views.utente_riserva_termina),

@@ -5,40 +5,30 @@
 {% load l10n %}
 {% load base_tags %}
 
-{% block pagina_titolo %}
-    {{ sede.nome }} - {{ sede.get_tipo_display }}, {{ sede.get_estensione_display }}
-{% endblock %}
+{% block pagina_titolo %}{{ sede.nome }} - {{ sede.get_tipo_display }}, {{ sede.get_estensione_display }}{% endblock %}
 
 {% block pagina_principale %}
+    <style>
+        .sede-meta dt {width: 180px !important;}
+        .sede-meta dd {margin-left: 200px; !important;}
+    </style>
     <script>
-
         $(document).ready(function(){
-
             // cerca tag a nella lista .children che contiene la parola lazio nell href
-
             $('ul a[href*="lazio"]').parent('li').each(function() {
-
                 var text = $(this).html();
-
                 // sostituisci il testo
-
                 text = text.replace("Sede Regionale", "Sede Provinciale");
                 $(this).html(text);
-
             });
-
         });
-
     </script>
 
     <div class="container">
-
         <div class="row">
             <div class="col-md-6">
-
                 <a href="/informazioni/sedi/?embed={{ embed }}" class="btn btn-block btn-success">
-                    <i class="fa fa-fw fa-reply"></i>
-                    Torna all'elenco delle Sedi
+                    <i class="fa fa-fw fa-reply"></i> Torna all'elenco delle Sedi
                 </a>
 
                 <hr />
@@ -49,9 +39,7 @@
                     </h4>
                 {% endif %}
 
-                <h2 class="allinea-centro">
-                    {{ sede.nome }}
-                </h2>
+                <h2 class="allinea-centro">{{ sede.nome }}</h2>
 
                 <h4 class="allinea-centro">
                     {{ sede.get_tipo_display }} &mdash;
@@ -60,60 +48,103 @@
                     {% else %}
                         {{ sede.get_estensione_display }}
                     {% endif %}
-
                 </h4>
 
-                <dl class="dl-horizontal">
-                {% if sede.email %}
-                    <dt>E-mail <i class="fa fa-fw fa-envelope-o"></i></dt>
-                    <dd><a href="mailto:{{ sede.email }}">{{ sede.email }}</a></dd>
-                {% endif %}
+                <dl class="dl-horizontal sede-meta">
+                    {% if sede.codice_fiscale %}
+                        <dt>C.F. <i class="fa fa-fw fa-plus"></i></dt>
+                        <dd>{{ sede.codice_fiscale }}</dd>
+                    {% endif %}
 
-                {% if sede.telefono %}
-                    <dt>Numero di telefono <i class="fa fa-fw fa-phone"></i></dt>
-                    <dd>{{ sede.telefono }}</dd>
-                {% endif %}
+                    {% if sede.partita_iva %}
+                        <dt>P.IVA <i class="fa fa-fw fa-plus"></i></dt>
+                        <dd>{{ sede.partita_iva }}</dd>
+                    {% endif %}
 
-                {% if presidente %}
-                    <dt>{{ sede | select_nomina_presidenziale }} <i class="fa fa-fw fa-user"></i></dt>
-                    <dd>{{ presidente.link|safe }}</dd>
-                {% endif %}
+                    {% if sede.rea %}
+                        <dt>REA <i class="fa fa-fw fa-plus"></i></dt>
+                        <dd>{{ sede.rea }}</dd>
+                    {% endif %}
 
-                {% if vice_presidente %}
-                    <dt>Vice Presidente <i class="fa fa-fw fa-user"></i></dt>
-                    <dd>{{ vice_presidente.link|safe }}</dd>
-                {% endif %}
+                    {% if sede.cciaa %}
+                        <dt>CCIAA <i class="fa fa-fw fa-plus"></i></dt>
+                        <dd>{{ sede.cciaa }}</dd>
+                    {% endif %}
 
-                {% if consiglieri %}
-                    {% for consigliere in consiglieri %}
-                        <dt>Consigliere <i class="fa fa-fw fa-user"></i></dt>
-                        <dd>{{ consigliere.link|safe }}</dd>
+                    {% if sede.runts %}
+                        <dt>RUNTS <i class="fa fa-fw fa-plus"></i></dt>
+                        <dd>{{ sede.runts }}</dd>
+                    {% endif %}
+
+                    {% if sede.email %}
+                        <dt>E-mail <i class="fa fa-fw fa-envelope-o"></i></dt>
+                        <dd><a href="mailto:{{ sede.email }}">{{ sede.email }}</a></dd>
+                    {% endif %}
+
+                    {% if sede.pec %}
+                        <dt>PEC <i class="fa fa-fw fa-envelope-o"></i></dt>
+                        <dd><a href="mailto:{{ sede.email }}">{{ sede.pec }}</a></dd>
+                    {% endif %}
+
+                    {% if sede.telefono %}
+                        <dt>Numero di telefono <i class="fa fa-fw fa-phone"></i></dt>
+                        <dd>{{ sede.telefono }}</dd>
+                    {% endif %}
+
+                    {% if presidente %}
+                        <dt>{{ sede | select_nomina_presidenziale }} <i class="fa fa-fw fa-user"></i></dt>
+                        <dd>{{ presidente.link|safe }}</dd>
+                    {% endif %}
+
+
+                    {% if vice_presidente %}
+                        <dt>Vice Presidente <i class="fa fa-fw fa-user"></i></dt>
+                        <dd>{{ vice_presidente.link|safe }}</dd>
+                    {% endif %}
+
+                    {% if consiglieri %}
+                        {% for consigliere in consiglieri %}
+                            <dt>Consigliere <i class="fa fa-fw fa-user"></i></dt>
+                            <dd>{{ consigliere.link|safe }}</dd>
+                        {% endfor %}
+                    {% endif %}
+
+                    {% if consigliere_giovane %}
+                        <dt>Consigliere Giovane <i class="fa fa-fw fa-user"></i></dt>
+                        <dd>{{ consigliere_giovane.link|safe }}</dd>
+                    {% endif %}
+
+                    {% if sede.nominativi_rdc  %}
+                        {% for revisore in sede.nominativi_rdc %}
+                            <dt>Revisore dei Conti  <i class="fa fa-fw fa-user"></i></dt>
+                            <dd>{{ revisore.nome }} {{ revisore.cognome }}</dd>
+                        {% endfor %}
+                    {% endif %}
+
+                    {% if sede.nominativi_odc %}
+                        {% for organo_di_controllo in sede.nominativi_odc %}
+                            <dt>Organo di Controllo  <i class="fa fa-fw fa-user"></i></dt>
+                            <dd>{{ organo_di_controllo.nome }} {{ organo_di_controllo.cognome }}</dd>
+                        {% endfor %}
+                    {% endif %}
+
+                    {% if sede.locazione %}
+                        <dt>Sede Legale <i class="fa fa-fw fa-map-marker"></i></dt>
+                        <dd>{{ sede.locazione }}</dd>
+                    {% endif %}
+
+                    {% for sede_operativa in sede.sede_operativa.all %}
+                        <dt>Sede Operativa {{ forloop.counter }} <i class="fa fa-fw fa-map-marker"></i></dt>
+                        <dd>{{ sede_operativa }}</dd>
                     {% endfor %}
-                {% endif %}
-
-                {% if consigliere_giovane %}
-                    <dt>Consigliere Giovane <i class="fa fa-fw fa-user"></i></dt>
-                    <dd>{{ consigliere_giovane.link|safe }}</dd>
-                {% endif %}
-
-
-                {% if sede.locazione %}
-                    <dt>Indirizzo <i class="fa fa-fw fa-map-marker"></i></dt>
-                    <dd>{{ sede.locazione }}</dd>
-                {% endif %}
-
                 </dl>
 
-
-
                 {% if sede.unita_sottostanti.exists %}
-
                     <p>Questa Sede CRI ha {{ sede.unita_sottostanti.count }} unit&agrave; territoriali distaccate:</p>
                     <ul>
                         {% for node in sede.unita_sottostanti %}
                             <li>
                                 <strong>{{ node.nome }}</strong>
-
                                 {% if node.email %}
                                     &mdash; <a href="mailto:{{ node.email }}">{{ node.email }}</a>
                                 {% endif %}
@@ -121,59 +152,38 @@
                                 {% if node.telefono %}
                                     &mdash; {{ node.telefono }}
                                 {% endif %}
-
                             </li>
                         {% endfor %}
                     </ul>
-
                 {% endif %}
 
                 {% if sede.comitati_sottostanti.exists %}
-
                     <p>Questa Sede CRI ha {{ sede.comitati_sottostanti.count }} Comitati nel territorio:</p>
                     <ul>
                         {% for node in sede.comitati_sottostanti %}
                             <li>
-                                <a href="{{ node.url }}?embed={{ embed }}">
-                                    <strong>{{ node.nome }}</strong>
-                                </a>
+                                <a href="{{ node.url }}?embed={{ embed }}"><strong>{{ node.nome }}</strong></a>
                                 ({{ node.get_estensione_display }})
-
                             </li>
                         {% endfor %}
                     </ul>
-
                 {% endif %}
-
 
                 {% if vicini.exists %}
-
                     <p>Vi sono {{ vicini.count }} Sedi nelle vicinanze ({{ vicini_km }} km):</p>
-
                     <ul>
                         {% for node in vicini %}
-                            <li>
-                                <a href="{{ node.url }}?embed={{ embed }}">
-                                    {{ node.nome }}
-                                </a>
+                            <li><a href="{{ node.url }}?embed={{ embed }}">{{ node.nome }}</a>
                                 ({{ node.get_estensione_display }})
-
                             </li>
                         {% endfor %}
                     </ul>
-
-
                 {% endif %}
-
-
             </div>
 
 
             <div class="col-md-6">
-
-
                 <div class="row">
-
                     {% load utils %}
                     {% mappa da_mostrare %}
                         <strong>{{ elemento.link|safe }}</strong><br />
@@ -183,13 +193,8 @@
                     {% icona_colore %}
                         {{ elemento.colore_mappa }}
                     {% endmappa %}
-
                 </div>
-
             </div>
-
         </div>
     </div>
-
-
 {% endblock %}

@@ -8,6 +8,8 @@ COMMISSARIO = 'CM'
 CONSIGLIERE = 'CN'
 CONSIGLIERE_GIOVANE = 'CG'
 UFFICIO_SOCI = 'US'
+UFFICIO_SOCI_CM = 'UM'
+UFFICIO_SOCI_IIVV = 'IV'
 UFFICIO_SOCI_UNITA = 'UU'
 UFFICIO_SOCI_TEMPORANEO = 'UT'
 DELEGATO_AREA = 'DA'
@@ -19,8 +21,12 @@ DELEGATO_OBIETTIVO_5 = 'O5'
 DELEGATO_OBIETTIVO_6 = 'O6'
 RESPONSABILE_AREA = 'RA'
 REFERENTE = 'RE'
+REFERENTE_SERVIZI_SO = 'RS'
+REFERENTE_OPERAZIONE_SO = 'RO'
+REFERENTE_FUNZIONE_SO = 'RU'
 REFERENTE_GRUPPO = 'GR'
 DELEGATO_CO = 'CO'
+DELEGATO_SO = 'SO'
 RESPONSABILE_FORMAZIONE = 'RF'
 RESPONSABILE_AUTOPARCO = 'AP'
 RESPONSABILE_PATENTI = 'PA'
@@ -44,6 +50,8 @@ PERMESSI_NOMI = (
     (CONSIGLIERE,               "Consigliere"),
     (CONSIGLIERE_GIOVANE,       "Consigliere giovane"),
     (UFFICIO_SOCI,              "Ufficio Soci"),
+    (UFFICIO_SOCI_CM,           "Ufficio Soci corpo militare"),
+    (UFFICIO_SOCI_IIVV,         "Ufficio Soci Infermiere volontarie"),
     (UFFICIO_SOCI_UNITA,        "Ufficio Soci Unità territoriali"),
     (DELEGATO_AREA,             "Delegato d'Area"),
     (DELEGATO_OBIETTIVO_1,      "Delegato Obiettivo I (Salute)"),
@@ -54,8 +62,12 @@ PERMESSI_NOMI = (
     (DELEGATO_OBIETTIVO_6,      "Delegato Obiettivo VI (Sviluppo)"),
     (RESPONSABILE_AREA,         "Responsabile d'Area"),
     (REFERENTE,                 "Referente Attività"),
+    (REFERENTE_SERVIZI_SO,      "Referente Servizio SO"),
+    (REFERENTE_OPERAZIONE_SO,   "Referente Operazione SO"),
+    (REFERENTE_FUNZIONE_SO,   "Referente Operazione SO"),
     (REFERENTE_GRUPPO,          "Referente Gruppo"),
     (DELEGATO_CO,               "Delegato Centrale Operativa"),
+    (DELEGATO_SO,               "Delegato Sala Operativa"),
     (RESPONSABILE_FORMAZIONE,   "Responsabile Formazione"),
     (DIRETTORE_CORSO,           "Direttore Corso"),
     (RESPONSABILE_AUTOPARCO,    "Responsabile Autoparco"),
@@ -67,7 +79,7 @@ DELEGHE_RUBRICA = (
     PRESIDENTE, COMMISSARIO, CONSIGLIERE_GIOVANE, UFFICIO_SOCI, UFFICIO_SOCI_UNITA,
     DELEGATO_OBIETTIVO_1, DELEGATO_OBIETTIVO_2, DELEGATO_OBIETTIVO_3,
     DELEGATO_OBIETTIVO_4, DELEGATO_OBIETTIVO_5, DELEGATO_OBIETTIVO_6,
-    RESPONSABILE_FORMAZIONE, DELEGATO_CO, RESPONSABILE_AUTOPARCO,
+    RESPONSABILE_FORMAZIONE, DELEGATO_CO, DELEGATO_SO, RESPONSABILE_AUTOPARCO,
 )
 
 PERMESSI_NOMI_DICT = dict(PERMESSI_NOMI)
@@ -78,6 +90,8 @@ RUBRICHE_TITOLI = OrderedDict((
     ('condigliere_giovane', (CONSIGLIERE_GIOVANE, 'Consiglieri giovani', True)),
     ('delegati_us', (UFFICIO_SOCI, 'Delegati Ufficio Soci', True)),
     ('delegati_us_unita', (UFFICIO_SOCI_UNITA, 'Delegati Ufficio Soci Unità territoriali', True)),
+    ('delegati_us_corpo_militare', (UFFICIO_SOCI_CM, 'Delegati Ufficio Soci Corpo militare', True)),
+    ('delegati_us_infermiere_volontarie', (UFFICIO_SOCI_IIVV, 'Delegati Ufficio Infermiere Volontarie', True)),
     ('delegati_obiettivo_1', (DELEGATO_OBIETTIVO_1, 'Delegati Obiettivo I (Salute)', True)),
     ('delegati_obiettivo_2', (DELEGATO_OBIETTIVO_2, 'Delegati Obiettivo II (Sociale)', True)),
     ('delegati_obiettivo_3', (DELEGATO_OBIETTIVO_3, 'Delegati Obiettivo III (Emergenze)', True)),
@@ -88,7 +102,11 @@ RUBRICHE_TITOLI = OrderedDict((
     # ('responsabili_area', (RESPONSABILE_AREA, 'Responsabili d\'Area', False)), rimosso perché non utile al momento
     ('referenti_attivita', (REFERENTE, 'Referenti Attività', False)),
     ('referenti_gruppi', (REFERENTE, 'Referenti Gruppi', False)),
+    # ('referenti_servizio_so', (REFERENTE_SERVIZI_SO, 'Referenti Servizi SO', False)),
+    # ('referenti_operazione_so', (REFERENTE_OPERAZIONE_SO, 'Referenti Operazione SO', False)),
+    # ('referenti_funzioni_so', (REFERENTE_FUNZIONE_SO, 'Referenti Funzione SO', False)),
     ('centrali_operative', (DELEGATO_CO, 'Referenti Centrale Operativa', True)),
+    ('sale_operative', (DELEGATO_SO, 'Delegati Sale Operativa', True)),
     ('responsabili_formazione', (RESPONSABILE_FORMAZIONE, 'Referenti Responsabili Formazione', True)),
     ('direttori_corsi', (DIRETTORE_CORSO, 'Direttori Corsi', True)),
     ('responsabili_autoparco', (RESPONSABILE_AUTOPARCO, 'Responsabili Autoparco', True)),

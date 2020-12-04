@@ -1,0 +1,102 @@
+{% extends 'so_vuota.html' %}
+
+{% load bootstrap3 %}
+{% load humanize %}
+
+{% block pagina_titolo %}Sala Operativa - Le mie reperibilit&agrave;{% endblock %}
+
+{% block app_contenuto %}
+    <div class="alert alert-block alert-info">
+        <i class="fa fa-fw fa-info-circle"></i> Da qui puoi fornire e visionare la reperibilità per la Sala Operativa del Comitato.<br>
+        Compila questo modulo per segnalare reperibilit&agrave; per i Volontari della tua Sede.
+    </div>
+    <div class="alert alert-block alert-warning" hidden id="datore_warning">
+        <i class="fa fa-fw fa-info-circle"></i> Assicurati di aver inserito il datore di lavoro.
+    </div>
+    <div class="row">
+        <div class="col-md-8">
+            <div class="panel panel-info">
+                <div class="panel-heading">
+                    <h2 class="panel-title">
+                        <i class="fa fa-fw fa-list"></i> Ultime reperibilit&agrave; segnalate da me per i miei Volontari
+                    </h2>
+                </div>
+                <div class="panel-body">
+                    <table class="table table-striped">
+                        <thead>
+                        <tr>
+                            <th>Orario</th>
+                            <th>Attivazione</th>
+                            <th>Data segnalazione</th>
+                        </tr>
+                        </thead>
+                        <tbody>
+                        {% for r in reperibilita %}
+                            <tr>
+                                <td>
+                                    <strong>{{ r.persona.link|safe }}</strong><br>
+                                    <strong>{{ r.get_estensione_display }}</strong><br>
+                                    <div style="margin-bottom:8px;">
+                                        L'impiego con i Benefici di legge:
+                                        <strong>{% if r.applicazione_bdl %}Si{% else %}No{% endif %}</strong>
+                                    </div><br>
+                                    <strong>Inizio:</strong> {{ r.inizio }}<br>
+                                    <strong>Fine:</strong> {{ r.fine }}
+                                </td>
+                                <td>{{ r.attivazione }}</td>
+                                <td>
+                                    {{ r.creazione|date:"SHORT_DATETIME_FORMAT" }}<br/>
+                                    <a href="{% url 'so:reperibilita_cancella' r.pk %}"
+                                       data-conferma="Vuoi cancellare la reperibilità selezionata?"><i
+                                            class="fa fa-fw fa-trash"></i> Cancella</a><br>
+                                    <a href="{% url 'so:reperibilita_modifica' r.pk %}"><i
+                                            class="fa fa-fw fa-edit"></i> Modifica</a>
+                                </td>
+                            </tr>
+                        {% empty %}
+                            <tr class="alert alert-warning">
+                                <td colspan="3">
+                                    <i class="fa fa-fw fa-warning"></i> Ancora nessuna reperibilit&agrave;
+                                    segnalata.
+                                </td>
+                            </tr>
+                        {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-4">
+            <div class="panel panel-primary">
+                <div class="panel-heading">
+                    <h2 class="panel-title"><i class="fa fa-fw fa-plus-circle"></i> Segnala reperibilit&agrave; per VO</h2>
+                </div>
+
+                <div class="panel-body">
+                    <form method="POST" action=".">
+                        {% bootstrap_form form %}
+                        <button type="submit" class="btn btn-block btn-primary">
+                            <i class="fa fa-fw fa-check"></i> Aggiungi
+                        </button>
+                        {% csrf_token %}
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+    </div>
+    <script>
+    $('#id_datore_lavoro').parent().hide();
+
+    $('#id_applicazione_bdl').change(function (){
+        if ($(this).is(':checked')){
+            $('#id_datore_lavoro').parent().show();
+            $('#datore_warning').show();
+        }
+        else{
+            $('#id_datore_lavoro').parent().hide();
+            $('#datore_warning').show();
+        }
+    });
+</script>
+{% endblock %}
