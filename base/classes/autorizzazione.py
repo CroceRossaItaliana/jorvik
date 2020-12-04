@@ -88,12 +88,13 @@ class AutorizzazioneProcess:
 
                 if isinstance(self.richiesta.oggetto, Trasferimento):
                     delega = self.me.deleghe_attuali(tipo__in=[PRESIDENTE, COMMISSARIO, UFFICIO_SOCI]).first()
-                    print(delega)
-                    print(delega.oggetto)
                     destinatari = [delega.oggetto.sede_regionale.presidente()]
                     destinatari.extend(delega.oggetto.sede_regionale.delegati_ufficio_soci())
                     Messaggio.costruisci_e_accoda(
-                        oggetto="Trasferimento {}".format("Confermato" if concedi else "Negato"),
+                        oggetto="Trasferimento {} per {}".format(
+                            "Confermato" if concedi else "Negato",
+                            self.richiesta.oggetto.richiedente.nome_completo
+                        ),
                         modello="email_richiesta_trasferimento_regionale.html",
                         corpo={
                             "persona": self.richiesta.oggetto.richiedente.nome_completo,
