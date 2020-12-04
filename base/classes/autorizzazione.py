@@ -1,6 +1,5 @@
-from anagrafica.api_trippus import COMMISSARIO
 from anagrafica.models import Trasferimento
-from anagrafica.permessi.applicazioni import PRESIDENTE, UFFICIO_SOCI
+from anagrafica.permessi.applicazioni import PRESIDENTE, UFFICIO_SOCI, COMMISSARIO
 from posta.models import Messaggio
 from ..errori import errore_generico
 
@@ -89,6 +88,8 @@ class AutorizzazioneProcess:
 
                 if isinstance(self.richiesta.oggetto, Trasferimento):
                     delega = self.me.deleghe_attuali(tipo__in=[PRESIDENTE, COMMISSARIO, UFFICIO_SOCI]).first()
+                    print(delega)
+                    print(delega.oggetto)
                     destinatari = [delega.oggetto.sede_regionale.presidente()]
                     destinatari.extend(delega.oggetto.sede_regionale.delegati_ufficio_soci())
                     Messaggio.costruisci_e_accoda(
