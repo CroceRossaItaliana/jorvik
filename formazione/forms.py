@@ -466,6 +466,7 @@ class FormVerbaleCorso(ModelForm):
                                                 'argomento_parte_1',
                                                 'esito_parte_2',
                                                 'argomento_parte_2',
+                                                'partecipazione_online',
                                                 'extra_1', 'extra_2',
                                                 'destinazione',]
         SCHEDA_VALUTAZIONE_CORSO_NUOVO_FIELDS = ['esito_parte_1',

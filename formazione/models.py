@@ -1771,6 +1771,7 @@ class PartecipazioneCorsoBase(ModelloSemplice, ConMarcaTemporale, ConAutorizzazi
     argomento_parte_1 = models.CharField(max_length=1024, blank=True, null=True, help_text="es. Storia della CRI, DIU.")
     esito_parte_2 = models.CharField(max_length=1, choices=ESITO, default=None, blank=True, null=True, db_index=True, help_text="Gesti e manovre salvavita.")
     argomento_parte_2 = models.CharField(max_length=1024, blank=True, null=True, help_text="es. BLS, colpo di calore.")
+    partecipazione_online = models.BooleanField(verbose_name="Prova pratica su Parte 2 sostituita da colloquio ONLINE", default=False)
     extra_1 = models.BooleanField(verbose_name="Prova pratica su Parte 2 sostituita da colloquio.", default=False)
     extra_2 = models.BooleanField(verbose_name="Verifica effettuata solo sulla Parte 1 del programma del corso.", default=False)
     destinazione = models.ForeignKey("anagrafica.Sede", verbose_name="Sede di destinazione", related_name="aspiranti_destinati", default=None, null=True, blank=True, help_text="La Sede presso la quale verrà registrato come Volontario l'aspirante "
