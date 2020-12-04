@@ -367,6 +367,12 @@ def autorizzazione_concedi(request, me, pk=None):
 
 
 @pagina_privata
+def autorizzazione_qualifica_presa_visione(request, me, pk=None):
+    auth = AutorizzazioneProcess(request, me, pk)
+    return auth.qualifica_presa_visione()
+
+
+@pagina_privata
 def autorizzazione_nega(request, me, pk=None):
     auth = AutorizzazioneProcess(request, me, pk)
     return auth.nega()

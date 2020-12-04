@@ -1,3 +1,4 @@
+from posta.models import Messaggio
 from ..errori import errore_generico
 
 
@@ -29,6 +30,24 @@ class AutorizzazioneProcess:
         self._template = 'base_autorizzazioni_nega.html'
         self._autorizzazione_form = self.richiesta.oggetto.autorizzazione_nega_modulo()
         return self._process(concedi=False)
+
+    def qualifica_presa_visione(self):
+        concedi_processed = self.concedi()
+
+        # GAIA-323
+        Messaggio.costruisci_e_accoda(
+            oggetto="Inserimento negli Albi della Formazione CRI",
+            modello="email_cv_qualifica_inserimento_negli_albi_della_formazione_cri.html",
+            corpo={
+                "volontario": self.richiesta.richiedente,
+            },
+            mittente=None,
+            destinatari=[
+                self.richiesta.richiedente,
+            ]
+        )
+
+        return concedi_processed
 
     def _process(self, concedi):
         richiesta = self.richiesta

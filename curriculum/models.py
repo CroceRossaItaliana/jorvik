@@ -4,14 +4,19 @@ from django.contrib.postgres.fields import JSONField
 from django.db import models
 from django.utils import timezone
 
+from anagrafica.permessi.incarichi import INCARICO_GESTIONE_TITOLI
 from base.models import ModelloSemplice, ConAutorizzazioni, ConVecchioID
 from base.tratti import ConMarcaTemporale
+from posta.models import Messaggio
 
 from .areas import OBBIETTIVI_STRATEGICI
 from .validators import cv_attestato_file_upload_path
 
 
 class Titolo(ModelloSemplice, ConVecchioID):
+    QUALIFICHE_REGRESSO_DEADLINE = '01/06/2021'
+    QUALIFICHE_REGRESSO_DEADLINE_DATE = date(year=2021, month=6, day=1)
+
     # Tipo del titolo
     COMPETENZA_PERSONALE = "CP"
     PATENTE_CIVILE      = "PP"
@@ -259,6 +264,22 @@ class TitoloPersonale(ModelloSemplice, ConMarcaTemporale, ConAutorizzazioni):
         elif self.titolo.is_course_title and not self.titolo.inseribile_in_autonomia:
             return False
         return True
+
+    def richiedi_autorizzazione(self, qualifica_nuova, me, sede_attuale):
+        qualifica_nuova.autorizzazione_richiedi_sede_riferimento(me, INCARICO_GESTIONE_TITOLI)
+
+        vo_nome_cognome = "%s %s" % (me.nome, me.cognome)
+        Messaggio.costruisci_e_accoda(
+            oggetto="Inserimento su GAIA Qualifiche CRI: Volontario %s" % vo_nome_cognome,
+            modello="email_cv_qualifica_regressa_inserimento_mail_al_presidente.html",
+            corpo={
+                "volontario": me,
+            },
+            mittente=None,
+            destinatari=[
+                sede_attuale.presidente(),
+            ]
+        )
 
     def __str__(self):
         return "%s di %s" % (self.titolo, self.persona)

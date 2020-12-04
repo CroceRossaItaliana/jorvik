@@ -42,8 +42,7 @@
 
                                         {% if t.certificato %}
                                             <span class="text-success">
-                                                <i class="fa fa-fw fa-asterisk"></i>
-                                                Certificato
+                                                <i class="fa fa-fw fa-asterisk"></i> Certificato
                                             </span>
 
                                         {% elif t.is_expired_course_title %}
@@ -53,10 +52,10 @@
                                             </span> -->
 
                                         {% elif t.esito == t.ESITO_OK %}
-                                            <span class="text-success"><i class="fa fa-fw fa-check"></i> {{ t.esito }}</span>
+                                            <span class="text-success"><i class="fas fa-check"></i> {{ t.esito }}</span>
 
                                         {% elif t.esito == t.ESITO_PENDING %}
-                                            <span class="alert-warning"><i class="fa fa-fw fa-clock-o"></i> In attesa di conferma</span>
+                                            <span class="alert-warning"><i class="far fa-clock"></i> In attesa di conferma</span>
 
                                         {% else %}
                                             <span class="text-danger">{{ t.esito }}</span>

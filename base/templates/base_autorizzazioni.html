@@ -18,7 +18,7 @@
                     </div>
                     <div class="col-md-3">
                         <div class=" btn-group-vertical btn-group-sm btn-block">
-                            <a class="btn btn-success" href="/autorizzazioni/{{ richiesta.pk }}/concedi/"><i class="fa fa-fw fa-check"></i> {% richiesta_autorizzazione_button_text %}</a>
+                            <a class="btn btn-success" href="{% autorizzazione_concedi_url richiesta %}"><i class="fa fa-fw fa-check"></i> {% richiesta_autorizzazione_button_text %}</a>
 
                             {% richiesta_autorizzazione_button 'nega' as richiesta_autorizzazione_nega_button %}
                             {% if richiesta_autorizzazione_nega_button %}

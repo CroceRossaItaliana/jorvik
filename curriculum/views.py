@@ -1,4 +1,5 @@
 from django.contrib import messages
+from django.core.urlresolvers import reverse
 from django.http import JsonResponse
 from django.shortcuts import render_to_response, redirect, get_object_or_404
 
@@ -6,8 +7,10 @@ from anagrafica.permessi.costanti import ERRORE_PERMESSI
 from anagrafica.permessi.incarichi import INCARICO_GESTIONE_TITOLI
 from autenticazione.funzioni import pagina_privata
 from base.errori import (errore_nessuna_appartenenza, errore_no_volontario)
+from base.models import Autorizzazione
 from formazione.constants import FORMAZIONE_ROLES
 from formazione.models import CorsoBase
+from posta.models import Messaggio
 
 from .forms import (FormAddQualificaCRI, ModuloNuovoTitoloPersonale, ModuloDettagliTitoloPersonale)
 from .models import Titolo, TitoloPersonale
@@ -135,7 +138,7 @@ def cv_add_qualifica_cri(request, me):
                     qualifica_nuova.delete()
                     return errore_nessuna_appartenenza(request, me, torna_url="/utente/curriculum/TC/")
 
-                qualifica_nuova.autorizzazione_richiedi_sede_riferimento(me, INCARICO_GESTIONE_TITOLI)
+                qualifica_nuova.richiedi_autorizzazione(qualifica_nuova, me, sede_attuale)
 
             messages.success(request, "La qualifica è stata inserita.")
             return redirect_url
@@ -162,3 +165,27 @@ def cv_cancel(request, me, pk=None):
     titolo.delete()
 
     return redirect_url
+
+
+@pagina_privata
+def cv_qualifica_errata_notifica_comitato_regionale(request, me, pk=None):
+    richiesta = Autorizzazione.objects.get(pk=pk)
+
+    volontario = richiesta.richiedente
+    presidente = volontario.sede_riferimento().presidente()
+    vo_nome_cognome = "%s %s" % (volontario.nome, volontario.cognome)
+
+    Messaggio.costruisci_e_accoda(
+        oggetto="Inserimento errato su GAIA Qualifiche CRI: %s" % vo_nome_cognome,
+        modello="email_cv_qualifica_regressa_inserimento_errato.html",
+        corpo={
+            "volontario": volontario,
+        },
+        mittente=None,
+        destinatari=[
+            presidente,
+            volontario,
+        ]
+    )
+    messages.success(request, "Il presidente %s è stato avvisato." % presidente)
+    return redirect(reverse('autorizzazioni:aperte'))

@@ -143,3 +143,9 @@ def add_flag_to_profile_url(context):
     elenco_short_name = elenco.SHORT_NAME if hasattr(elenco, 'SHORT_NAME') else ''
     return elenco_short_name
 
+
+@register.simple_tag(takes_context=True)
+def autorizzazione_concedi_url(context, richiesta):
+    if str(richiesta.oggetto_tipo) == 'Titolo personale':
+        return "/autorizzazioni/%s/qualifica-presa-visione/" % richiesta.pk
+    return "/autorizzazioni/%s/concedi/" % richiesta.pk
