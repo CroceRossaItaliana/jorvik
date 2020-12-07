@@ -503,6 +503,7 @@ class FormVerbaleCorso(ModelForm):
                                           if ch[0] != PartecipazioneCorsoBase.NON_PREVISTO]
             self.fields['esito_parte_1'].choices = CHOICES_SENZA_NON_PREVISTO
             self.fields['esito_parte_2'].choices = CHOICES_SENZA_NON_PREVISTO
+            self.fields['partecipazione_online'].help_text = "<strong>N.B</strong> Da selezionare quando la prova pratica dell'esame è sostituita da colloquio online e la certificazione EFAC non può essere rilasciata"
 
         # Escludi quei campi che non stanno nella lista di sopra
         for field in self.fields.copy():
