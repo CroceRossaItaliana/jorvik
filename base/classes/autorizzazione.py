@@ -34,6 +34,12 @@ class AutorizzazioneProcess:
     def qualifica_presa_visione(self):
         concedi_processed = self.concedi()
 
+        # Un update dei dati
+        qualifica = self.richiesta.oggetto
+        qualifica.certificato_da = self.me
+        qualifica.is_course_title = True  # senza non viene visualizzato sull'albo formazione
+        qualifica.save()
+
         # GAIA-323
         Messaggio.costruisci_e_accoda(
             oggetto="Inserimento negli Albi della Formazione CRI",

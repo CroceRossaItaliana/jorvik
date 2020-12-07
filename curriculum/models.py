@@ -145,7 +145,7 @@ class Titolo(ModelloSemplice, ConVecchioID):
             "richiede_conferma": str(set_to),
         }
 
-        print('Fields to update (%s):', (titoli.count(), fields_to_update))
+        print('Fields to update (%s):' % titoli.count(), fields_to_update)
 
         for titolo in titoli:
             if not titolo.meta:
@@ -308,6 +308,10 @@ class TitoloPersonale(ModelloSemplice, ConMarcaTemporale, ConAutorizzazioni):
                 sede_attuale.presidente(),
             ]
         )
+
+    @property
+    def associated_to_a_course(self):
+        return True if self.corso_partecipazione else False
 
     def __str__(self):
         return "%s di %s" % (self.titolo, self.persona)

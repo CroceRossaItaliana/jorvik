@@ -35,7 +35,7 @@
                                         <p class="grassetto">
                                             {{ t.titolo.nome }}
 
-                                            {% if t.is_course_title %} <!-- and not t.is_expired_course_title -->
+                                            {% if t.associated_to_a_course and t.is_course_title %} <!-- and not t.is_expired_course_title -->
                                                 <br><a href="{% url 'aspirante:report_schede' t.corso_partecipazione.corso.pk %}?download_single_attestato={{t.pk}}">Scarica attestato</a>
                                             {% endif %}
                                         </p>

@@ -35,10 +35,6 @@
 </p>
 
 <p>
-    <a href="{% url 'cv:notifica_comitato_regionale_dati_errati' richiesta.pk %}"><i class="fas fa-exclamation-circle"></i> Comunicare al Comitato Regionale che i dati inseriti sono errati</a>
-</p>
-
-<p>
     {% if richiesta.oggetto.codice %}
         <strong>Num./Codice: {{ richiesta.oggetto.codice }}.</strong>
     {% endif %}
