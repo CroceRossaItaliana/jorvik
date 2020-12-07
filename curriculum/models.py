@@ -53,6 +53,7 @@ class Titolo(ModelloSemplice, ConVecchioID):
     is_active = models.BooleanField(default=True)
     expires_after = models.IntegerField(null=True, blank=True, verbose_name="Scadenza",
         help_text='Indicare in giorni (es: per 1 anno indicare 365)')
+    meta = JSONField(null=True, blank=True)
     scheda_lezioni = JSONField(null=True, blank=True)
     scheda_obiettivi = models.TextField('Obiettivi formativi', null=True, blank=True)
     scheda_competenze_in_uscita = models.TextField('Competenze_in_uscita', null=True, blank=True)
@@ -129,6 +130,33 @@ class Titolo(ModelloSemplice, ConVecchioID):
 
     def corsi(self, **kwargs):
         return self.corsobase_set.all().filter(**kwargs)
+
+    @staticmethod
+    def gaia_323_set_values(set_to: bool):
+        titoli = Titolo.objects.filter(tipo=Titolo.TITOLO_CRI,
+                                       sigla__isnull=False,
+                                       is_active=True,
+                                       # inseribile_in_autonomia=False,
+                                       area__isnull=False,
+                                       nome__isnull=False,
+                                       cdf_livello__isnull=False,)
+        fields_to_update = {
+            "inseribile_in_autonomia": str(set_to),
+            "richiede_conferma": str(set_to),
+        }
+
+        print('Fields to update (%s):', (titoli.count(), fields_to_update))
+
+        for titolo in titoli:
+            if not titolo.meta:
+                titolo.meta = fields_to_update
+                titolo.save()
+            else:
+                titolo.meta.update(fields_to_update)
+                titolo.save()
+
+        print('Titotli aggiornati:', titoli)
+        return titoli
 
     def __str__(self):
         return str(self.nome)

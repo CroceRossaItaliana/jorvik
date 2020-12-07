@@ -1,7 +1,7 @@
 {% extends 'email.html' %}
 
 {% block corpo %}
-  <p class="grassetto">Caro Presidente,</p>
+  <p class="grassetto">Caro {{ destinatario }},</p>
 
   <p>il Volontario {{ volontario.nome }} {{ volontario.cognome }} ha inserito su GAIA tutte le informazioni e
     i relativi documenti per il riconoscimento delle qualifiche CRI.<br>

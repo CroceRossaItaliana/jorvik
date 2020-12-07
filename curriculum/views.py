@@ -1,6 +1,9 @@
+from datetime import timedelta
+
 from django.contrib import messages
 from django.core.urlresolvers import reverse
 from django.http import JsonResponse
+from django.utils.timezone import now
 from django.shortcuts import render_to_response, redirect, get_object_or_404
 
 from anagrafica.permessi.costanti import ERRORE_PERMESSI
@@ -132,10 +135,11 @@ def cv_add_qualifica_cri(request, me):
             qualifica_nuova = TitoloPersonale(persona=me, confermata=False, **cd)
             qualifica_nuova.save()
 
-            if titolo.richiede_conferma:
+            if titolo.meta.get('richiede_conferma'):
                 sede_attuale = me.sede_riferimento()
                 if not sede_attuale:
                     qualifica_nuova.delete()
+                    messages.error(request, 'Errore.')
                     return errore_nessuna_appartenenza(request, me, torna_url="/utente/curriculum/TC/")
 
                 qualifica_nuova.richiedi_autorizzazione(qualifica_nuova, me, sede_attuale)
@@ -143,6 +147,7 @@ def cv_add_qualifica_cri(request, me):
             messages.success(request, "La qualifica è stata inserita.")
             return redirect_url
 
+        messages.success(request, "La qualifica non è stata inserita.")
         return 'cv_add_qualifica_cri.html', {'form': form}
 
     return redirect_url
@@ -172,20 +177,42 @@ def cv_qualifica_errata_notifica_comitato_regionale(request, me, pk=None):
     richiesta = Autorizzazione.objects.get(pk=pk)
 
     volontario = richiesta.richiedente
-    presidente = volontario.sede_riferimento().presidente()
     vo_nome_cognome = "%s %s" % (volontario.nome, volontario.cognome)
+    vo_sede = volontario.sede_riferimento()
+    vo_sede_regionale = vo_sede.sede_regionale
+    presidente_regionale = vo_sede_regionale.presidente()
+    delegati_formazione_regionale = vo_sede_regionale.delegati_formazione()
 
-    Messaggio.costruisci_e_accoda(
-        oggetto="Inserimento errato su GAIA Qualifiche CRI: %s" % vo_nome_cognome,
-        modello="email_cv_qualifica_regressa_inserimento_errato.html",
-        corpo={
-            "volontario": volontario,
-        },
-        mittente=None,
-        destinatari=[
-            presidente,
-            volontario,
-        ]
-    )
-    messages.success(request, "Il presidente %s è stato avvisato." % presidente)
+    # Mail settings
+    oggetto = "Inserimento errato su GAIA Qualifiche CRI: %s" % vo_nome_cognome
+
+    def _costruisci_e_accoda(destinatario_title: str, destinatari) -> None:
+        Messaggio.costruisci_e_accoda(
+            oggetto=oggetto,
+            modello="email_cv_qualifica_regressa_inserimento_errato.html",
+            corpo={
+                "volontario": volontario,
+                'destinatario': destinatario_title,
+            },
+            mittente=None,
+            destinatari=destinatari,
+        )
+
+    date_from = now() - timedelta(days=2)
+    mail_exists = Messaggio.objects.filter(oggetto=oggetto,
+                                           terminato__gte=date_from,
+                                           terminato__lte=now(),
+                                           ).exists()
+    mail_already_sent = True if mail_exists else False
+
+    if mail_already_sent:
+        messages.success(request, "La comunicazione è stata già effettuata.")
+        return redirect(reverse('autorizzazioni:aperte'))
+
+    _costruisci_e_accoda('Presidente', [presidente_regionale])
+    _costruisci_e_accoda('Volontario', [volontario])
+    _costruisci_e_accoda('Delegato Formazione', [i for i in delegati_formazione_regionale])
+
+    messages.success(request, "Sono stati avvisati il presidente regionale %s e "
+                              "i delegati formazione regionale" % (presidente_regionale, ))
     return redirect(reverse('autorizzazioni:aperte'))
