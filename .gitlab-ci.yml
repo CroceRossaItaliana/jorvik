@@ -7,6 +7,7 @@ stages:
   - setup
   - restore_db
   - deploy
+  - deploy_provami
 
 cache:
   key: ${CI_MERGE_REQUEST_ID}
@@ -95,59 +96,16 @@ fire_pr:
     - merge_requests
 
 
-restore_db_release:
-  stage: restore_db
-  tags:
-    - staging
-  before_script:
-    - export CI_MERGE_REQUEST_ID=release
-    - chown -R gitlab-runner:gitlab-runner /home/gitlab-runner
-  script:
-    - docker-compose -f docker-compose-staging.yml stop
-    - sleep 30
-    - ls -alh /opt/gaia_dumps
-    - docker-compose -f docker-compose-staging.yml up -d db
-    - docker-compose -f docker-compose-staging.yml ps
-    - sleep 30
-    - docker cp /opt/gaia_dumps/smalldump "$(docker-compose ps -q db)":/tmp/smalldump
-    - echo "SELECT pg_terminate_backend(pid) FROM pg_stat_activity WHERE datname = 'jorvik';" | docker-compose -f docker-compose-staging.yml exec -T db psql -U postgres
-    - docker-compose -f docker-compose-staging.yml exec -T db pg_restore --disable-triggers -C --clean --no-acl --no-owner -j 8 -U postgres -d postgres /tmp/smalldump
-  only:
-    - release
-  allow_failure: true
-
-deploy_release:
-  stage: deploy
-  tags:
-    - staging
-  before_script:
-    - export CI_MERGE_REQUEST_ID=release
-  script:
-    - docker-compose -f docker-compose-staging.yml down
-    - sleep 30
-    - docker-compose -f docker-compose-staging.yml up -d db
-    - sleep 10
-    - docker-compose -f docker-compose-staging.yml up -d
-    - sleep 30
-    - docker-compose -f docker-compose-staging.yml restart proxy
-  environment:
-    name: release
-    url: https://release.staging.gaia.cri.it
-  only:
-    - release
-
 deploy_provami:
-  stage: deploy
+  stage: deploy_provami
   tags:
     - staging
   before_script:
     - export CI_MERGE_REQUEST_ID=provami
   script:
+    - docker-compose -f docker-compose-staging.yml -f docker-compose-provami.yml down -v
     - docker-compose -f docker-compose-staging.yml -f docker-compose-provami.yml up -d
-    - sleep 30
-    - docker-compose -f docker-compose-staging.yml -f docker-compose-provami.yml exec -T web pip3 install python-barcode==0.10.0
-    - docker-compose -f docker-compose-staging.yml -f docker-compose-provami.yml exec -T web python manage.py makemigrations
-    - docker-compose -f docker-compose-staging.yml -f docker-compose-provami.yml exec -T web python manage.py migrate
+    - sleep 180
     - docker-compose -f docker-compose-staging.yml -f docker-compose-provami.yml exec -T web python scramble.py --dati-di-esempio
     - docker-compose -f docker-compose-staging.yml -f docker-compose-provami.yml exec -T web python manage.py loaddata fixtures_data/formazione_titoli_cri_con_sigle.json
     - docker-compose -f docker-compose-staging.yml -f docker-compose-provami.yml restart proxy
@@ -155,7 +113,8 @@ deploy_provami:
     name: provami
     url: https://provami.gaia.cri.it
   only:
-    - release
+    - "release"
+
 
 dump_db:
   stage: dump_db

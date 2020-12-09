@@ -115,6 +115,7 @@ class GeneraReport:
             messages.error(self.request, "Questo attestato non esiste.")
             return redirect(reverse('utente:cv_tipo', args=[Titolo.TITOLO_CRI,]))
 
+        # Genera attestato
         attestato = self._attestato(partecipazione)
         filename = self.ATTESTATO_FILENAME % (partecipazione.titolo_ottenuto.last(), '')
 

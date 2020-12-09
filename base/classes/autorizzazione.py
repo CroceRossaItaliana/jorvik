@@ -1,3 +1,6 @@
+from anagrafica.models import Trasferimento
+from anagrafica.permessi.applicazioni import PRESIDENTE, UFFICIO_SOCI, COMMISSARIO
+from posta.models import Messaggio
 from ..errori import errore_generico
 
 
@@ -82,6 +85,24 @@ class AutorizzazioneProcess:
                     self.richiesta.concedi(self.me, modulo=self.form)
                 else:
                     self.richiesta.nega(self.me, modulo=self.form)
+
+                if isinstance(self.richiesta.oggetto, Trasferimento):
+                    delega = self.me.deleghe_attuali(tipo__in=[PRESIDENTE, COMMISSARIO, UFFICIO_SOCI]).first()
+                    destinatari = [delega.oggetto.sede_regionale.presidente()]
+                    destinatari.extend(delega.oggetto.sede_regionale.delegati_ufficio_soci())
+                    Messaggio.costruisci_e_accoda(
+                        oggetto="Trasferimento {} per {}".format(
+                            "Confermato" if concedi else "Negato",
+                            self.richiesta.oggetto.richiedente.nome_completo
+                        ),
+                        modello="email_richiesta_trasferimento_regionale.html",
+                        corpo={
+                            "persona": self.richiesta.oggetto.richiedente.nome_completo,
+                            "comitato": self.richiesta.oggetto.destinazione,
+                            "stato": "Confermata" if concedi else "Negata"
+                        },
+                        destinatari=set(destinatari),
+                    )
         else:
             try:
                 self.form = self._autorizzazione_form(**form_kwargs)
