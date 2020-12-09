@@ -1,0 +1,6 @@
+{% extends 'email.html' %}
+
+{% block corpo %}
+  <p class="grassetto">Gentile {{ nome }},</p>
+  <p>Ricevi questo messaggio perché {{ persona }} ha terminato la tua nomina a Docente per {{ corso }}, poiché il corso è stato annullato.</p>
+{% endblock %}

@@ -1,19 +1,21 @@
 from operator import attrgetter
 
+from ckeditor_filebrowser_filer.views import _return_thumbnail
 from django.conf import settings
 from django.core.exceptions import PermissionDenied
 from django.core.urlresolvers import reverse
 from django.db.models import Q
-from django.http import Http404, HttpResponsePermanentRedirect, HttpResponseRedirect
+from django.http import Http404, HttpResponsePermanentRedirect, HttpResponseRedirect, JsonResponse
+from django.shortcuts import redirect
 from django.utils.decorators import method_decorator
 from django.views.generic import ListView
-
-from autenticazione.funzioni import pagina_privata, VistaDecorata, pagina_pubblica
-from ckeditor_filebrowser_filer.views import _return_thumbnail
-from filer.models import File, Folder
+from filer.models import File, Folder, datetime
 from filer.server.views import filer_settings
 
-from gestione_file.models import Documento, DocumentoSegmento, Immagine
+from anagrafica.costanti import TERRITORIALE
+from autenticazione.funzioni import pagina_privata, VistaDecorata, pagina_pubblica
+from gestione_file.forms import ModuloAggiungiDocumentoComitato
+from gestione_file.models import Documento, DocumentoSegmento, Immagine, DocumentoComitato
 from jorvik import settings
 
 server = filer_settings.FILER_PRIVATEMEDIA_SERVER
@@ -117,3 +119,63 @@ def serve_image(request, persona, image_id, thumb_options=None, width=None, heig
         return server.serve(request, file_obj=thumb, save_as=False)
     else:
         return HttpResponseRedirect(url)
+
+
+@pagina_privata
+def documenti_comitato(request, me):
+    sede = me.delega_presidente.oggetto
+    from django.db.models import Q
+    if request.method == 'POST':
+        form = ModuloAggiungiDocumentoComitato(request.POST, request.FILES)
+        if form.is_valid():
+            doc = form.save(commit=False)
+            doc.sede = sede
+            doc.save()
+    else:
+        form = ModuloAggiungiDocumentoComitato()
+    sedi = []
+    for sede in sede.ottieni_discendenti(includimi=True).exclude(estensione=TERRITORIALE):
+        sedi.append(
+            {
+                "comitato": sede.comitato,
+                "documenti": DocumentoComitato.objects.filter(
+                    Q(expires__gt=datetime.now())|
+                    Q(expires=None),
+                    sede=sede,
+                ).order_by('creazione')
+            }
+        )
+
+    contesto = {
+        'form': form,
+        'sedi': sedi,
+        'sede': sede
+    }
+
+    return 'documenti_comitato.html', contesto
+
+
+@pagina_privata
+def documenti_comitato_cancella(request, me, pk=None):
+
+    doc = DocumentoComitato.objects.get(pk=pk)
+    doc.delete()
+    return redirect(reverse('documenti:documenti-comitato'))
+
+
+@pagina_privata
+def documenti_comitato_modifica(request, me, pk=None):
+    doc = DocumentoComitato.objects.get(pk=pk)
+    if request.method == 'POST':
+        form = ModuloAggiungiDocumentoComitato(request.POST, request.FILES, instance=doc)
+        if form.is_valid():
+            form.save()
+            return redirect(reverse('documenti:documenti-comitato'))
+    else:
+        form = ModuloAggiungiDocumentoComitato(instance=doc)
+
+    contesto = {
+        'form': form
+    }
+
+    return 'documenti_comitato_modifica.html', contesto

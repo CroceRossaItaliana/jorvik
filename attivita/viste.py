@@ -1,12 +1,8 @@
-# coding=utf8
 import json
 from datetime import date, timedelta, datetime, time
 
-from attivita.stats import statistiche_attivita_persona
 from django.db.models import Count, F, Sum
 from django.utils import timezone
-
-
 from django.core.paginator import Paginator, PageNotAnInteger, EmptyPage
 from django.shortcuts import redirect, get_object_or_404
 
@@ -16,15 +12,15 @@ from anagrafica.permessi.applicazioni import RESPONSABILE_AREA, DELEGATO_AREA, R
 from anagrafica.permessi.costanti import MODIFICA, GESTIONE_ATTIVITA, ERRORE_PERMESSI, GESTIONE_GRUPPO, \
     GESTIONE_AREE_SEDE, COMPLETO, GESTIONE_ATTIVITA_AREA, GESTIONE_REFERENTI_ATTIVITA, GESTIONE_ATTIVITA_SEDE, \
     GESTIONE_POTERI_CENTRALE_OPERATIVA_SEDE
-from attivita.elenchi import ElencoPartecipantiTurno, ElencoPartecipantiAttivita
-from attivita.forms import ModuloStoricoTurni, ModuloAttivitaInformazioni, ModuloModificaTurno, \
+from .stats import statistiche_attivita_persona
+from .elenchi import ElencoPartecipantiTurno, ElencoPartecipantiAttivita
+from .forms import ModuloStoricoTurni, ModuloAttivitaInformazioni, ModuloModificaTurno, \
     ModuloAggiungiPartecipanti, ModuloCreazioneTurno, ModuloCreazioneArea, ModuloOrganizzaAttivita, \
     ModuloOrganizzaAttivitaReferente, ModuloStatisticheAttivita, ModuloRipetiTurno, ModuloStatisticheAttivitaPersona
-from attivita.models import Partecipazione, Attivita, Turno, Area
-from attivita.utils import turni_raggruppa_giorno
+from .models import Partecipazione, Attivita, Turno, Area
+from .utils import turni_raggruppa_giorno
 from autenticazione.funzioni import pagina_privata, pagina_pubblica
 from base.errori import ci_siamo_quasi, errore_generico, messaggio_generico, errore_no_volontario
-from base.files import Excel, FoglioExcel
 from base.utils import poco_fa, timedelta_ore
 from gruppi.models import Gruppo
 
@@ -231,7 +227,6 @@ def attivita_referenti(request, me, pk=None, nuova=False):
         "continua_url": continua_url
     }
     return 'attivita_referenti.html', contesto
-
 
 
 @pagina_privata
@@ -612,7 +607,6 @@ def attivita_scheda_partecipanti(request, me, pk=None):
     return "attivita_scheda_partecipanti.html", contesto
 
 
-
 @pagina_privata
 def attivita_scheda_turni_rimuovi(request, me, pk=None, turno_pk=None, partecipante_pk=None):
 
@@ -639,7 +633,6 @@ def attivita_scheda_turni_rimuovi(request, me, pk=None, turno_pk=None, partecipa
                                         "è stata ritirata con successo.",
                               torna_titolo="Torna al turno",
                               torna_url=turno.url)
-
 
 
 @pagina_privata

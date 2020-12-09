@@ -1,0 +1,53 @@
+<table class="table table-striped">
+    <thead>
+    <tr>
+        <td>Persone</td>
+        <th>Contatto</th>
+        <th>Dispinibilita</th>
+        <th>Benefici di legge</th>
+        <th>Azioni</th>
+    </tr>
+    </thead>
+    <tbody>
+    {% for r in reperibilita %}
+        <tr>
+            <td>
+                <strong>{{ r.persona.nome_completo }}</strong><br>
+                {{ r.persona.codice_fiscale }}<br>
+            </td>
+            <td>
+                {{ r.persona.email }}<br>
+                {% for numero in r.persona.numeri_pubblici %}
+                    {{ numero }}<br>
+                {% endfor %}
+            </td>
+            <td>
+                <strong>Dal:</strong> {{ r.inizio|date:"SHORT_DATETIME_FORMAT" }}<br>
+                <strong>Al:</strong> {{ r.fine|date:"SHORT_DATETIME_FORMAT" }}<br>
+                <strong>Per:</strong> {{ r.attivazione }}<br>
+            </td>
+            <td>
+                <div style="margin:4px 0 8px; font-size:12px;">
+                    <strong>{% if r.applicazione_bdl %}Si{% else %}
+                    No{% endif %}</strong>
+                </div>
+            </td>
+            <td>
+                <a href="{% url 'so:reperibilita_modifica' r.pk %}">
+                    <i class="fa fa-fw fa-edit"></i> Modifica
+                </a><br>
+                <a href="{% url 'so:reperibilita_cancella' r.pk %}"
+                   data-conferma="Vuoi cancellare la reperibilità selezionata?">
+                    <i class="fa fa-fw fa-trash"></i> Cancella
+                </a>
+            </td>
+        </tr>
+    {% empty %}
+        <tr class="alert alert-warning">
+            <td colspan="4">
+                <i class="fa fa-fw fa-warning"></i> Ancora nessuna reperibilit&agrave; segnalata.
+            </td>
+        </tr>
+    {% endfor %}
+    </tbody>
+</table>

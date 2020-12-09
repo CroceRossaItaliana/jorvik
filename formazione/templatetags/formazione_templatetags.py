@@ -22,6 +22,26 @@ def titoli_del_corso(persona, cd):
     }
 
 
+@register.filter
+def posso_annullare_corso(persona, corso):
+    if persona.is_presidente:
+        delega = persona.delega_presidente
+        if delega.oggetto == corso.sede:
+            return True
+
+    if persona.is_comissario:
+        delega = persona.delega_commissario
+        if delega.oggetto == corso.sede:
+            return True
+
+    if persona.is_responsabile_formazione:
+        delega = persona.delega_responsabile_formazione
+        if delega.oggetto == corso.sede:
+            return True
+
+    return False
+
+
 @register.simple_tag
 def lezione_esonero(lezione, partecipante):
     from ..models import AssenzaCorsoBase
@@ -179,4 +199,11 @@ def lezione_durata(lezione):
         splitted = str(durata).split(':')
         if splitted:
             return "%s ore %s min" % tuple(splitted[:2])
+    return ''
+
+
+@register.simple_tag
+def formazione_menu_link_pdf_target_blank(url):
+    if url.endswith('.pdf'):
+        return "target=_blank"
     return ''

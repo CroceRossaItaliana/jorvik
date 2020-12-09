@@ -1,0 +1,32 @@
+<div class="row allinea-centro">
+    <div class="col-md-12">
+        <ul class="pagination pagionation-lg">
+            {% if ha_precedente %}
+                <li class="prev">
+                    <a href="{% url 'so:servizio_turni_modifica' attivita.pk %}{{ pagina_precedente }}/">
+                        <i class="fa fa-arrow-left"></i>
+                    </a>
+                </li>
+            {% else %}
+                <li class="prev disabled"><a href="#"><i class="fa fa-arrow-left"></i></a></li>
+            {% endif %}
+
+            {% if puo_modificare %}
+                <li class="active"><a href="{% url 'so:servizio_turni_nuovo' attivita.pk %}"><i class="fa fa-fw fa-plus-circle"></i> Crea nuovo turno</a></li>
+            {% endif %}
+
+            <li class="disabled"><a href="#">Pag. {{ pagina }} di {{ pagine }} &mdash; {{ totale }} turni</a></li>
+            <li><a href="{% url 'so:servizio_turni_modifica' attivita.pk %}"><i class="fa fa-fw fa-calendar"></i> Vai a oggi</a></li>
+
+            {% if puo_modificare %}
+                <li><a href="{% url 'so:servizio_turni_modifica' attivita.pk %}{{ pagine }}/"><i class="fa fa-fw fa-list"></i> Ultima pagina</a></li>
+            {% endif %}
+
+            {% if ha_successivo %}
+                <li class="next"><a href="{% url 'so:servizio_turni_modifica' attivita.pk %}{{ pagina_successiva }}/"><i class="fa fa-arrow-right"></i></a></li>
+            {% else %}
+                <li class="next disabled"><a href="#"><i class="fa fa-arrow-right"></i></a></li>
+            {% endif %}
+        </ul>
+    </div>
+</div>

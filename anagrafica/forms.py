@@ -22,8 +22,8 @@ from sangue.models import Donatore, Donazione
 from formazione.models import Corso
 from .costanti import REGIONALE
 from .models import (Sede, Persona, Appartenenza, Documento, Estensione,
-    ProvvedimentoDisciplinare, Delega, Fototessera, Trasferimento, Riserva,
-    Nominativo,)
+                     ProvvedimentoDisciplinare, Delega, Fototessera, Trasferimento, Riserva,
+                     Nominativo)
 from .validators import valida_almeno_14_anni, valida_data_nel_passato
 from .permessi.applicazioni import (PRESIDENTE, COMMISSARIO,
     CONSIGLIERE, CONSIGLIERE_GIOVANE, VICE_PRESIDENTE)
@@ -251,6 +251,7 @@ class ModuloProfiloModificaAnagrafica(ModelForm):
                     self.fields[f].disabled = True
 
 
+
 class ModuloProfiloModificaAnagraficaDomicilio(ModelForm):
     class Meta:
         model = Persona
@@ -409,11 +410,16 @@ class ModuloCreazioneTrasferimento(autocomplete_light.ModelForm):
 
 class ModuloConsentiTrasferimento(forms.Form):
     protocollo_numero = forms.CharField(max_length=32, label="Numero di protocollo", help_text="Numero di protocollo con cui è stata registrata la richiesta.")
+    conferma = forms.BooleanField(
+        label=mark_safe("<strong>Confermo il contatto e l'assenso del Presidente del comitato di destinazione</strong>"),
+        required=True
+    )
     protocollo_data = forms.DateField(label="Data del protocollo", help_text="Data di registrazione del protocollo.")
 
 
-class ModuloConsentiRiserva(ModuloConsentiTrasferimento):
-    pass
+class ModuloConsentiRiserva(forms.Form):
+    protocollo_numero = forms.CharField(max_length=32, label="Numero di protocollo", help_text="Numero di protocollo con cui è stata registrata la richiesta.")
+    protocollo_data = forms.DateField(label="Data del protocollo", help_text="Data di registrazione del protocollo.")
 
 
 class ModuloNuovoProvvedimento(autocomplete_light.ModelForm):

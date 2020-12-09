@@ -1,0 +1,34 @@
+{% load so_templatetags %}
+
+{% partecipazione turno as part %}
+
+<div class="btn-group-vertical btn-block" style="text-align:center;">
+    {% if part in turno.TURNO_PUOI_PARTECIPARE %}
+        {% if part == turno.TURNO_PUOI_PARTECIPARE_DISPONIBILITA %}
+            <i class="fas fa-info"></i> Il turno &egrave; pieno
+        {% endif %}
+
+    {% elif part in turno.TURNO_PRENOTATO %}
+        {% if part == turno.TURNO_PRENOTATO_PUOI_RITIRARTI %}
+            <a href="{{ turno.url_ritirati }}" class="btn btn-warning"><i class="fa fa-fw fa-times"></i> Ritirati</a>
+
+        {% elif part == turno.TURNO_PRENOTATO_NON_PUOI_RITIRARTI %}
+            <i class="fa fa-fw fa-info-circle"></i> Partecipazione confermata
+        {% endif %}
+
+    {% elif part in turno.TURNO_NON_PUOI_PARTECIPARE %}
+        {% if part == turno.TURNO_NON_PUOI_PARTECIPARE_ATTIVITA_CHIUSA %}
+            <i class="fa fa-fw fa-lock"></i> Servizio chiuso
+
+        {% elif part == turno.TURNO_NON_PUOI_PARTECIPARE_TROPPO_TARDI %}
+            <i class="fa fa-fw fa-lock"></i> Turno chiuso
+
+        {% elif part == turno.TURNO_NON_PUOI_PARTECIPARE_ACCEDI %}
+            <a class="btn btn-danger btn-sm disabled" href="/login/?next={{ turno.url }}"><i class="fa fa-fw fa-key"></i> Accedi a Gaia</a>
+        {% endif %}
+    {% endif %}
+</div>
+
+{% if puo_modificare %}
+    <a href="{{ turno.url_modifica }}" class="btn btn-sm btn-block btn-default"><i class="fas fa-pencil-alt"></i> Gestione turno</a>
+{% endif %}

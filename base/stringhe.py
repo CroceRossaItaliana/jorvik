@@ -28,10 +28,14 @@ def genera_uuid_casuale():
     """
     return str(uuid.uuid4()).upper()
 
+
 from django.utils.deconstruct import deconstructible
+
 
 @deconstructible
 class GeneratoreNomeFile():
+
+    MAX_LENGTH = 80
 
     def __init__(self, prefisso, forza_suffisso=None):
         """
@@ -48,10 +52,21 @@ class GeneratoreNomeFile():
                  {MEDIA_ROOT}/prefisso/C22AF346-8D6B-429B-B518-F85F7E69281F.suffisso
         """
 
+        originale = originale.encode('ascii', 'ignore').decode()
         suffisso = self.forza_suffisso if self.forza_suffisso is not None \
             else os.path.splitext(originale)[1]
 
-        return self.prefisso + genera_uuid_casuale() + suffisso
+        nome_file = os.path.splitext(originale)[0]
+        datetime_file = datetime.now().strftime("%d_%m_%Y_%H_%M_%S_%f")
+        lunghezza_tot = len(self.prefisso) + len(nome_file) + len(datetime_file) + len(suffisso)
+
+        if lunghezza_tot > self.MAX_LENGTH:
+            slice = self.MAX_LENGTH - (lunghezza_tot - len(nome_file))
+
+            return self.prefisso + "{}{}".format(nome_file[:slice], datetime_file) + suffisso
+
+        return self.prefisso + "{}{}".format(nome_file, datetime_file) + suffisso
+
 
 def domani():
     """

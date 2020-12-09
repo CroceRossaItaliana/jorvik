@@ -62,6 +62,7 @@ INSTALLED_APPS = [
     'django.contrib.humanize',
     'django_gravatar',
     'centrale_operativa',
+    'sala_operativa',
     'compressor',
     'easy_thumbnails',
     'gestione_file',
@@ -266,6 +267,9 @@ TRIPPUS_DOMAIN = APIS_CONF.get('trippus', 'domain')
 TRIPPUS_USERNAME = APIS_CONF.get('trippus', 'username', fallback=os.environ.get("TRIPPUS_USERNAME"))
 TRIPPUS_PASSWORD = APIS_CONF.get('trippus', 'password', fallback=os.environ.get("TRIPPUS_PASSWORD"))
 
+MOODLE_KEY = APIS_CONF.get('moodle', 'token', fallback=os.environ.get("MOODLE_KEY"))
+MOODLE_DOMAIN = APIS_CONF.get('moodle', 'domain', fallback=os.environ.get("MOODLE_DOMAIN"))
+
 
 DESTINATARI_REPORT = ['sviluppo@cri.it', 'info@gaia.cri.it']
 
@@ -417,7 +421,6 @@ from django.utils.translation import ugettext_lazy as _
 COUNTRIES_OVERRIDE = {
     'KS': _('Kosovo'),
 }
-
 
 INIZIO_ASSEMBLEA_NAZIONALE = '10/30/2020 08:00:00'
 FINE_ASSEMBLEA_NAZIONALE = '10/31/2020 15:30:00'

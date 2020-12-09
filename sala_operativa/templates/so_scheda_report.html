@@ -1,0 +1,94 @@
+{% extends 'so_vuota.html' %}
+
+{% load utils %}
+
+{% block scheda_titolo %}Report servizi{% endblock %}
+
+{% block scheda_contenuto %}
+    <form method="POST">
+        {% csrf_token %}
+        <div class="row">
+            <div class="col-md-8">
+                <div class="panel panel-info">
+                    <div class="panel-heading">
+                        <h2 class="panel-title">
+                            <i class="fa fa-fw fa-bar-chart"></i> Statistiche
+                        </h2>
+                    </div>
+                    <div class="panel-body">
+                        <table class="table table-responsive table-striped">
+                            <thead>
+                            <tr>
+                                <th>Parametro</th>
+                                <th>Valore</th>
+                            </tr>
+                            </thead>
+                            <tbody>
+                            <tr>
+                                <td><i class="fa fa-fw fa-calendar text-muted"></i> Numero di turni</td>
+                                <td>{{ attivita.turni_passati.count }} turni</td>
+                            </tr>
+                            <tr>
+                                <td><i class="fa fa-fw fa-clock-o text-muted"></i> Ore di servizio</td>
+                                <td>{% giorni_ore_minuti attivita.ore_di_servizio as gom %}
+                                    {{ gom.0 }} giorni, {{ gom.1 }} ore, {{ gom.2 }} minuti
+                                </td>
+                            </tr>
+                            <tr>
+                                <td><i class="fa fa-fw fa-users text-muted"></i> Volontari partecipanti</td>
+                                <td>{{ attivita.partecipanti_confermati.count }} persone</td>
+                            </tr>
+                            <tr>
+                                <td><i class="fa fa-fw fa-clock-o text-muted"></i> Ore/uomo di servizio</td>
+                                <td>{% giorni_ore_minuti attivita.ore_uomo_di_servizio as gom %}
+                                    {{ gom.0 }} giorni, {{ gom.1 }} ore, {{ gom.2 }} minuti
+                                </td>
+                            </tr>
+                            <tr>
+                                <td><i class="fa fa-fw fa-info-circle text-muted"></i> Et&agrave; media partecipanti
+                                </td>
+                                <td>{{ attivita.eta_media_partecipanti }} anni</td>
+                            </tr>
+                            </tbody>
+                        </table>
+                        <p class="text-info">
+                            <i class="fa fa-fw fa-info-circle"></i>
+                            Nota bene: Le statistiche sono calcolate relativamente solo ai turni gi&agrave; terminati.
+                        </p>
+                    </div>
+                </div>
+            </div>
+            <div class="col-md-4">
+                <div class="panel panel-primary">
+                    <div class="panel-heading">
+                        <h2 class="panel-title">
+                            <i class="fa fa-fw fa-list"></i> Tutti i partecipanti
+                        </h2>
+                    </div>
+                    <div class="panel-body">
+                        <p>Puoi generare un elenco di tutti i partecipanti per inviare una e-mail di massa, oppure
+                            scaricarlo per ottenere un file Excel che riassume i partecipanti per ognuno dei
+                            turni.</p>
+                        <a href="{{ attivita.url_partecipanti }}" class="btn btn-block btn-primary">
+                            <i class="fa fa-fw fa-cogs"></i> Genera Elenco
+                        </a>
+                    </div>
+                </div>
+                <div class="panel panel-primary">
+                    <div class="panel-heading">
+                        <h2 class="panel-title">
+                            <i class="fa fa-fw fa-file-pdf-o"></i> Scarica il report
+                        </h2>
+                    </div>
+                    <div class="panel-body">
+                        <p>Il report in formato Excel contiene un elenco di tutti i turni passati dell'attivit&agrave; e
+                            i nomi dei volontari che vi hanno partecipato.</p>
+                        <button type="submit" target="_blank" download class="btn btn-block btn-primary">
+                            <i class="fa fa-fw fa-download"></i> Scarica report
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </form>
+{% endblock %}

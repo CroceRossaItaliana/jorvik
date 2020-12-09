@@ -33,6 +33,8 @@ from .forms import (ModuloCreazioneCorsoBase, ModuloModificaLezione,
     FormVerbaleCorso, FormRelazioneDelDirettoreCorso)
 from .classes import GeneraReport, GestioneLezioni
 from .utils import costruisci_titoli
+from .training_api import TrainingApi
+
 
 
 @pagina_privata
@@ -54,6 +56,7 @@ def formazione(request, me):
         "corsi": corsi,
         "sedi": me.oggetti_permesso(GESTIONE_CORSI_SEDE),
         "puo_pianificare": me.ha_permesso(GESTIONE_CORSI_SEDE),
+        "me": me,
     }
     return 'formazione.html', context
 
@@ -134,6 +137,7 @@ def formazione_corsi_base_elenco(request, me):
     context = {
         "corsi": me.oggetti_permesso(GESTIONE_CORSO),
         "puo_pianificare": puo_modificare,
+        "posso_annullare": me.is_presidente or me.is_comissario or me.is_responsabile_formazione
     }
     return 'formazione_corsi_base_elenco.html', context
 
@@ -292,6 +296,12 @@ def aspirante_corso_base_informazioni(request, me=None, pk=None):
     context['can_activate'] = corso.can_activate(me)
     context['puoi_partecipare'] = puoi_partecipare
 
+    if corso.online and corso.moodle:
+        api = TrainingApi()
+        r = api.core_course_get_courses_by_field_shortname(corso.titolo_cri.sigla)
+        context['link'] = 'https://training.cri.it/course/view.php?id={}'.format(r['id'])
+
+
     return 'aspirante_corso_base_scheda_informazioni.html', context
 
 
@@ -321,7 +331,7 @@ def aspirante_corso_base_iscriviti(request, me=None, pk=None):
     p = PartecipazioneCorsoBase(persona=me, corso=corso)
     p.save()
     p.richiedi()
-    print(p)
+
     return messaggio_generico(request, me,
         titolo="Sei iscritt%s al corso" % me.genere_o_a,
         messaggio="Complimenti! La tua richiesta di iscrizione è stata registrata ed inviata al Direttore di Corso. "
@@ -349,6 +359,9 @@ def aspirante_corso_base_ritirati(request, me=None, pk=None):
         if partecipazione.confermata:
             partecipazione.confermata = False
             partecipazione.save()  # second save() call
+            if corso.online and corso.moodle:
+                api = TrainingApi()
+                api.cancellazione_iscritto(persona=me, corso=corso)
 
         # Informa direttore corso
         posta = Messaggio.costruisci_e_accoda(
@@ -359,6 +372,8 @@ def aspirante_corso_base_ritirati(request, me=None, pk=None):
                 'partecipante': partecipazione.persona,
             },
             destinatari=corso.direttori_corso())
+
+
 
         if posta:
             messages.success(request, "Il direttore del corso è stato avvisato.")
@@ -571,13 +586,18 @@ def aspirante_corso_base_attiva(request, me, pk):
     if request.POST:
         activation = corso.attiva(request=request, rispondi_a=me)
 
-        volontari_da_informare = corso._corso_activation_recipients_for_email().count()
+        volontari_o_aspiranti_da_informare = corso._corso_activation_recipients_for_email().count()
 
         if corso.extension_type == CorsoBase.EXT_MIA_SEDE:
-            messages.success(request, "Saranno avvisati %s volontari del %s" % (volontari_da_informare, corso.sede))
+            asp_or_vol = "volontari"
+            if corso.titolo_cri and corso.titolo_cri.is_titolo_corso_base:
+                asp_or_vol = "aspiranti"
+            messages.success(request, "Saranno avvisati %s %s del %s" % (volontari_o_aspiranti_da_informare,
+                                                                         asp_or_vol,
+                                                                         corso.sede))
         else:
-            messages.success(request, "Saranno avvisati %s volontari dei comitati secondo le impostazioni delle estensioni." % volontari_da_informare)
-
+            messages.success(request, "Saranno avvisati %s volontari dei comitati secondo le impostazioni delle estensioni." % volontari_o_aspiranti_da_informare)
+        
         return activation
 
     context = {
@@ -643,11 +663,24 @@ def aspirante_corso_base_termina(request, me, pk):
 
     # Validazione delle form
     for partecipante in partecipanti_qs:
-        form = FormVerbaleCorso(request.POST or None,
-            prefix="part_%d" % partecipante.pk,
-            instance=partecipante,
-            generazione_verbale=generazione_verbale
-        )
+        if corso.online and corso.moodle and request.method == 'GET':
+            api = TrainingApi()
+            form = FormVerbaleCorso(request.POST or None,
+                prefix="part_%d" % partecipante.pk,
+                instance=partecipante,
+                generazione_verbale=generazione_verbale,
+                initial={
+                    'ammissione': PartecipazioneCorsoBase.AMMESSO
+                    if api.ha_ottenuto_competenze(persona=partecipante.persona, corso=corso) else PartecipazioneCorsoBase.NON_AMMESSO
+                }
+            )
+        else:
+            form = FormVerbaleCorso(
+                request.POST or None,
+                prefix="part_%d" % partecipante.pk,
+                instance=partecipante,
+                generazione_verbale=generazione_verbale
+            )
 
         if corso.tipo == Corso.BASE:
             if corso.titolo_cri and corso.titolo_cri.scheda_prevede_esame:
@@ -725,6 +758,11 @@ def aspirante_corso_base_termina(request, me, pk):
         corso.termina(mittente=me,
                       partecipanti_qs=partecipanti_qs,
                       data_ottenimento=data_ottenimento)
+
+        if corso.online and corso.moodle:
+            api = TrainingApi()
+            for partecipante in partecipanti_qs:
+                api.cancellazione_iscritto(persona=partecipante.persona, corso=corso)
 
         if corso.is_nuovo_corso:
             torna_titolo = "Vai al Report del Corso"
@@ -826,8 +864,14 @@ def aspirante_corso_base_iscritti_cancella(request, me, pk, iscritto):
     if request.method == 'POST':
         for partecipazione in corso.partecipazioni_confermate_o_in_attesa().filter(persona=persona):
             partecipazione.disiscrivi(mittente=me)
+            if corso.online and corso.moodle:
+                api = TrainingApi()
+                api.cancellazione_iscritto(persona=persona, corso=corso)
         for partecipazione in corso.inviti_confermati_o_in_attesa().filter(persona=persona):
             partecipazione.disiscrivi(mittente=me)
+            if corso.online and corso.moodle:
+                api = TrainingApi()
+                api.cancellazione_iscritto(persona=persona, corso=corso)
         return messaggio_generico(request, me, titolo="Iscritto cancellato",
                                   messaggio="{} è stato cancellato dal corso {}.".format(persona, corso),
                                   torna_titolo="Torna al corso base", torna_url=corso.url_iscritti)
@@ -909,6 +953,11 @@ def aspirante_corso_base_iscritti_aggiungi(request, me, pk):
                         mittente=me,
                         destinatari=[persona]
                     )
+
+                if corso.online and corso.moodle:
+                    from formazione.training_api import TrainingApi
+                    api = TrainingApi()
+                    api.aggiugi_ruolo(persona=persona, corso=corso, ruolo=TrainingApi.DISCENTE)
 
                 Log.crea(me, partecipazione)
 
@@ -1476,9 +1525,9 @@ def catalogo_corsi(request, me):
     if search_query:
         qs = Titolo.objects.filter(
             Q(Q(sigla__icontains=search_query) | Q(nome__icontains=search_query)),
-            tipo=Titolo.TITOLO_CRI, sigla__isnull=False)
+            tipo=Titolo.TITOLO_CRI, sigla__isnull=False).order_by('sigla')
     else:
-        qs = Titolo.objects.filter(tipo=Titolo.TITOLO_CRI, sigla__isnull=False)
+        qs = Titolo.objects.filter(tipo=Titolo.TITOLO_CRI, sigla__isnull=False).order_by('sigla')
 
     context = costruisci_titoli(context, qs.filter(online=False), search_query, 'titoli')
     context = costruisci_titoli(context, qs.filter(online=True), search_query, 'titoli_online')
@@ -1486,3 +1535,15 @@ def catalogo_corsi(request, me):
     context['titoli_total'] = qs.count()
 
     return 'catalogo_corsi.html', context
+
+
+@pagina_privata
+def aspirante_corso_base_annulla(request, me, pk):
+    corso = get_object_or_404(CorsoBase, pk=pk)
+
+    if not me.permessi_almeno(corso, MODIFICA):
+        return redirect(ERRORE_PERMESSI)
+
+    corso.annulla(me)
+
+    return redirect(reverse('formazione:index'))

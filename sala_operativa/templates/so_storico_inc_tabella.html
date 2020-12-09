@@ -1,0 +1,47 @@
+<table class="table table-striped">
+    <thead>
+        <th><i class="fa fa-fw fa-calendar"></i> Turno e Servizio</th>
+        <th><i class="fa fa-fw fa-clock-o"></i> Data e ora</th>
+        <th><i class="fa fa-fw fa-info-circle"></i> Stato</th>
+        <th><i class="fa fa-fw fa-times"></i> Aggiornamenti</th>
+    </thead>
+
+    <tbody>
+    {% for richiesta in storico %}
+        <tr>
+            <td>
+                <span class="piu-grande">{{ richiesta.turno.link|safe }}</span><br />
+                {{ richiesta.turno.attivita.link|safe }}
+            </td>
+            <td>
+                <strong>Inizio:</strong> {{ richiesta.turno.inizio|date:"SHORT_DATETIME_FORMAT" }}<br />
+                <strong>Fine:</strong> {{ richiesta.turno.fine|date:"SHORT_DATETIME_FORMAT" }}
+            </td>
+            <td>
+                {% if richiesta.stato == richiesta.PARTECIPA %}
+                    {{ richiesta.get_stato_display }}
+
+                {% elif richiesta.stato == richiesta.NON_PRESENTATO %}
+                    <span class="text-danger grassetto">
+                        <i class="fa fa-fw fa-warning"></i>
+                        Non presentato/a
+                    </span>
+                {% endif %}
+            </td>
+            <td>
+                <span class="piu-piccolo">Creazione: {{ richiesta.creazione|date:"SHORT_DATETIME_FORMAT" }}</span><br>
+                <span class="piu-piccolo">Ultima modifica: {{ richiesta.ultima_modifica|date:"SHORT_DATETIME_FORMAT" }}</span>
+            </td>
+        </tr>
+
+    {% empty %}
+        {% block storico_empty %}
+        <tr class="info allinea-centro">
+            <td colspan="4">
+                <h4><i class="fa fa-fw fa-info-circle"></i> Nessuna partecipazione</h4>
+            </td>
+        </tr>
+        {% endblock %}
+    {% endfor %}
+    </tbody>
+</table>

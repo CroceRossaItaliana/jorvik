@@ -180,7 +180,7 @@ class ModuloModificaLezione(ModelForm):
                 # hours = days * 24 + seconds // 3600
                 # hours = datetime.timedelta(hours=hours)
 
-                if duration > lezione_ore.seconds:
+                if duration > lezione_ore.seconds and not self.corso.online:
                     self.add_error('fine', 'La durata della lezione non può essere '
                         'maggiore della durata impostata nella scheda per questa lezione (%s). '
                         'Hai indicato %s' % (lezione_ore, datetime.timedelta(seconds=duration)))
@@ -466,6 +466,7 @@ class FormVerbaleCorso(ModelForm):
                                                 'argomento_parte_1',
                                                 'esito_parte_2',
                                                 'argomento_parte_2',
+                                                'partecipazione_online',
                                                 'extra_1', 'extra_2',
                                                 'destinazione',]
         SCHEDA_VALUTAZIONE_CORSO_NUOVO_FIELDS = ['esito_parte_1',
@@ -502,6 +503,7 @@ class FormVerbaleCorso(ModelForm):
                                           if ch[0] != PartecipazioneCorsoBase.NON_PREVISTO]
             self.fields['esito_parte_1'].choices = CHOICES_SENZA_NON_PREVISTO
             self.fields['esito_parte_2'].choices = CHOICES_SENZA_NON_PREVISTO
+            self.fields['partecipazione_online'].help_text = "<strong>N.B</strong> Da selezionare quando la prova pratica dell'esame è sostituita da colloquio online e la certificazione EFAC non può essere rilasciata"
 
         # Escludi quei campi che non stanno nella lista di sopra
         for field in self.fields.copy():

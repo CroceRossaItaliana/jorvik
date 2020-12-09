@@ -9,6 +9,7 @@ from django.db.models import Q
 from django.db.transaction import atomic
 from django.contrib.contenttypes.models import ContentType
 from django.shortcuts import get_object_or_404
+from django.template.loader import get_template
 from django.utils import timezone
 from django.utils.timezone import now
 from django.utils.translation import ugettext_lazy as _
@@ -30,6 +31,7 @@ from curriculum.areas import OBBIETTIVI_STRATEGICI
 from posta.models import Messaggio
 from social.models import ConCommenti, ConGiudizio
 from survey.models import Survey
+from .training_api import TrainingApi
 from .validators import (course_file_directory_path, validate_file_extension,
                          delibera_file_upload_path)
 
@@ -188,6 +190,13 @@ class CorsoBase(Corso, ConVecchioID, ConPDF):
 
     NON_PUOI_ISCRIVERTI_SOLO_SE_IN_AUTONOMIA = (NON_PUOI_ISCRIVERTI_TROPPO_TARDI,)
 
+    @property
+    def annullabile(self):
+        if self.stato == self.PREPARAZIONE or self.stato == self.ATTIVO:
+            if not self.lezioni.filter(inizio__lte=datetime.datetime.now()).exists():
+                return True
+        return False
+
     def persona(self, persona):
         # Validazione per Nuovi Corsi (Altri Corsi)
         if self.is_nuovo_corso or self.online:
@@ -314,6 +323,10 @@ class CorsoBase(Corso, ConVecchioID, ConPDF):
     @property
     def online(self):
         return self.tipo == self.CORSO_ONLINE
+
+    @property
+    def moodle(self):
+        return self.tipo == self.CORSO_ONLINE and self.titolo_cri.moodle
 
     @property
     def prossimo(self):
@@ -509,6 +522,10 @@ class CorsoBase(Corso, ConVecchioID, ConPDF):
     @property
     def url_direttori(self):
         return "/formazione/corsi-base/%d/direttori/" % (self.pk,)
+
+    @property
+    def url_annulla(self):
+        return reverse('aspirante:annulla', args=[self.pk])
 
     @property
     def url_commissione_esame(self):
@@ -780,17 +797,60 @@ class CorsoBase(Corso, ConVecchioID, ConPDF):
             torna_titolo="Torna al Corso",
             torna_url=self.url)
 
+    def annulla(self, persona):
+        if not self.annullabile:
+            raise ValueError("Questo corso non è annullabile.")
+
+        self.stato = self.ANNULLATO
+
+        self.save()
+
+        for partecipazione in self.partecipazioni_confermate_o_in_attesa():
+            partecipazione.annulla(persona)
+            if self.online and self.moodle:
+                api = TrainingApi()
+                api.cancellazione_iscritto(persona=partecipazione.persona, corso=self)
+
+        direttori_deleghe = self.direttori_corso(as_delega=True)
+        for direttore in direttori_deleghe:
+            p = direttore.persona
+            direttore.termina(mittente=persona)
+            Messaggio.costruisci_e_accoda(
+                oggetto="Annullamento corso: {}".format(self),
+                modello='email_corso_annullamanto_direttore.html',
+                corpo={
+                    'nome': p.nome_completo,
+                    "persona": persona.nome_completo,
+                    "corso": self
+                },
+                destinatari=[p, ]
+            )
+
+        docenti = self.docenti_corso()
+        for docente in docenti:
+            Messaggio.costruisci_e_accoda(
+                oggetto="Annullamento corso: {}".format(self),
+                modello='email_corso_annullamanto_docenti.html',
+                corpo={
+                    'nome': docente.nome_completo,
+                    "persona": persona.nome_completo,
+                    "corso": self
+                },
+                destinatari=[docente, ]
+            )
+
+        self.notifica_annullamento_corso()
+
     def _corso_activation_recipients_for_email(self):
         """
         Trovare destinatari aspiranti o volontari da avvisare di un nuovo corso attivato.
         :return: <Persona>QuerySet
         """
-        if self.corso_vecchio:
+        if self.titolo_cri and self.titolo_cri.is_titolo_corso_base:
             aspiranti_list = self.aspiranti_nelle_vicinanze().values_list('persona', flat=True)
             persone = Persona.objects.filter(pk__in=aspiranti_list)
         else:
             persone = self.get_volunteers_by_course_requirements()
-            print('volontari', persone)
         return persone
 
     def _corso_activation_recipients_for_email_generator(self):
@@ -881,11 +941,11 @@ class CorsoBase(Corso, ConVecchioID, ConPDF):
             persone_da_informare = self.get_volunteers_by_only_sede()
 
         if CorsoBase.EXT_LVL_REGIONALE == corso_extension:
-            print(CorsoBase.EXT_LVL_REGIONALE)
+            # print(CorsoBase.EXT_LVL_REGIONALE)
             by_ext_sede = self.get_volunteers_by_ext_sede()
-            print('by_ext_sede', by_ext_sede)
+            #print('by_ext_sede', by_ext_sede)
             by_ext_titles = self.get_volunteers_by_ext_titles()
-            print('by_ext_titles', by_ext_titles)
+            #print('by_ext_titles', by_ext_titles)
             persone_da_informare = by_ext_sede | by_ext_titles
 
         if persone_da_informare is None:
@@ -1125,7 +1185,7 @@ class CorsoBase(Corso, ConVecchioID, ConPDF):
         partecipazioni = self.partecipazioni_confermate_assente_motivo(solo=verbale_per_seconda_data_esame)
 
         pdf_template = "pdf_corso_%sesame_verbale.html"
-        pdf_template = pdf_template % "base_" if self.corso_vecchio else pdf_template % ""
+        pdf_template = pdf_template % 'base_' if self.corso_vecchio else pdf_template % ''
 
         if anteprima:
             numero_idonei = len([p.pk for p in partecipazioni if p.idoneo])
@@ -1220,8 +1280,9 @@ class CorsoBase(Corso, ConVecchioID, ConPDF):
             )
 
         if not sede == NAZIONALE:
-            email_to = self.sede.sede_regionale.presidente()
+            sede_regionale = self.sede.sede_regionale
 
+            email_to = sede_regionale.presidente()
             # Invia posta
             Messaggio.costruisci_e_accoda(
                 oggetto=oggetto,
@@ -1232,6 +1293,103 @@ class CorsoBase(Corso, ConVecchioID, ConPDF):
                 destinatari=[email_to,],
                 allegati=[self.delibera_file,]
             )
+
+            delegato_fomazione = sede_regionale.delegati_formazione()
+            for delegato in delegato_fomazione:
+                # Invia e-mail delegato_fomazione
+                Messaggio.invia_raw(
+                    oggetto=oggetto,
+                    corpo_html=get_template('email_corso_invia_delibera_al_delegati_formazione.html').render(
+                        {
+                            'nome': delegato.nome_completo
+                        }
+                    ),
+                    email_mittente=Messaggio.NOREPLY_EMAIL,
+                    lista_email_destinatari=[delegato.email],
+                    allegati=self.delibera_file
+                )
+
+                # Invia posta delegato_fomazione
+                Messaggio.costruisci_e_accoda(
+                    oggetto=oggetto,
+                    modello='email_corso_invia_delibera_al_delegati_formazione.html',
+                    corpo={
+                         'nome': delegato.nome_completo
+                    },
+                    destinatari=[delegato, ],
+                    allegati=[self.delibera_file, ]
+                )
+
+    def notifica_annullamento_corso(self):
+        sede = self.sede.estensione
+        oggetto = "Annullamento corso: %s" % self
+
+        email_destinatari = ['formazione@cri.it', ]
+
+        if self.livello in [Titolo.CDF_LIVELLO_I, Titolo.CDF_LIVELLO_II]:
+            # Se indicato, l'indirizzo invia una copia sulla mail della sede regionale
+            sede_regionale = self.sede.sede_regionale
+            sede_regionale_email = sede_regionale.email if hasattr(sede_regionale, 'email') else None
+            if sede_regionale_email:
+                email_destinatari.append(sede_regionale_email)
+
+        elif self.livello in [Titolo.CDF_LIVELLO_III, Titolo.CDF_LIVELLO_IV]:
+            pass
+
+        if sede == REGIONALE:
+            # Invia e-mail
+            Messaggio.invia_raw(
+                oggetto=oggetto,
+                corpo_html=get_template('email_corso_annullamento_al_presidente_responsavile_formazione.html').render(
+                    {
+                        'corso': self
+                    }
+                ),
+                email_mittente=Messaggio.NOREPLY_EMAIL,
+                lista_email_destinatari=email_destinatari
+            )
+
+        if not sede == NAZIONALE:
+            sede_regionale = self.sede.sede_regionale
+
+            email_to = sede_regionale.presidente()
+            # Invia posta
+            Messaggio.costruisci_e_accoda(
+                oggetto=oggetto,
+                modello='email_corso_annullamento_al_presidente_responsavile_formazione.html',
+                corpo={
+                    'corso': self,
+                },
+                destinatari=[email_to,]
+            )
+
+            delegato_fomazione = sede_regionale.delegati_formazione()
+
+            # Invia e-mail delegato_fomazione
+            for delegato in delegato_fomazione:
+                Messaggio.invia_raw(
+                    oggetto=oggetto,
+                    corpo_html=get_template('email_corso_annullamento_al_presidente_responsavile_formazione.html').render(
+                        {
+                            'corso': self
+                        }
+                    ),
+                    email_mittente=Messaggio.NOREPLY_EMAIL,
+                    lista_email_destinatari=[delegato.email]
+                )
+
+                # Invia posta delegato_fomazione
+                Messaggio.costruisci_e_accoda(
+                    oggetto=oggetto,
+                    modello='email_corso_annullamento_al_presidente_responsavile_formazione.html',
+                    corpo={
+                        'corso': self
+                    },
+                    destinatari=[delegato, ]
+                )
+
+
+
 
     @property
     def presidente_corso(self):
@@ -1334,6 +1492,8 @@ class CorsoBase(Corso, ConVecchioID, ConPDF):
 
         if not self.titolo_cri:
             return True
+        elif self.titolo_cri:
+            return False
         # elif self.creazione < timezone.datetime(2019, 9, 1):
         #     return True
         return False
@@ -1502,6 +1662,20 @@ class InvitoCorsoBase(ModelloSemplice, ConAutorizzazioni, ConMarcaTemporale, mod
             notifiche_attive=notifiche_attive,
         )
 
+    def annulla(self, mittente=None):
+        self.autorizzazioni_ritira()
+        Messaggio.costruisci_e_accoda(
+            oggetto="Notifica Annullamento corso",
+            modello="email_corso_annullamento.html",
+            corpo={
+                "persona": self.persona,
+                "mittente": mittente,
+                "corso": self.corso.nome
+            },
+            mittente=mittente,
+            destinatari=[self.persona]
+        )
+
     def disiscrivi(self, mittente=None):
         """
         Disiscrive partecipante dal corso base.
@@ -1597,6 +1771,7 @@ class PartecipazioneCorsoBase(ModelloSemplice, ConMarcaTemporale, ConAutorizzazi
     argomento_parte_1 = models.CharField(max_length=1024, blank=True, null=True, help_text="es. Storia della CRI, DIU.")
     esito_parte_2 = models.CharField(max_length=1, choices=ESITO, default=None, blank=True, null=True, db_index=True, help_text="Gesti e manovre salvavita.")
     argomento_parte_2 = models.CharField(max_length=1024, blank=True, null=True, help_text="es. BLS, colpo di calore.")
+    partecipazione_online = models.BooleanField(verbose_name="Prova pratica su Parte 2 sostituita da colloquio ONLINE", default=False)
     extra_1 = models.BooleanField(verbose_name="Prova pratica su Parte 2 sostituita da colloquio.", default=False)
     extra_2 = models.BooleanField(verbose_name="Verifica effettuata solo sulla Parte 1 del programma del corso.", default=False)
     destinazione = models.ForeignKey("anagrafica.Sede", verbose_name="Sede di destinazione", related_name="aspiranti_destinati", default=None, null=True, blank=True, help_text="La Sede presso la quale verrà registrato come Volontario l'aspirante "
@@ -1681,6 +1856,20 @@ class PartecipazioneCorsoBase(ModelloSemplice, ConMarcaTemporale, ConAutorizzazi
             },
             mittente=mittente,
             destinatari=[self.persona],
+        )
+
+    def annulla(self, mittente=None):
+        self.autorizzazioni_ritira()
+        Messaggio.costruisci_e_accoda(
+            oggetto="Notifica Annullamento corso",
+            modello="email_corso_annullamento.html",
+            corpo={
+                "persona": self.persona,
+                "mittente": mittente,
+                "corso": self.corso.nome
+            },
+            mittente=mittente,
+            destinatari=[self.persona]
         )
 
     def disiscrivi(self, mittente=None):

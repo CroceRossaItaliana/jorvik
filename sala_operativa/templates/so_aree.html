@@ -1,0 +1,46 @@
+{% extends 'so_vuota.html' %}
+
+{% load bootstrap3 %}
+
+{% block pagina_titolo %}Aree di Intervento{% endblock %}
+
+{% block app_contenuto %}
+    <div class="alert alert-info alert-block">
+        <p>
+            <i class="fa fa-fw fa-info-circle"></i>
+            Scegli una Sede CRI dall'elenco per gestirne le Aree di intervento.
+            Le <strong>Aree di intervento</strong> sono i "contenitori" principali delle
+            attivit&agrave;. Ogni area pu&ograve; avere dei responsabili, che possono
+            organizzare attivit&agrave; in autonomia per la rispettiva area.
+        </p>
+    </div>
+
+    <table class="table table-striped">
+        <thead>
+            <tr>
+                <th>Sede CRI</th>
+                <th>Aree</th>
+                <th>Attivit&agrave;</th>
+                <th>Link</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for sede in sedi %}
+                <tr>
+                    <td>
+                        <a href="{% url 'so:aree_sede' sede.pk %}">{{ sede.nome_completo }}</a>
+                    </td>
+                    <td class="grassetto">
+                        {{ sede.aree.count }} aree di intervento
+                    </td>
+                    <td>
+                        {{ sede.attivita.count }} attivit&agrave;
+                    </td>
+                    <td>
+                        <a href="{% url 'so:aree_sede' sede.pk %}"><i class="fa fa-fw fa-cogs"></i> Gestisci Aree</a>
+                    </td>
+                </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+{% endblock %}

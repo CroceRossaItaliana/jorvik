@@ -115,6 +115,7 @@ class GeneraReport:
             messages.error(self.request, "Questo attestato non esiste.")
             return redirect(reverse('utente:cv_tipo', args=[Titolo.TITOLO_CRI,]))
 
+        # Genera attestato
         attestato = self._attestato(partecipazione)
         filename = self.ATTESTATO_FILENAME % (partecipazione.titolo_ottenuto.last(), '')
 
@@ -210,7 +211,11 @@ class GestioneLezioni:
             request_data,
             instance=lezione,
             prefix="%s" % lezione.pk,
-            corso=self.corso
+            corso=self.corso,
+            initial={
+                "inizio": self.corso.data_inizio,
+                "fine": self.corso.data_esame
+            } if self.corso.online and self.corso.moodle else None
         )
 
     def presenze_assenze(self, per_singola_lezione=False):
@@ -246,10 +251,16 @@ class GestioneLezioni:
         if self.AZIONE_NUOVA:
             form_args.append(self.request.POST)
         else:
-            form_kwargs['initial'] = {
-                "inizio": timezone.now(),
-                "fine": timezone.now() + timedelta(hours=2)
-            }
+            if self.corso.online and self.corso.moodle:
+                form_kwargs['initial'] = {
+                    "inizio": self.corso.data_inizio,
+                    "fine": self.corso.data_esame
+                }
+            else:
+                form_kwargs['initial'] = {
+                    "inizio": timezone.now(),
+                    "fine": timezone.now() + timedelta(hours=2)
+                }
         return ModuloModificaLezione(*form_args, **form_kwargs)
 
     @property
@@ -266,6 +277,12 @@ class GestioneLezioni:
             lezione.save()
 
             lezione.docente = cd['docente']
+            if self.corso.online and self.corso.moodle:
+                from formazione.training_api import TrainingApi
+                api = TrainingApi()
+                for docente in cd['docente']:
+                    api.aggiugi_ruolo(docente, self.corso, TrainingApi.DOCENTE)
+
             lezione.save()
 
             self.avvisare_docente_e_presidente(lezione)
@@ -283,7 +300,6 @@ class GestioneLezioni:
 
         lezione = self.lezioni.get(pk=self.lezione_pk, corso=self.corso)
         form = self._lezione_form(lezione)
-
         if self.AZIONE_SALVA_PRESENZE:
             GestionePresenza(self.request, lezione, self.me, self.partecipanti)
 
@@ -299,6 +315,12 @@ class GestioneLezioni:
                 return self.dividi(lezione)
 
             self.avvisare_docente_e_presidente(lezione)
+
+            if self.corso.online and self.corso.moodle:
+                from formazione.training_api import TrainingApi
+                api = TrainingApi()
+                for docente in form.cleaned_data['docente']:
+                    api.aggiugi_ruolo(docente, self.corso, TrainingApi.DOCENTE)
 
             messages.success(self.request, "La lezione è stata salvata correttamente.")
             return redirect("%s#%d" % (self.corso.url_lezioni, lezione.pk))

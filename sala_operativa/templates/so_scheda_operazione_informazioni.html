@@ -1,0 +1,88 @@
+{% extends 'so_scheda_operazione.html' %}
+
+{% block scheda_titolo %}Informazioni{% endblock %}
+
+{% load utils %}
+{% load social %}
+{% load so_templatetags %}
+
+{% block scheda_contenuto %}
+    <div class="row">
+        <div class="col-md-4">
+            <div class="panel panel-info">
+                <div class="panel-heading">
+                    <h3 class="panel-title">
+                        <i class="fa fa-fw fa-user"></i> Referenti
+                        <span class="pull-right">{{ operazione.delegati_attuali.count }}</span>
+                    </h3>
+                </div>
+                <div class="panel-body">
+                    <div class="btn-group btn-group-vertical">
+                    {% for referente in operazione.delegati_attuali %}
+                        {% card referente extra_class='' mute_contact=True %}<br />
+                    {% empty %}
+                        <i class="fa fa-fw fa-warning"></i> Nessun referente.
+                    {% endfor %}
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="col-md-4">
+            <div class="panel panel-info">
+                <div class="panel-heading">
+                    <h3 class="panel-title">
+                        <i class="fa fa-fw fa-home"></i>
+                        Organizzatore
+                    </h3>
+                </div>
+                <div class="panel-body">
+                    <strong>
+                        <a href="{{ operazione.sede.url }}" target="_new">
+                            {{ operazione.sede.nome }}
+                        </a>
+                    </strong><br />
+                    {{ operazione.sede.get_tipo_display }} &mdash;
+                    {{ operazione.sede.get_estensione_display }}
+                </div>
+            </div>
+        </div>
+{#        <div class="col-md-4">#}
+{#            <div class="panel panel-info">#}
+{#                <div class="panel-heading">#}
+{#                    <h3 class="panel-title"><i class="fa fa-fw fa-lock"></i>Aperto a</h3>#}
+{#                </div>#}
+{#                <div class="panel-body">#}
+{#                    {% if operazione.estensione %}#}
+{#                        Tutti i Volontari di#}
+{#                        <strong>#}
+{#                        <a href="{{ operazione.estensione.url }}" target="_new">#}
+{#                            {{ operazione.estensione.nome }}#}
+{#                        </a>#}
+{#                        </strong><br />#}
+{#                        ({{ operazione.estensione.get_estensione_display }} e sottostanti)#}
+{#                    {% else %}#}
+{#                        Nessuno.#}
+{#                    {% endif %}#}
+{#                </div>#}
+{#            </div>#}
+        </div>
+    </div>
+{#    {% if me %}#}
+{#        <div class="row">#}
+{#            <div class="col-md-6">#}
+{#                <h3><i class="fa fa-fw fa-info-circle"></i> Informazioni</h3>#}
+{#                {{ operazione.descrizione|safe }}#}
+{#            </div>#}
+{#            <div class="col-md-6"></div>#}
+{#        </div>#}
+{#    {% else %}#}
+{#        <div class="alert alert-info col-md-12">#}
+{#            <h4><i class="fa fa-fw fa-key"></i> Accedi a Gaia per maggiori informazioni</h4>#}
+{#            <p>Alcune informazioni, come la descrizione dell'attivit&agrave; e#}
+{#                i commenti, sono visibili solo ai volontari che hanno effettuato#}
+{#                l'accesso a Gaia. Se sei registrato/a, accedi a Gaia usando#}
+{#                il pulsante in alto a destra a questa pagina.</p>#}
+{#        </div>#}
+{#    {% endif %}#}
+{% endblock %}

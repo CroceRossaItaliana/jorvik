@@ -64,6 +64,8 @@ class Titolo(ModelloSemplice, ConVecchioID):
 
     online = models.BooleanField(default=False, blank=True)
 
+    moodle = models.BooleanField(default=False, blank=True)
+
     class Meta:
         verbose_name_plural = "Titoli: Elenco"
         permissions = (

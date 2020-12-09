@@ -13,29 +13,43 @@ urlpatterns = [
     url(r'^anagrafica/$', views.utente_anagrafica, name='anagrafica'),
     url(r'^estensione/$', views.utente_estensione, name='estensione'),
     url(r'^trasferimento/$', views.utente_trasferimento, name='trasferimento'),
+
+    # Fotografia
     url(r'^fotografia/$', views.utente_fotografia, name='foto'),
     url(r'^fotografia/avatar/$', views.utente_fotografia_avatar, name='avatar'),
     url(r'^fotografia/fototessera/$', views.utente_fotografia_fototessera, name='fototessera'),
+
+    # Documenti
     url(r'^documenti/$', views.utente_documenti, name='documenti'),
     url(r'^documenti/zip/$', views.utente_documenti_zip, name='documenti_zip'),
     url(r'^documenti/cancella/(?P<pk>.*)/$', views.utente_documenti_cancella, name='remove_document'),
     url(r'^storico/$', views.utente_storico, name='storico'),
+
+    # Rubrica
     url(r'^contatti/$', views.utente_contatti, name='contatti'),
     url(r'^rubrica/referenti/$', views.utente_rubrica_referenti),
     url(r'^rubrica/volontari/$', views.utente_rubrica_volontari),
     url(r'^rubrica/servizio-civile/$', views.utente_rubrica_servizio_civile),
     url(r'^rubrica/(?P<rubrica>.*)/$', views.rubrica_delegati, name='rubrica'),
+
+    # CV
     url(r'^curriculum/$', views.utente_curriculum),
     url(r'^curriculum/(?P<pk>.*)/cancella/$', views.utente_curriculum_cancella),
     url(r'^curriculum/(?P<tipo>.*)/$', views.utente_curriculum, name='cv_tipo'),
+
+    # Riserva
     url(r'^riserva/$', views.utente_riserva, name='riserva'),
     url(r'^riserva/(?P<pk>.*)/termina/$', views.utente_riserva_termina),
     url(r'^riserva/(?P<pk>.*)/ritira/$', views.utente_riserva_ritira),
     url(r'^contatti/cancella-numero/(?P<pk>.*)/$', views.utente_contatti_cancella_numero),
+
+    # Estensioni
     url(r'^estensione/(?P<pk>.*)/estendi/$', views.utente_estensione_estendi),
     url(r'^estensione/(?P<pk>.*)/termina/$', views.utente_estensione_termina),
     url(r'^riserva/(?P<pk>.*)/termina/$', views.utente_riserva_termina),
     url(r'^trasferimento/(?P<pk>.*)/ritira/$', views.utente_trasferimento_ritira),
+
+    # Donazioni
     url(r'^donazioni/profilo/$', views.utente_donazioni_profilo),
     url(r'^donazioni/sangue/(?P<pk>.*)/cancella/$', views.utente_donazioni_sangue_cancella),
     url(r'^donazioni/sangue/$', views.utente_donazioni_sangue),

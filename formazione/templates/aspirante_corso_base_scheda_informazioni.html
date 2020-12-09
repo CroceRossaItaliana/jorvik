@@ -12,8 +12,6 @@
     .scheda-lezione-non-revisionata {color:red;}
 </style>
 
-
-
 {% if not me or not puo_modificare %}
     {% if not me or puoi_partecipare in corso.PUOI_ISCRIVERTI %}
         <div class="alert alert-success alert-block">
@@ -171,7 +169,21 @@
         </div>
     </div>
 
+
 </div>
+
+    {% if corso.online and corso.moodle%}
+<div class="row">
+    <div class="col-md-3">
+        <div class="panel panel-primary">
+            <div class="panel-heading">
+                <h3 class="panel-title"><i class="fa fa-fw fa-language"></i>Training</h3>
+            </div>
+            <div class="panel-body"><a href="{{ link }}" target="_blank">Link al corso</a></div>
+        </div>
+    </div>
+</div>
+    {% endif %}
 
 <div class="row">
     <div class="col-md-6">
@@ -204,7 +216,7 @@
         <p>
             <strong>Regolamenti:</strong>
             <ul>
-                <li><a href="https://datafiles.gaia.cri.it/media/filer_public/94/12/94127b9a-b049-45bc-ae82-b326707528bf/statuto_dell__associazione_della_croce_rossa_italiana_odv_versione_grafica.pdf" target="_blank">Lo Statuto</a></li>
+                <li><a href="https://datafiles.gaia.cri.it/media/filer_public/7c/9b/7c9b44ce-5c82-453d-aa34-c4d34933d379/statuto_dellassociazione_della_croce_rossa_italiana-odv_aggiornato_al_30112019.pdf" target="_blank">Lo Statuto</a></li>
                 <li><a href="https://datafiles.gaia.cri.it/media/filer_public/5b/4b/5b4ba0cb-239f-40e7-a414-a49023e5eb36/codice_etico_provvedimenti_disciplinari_e_collegi_disciplinari.pdf" target="_blank">Il Codice Etico</a></li>
             </ul>
         </p>

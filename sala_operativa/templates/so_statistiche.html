@@ -1,0 +1,115 @@
+{% extends 'so_vuota.html' %}
+
+{% load bootstrap3 %}
+{% load utils %}
+
+{% block pagina_titolo %}Statistiche Servizi{% endblock %}
+
+{% block app_contenuto %}
+    <div class="row">
+        <div class="col-md-4">
+            <div class="panel panel-primary">
+                <div class="panel-heading">
+                    <h2 class="panel-title">
+                        <i class="fa fa-fw fa-search"></i> Statistiche serivzi
+                    </h2>
+                </div>
+                <form method="POST" class="panel-body">
+                    {% csrf_token %}
+                    <p>Seleziona le Sedi per le quali generare le statistiche relativi ai servizi</p>
+                    {% bootstrap_form modulo %}
+                    <button type="submit" class="btn btn-block btn-primary">
+                        <i class="fa fa-fw fa-cogs"></i> Elabora dati
+                    </button>
+                </form>
+            </div>
+            <div class="panel panel-success">
+                <div class="panel-heading">
+                    <h2 class="panel-title">
+                        <i class="fa fa-fw fa-info-circle"></i> Dati elaborati
+                    </h2>
+                </div>
+                <div class="panel-body">
+                    <p><strong>(A)</strong> &egrave; il numero di ore dei servizi organizzati nella settimana;
+                    </p>
+                    <p><strong>(B)</strong> &egrave; il numero di ore-uomo di servizio dei volontari nella settimana;
+                    </p>
+                    <p><strong>(C)</strong> &egrave; il rapporto (A):(B), ovvero il tasso di partecipazione
+                        per ora di servizio della forza volontaria.</p>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-8">
+            <div class="panel panel-info">
+                <div class="panel-heading">
+                    <h2 class="panel-title">
+                        <i class="far fa-chart-bar"></i> Risultati elaborazione
+                    </h2>
+                </div>
+                <div class="panel-body">
+                    {% if statistiche %}
+                        <p class="text-info">
+                            <i class="fa fa-fw fa-info-circle"></i>
+                            Il grafico rappresenta il tasso di partecipazione per ora dei volontari <strong>(C)</strong>.
+                        </p>
+                        <div class="ct-chart ct-octave"></div>
+                        <script type="text/javascript" async>
+                            $(document).ready(function () {
+                                new Chartist.Line('.ct-chart', {
+                                    labels: {{ chart.labels|safe }},
+                                    series: [
+                                        {{ chart.rapporto }}
+                                    ]
+                                }, {
+                                    fullWidth: true,
+                                    chartPadding: {
+                                        right: 40
+                                    }
+                                });
+                            });
+                        </script>
+                        <p>&nbsp;</p>
+                        <table class="table table-striped table-bordered">
+                            <thead>
+                            <tr class="piu-piccolo">
+                                <th>Settimana</th>
+                                <th>(A)</th>
+                                <th>(B)</th>
+                                <th>(C)</th>
+                            </tr>
+                            </thead>
+                            <tbody>
+                            {% for s in statistiche %}
+                                <tr>
+                                    <td>
+                                        {{ s.inizio|date:"SHORT_DATE_FORMAT" }}<br/>
+                                        {{ s.fine|date:"SHORT_DATE_FORMAT" }}
+                                    </td>
+                                    <td>
+                                        {% giorni_ore_minuti s.ore_di_servizio as gom %}
+                                        {{ gom.0 }} gg., {{ gom.1 }} ore, {{ gom.2 }} min.
+                                    </td>
+                                    <td>
+                                        {% giorni_ore_minuti s.ore_uomo_di_servizio as gom %}
+                                        {{ gom.0 }} gg., {{ gom.1 }} ore, {{ gom.2 }} min.
+                                    </td>
+                                    <td class="grassetto">
+                                        {{ s.rapporto }}
+                                    </td>
+                                </tr>
+                            {% endfor %}
+                            </tbody>
+                        </table>
+                    {% else %}
+                        <div class="alert alert-warning">
+                            <p>
+                                <i class="fas fa-exclamation-circle"></i>
+                                Compila il modulo e avvia l'elaborazione per mostrare dei risultati.
+                            </p>
+                        </div>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+    </div>
+{% endblock %}

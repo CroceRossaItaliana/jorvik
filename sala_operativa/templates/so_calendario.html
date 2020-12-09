@@ -1,0 +1,54 @@
+{% extends 'so_vuota.html' %}
+
+{% load bootstrap3 %}
+
+{% block pagina_titolo %}Servizio ({{ inizio }}&mdash;{{ fine }}){% endblock %}
+
+{% block app_contenuto %}
+        <h2 class="allinea-centro">
+            <span class="text-muted">Servizio dal</span>
+            {{ inizio }}
+
+            <span class="text-muted">al</span>
+            {{ fine }}
+        </h2>
+
+        {% include 'so_inc_elenco_paginazione.html' %}
+        <p>&nbsp;</p>
+
+        <table class="table table-striped">
+            <tbody>
+                {% for giorno, turni in raggruppati.items %}
+                    <tr>
+                        <td class="calendario-giorno">
+                            <div class="giorno-settimana">
+                                {{ giorno|date:"D" }}
+                            </div>
+                            <div class="giorno">
+                                {{ giorno.day }}
+                            </div>
+                            <div class="mese">
+                                {{ giorno|date:"M" }}
+                            </div>
+                        </td>
+                        <td>
+                            {% for turno in turni %}
+                                {% include 'so_inc_elenco_turno.html' %}
+                            {% endfor %}
+                        </td>
+                    </tr>
+                {% empty %}
+                    <tr>
+                        <td class="">
+                            <div class="alert alert-info alert-block">
+                                <h4><i class="fa fa-info-circle"></i> Nessuna attivit&agrave;</h4>
+                                <p>Non &egrave; stato trovato alcun servizio avente dei turni tra il {{ inizio }} e {{ fine }} aperti ai volontari delle tue sedi di appartenenza.</p>
+                            </div>
+                        </td>
+                    </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+
+        {% include 'so_inc_elenco_paginazione.html' %}
+{% endblock %}

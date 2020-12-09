@@ -95,6 +95,12 @@ class Menu:
         return ufficio_soci.menu_us(self.me)
 
     @property
+    def so(self):
+        from sala_operativa.menus import sala_operativa
+
+        return sala_operativa(self.me)
+
+    @property
     def co(self):
         from .menus import centrale_operativa
 
@@ -151,6 +157,11 @@ class Menu:
                 'name_for_template': 'us',
             }),
             ({
+                'urls': ['/so/'],
+                'method': 'so',
+                'name_for_template': 'so',
+            }),
+            ({
                 'urls': ['/veicoli/', '/veicolo/', '/autoparco/'],
                 'method': 'veicoli',
                 'name_for_template': 'veicoli',
@@ -193,6 +204,9 @@ class Menu:
         return (
             ("Documenti", (
                 ("Elenco", "fa-newspaper-o", reverse('documenti:lista_documenti')),
+                (
+                    "Documenti comitato", "fa-newspaper-o", reverse('documenti:documenti-comitato')
+                ) if self.me.is_presidente or self.me.is_comissario else None
             )),
         )
 
