@@ -1,10 +1,8 @@
 from django.contrib.auth.models import Group
-from django.contrib.contenttypes.models import ContentType
 from django.core.management import BaseCommand
 
 from anagrafica.costanti import LOCALE, PROVINCIALE, REGIONALE, NAZIONALE
-from anagrafica.models import Sede, Delega
-from anagrafica.permessi.applicazioni import PRESIDENTE, COMMISSARIO
+from anagrafica.models import Sede
 from autenticazione.models import Utenza
 
 
