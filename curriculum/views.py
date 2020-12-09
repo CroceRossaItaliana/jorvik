@@ -20,8 +20,7 @@ def cdf_titolo_json(request, me):
             if tipo == CorsoBase.CORSO_ONLINE:
                 query = query.filter(modalita_titoli_cri=Titolo.CORSO_ONLINE)
             elif tipo == CorsoBase.CORSO_NUOVO:
-                query = query.filter(modalita_titoli_cri=Titolo.CORSO_BASE)
-
+                query = query.filter(modalita_titoli_cri__isnull=True)
             elif tipo == CorsoBase.CORSO_EQUIPOLLENZA:
                 query = query.filter(modalita_titoli_cri=Titolo.CORSO_EQUIPOLLENZA)
 
