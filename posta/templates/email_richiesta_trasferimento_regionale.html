@@ -1,0 +1,9 @@
+{% extends 'email.html' %}
+
+{% block corpo %}
+
+<p class="grassetto">Gentilissimi,</p>
+
+<p>Vi infomiamo che la richiesta di trasferimento di {{ persona }} al comitato di {{ comitato }} è stata {{ stato }}</p>
+
+{% endblock %}
