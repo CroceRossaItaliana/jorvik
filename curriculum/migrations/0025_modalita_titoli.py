@@ -6,7 +6,7 @@ from django.db import migrations, models
 def update_select_modalita(apps, schema_editor):
     Titolo = apps.get_model('curriculum', 'Titolo')
 
-    corsi = Titolo.objects.filter(tipo='TC', sigla__isnull=False)
+    corsi = Titolo.objects.filter(tipo='TC', sigla__isnull=False, online=True)
     for corso in corsi:
         if corso.online:
             corso.modalita_titoli_cri = 'CO'
