@@ -10,8 +10,6 @@ def update_select_modalita(apps, schema_editor):
     for corso in corsi:
         if corso.online:
             corso.modalita_titoli_cri = 'CO'
-        else:
-            corso.modalita_titoli_cri = 'CB'
 
         corso.save()
 
@@ -26,9 +24,13 @@ class Migration(migrations.Migration):
         migrations.AddField(
             model_name='titolo',
             name='modalita_titoli_cri',
-            field=models.CharField(blank=True,
-                                   choices=[('CB', 'Corso base'), ('CO', 'Corso online'),
-                                            ('CE', 'Corso equipollenza')], db_index=True, max_length=2, null=True),
+            field=models.CharField(
+                blank=True,
+                choices=[('CO', 'Corso online'), ('CE', 'Corso equipollenza')],
+                db_index=True,
+                max_length=2,
+                null=True
+            ),
         ),
         migrations.RunPython(update_select_modalita),
         migrations.RemoveField(

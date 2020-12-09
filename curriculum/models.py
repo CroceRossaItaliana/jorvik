@@ -40,7 +40,6 @@ class Titolo(ModelloSemplice, ConVecchioID):
     CORSO_MOODLE = 'CM'
     CORSO_EQUIPOLLENZA = 'CE'
     MODALITA = (
-        (CORSO_BASE, 'Corso base'),
         (CORSO_ONLINE, 'Corso online'),
         (CORSO_EQUIPOLLENZA, 'Corso equipollenza'),
     )
