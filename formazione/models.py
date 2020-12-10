@@ -359,7 +359,12 @@ class CorsoBase(Corso, ConVecchioID, ConPDF):
         # Trova corsi che hanno <sede> uguale alla <sede del volontario>
         ###
         qs_estensioni_1 = CorsoEstensione.objects.filter(sede__in=sede,
-                                                         corso__tipo__in=[Corso.CORSO_NUOVO, Corso.CORSO_ONLINE, Corso.BASE],
+                                                         corso__tipo__in=[
+                                                             Corso.CORSO_NUOVO,
+                                                             Corso.CORSO_ONLINE,
+                                                             Corso.BASE,
+                                                             Corso.CORSO_EQUIPOLLENZA
+                                                         ],
                                                          corso__stato=Corso.ATTIVO,)
         courses_1 = cls.objects.filter(id__in=qs_estensioni_1.values_list('corso__id'))
 
@@ -368,7 +373,7 @@ class CorsoBase(Corso, ConVecchioID, ConPDF):
         ###
         # four_weeks_delta = today + datetime.timedelta(weeks=4)
         qs_estensioni_2 = CorsoEstensione.objects.filter(
-            corso__tipo__in=[Corso.CORSO_NUOVO, Corso.CORSO_ONLINE, Corso.BASE],
+            corso__tipo__in=[Corso.CORSO_NUOVO, Corso.CORSO_ONLINE, Corso.BASE, Corso.CORSO_EQUIPOLLENZA],
             corso__stato=Corso.ATTIVO,
         ).exclude(corso__id__in=courses_1.values_list('id', flat=True))
 
