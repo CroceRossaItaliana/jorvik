@@ -2,7 +2,7 @@ from django.contrib.auth.models import Group
 from django.core.management import BaseCommand
 
 from anagrafica.costanti import LOCALE, PROVINCIALE, REGIONALE, NAZIONALE
-from anagrafica.models import Sede, Delega
+from anagrafica.models import Sede
 from anagrafica.permessi.applicazioni import CONSIGLIERE_GIOVANE
 from autenticazione.models import Utenza
 
@@ -11,7 +11,7 @@ class Command(BaseCommand):
 
     NOME_GRUPPO = 'Assemblea consiglieri'
 
-    help = 'Creare ilo grupppo {} ed assegna dei consiglieri giovani'.format(NOME_GRUPPO)
+    help = 'Creare il grupppo {} ed assegna dei consiglieri giovani'.format(NOME_GRUPPO)
 
     def add_arguments(self, parser):
         parser.add_argument('clean', nargs='?', type=str, default='')
@@ -52,7 +52,6 @@ class Command(BaseCommand):
         print(
             'consiglieri giovani aggiunti {}'.format(len(cg))
         )
-
 
     def handle(self, *args, **options):
         if options['clean']:
