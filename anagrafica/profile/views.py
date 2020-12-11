@@ -1,13 +1,17 @@
-from django.shortcuts import render_to_response, redirect, get_object_or_404
+from django.contrib import messages
+from django.core.urlresolvers import reverse
 from django.db import transaction
+from django.shortcuts import render_to_response, redirect, get_object_or_404
 
 from autenticazione.funzioni import pagina_privata
 from autenticazione.models import Utenza
 from attivita.forms import ModuloStatisticheAttivitaPersona
 from attivita.models import Partecipazione
 from attivita.stats import statistiche_attivita_persona
-from base.errori import (errore_generico, messaggio_generico)
+from base.errori import (errore_generico, messaggio_generico,
+                         errore_nessuna_appartenenza)
 from base.models import Log
+from curriculum.models import TitoloPersonale
 from posta.models import Messaggio
 from sangue.models import Donatore
 from ..permessi.costanti import (ERRORE_PERMESSI, MODIFICA, LETTURA)
@@ -182,12 +186,24 @@ def _profilo_riserve(request, me, persona):
 
 def _profilo_curriculum(request, me, persona):
     from curriculum.forms import FormAddQualificaCRI
-    form = FormAddQualificaCRI(request.POST or None)
 
-    if form.is_valid():
-        tp = form.save(commit=False)
-        tp.persona = persona
-        tp.save()
+    reversed = reverse('profilo:profilo', args=[persona.pk, 'curriculum'])
+    redirect_url = redirect(reversed)
+
+    form = FormAddQualificaCRI()
+    if request.method == 'POST':
+        form = FormAddQualificaCRI(request.POST, request.FILES, me=persona)
+        if form.is_valid():
+            cd = form.cleaned_data
+            qualifica_created = TitoloPersonale.crea_qualifica_regressa(persona=me, **cd)
+            if not qualifica_created:
+                messages.error(request, 'Errore.')
+                return errore_nessuna_appartenenza(request, me, torna_url=reversed)
+
+            messages.success(request, "La qualifica è stata inserita.")
+            return redirect_url
+
+        messages.success(request, "La qualifica non è stata inserita.")
 
     context = {
         "modulo": form,

@@ -309,6 +309,22 @@ class TitoloPersonale(ModelloSemplice, ConMarcaTemporale, ConAutorizzazioni):
             ]
         )
 
+    @classmethod
+    def crea_qualifica_regressa(cls, persona, **kwargs):
+        qualifica_nuova = TitoloPersonale(persona=persona, confermata=False, **kwargs)
+        qualifica_nuova.save()
+
+        titolo = kwargs['titolo']
+        if titolo.meta.get('richiede_conferma'):
+            sede_attuale = persona.sede_riferimento()
+            if not sede_attuale:
+                qualifica_nuova.delete()
+                return None
+
+            # Richiedi autorizzazione, manda le mail
+            qualifica_nuova.richiedi_autorizzazione(qualifica_nuova, persona, sede_attuale)
+        return qualifica_nuova
+
     @property
     def associated_to_a_course(self):
         return True if self.corso_partecipazione else False

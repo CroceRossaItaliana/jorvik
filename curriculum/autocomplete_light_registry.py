@@ -80,6 +80,10 @@ class QualificaCRIRegressoAutocompletamento(autocomplete_light.AutocompleteModel
             Q(meta__inseribile_in_autonomia=str(True)) | Q(inseribile_in_autonomia=True),
             tipo=Titolo.TITOLO_CRI,
             is_active=True,
+            sigla__isnull=False,
+            area__isnull=False,
+            nome__isnull=False,
+            cdf_livello__isnull=False,
         ).order_by('nome').distinct('nome')
 
         return super().choices_for_request()

@@ -75,7 +75,9 @@ class FormAddQualificaCRI(autocomplete_light.ModelForm):
         cd = self.cleaned_data
 
         email = 'regione@cri.it'
-        app = self.me.appartenenze_attuali(membro__in=[Appartenenza.VOLONTARIO,
+
+        persona = self.me
+        app = persona.appartenenze_attuali(membro__in=[Appartenenza.VOLONTARIO,
                                                        Appartenenza.DIPENDENTE])
         if app:
             app_vo = app.filter(membro=Appartenenza.VOLONTARIO)
