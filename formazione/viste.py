@@ -165,7 +165,8 @@ def formazione_corsi_base_nuovo(request, me):
         me=me
     )
     form.fields['sede'].queryset = me.oggetti_permesso(GESTIONE_CORSI_SEDE)
-
+    print('POST', request.POST)
+    print('FILES', request.FILES)
     if form.is_valid():
         kwargs = {}
         cd = form.cleaned_data
@@ -178,7 +179,7 @@ def formazione_corsi_base_nuovo(request, me):
                                                       tipo=Titolo.TITOLO_CRI,
                                                       is_active=True)
 
-        if tipo == Corso.CORSO_NUOVO or tipo == Corso.CORSO_ONLINE:
+        if tipo == Corso.CORSO_NUOVO or tipo == Corso.CORSO_ONLINE or tipo == Corso.CORSO_EQUIPOLLENZA:
             kwargs['titolo_cri'] = cd['titolo_cri']
             kwargs['cdf_level'] = cd['level']
             kwargs['cdf_area'] = cd['area']
@@ -1080,7 +1081,7 @@ def aspirante_corsi(request, me):
 
         # Unisci 2 categorie di corsi
         corsi = corsi_confermati | corsi_da_partecipare | corsi_estensione_mia_appartenenze
-        corsi = corsi.filter(tipo__in=[Corso.CORSO_NUOVO, Corso.CORSO_ONLINE])
+        corsi = corsi.filter(tipo__in=[Corso.CORSO_NUOVO, Corso.CORSO_ONLINE, Corso.CORSO_EQUIPOLLENZA])
 
     corsi_frequentati = me.corsi_frequentati
     corsi_attivi = corsi.exclude(pk__in=corsi_frequentati.values_list('pk', flat=True))
@@ -1145,10 +1146,11 @@ def aspirante_corso_estensioni_modifica(request, me, pk):
     course = get_object_or_404(CorsoBase, pk=pk)
 
     if not me.permessi_almeno(course, MODIFICA):
+        print('permessi')
         return redirect(ERRORE_PERMESSI)
 
-    if not course.tipo == Corso.CORSO_NUOVO and not course.tipo == Corso.CORSO_ONLINE:
-        # The page is not accessible if the type of course is not CORSO_NUOVO or CORSO_ONLINE
+    if not course.tipo == Corso.CORSO_NUOVO and not course.tipo == Corso.CORSO_ONLINE and not course.tipo == Corso.CORSO_EQUIPOLLENZA:
+        # The page is not accessible if the type of course is not CORSO_NUOVO or CORSO_ONLINE or CORSO_EQUIPOLLENZA
         return redirect(ERRORE_PERMESSI)
 
     if request.method == 'POST':
@@ -1512,12 +1514,12 @@ def course_commissione_esame(request, me, pk):
 
 @pagina_privata
 def catalogo_corsi(request, me):
-    from curriculum.areas import OBBIETTIVI_STRATEGICI
     from .forms import CatalogoCorsiSearchForm
 
     context = {
         'titoli': OrderedDict(),
         'titoli_online': OrderedDict(),
+        'titoli_equipollenza': OrderedDict(),
         'form': CatalogoCorsiSearchForm,
     }
 
@@ -1529,8 +1531,9 @@ def catalogo_corsi(request, me):
     else:
         qs = Titolo.objects.filter(tipo=Titolo.TITOLO_CRI, sigla__isnull=False).order_by('sigla')
 
-    context = costruisci_titoli(context, qs.filter(online=False), search_query, 'titoli')
-    context = costruisci_titoli(context, qs.filter(online=True), search_query, 'titoli_online')
+    context = costruisci_titoli(context, qs.filter(modalita_titoli_cri__isnull=True), search_query, 'titoli')
+    context = costruisci_titoli(context, qs.filter(modalita_titoli_cri=Titolo.CORSO_ONLINE), search_query, 'titoli_online')
+    context = costruisci_titoli(context, qs.filter(modalita_titoli_cri=Titolo.CORSO_EQUIPOLLENZA), search_query, 'titoli_equipollenza')
 
     context['titoli_total'] = qs.count()
 
