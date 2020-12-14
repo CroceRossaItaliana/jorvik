@@ -93,11 +93,11 @@ class AutorizzazioneProcess:
                     Messaggio.costruisci_e_accoda(
                         oggetto="Trasferimento {} per {}".format(
                             "Confermato" if concedi else "Negato",
-                            self.richiesta.oggetto.richiedente.nome_completo
+                            self.richiesta.oggetto.persona.nome_completo
                         ),
                         modello="email_richiesta_trasferimento_regionale.html",
                         corpo={
-                            "persona": self.richiesta.oggetto.richiedente.nome_completo,
+                            "persona": self.richiesta.oggetto.persona.nome_completo,
                             "comitato": self.richiesta.oggetto.destinazione,
                             "stato": "Confermata" if concedi else "Negata"
                         },
