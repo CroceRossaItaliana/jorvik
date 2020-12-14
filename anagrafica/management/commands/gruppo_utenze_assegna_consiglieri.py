@@ -9,7 +9,7 @@ from autenticazione.models import Utenza
 
 class Command(BaseCommand):
 
-    NOME_GRUPPO = 'Assemblea consiglieri'
+    NOME_GRUPPO = 'Assemblea giovani'
 
     help = 'Creare il grupppo {} ed assegna dei consiglieri giovani'.format(NOME_GRUPPO)
 

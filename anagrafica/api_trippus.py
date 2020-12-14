@@ -151,7 +151,7 @@ def trippus_booking_consiglieri(persona=None, access_token=''):
                 },
                 {
                   "key": "Ruolo",
-                  "value": "Consigliere",
+                  "value": "Consigliere Giovane",
                   "type": "Web"
                 },
                 {

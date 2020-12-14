@@ -1288,14 +1288,14 @@ class Persona(ModelloSemplice, ConMarcaTemporale, ConAllegati, ConVecchioID):
     def is_responsabile_area_delegato_assemblea_nazionale_giovani(self):
         delegato_area = False
         for delega in self.deleghe_attuali(tipo=RESPONSABILE_AREA):
-            if 'RESPONSABILE GIOVANI'.lower() in delega.oggetto.__str__().lower():
+            if 'ASSEMBLEA GIOVANI'.lower() in delega.oggetto.__str__().lower():
                 delegato_area = True
         return delegato_area
 
     @property
     def delega_responsabile_area_delegato_assemblea_nazionale_giovani(self):
         for delega in self.deleghe_attuali(tipo=RESPONSABILE_AREA):
-            if 'RESPONSABILE GIOVANI'.lower() in delega.oggetto.__str__().lower():
+            if 'ASSEMBLEA GIOVANI'.lower() in delega.oggetto.__str__().lower():
                 return delega
 
     @property
