@@ -9,6 +9,7 @@ var area_form_group = $('#id_area').closest('.form-group');
 var corso_base_tipo_value = 'BA';
 var corso_nuovo_tipo_value = 'C1';
 var corso_online_value = 'CO';
+var corso_equipolenza_value = 'CE';
 var titolo_options_ajax_data = {};
 
 
@@ -79,7 +80,7 @@ $('#id_tipo').on('change', function(e){
         cleanDeliberaFileLink();
     }
 
-    if (corso_tipo_value && (corso_tipo_value == corso_nuovo_tipo_value || corso_tipo_value == corso_online_value)){
+    if (corso_tipo_value && (corso_tipo_value == corso_nuovo_tipo_value || corso_tipo_value == corso_online_value || corso_tipo_value == corso_equipolenza_value)){
         level_form_group.show();
         area_form_group.show();
     }

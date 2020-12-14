@@ -41,16 +41,20 @@
     <span><button type="submit">Cerca corso</button></span>
   </form>
 
-  <div class="area-nome" data-settore-id="#settore_id_X" style="color: black;">Catalogo corsi formazione </div>
-  <div class="area-levels" id="settore_id_X">
+  <div class="area-nome" data-settore-id="#settore_id_altri_corsi" style="color: black;">Catalogo corsi formazione </div>
+  <div class="area-levels" id="settore_id_altri_corsi">
     {% include 'titoli_menu.html' with titoli=titoli margine_sezione="15px" suffix=''%}
   </div>
 
-  <div class="area-nome" data-settore-id="#settore_id_Y" style="color: black;">Catalogo corsi formazione online</div>
-  <div class="area-levels" id="settore_id_Y">
+  <div class="area-nome" data-settore-id="#settore_id_online" style="color: black;">Catalogo corsi formazione online</div>
+  <div class="area-levels" id="settore_id_online">
     {% include 'titoli_menu.html' with titoli=titoli_online margine_sezione="15px" suffix='online'%}
   </div>
 
+  <div class="area-nome" data-settore-id="#settore_id_equipollenza" style="color: black;">Catalogo corsi formazione equipollenza</div>
+  <div class="area-levels" id="settore_id_equipollenza">
+    {% include 'titoli_menu.html' with titoli=titoli_equipollenza margine_sezione="15px" suffix='equipollenza'%}
+  </div>
 
   <script>
     $('.area-levels').hide();

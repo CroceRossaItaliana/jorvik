@@ -42,10 +42,12 @@ class Corso(ModelloSemplice, ConDelegati, ConMarcaTemporale,
     CORSO_NUOVO = 'C1'
     BASE = 'BA'
     CORSO_ONLINE = 'CO'
+    CORSO_EQUIPOLLENZA = 'CE'
     TIPO_CHOICES = (
         (BASE, 'Corso di Formazione per Volontari CRI'),
         (CORSO_NUOVO, 'Altri Corsi'),
         (CORSO_ONLINE, 'Corsi online'),
+        (CORSO_EQUIPOLLENZA, 'Corsi equipollenza'),
     )
 
     # Stato del corso
@@ -326,7 +328,7 @@ class CorsoBase(Corso, ConVecchioID, ConPDF):
 
     @property
     def moodle(self):
-        return self.tipo == self.CORSO_ONLINE and self.titolo_cri.moodle
+        return self.titolo_cri.moodle
 
     @property
     def prossimo(self):
@@ -357,7 +359,12 @@ class CorsoBase(Corso, ConVecchioID, ConPDF):
         # Trova corsi che hanno <sede> uguale alla <sede del volontario>
         ###
         qs_estensioni_1 = CorsoEstensione.objects.filter(sede__in=sede,
-                                                         corso__tipo__in=[Corso.CORSO_NUOVO, Corso.CORSO_ONLINE, Corso.BASE],
+                                                         corso__tipo__in=[
+                                                             Corso.CORSO_NUOVO,
+                                                             Corso.CORSO_ONLINE,
+                                                             Corso.BASE,
+                                                             Corso.CORSO_EQUIPOLLENZA
+                                                         ],
                                                          corso__stato=Corso.ATTIVO,)
         courses_1 = cls.objects.filter(id__in=qs_estensioni_1.values_list('corso__id'))
 
@@ -366,7 +373,7 @@ class CorsoBase(Corso, ConVecchioID, ConPDF):
         ###
         # four_weeks_delta = today + datetime.timedelta(weeks=4)
         qs_estensioni_2 = CorsoEstensione.objects.filter(
-            corso__tipo__in=[Corso.CORSO_NUOVO, Corso.CORSO_ONLINE, Corso.BASE],
+            corso__tipo__in=[Corso.CORSO_NUOVO, Corso.CORSO_ONLINE, Corso.BASE, Corso.CORSO_EQUIPOLLENZA],
             corso__stato=Corso.ATTIVO,
         ).exclude(corso__id__in=courses_1.values_list('id', flat=True))
 
@@ -1241,7 +1248,7 @@ class CorsoBase(Corso, ConVecchioID, ConPDF):
 
     @property
     def is_nuovo_corso(self):
-        return self.tipo == Corso.CORSO_NUOVO or self.tipo == Corso.CORSO_ONLINE
+        return self.tipo == Corso.CORSO_NUOVO or self.tipo == Corso.CORSO_ONLINE or self.tipo == Corso.CORSO_EQUIPOLLENZA
 
     def get_course_links(self):
         return self.corsolink_set.filter(is_enabled=True)

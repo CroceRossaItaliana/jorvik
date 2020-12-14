@@ -18,9 +18,13 @@ def cdf_titolo_json(request, me):
                                           cdf_livello=cdf_livello[0]).exclude(sigla__in=['CRI',])
 
             if tipo == CorsoBase.CORSO_ONLINE:
-                query = query.filter(online=True)
-            else:
-                query = query.filter(online=False)
+                query = query.filter(modalita_titoli_cri=Titolo.CORSO_ONLINE)
+            elif tipo == CorsoBase.CORSO_NUOVO:
+                query = query.filter(modalita_titoli_cri__isnull=True)
+            elif tipo == CorsoBase.CORSO_EQUIPOLLENZA:
+                query = query.filter(modalita_titoli_cri=Titolo.CORSO_EQUIPOLLENZA)
+
+            print(query)
 
             options_for_select = {option['id']: {
                 'nome': option['nome'],
