@@ -73,7 +73,7 @@ class ModuloCreazioneCorsoBase(ModelForm):
                 if field in cd:
                     del cd[field]
 
-        if tipo == Corso.CORSO_NUOVO or tipo == Corso.CORSO_ONLINE:
+        if tipo == Corso.CORSO_NUOVO or tipo == Corso.CORSO_ONLINE or tipo == Corso.CORSO_EQUIPOLLENZA:
             cd_titolo_cri = cd.get('titolo_cri')
 
             if not cd_titolo_cri:
@@ -134,7 +134,6 @@ class ModuloCreazioneCorsoBase(ModelForm):
                 tipo=Titolo.TITOLO_CRI,
                 is_active=True,
             ).order_by('nome')]
-
         # Sort area options 'ASC'
         self.fields['area'].choices = sorted(self.fields['area'].choices, key=lambda x: x[1])
 
@@ -466,6 +465,7 @@ class FormVerbaleCorso(ModelForm):
                                                 'argomento_parte_1',
                                                 'esito_parte_2',
                                                 'argomento_parte_2',
+                                                'partecipazione_online',
                                                 'extra_1', 'extra_2',
                                                 'destinazione',]
         SCHEDA_VALUTAZIONE_CORSO_NUOVO_FIELDS = ['esito_parte_1',
@@ -502,6 +502,7 @@ class FormVerbaleCorso(ModelForm):
                                           if ch[0] != PartecipazioneCorsoBase.NON_PREVISTO]
             self.fields['esito_parte_1'].choices = CHOICES_SENZA_NON_PREVISTO
             self.fields['esito_parte_2'].choices = CHOICES_SENZA_NON_PREVISTO
+            self.fields['partecipazione_online'].help_text = "<strong>N.B</strong> Da selezionare quando la prova pratica dell'esame è sostituita da colloquio online e la certificazione EFAC non può essere rilasciata"
 
         # Escludi quei campi che non stanno nella lista di sopra
         for field in self.fields.copy():
