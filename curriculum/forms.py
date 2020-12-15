@@ -1,8 +1,10 @@
 from django import forms
+from django.core.exceptions import ValidationError
 from autocomplete_light import shortcuts as autocomplete_light
 
+from anagrafica.models import Appartenenza
 from .areas import TITOLO_STUDIO_CHOICES, PATENTE_CIVILE_CHOICES, OBBIETTIVI_STRATEGICI
-from .models import Titolo, TitleGoal, TitoloPersonale
+from .models import Titolo, TitoloPersonale
 
 
 class ModuloNuovoTitoloPersonale(autocomplete_light.ModelForm):
@@ -56,14 +58,66 @@ class ModuloNuovoTitoloPersonale(autocomplete_light.ModelForm):
             placeholder = 'Scrivi "Patente"'
         self.fields['titolo'].widget.attrs['placeholder'] = placeholder
             
-            
+
+class FormAddQualificaCRI(autocomplete_light.ModelForm):
+    titolo = autocomplete_light.ModelChoiceField('QualificaCRIRegressoAutocompletamento')
+
+    class Meta:
+        model = TitoloPersonale
+        fields = ['titolo', 'data_ottenimento', 'tipo_documentazione', 'attestato_file',
+                  'luogo_ottenimento', 'direttore_corso', 'note',]
+        help_texts = {
+            'data_ottenimento': '',
+            'luogo_ottenimento': '',
+        }
+
+    def clean(self):
+        cd = self.cleaned_data
+
+        email = 'regione@cri.it'
+
+        persona = self.me
+        app = persona.appartenenze_attuali(membro__in=[Appartenenza.VOLONTARIO,
+                                                       Appartenenza.DIPENDENTE])
+        if app:
+            app_vo = app.filter(membro=Appartenenza.VOLONTARIO)
+            app_di = app.filter(membro=Appartenenza.DIPENDENTE)
+            app = app.last() if app_vo or app_di else None
+            if app and hasattr(app.sede, 'sede_regionale'):
+                sede_regionale = app.sede.sede_regionale
+                email = sede_regionale.email if hasattr(sede_regionale, 'email') else email
+
+        show_alert = False
+        required_fields = ['titolo', 'data_ottenimento', 'tipo_documentazione', 'attestato_file']
+
+        for field in required_fields:
+            if not cd.get(field):
+                show_alert = True
+                self.add_error(field, 'Campo obbligatorio.')
+
+        if show_alert:
+            alert = """Caro Volontario/Dipendente,
+                se non sei in possesso di tutte le informazioni richieste per inserire le qualifiche CRI acquisite, 
+                ti suggeriamo di rivolgerti al tuo Comitato Regionale (%s) che ti supporterà nella ricerca delle informazioni mancanti. 
+                Puoi scrivere una mail indicando il tuo nome, cognome, codice fiscale e indicando le qualifiche da validare 
+                ed inserendo tutte le informazioni in tuo possesso in merito. 
+                Tutto ciò agevolerà lo staff dedicato a supportarti.""" % email
+            raise ValidationError(alert)
+
+    def __init__(self, *args, **kwargs):
+        self.me = kwargs.pop('me', None)
+
+        super().__init__(*args, **kwargs)
+
+        self.fields['titolo'].widget.attrs['placeholder'] = 'Inizia a digitare ...'
+
+
 class ModuloDettagliTitoloPersonale(forms.ModelForm):
     class Meta:
         model = TitoloPersonale
-        fields = ['data_ottenimento', 'luogo_ottenimento', 'data_scadenza',
-                  'codice',]
+        fields = ['data_ottenimento', 'luogo_ottenimento', 'data_scadenza', 'codice',]
 
     def __init__(self, *args, **kwargs):
-        super(ModuloDettagliTitoloPersonale, self).__init__(*args, **kwargs)
+        super().__init__(*args, **kwargs)
         for key in self.fields:
             self.fields[key].required = True

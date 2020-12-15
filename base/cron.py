@@ -41,6 +41,18 @@ class CronRichiesteInAttesa(CronJobBase):
         Autorizzazione.notifiche_richieste_in_attesa()
 
 
+class CronRichiesteTitoliRegressoInAttesa(CronJobBase):
+
+    RUN_EVERY_HOURS = 24
+    RUN_EVERY_MINS = RUN_EVERY_HOURS * 60
+
+    schedule = Schedule(run_every_mins=RUN_EVERY_MINS)
+    code = 'base.estensioni.notifica.manuali'
+
+    def do(self):
+        Autorizzazione.avviso_richieste_in_attesa_presa_visione_qualifica_cri()
+
+
 class PulisciAspirantiVolontari(CronJobBase):
 
     RUN_EVERY_HOURS = 24

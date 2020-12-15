@@ -77,10 +77,10 @@ def profile_sections(puo_leggere, puo_modificare):
             'Anagrafica', 'fa-edit', views._profilo_anagrafica, puo_leggere
         )),
         ('appartenenze', (
-            'Appartenenze', 'fa-clock-o', views._profilo_appartenenze, puo_leggere
+            'Appartenenze', 'fa-map', views._profilo_appartenenze, puo_leggere
         )),
         ('deleghe', (
-            'Deleghe', 'fa-clock-o', views._profilo_deleghe, puo_leggere
+            'Deleghe', 'fa-user-clock', views._profilo_deleghe, puo_leggere
         )),
         ('turni', (
             'Turni', 'fa-calendar', views._profilo_turni, puo_leggere
@@ -89,7 +89,7 @@ def profile_sections(puo_leggere, puo_modificare):
             'Riserve', 'fa-pause', views._profilo_riserve, puo_leggere
         )),
         ('fototessera', (
-            'Fototessera', 'fa-photo', views._profilo_fototessera, puo_leggere
+            'Fototessera', 'fa-image', views._profilo_fototessera, puo_leggere
         )),
         ('documenti', (
             'Documenti', 'fa-folder', views._profilo_documenti, puo_leggere
@@ -101,10 +101,10 @@ def profile_sections(puo_leggere, puo_modificare):
             'Sangue', 'fa-flask', views._profilo_sangue, puo_modificare
         )),
         ('quote', (
-            'Quote/Ricevute', 'fa-money', views._profilo_quote, puo_leggere
+            'Quote/Ricevute', 'fa-money-bill-alt', views._profilo_quote, puo_leggere
         )),
         ('provvedimenti', (
-            'Provvedimenti', 'fa-legal', views._profilo_provvedimenti, puo_leggere
+            'Provvedimenti', 'fa-balance-scale-right', views._profilo_provvedimenti, puo_leggere
         )),
         ('credenziali', (
             'Credenziali', 'fa-key', views._profilo_credenziali, puo_modificare

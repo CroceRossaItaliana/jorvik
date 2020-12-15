@@ -1,0 +1,13 @@
+{% extends 'email.html' %}
+
+{% block corpo %}
+  <p class="grassetto">Caro {{ destinatario }},</p>
+
+  <p>il Volontario {{ volontario.nome }} {{ volontario.cognome }} ha inserito su GAIA tutte le informazioni e
+    i relativi documenti per il riconoscimento delle qualifiche CRI.<br>
+    Tuttavia, sono stati riscontrati errori.<br>
+    Ti preghiamo di supportare il Presidente in questo iter al fine di individuare
+    le informazioni inesatte e permettere un corretto inserimento delle qualifiche del/la Volontario/a.</p>
+  <p>Grazie per il tuo supporto!</p>
+
+{% endblock %}

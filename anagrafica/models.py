@@ -1231,6 +1231,10 @@ class Persona(ModelloSemplice, ConMarcaTemporale, ConAllegati, ConVecchioID):
 
 
     @property
+    def presidente_di(self):
+        return self.deleghe_attuali(tipo=PRESIDENTE).last()
+
+    @property
     def is_presidente(self):
         return self.deleghe_attuali(tipo=PRESIDENTE).exists()
 

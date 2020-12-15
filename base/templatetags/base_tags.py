@@ -1,3 +1,4 @@
+from os import path
 from datetime import datetime
 from django import template
 from django.contrib.messages import constants
@@ -107,8 +108,44 @@ def get_url_for_staticfiles(context):
     return ''
 
 
+@register.simple_tag
+def get_filename(file):
+    return path.basename(file.name)
+
+
+@register.simple_tag(takes_context=True)
+def richiesta_autorizzazione_button(context, action):
+    richiesta = context['richiesta']
+    oggetto = richiesta.oggetto
+
+    display = True
+    if hasattr(oggetto, 'qualifica_regresso') and oggetto.qualifica_regresso == True:
+        display = False
+
+    if action == 'nega':
+        return display
+
+    return True
+
+
+@register.simple_tag(takes_context=True)
+def richiesta_autorizzazione_button_text(context):
+    richiesta = context['richiesta']
+
+    if str(richiesta.oggetto_tipo) == 'Titolo personale':
+        return 'Presa visione'
+    return "Conferma"
+
+
 @register.simple_tag(takes_context=True)
 def add_flag_to_profile_url(context):
     elenco = context['elenco']
     elenco_short_name = elenco.SHORT_NAME if hasattr(elenco, 'SHORT_NAME') else ''
     return elenco_short_name
+
+
+@register.simple_tag(takes_context=True)
+def autorizzazione_concedi_url(context, richiesta):
+    if str(richiesta.oggetto_tipo) == 'Titolo personale':
+        return "/autorizzazioni/%s/qualifica-presa-visione/" % richiesta.pk
+    return "/autorizzazioni/%s/concedi/" % richiesta.pk

@@ -4,22 +4,16 @@
 {% block profilo_corpo %}
 
 <div class="row">
-
     <div class="col-lg-8">
         <div class="panel panel-info">
-
             <div class="panel-heading">
                 <h4 class="panel-title">
-                    <i class="fa fa-folder-o fa-fw"></i> Curriculum ({{ persona.titoli_personali.count }})
+                    <i class="fa fa-folder fa-fw"></i> Curriculum ({{ persona.titoli_personali.count }})
                 </h4>
-
-
             </div>
 
             <div class="panel-body">
-
-                <p>Il curriculum di un volontario include competenze personali,
-                    titoli CRI, patenti civili e CRI.</p>
+                <p>Il curriculum di un volontario include competenze personali, titoli CRI, patenti civili e CRI.</p>
 
                 <table class="table table-striped">
                     <thead>
@@ -30,7 +24,6 @@
                             <th><i class="fa fa-trash"></i></th>
                         {% endif %}
                     </thead>
-
                     <tbody>
                         {% for t in persona.titoli_personali.all %}
                             <tr>
@@ -38,10 +31,7 @@
                                     {{ t.titolo.get_tipo_display }}
                                 </td>
                                 <td>
-
-                                    <p class="grassetto">
-                                        {{ t.titolo.nome }}
-                                    </p>
+                                    <p class="grassetto">{{ t.titolo.nome }}</p>
 
                                     {% if t.certificato %}
                                         <span class="text-success">
@@ -57,7 +47,7 @@
 
                                     {% elif t.esito == t.ESITO_PENDING %}
                                         <span class="alert-warning">
-                                            <i class="fa fa-fw fa-clock-o"></i>
+                                            <i class="fa fa-fw fa-clock"></i>
                                             In attesa di conferma
                                         </span>
 
@@ -116,29 +106,20 @@
                         {% endfor %}
                     </tbody>
                 </table>
-
             </div>
-
         </div>
-
-
-
     </div>
 
     <div class="col-lg-4">
-
-
         {% if puo_modificare %}
         <form method="POST" enctype="multipart/form-data">
 
             {% csrf_token %}
                 <div class="panel panel-primary">
-
                     <div class="panel-heading">
                         <h4 class="panel-title">
                             <i class="fa fa-plus"></i> Aggiungi titolo
                         </h4>
-
                     </div>
 
                     <div class="panel-body">
@@ -148,22 +129,11 @@
                             <i class="fa fa-check"></i>
                             Carica
                         </button>
-
                     </div>
-
                 </div>
-
         </form>
         {% endif %}
 
-
-
-
     </div>
-
-
-
 </div>
-
-
 {% endblock %}

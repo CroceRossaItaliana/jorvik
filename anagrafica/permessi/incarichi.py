@@ -107,6 +107,7 @@ def espandi_incarichi_responsabile_formazione(sede, al_giorno=None):
 def espandi_incarichi_presidente(sede, al_giorno=None):
     return [
        (INCARICO_GESTIONE_SANGUE,                       sede),
+       (INCARICO_GESTIONE_TITOLI,                       sede),
        (INCARICO_PRESIDENZA,                            sede),
 
     ] \

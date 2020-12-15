@@ -1,0 +1,20 @@
+{% extends "anagrafica_utente_vuota.html" %}
+
+{% load bootstrap3 %}
+
+{% block pagina_titolo %}Inserimento Qualifica CRI - Curriculum{% endblock %}
+{% block app_contenuto %}
+  <div class="row">
+    <div class="col-md-8">
+      <h2 class="title">Inserimento Qualifica CRI (regresso)</h2>
+      <div class="panel-body">
+          <form action="{% url 'cv:add_qualifica_cri' %}" method="POST" enctype="multipart/form-data">
+              {% csrf_token %}
+              {% bootstrap_form form %}
+              <button type="submit" class="btn btn-sm btn-primary btn-block"><i class="fa fa-fw fa-check"></i> Aggiungi {{ tipo_display }}</button>
+          </form>
+        </div>
+      </div>
+    </div>
+  </div>
+{% endblock %}

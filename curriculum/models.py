@@ -4,12 +4,19 @@ from django.contrib.postgres.fields import JSONField
 from django.db import models
 from django.utils import timezone
 
-from .areas import OBBIETTIVI_STRATEGICI
+from anagrafica.permessi.incarichi import INCARICO_GESTIONE_TITOLI
 from base.models import ModelloSemplice, ConAutorizzazioni, ConVecchioID
 from base.tratti import ConMarcaTemporale
+from posta.models import Messaggio
+
+from .areas import OBBIETTIVI_STRATEGICI
+from .validators import cv_attestato_file_upload_path
 
 
 class Titolo(ModelloSemplice, ConVecchioID):
+    QUALIFICHE_REGRESSO_DEADLINE = '01/06/2021'
+    QUALIFICHE_REGRESSO_DEADLINE_DATE = date(year=2021, month=6, day=1)
+
     # Tipo del titolo
     COMPETENZA_PERSONALE = "CP"
     PATENTE_CIVILE      = "PP"
@@ -21,7 +28,7 @@ class Titolo(ModelloSemplice, ConVecchioID):
         (PATENTE_CIVILE, "Patente Civile"),
         (PATENTE_CRI, "Patente CRI"),
         (TITOLO_STUDIO, "Titolo di Studio"),
-        (TITOLO_CRI, "Titolo CRI"),
+        (TITOLO_CRI, "Qualifica CRI"),
     )
 
     CDF_LIVELLO_I = '1'
@@ -57,6 +64,7 @@ class Titolo(ModelloSemplice, ConVecchioID):
     is_active = models.BooleanField(default=True)
     expires_after = models.IntegerField(null=True, blank=True, verbose_name="Scadenza",
         help_text='Indicare in giorni (es: per 1 anno indicare 365)')
+    meta = JSONField(null=True, blank=True)
     scheda_lezioni = JSONField(null=True, blank=True)
     scheda_obiettivi = models.TextField('Obiettivi formativi', null=True, blank=True)
     scheda_competenze_in_uscita = models.TextField('Competenze_in_uscita', null=True, blank=True)
@@ -90,9 +98,7 @@ class Titolo(ModelloSemplice, ConVecchioID):
 
     @property
     def is_course_title(self):
-        is_titolo_cri = self.is_titolo_cri
-        has_goal = self.goal
-        return is_titolo_cri and bool(has_goal) and bool(has_goal.obbiettivo_stragetico)
+        return self.is_titolo_cri and self.sigla
 
     @property
     def is_titolo_corso_base(self):
@@ -132,6 +138,33 @@ class Titolo(ModelloSemplice, ConVecchioID):
     def corsi(self, **kwargs):
         return self.corsobase_set.all().filter(**kwargs)
 
+    @staticmethod
+    def gaia_323_set_values(set_to: bool):
+        titoli = Titolo.objects.filter(tipo=Titolo.TITOLO_CRI,
+                                       sigla__isnull=False,
+                                       is_active=True,
+                                       # inseribile_in_autonomia=False,
+                                       area__isnull=False,
+                                       nome__isnull=False,
+                                       cdf_livello__isnull=False,)
+        fields_to_update = {
+            "inseribile_in_autonomia": str(set_to),
+            "richiede_conferma": str(set_to),
+        }
+
+        print('Fields to update (%s):' % titoli.count(), fields_to_update)
+
+        for titolo in titoli:
+            if not titolo.meta:
+                titolo.meta = fields_to_update
+                titolo.save()
+            else:
+                titolo.meta.update(fields_to_update)
+                titolo.save()
+
+        print('Titotli aggiornati:', titoli)
+        return titoli
+
     def __str__(self):
         return str(self.nome)
 
@@ -156,6 +189,18 @@ class TitleGoal(models.Model):
 
 class TitoloPersonale(ModelloSemplice, ConMarcaTemporale, ConAutorizzazioni):
     RICHIESTA_NOME = 'titolo'
+
+    ATTESTATO = 'a'
+    BREVETTO = 'b'
+    VERBALE_ESAME = 'v'
+    ALTRO_DOC = 'd'
+
+    TIPO_DOCUMENTAZIONE = (
+        (ATTESTATO, 'Attestato'),
+        (BREVETTO, 'Brevetto'),
+        (VERBALE_ESAME, "Verbale d'esame"),
+        (ALTRO_DOC, 'Altro documento inerente al corso'),
+    )
 
     titolo = models.ForeignKey(Titolo, on_delete=models.CASCADE)
     persona = models.ForeignKey("anagrafica.Persona",
@@ -182,6 +227,16 @@ class TitoloPersonale(ModelloSemplice, ConMarcaTemporale, ConAutorizzazioni):
                                        related_name="titoli_da_me_certificati",
                                        on_delete=models.SET_NULL)
     is_course_title = models.BooleanField(default=False)
+
+    # GAIA-210
+    tipo_documentazione = models.CharField(max_length=2, blank=True,
+                                           null=True, choices=TIPO_DOCUMENTAZIONE)
+    attestato_file = models.FileField(blank=True, null=True,
+                             upload_to=cv_attestato_file_upload_path,
+                             verbose_name='Attestato')
+    direttore_corso = models.CharField(max_length=255, blank=True, null=True,
+                             verbose_name='Nome del direttore del corso')
+    note = models.CharField(max_length=255, blank=True, null=True)
 
 
     # ValueError: Related model u'app.model' cannot be resolved
@@ -229,6 +284,57 @@ class TitoloPersonale(ModelloSemplice, ConMarcaTemporale, ConAutorizzazioni):
         now = timezone.now()
         today = date(now.year, now.month, now.day)
         return cls.objects.filter(is_course_title=True, data_scadenza=today)
+
+    @property
+    def qualifica_regresso(self):
+        if self.tipo_documentazione and self.attestato_file:
+            return True
+        return False
+
+    @property
+    def can_delete(self):
+        """ GAIA-207 """
+        if self.confermata and self.qualifica_regresso:
+            return False
+        elif self.titolo.is_course_title and not self.titolo.inseribile_in_autonomia:
+            return False
+        return True
+
+    def richiedi_autorizzazione(self, qualifica_nuova, me, sede_attuale):
+        qualifica_nuova.autorizzazione_richiedi_sede_riferimento(me, INCARICO_GESTIONE_TITOLI)
+
+        vo_nome_cognome = "%s %s" % (me.nome, me.cognome)
+        Messaggio.costruisci_e_accoda(
+            oggetto="Inserimento su GAIA Qualifiche CRI: Volontario %s" % vo_nome_cognome,
+            modello="email_cv_qualifica_regressa_inserimento_mail_al_presidente.html",
+            corpo={
+                "volontario": me,
+            },
+            mittente=None,
+            destinatari=[
+                sede_attuale.presidente(),
+            ]
+        )
+
+    @classmethod
+    def crea_qualifica_regressa(cls, persona, **kwargs):
+        qualifica_nuova = TitoloPersonale(persona=persona, confermata=False, **kwargs)
+        qualifica_nuova.save()
+
+        titolo = kwargs['titolo']
+        if titolo.meta.get('richiede_conferma'):
+            sede_attuale = persona.sede_riferimento()
+            if not sede_attuale:
+                qualifica_nuova.delete()
+                return None
+
+            # Richiedi autorizzazione, manda le mail
+            qualifica_nuova.richiedi_autorizzazione(qualifica_nuova, persona, sede_attuale)
+        return qualifica_nuova
+
+    @property
+    def associated_to_a_course(self):
+        return True if self.corso_partecipazione else False
 
     def __str__(self):
         return "%s di %s" % (self.titolo, self.persona)
