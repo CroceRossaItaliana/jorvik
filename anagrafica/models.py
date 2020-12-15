@@ -180,8 +180,8 @@ class Persona(ModelloSemplice, ConMarcaTemporale, ConAllegati, ConVecchioID):
         :return:
         """
         if self.email_contatto:
-            return self.email_contatto
-        return self.email_utenza
+            return self.email_contatto.lower()
+        return self.email_utenza.lower()
 
     @property
     def genere_codice_fiscale(self):

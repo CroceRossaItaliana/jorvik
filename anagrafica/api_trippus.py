@@ -146,7 +146,7 @@ def trippus_booking_consiglieri(persona=None, access_token=''):
                 },
                 {
                   "key": "Comitato",
-                  "value": sede.nome,
+                  "value": sede.nome ,
                   "type": "Web"
                 },
                 {
