@@ -39,8 +39,6 @@ def cdf_titolo_json(request, me):
             elif tipo == CorsoBase.CORSO_EQUIPOLLENZA:
                 query = query.filter(modalita_titoli_cri=Titolo.CORSO_EQUIPOLLENZA)
 
-            print(query)
-
             options_for_select = {option['id']: {
                 'nome': option['nome'],
                 'description': option['description'],
