@@ -171,7 +171,6 @@ def cv_qualifica_errata_notifica_comitato_regionale(request, me, pk=None):
     richiesta = Autorizzazione.objects.get(pk=pk)
 
     volontario = richiesta.richiedente
-    vo_nome_cognome = "%s %s" % (volontario.nome, volontario.cognome)
     vo_sede = volontario.sede_riferimento()
 
     if vo_sede.estensione == NAZIONALE:
@@ -183,7 +182,7 @@ def cv_qualifica_errata_notifica_comitato_regionale(request, me, pk=None):
         delegati_formazione_regionale = vo_sede_regionale.delegati_formazione()
 
     # Mail settings
-    oggetto = "Inserimento errato su GAIA Qualifiche CRI: %s" % vo_nome_cognome
+    oggetto = "Inserimento errato su GAIA Qualifiche CRI: %s" % volontario.nome_completo
 
     def _costruisci_e_accoda(destinatario_title: str, destinatari) -> None:
 
