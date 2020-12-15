@@ -1,5 +1,7 @@
 {% extends 'base_autorizzazioni_vuota.html' %}
 
+{% load base_tags %}
+
 {% block pagina_titolo %}({{ richieste.count }}) Richieste{% endblock %}
 
 {% block app_contenuto %}
@@ -16,8 +18,20 @@
                     </div>
                     <div class="col-md-3">
                         <div class=" btn-group-vertical btn-group-sm btn-block">
-                            <a class="btn btn-success" href="/autorizzazioni/{{ richiesta.pk }}/concedi/"><i class="fa fa-fw fa-check"></i> Conferma</a>
-                            <a class="btn btn-danger" href="/autorizzazioni/{{ richiesta.pk }}/nega/"><i class="fa fa-fw fa-times"></i> Nega</a>
+                            <a class="btn btn-success" href="{% autorizzazione_concedi_url richiesta %}"><i class="fa fa-fw fa-check"></i> {% richiesta_autorizzazione_button_text %}</a>
+
+                            {% richiesta_autorizzazione_button 'nega' as richiesta_autorizzazione_nega_button %}
+                            {% if richiesta_autorizzazione_nega_button %}
+                                <a class="btn btn-danger" href="/autorizzazioni/{{ richiesta.pk }}/nega/"><i class="fa fa-fw fa-times"></i> Nega</a>
+                            {% endif %}
+
+                            {# Titolo.TITOLO_CRI #}
+                            {% if richiesta.oggetto.titolo.tipo == 'TC' %}
+                                <p style="padding-top:6px;">
+                                    <a href="{% url 'cv:notifica_comitato_regionale_dati_errati' richiesta.pk %}"><i class="fas fa-exclamation-circle"></i>
+                                        Comunicare al Comitato Regionale che i dati inseriti sono errati</a>
+                                </p>
+                            {% endif %}
                         </div>
                     </div>
                 </div>

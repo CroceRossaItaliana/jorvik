@@ -1,6 +1,10 @@
+{% load base_tags %}
+
 <p>{{ richiesta.richiedente.link|safe }} chiede la conferma di
 
-    {% if richiesta.oggetto.titolo.tipo == richiesta.oggetto.titolo.TITOLO_CRI or richiesta.oggetto.titolo.tipo == richiesta.oggetto.titolo.TITOLO_STUDIO %}
+    {% if richiesta.oggetto.titolo.tipo == richiesta.oggetto.titolo.TITOLO_CRI %}
+        una
+    {% elif  richiesta.oggetto.titolo.tipo == richiesta.oggetto.titolo.TITOLO_STUDIO %}
         un
     {% else %}
         una
@@ -8,17 +12,29 @@
 
     {{ richiesta.oggetto.titolo.get_tipo_display }}: <strong>{{ richiesta.oggetto.titolo.nome }}</strong>.</p>
 
+    <p>
+        {% if richiesta.oggetto.qualifica_regresso %}
+            {% if richiesta.oggetto.attestato_file %}
+                <strong>{{ richiesta.oggetto.get_tipo_documentazione_display }}</strong> caricato dall'utente <i class="fa fa-fw text-muted fa-file"></i> <a href="{{ richiesta.oggetto.attestato_file.url }}" download>{% get_filename richiesta.oggetto.attestato_file %}</a><br />
+            {% endif %}
+        {% endif %}
+    </p>
+
 <p>
     {% if richiesta.oggetto.data_ottenimento %}
         Ottenuta/o il {{ richiesta.oggetto.data_ottenimento }}{% if richiesta.oggetto.luogo_ottenimento %}
             a {{ richiesta.oggetto.luogo_ottenimento }}.
         {% endif %}
     {% endif %}
+</p>
 
+<p>
     {% if richiesta.oggetto.data_scadenza %}
         Scadenza il {{ richiesta.oggetto.data_scadenza }}.
     {% endif %}
+</p>
 
+<p>
     {% if richiesta.oggetto.codice %}
         <strong>Num./Codice: {{ richiesta.oggetto.codice }}.</strong>
     {% endif %}

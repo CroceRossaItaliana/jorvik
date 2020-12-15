@@ -1,0 +1,180 @@
+{% extends "anagrafica_utente_vuota.html" %}
+
+{% load bootstrap3 %}
+{% load base_tags %}
+
+{% block pagina_titolo %}{{ tipo_display }} - Curriculum{% endblock %}
+{% block app_contenuto %}
+
+    <div class="alert bg-info">
+        <p>
+            <i class="fa fa-info-circle fa-fw"></i> Da questa pagina potrai gestire le tue qualifiche del tipo: <strong>{{ tipo_display }}</strong>.
+        </p>
+    </div>
+
+    <div class="row">
+        <div class="col-md-8">
+            <div class="panel panel-info">
+                <div class="panel-heading">
+                    <h4 class="panel-title">
+                        <i class="fa fa-fw fa-list"></i> Nel mio curriculum <span class="badge">{{ titoli.count }}</span>
+                    </h4>
+                </div>
+
+                <div class="panel-body">
+                    <table class="table table-striped">
+                        <thead>
+                            <th>Nome e Stato</th>
+                            <th>Dettagli</th>
+                            <th><i class="fa fa-trash"></i></th>
+                        </thead>
+                        <tbody>
+                            {% for t in titoli %}
+                                <tr>
+                                    <td>
+                                        <p class="grassetto">
+                                            {{ t.titolo.nome }}
+
+                                            {% if t.associated_to_a_course and t.is_course_title %} <!-- and not t.is_expired_course_title -->
+                                                <br><a href="{% url 'aspirante:report_schede' t.corso_partecipazione.corso.pk %}?download_single_attestato={{t.pk}}">Scarica attestato</a>
+                                            {% endif %}
+                                        </p>
+
+                                        {% if t.certificato %}
+                                            <span class="text-success">
+                                                <i class="fa fa-fw fa-asterisk"></i> Certificato
+                                            </span>
+
+                                        {% elif t.is_expired_course_title %}
+                                            <!-- <span class="text-danger">
+                                                <i class="fa fa-fw fa-clock-o"></i>
+                                                Scaduto titolo del corso
+                                            </span> -->
+
+                                        {% elif t.esito == t.ESITO_OK %}
+                                            <span class="text-success"><i class="fas fa-check"></i> {{ t.esito }}</span>
+
+                                        {% elif t.esito == t.ESITO_PENDING %}
+                                            <span class="alert-warning"><i class="far fa-clock"></i> In attesa di conferma</span>
+
+                                        {% else %}
+                                            <span class="text-danger">{{ t.esito }}</span>
+                                        {% endif %}
+
+                                    </td>
+                                    <td class="piu-piccolo" style="width: 30% !important;">
+                                        {% if t.data_ottenimento %}
+                                            <i class="fa fa-fw text-muted fa-calendar"></i> {{ t.data_ottenimento|date:"SHORT_DATE_FORMAT" }}<br />
+                                        {% endif %}
+
+                                        {% if t.luogo_ottenimento %}
+                                            <i class="fa fa-fw text-muted fa-map-marker"></i> {{ t.luogo_ottenimento }}<br />
+                                        {% endif %}
+
+                                        {% if t.tipo_documentazione %}
+                                            <i class="fa fa-fw text-muted fa-file"></i> {{ t.get_tipo_documentazione_display }}<br />
+                                        {% endif %}
+
+                                        {% if t.attestato_file %}
+                                            <i class="fa fa-fw text-muted fa-file"></i> <a href="{{ t.attestato_file.url }}" download>{% get_filename t.attestato_file %}</a><br />
+                                        {% endif %}
+
+                                        {% if t.direttore_corso %}
+                                            <i class="fa fa-fw text-muted fa-user"></i> {{ t.direttore_corso }}<br />
+                                        {% endif %}
+
+                                        {% if t.note %}
+                                            <i class="fa fa-fw text-muted fa-clipboard"></i> {{ t.note }}<br />
+                                        {% endif %}
+
+                                        {% if t.data_scadenza %}
+                                            <!-- <i class="fa fa-fw text-muted fa-clock-o"></i>
+                                            {{ t.data_scadenza|date:"SHORT_DATE_FORMAT" }}
+                                            <br /> -->
+                                        {% endif %}
+
+                                        {% if t.codice %}
+                                            <i class="fa fa-fw text-muted fa-barcode"></i> <span class="monospace">{{ t.codice }}</span><br />
+                                        {% endif %}
+                                    </td>
+                                    <td>
+                                        {% if t.can_delete %}
+                                            <a href="/utente/curriculum/{{ t.pk }}/cancella/"
+                                               data-conferma="Sei sicuro/a di voler rimuovere {{ t.titolo.nome }} dal tuo curriculum?"
+                                               class="btn btn-xs btn-danger" title="Rimuovi dal curriculum"> <i class="fa fa-trash"></i>
+                                            </a>
+                                        {% endif %}
+                                    </td>
+                                </tr>
+
+                            {% empty %}
+                                <tr class="alert alert-warning">
+                                    <td colspan="4">
+                                        <h4><i class="fa fa-fw fa-info-circle"></i> Nessun dato inserito</h4>
+                                        <p>Se hai un/una {{ tipo_display }}, usa il modulo a sinistra per inserirlo.</p>
+                                    </td>
+                                </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+
+        <div class="col-md-4">
+            {% if tipo == 'TC' %}
+            <div class="panel panel-primary">
+                <div class="panel-heading">
+                    <h4 class="panel-title">
+                        <i class="fa fa-fw fa-plus-circle"></i> Aggiungi Qualifica CRI
+                    </h4>
+                </div>
+                <div class="panel-body">
+                    <form action="{% url 'cv:add_qualifica_cri' %}" method="POST" enctype="multipart/form-data">
+                        {% csrf_token %}
+                        {% bootstrap_form form_add_qualifica %}
+                        <button type="submit" class="btn btn-sm btn-primary btn-block"><i class="fa fa-fw fa-check"></i> Aggiungi {{ tipo_display }}</button>
+                    </form>
+                </div>
+            </div>
+            {% endif %}
+
+            {% if tipo != 'TC' %}
+            <div class="panel panel-primary">
+                <div class="panel-heading">
+                    <h4 class="panel-title">
+                        <i class="fa fa-fw fa-plus-circle"></i>
+                        {% if passo == 1 %}
+                            Aggiungi {{ tipo_display }}
+                        {% else %}
+                            Aggiungi {{ titolo.nome }}
+                        {% endif %}
+                    </h4>
+                </div>
+
+                <div class="panel-body">
+                    <form method="POST">
+                    {% csrf_token %}
+                        {% if passo == 1 %}
+                            <strong>PASSO 1.</strong>
+                            <p>Cerca un/una {{ tipo_display }} da aggiungere al tuo curriculum.</p>
+                            {% bootstrap_form modulo %}
+
+                            <button type="submit" class="btn btn-sm btn-primary btn-block"><i class="fa fa-fw fa-check"></i> Aggiungi {{ tipo_display }}</button>
+
+                        {% else %}
+                            <strong>PASSO 2.</strong>
+                            <p>Completa i campi necessari per aggiungere "<strong>{{ titolo.nome }}</strong>" al tuo curriculum.</p>
+                            <input type="hidden" name="titolo_selezionato_id" value="{{ titolo.id }}" />
+                            {% bootstrap_form modulo %}
+
+                            <button type="submit" class="btn btn-sm btn-primary btn-block"><i class="fa fa-fw fa-check"></i> Aggiungi {{ titolo.nome }}</button>
+                            <a href="?indietro=1" class="btn btn-xs btn-default btn-block"><i class="fa fa-fw fa-mail-reply"></i> Torna indietro</a>
+                        {% endif %}
+                    </form>
+                </div>
+            </div>
+            {% endif %}
+        </div>
+    </div>
+{% endblock %}

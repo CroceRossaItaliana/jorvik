@@ -24,8 +24,7 @@ from base.files import Zip
 from base.models import Log
 from base.stringhe import genera_uuid_casuale
 from base.utils import poco_fa, oggi
-from curriculum.forms import ModuloNuovoTitoloPersonale, ModuloDettagliTitoloPersonale
-from curriculum.models import Titolo, TitoloPersonale
+from curriculum.models import TitoloPersonale
 from posta.models import Messaggio
 from posta.utils import imposta_destinatari_e_scrivi_messaggio
 from sangue.models import Donazione
@@ -1176,99 +1175,6 @@ def strumenti_delegati_termina(request, me, delega_pk=None):
 
     delega.termina(mittente=me, termina_at=poco_fa())
     return redirect(reverse('strumenti_delegati'))
-
-
-@pagina_privata
-def utente_curriculum(request, me, tipo=None):
-
-    if not tipo:
-        return redirect("/utente/curriculum/CP/")
-
-    if tipo not in dict(Titolo.TIPO):  # Tipo permesso?
-        redirect(ERRORE_PERMESSI)
-
-    if tipo in (Titolo.PATENTE_CRI, Titolo.TITOLO_CRI) and not (me.volontario or me.dipendente):
-        return errore_no_volontario(request, me)
-
-    passo = 1
-    tipo_display = dict(Titolo.TIPO)[tipo]
-    request.session['titoli_tipo'] = tipo
-
-    valida_secondo_form = True
-    titolo_selezionato = None
-    modulo = ModuloNuovoTitoloPersonale(tipo,
-                                        tipo_display,
-                                        request.POST or None,
-                                        me=me)
-    if modulo.is_valid():
-        titolo_selezionato = modulo.cleaned_data['titolo']
-        passo = 2
-        valida_secondo_form = False
-
-    if 'titolo_selezionato_id' in request.POST:
-        titolo_selezionato = Titolo.objects.get(pk=request.POST['titolo_selezionato_id'])
-        passo = 2
-
-    if passo == 2:
-        modulo = ModuloDettagliTitoloPersonale(request.POST if request.POST and valida_secondo_form else None)
-
-        if not titolo_selezionato.richiede_data_ottenimento:
-            del modulo.fields['data_ottenimento']
-
-        if not titolo_selezionato.richiede_data_scadenza:
-            del modulo.fields['data_scadenza']
-
-        if not titolo_selezionato.richiede_luogo_ottenimento:
-            del modulo.fields['luogo_ottenimento']
-
-        if not titolo_selezionato.richiede_codice:
-            del modulo.fields['codice']
-
-        if modulo.is_valid():
-
-            tp = modulo.save(commit=False)
-            tp.persona = me
-            tp.titolo = titolo_selezionato
-            tp.save()
-
-            if titolo_selezionato.richiede_conferma:
-                sede_attuale = me.sede_riferimento()
-                if not sede_attuale:
-                    tp.delete()
-                    return errore_nessuna_appartenenza(
-                        request, me,
-                        torna_url="/utente/curriculum/%s/" % (tipo,),
-                    )
-
-                tp.autorizzazione_richiedi_sede_riferimento(
-                    me, INCARICO_GESTIONE_TITOLI
-                )
-            return redirect("/utente/curriculum/%s/?inserimento=ok" % (tipo,))
-
-    titoli = me.titoli_personali.all().filter(titolo__tipo=tipo).order_by('data_scadenza')
-
-    contesto = {
-        "tipo": tipo,
-        "tipo_display": tipo_display,
-        "passo": passo,
-        "modulo": modulo,
-        "titoli": titoli,
-        "titolo": titolo_selezionato
-    }
-    return 'anagrafica_utente_curriculum.html', contesto
-
-
-@pagina_privata
-def utente_curriculum_cancella(request, me, pk=None):
-
-    titolo_personale = get_object_or_404(TitoloPersonale, pk=pk)
-    if not titolo_personale.persona == me:
-        return redirect(ERRORE_PERMESSI)
-
-    tipo = titolo_personale.titolo.tipo
-    titolo_personale.delete()
-
-    return redirect("/utente/curriculum/%s/" % (tipo,))
 
 
 @pagina_privata

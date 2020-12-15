@@ -127,7 +127,7 @@ class Menu:
 
         return (
             ({
-                'urls': ['/utente/', '/profilo/', '/page/'],
+                'urls': ['/utente/', '/profilo/', '/page/', '/cv/'],
                 'method': 'elementi_anagrafica',
                 'name_for_template': 'elementi_anagrafica',
             }),

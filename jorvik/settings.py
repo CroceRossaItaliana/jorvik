@@ -93,6 +93,7 @@ CRON_CLASSES = [
     "base.cron.CronCancellaFileScaduti",
     "base.cron.CronApprovaNegaAuto",
     "base.cron.CronRichiesteInAttesa",
+    "base.cron.CronRichiesteTitoliRegressoInAttesa",
     "base.cron.PulisciAspirantiVolontari",
     "anagrafica.cron.CronReportComitati",
     "centrale_operativa.cron.CronCancellaCoturniInvalidi",

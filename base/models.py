@@ -9,6 +9,7 @@ from django.core import urlresolvers
 from django.core.exceptions import ObjectDoesNotExist
 from django.db import models
 from django.db.models import Q
+from django.template.loader import get_template
 from django.utils.timezone import now
 from django.utils.functional import cached_property
 from mptt.models import MPTTModel, TreeForeignKey
@@ -359,6 +360,124 @@ class Autorizzazione(ModelloSemplice, ConMarcaTemporale):
             self.tipo_gestione = concedi
             self.scadenza = calcola_scadenza(scadenza)
             self.save()
+
+    @classmethod
+    def avviso_richieste_in_attesa_presa_visione_qualifica_cri(cls):
+        """
+        GAIA-221 (regresso qualifiche cri).
+
+        Trovare richieste di inserimento di Qualifica CRI non approvate entro
+        30 gg dal presidente territoriale.
+        Inviare al presidente regionale e sulla mail regionale un avviso.
+
+        :return: dictionary grouped_by
+        """
+        from curriculum.models import TitoloPersonale
+        from posta.models import Messaggio
+
+        delta = now() - relativedelta(months=1)
+        delta_one_day_before = (delta - relativedelta(days=1)).replace(hour=0, minute=0, second=0)
+        in_attesa = cls.objects.filter(concessa__isnull=True,
+                                       creazione__lte=delta,
+                                       creazione__gte=delta_one_day_before,
+                                       tipo_gestione=Autorizzazione.MANUALE,
+                                       oggetto_tipo=ContentType.objects.get_for_model(TitoloPersonale))
+
+        def send_email_to_seede_regionale(sede_regionale, email_title,
+                                          email_template, email_context):
+            sede_regionale_mail = sede_regionale.oggetto.email
+            rendered_html = get_template(email_template).render(email_context)
+            Messaggio.invia_raw(
+                email_mittente=None,
+                lista_email_destinatari=[sede_regionale_mail],
+                oggetto=email_title,
+                corpo_html=rendered_html
+            )
+
+        # Ragruppare per presidente_reg. -> presidente_terr. -> [richieste]
+        grouped_by = dict()
+
+        for richiesta in in_attesa:
+            has_oggetto = hasattr(richiesta, 'oggetto')
+            if not has_oggetto:
+                continue
+
+            oggetto = richiesta.oggetto
+            if not hasattr(oggetto, 'qualifica_regresso'):
+                continue
+
+            if not oggetto.qualifica_regresso:
+                continue
+
+            sede_richiesta = richiesta.destinatario_oggetto
+            presidente_territoriale = sede_richiesta.presidente()
+            presidente_regionale = sede_richiesta.sede_regionale.presidente()
+
+            if presidente_regionale not in grouped_by:
+                grouped_by[presidente_regionale] = dict()
+
+            if presidente_territoriale not in grouped_by[presidente_regionale]:
+                grouped_by[presidente_regionale][presidente_territoriale] = list()
+
+            grouped_by[presidente_regionale][presidente_territoriale].append(richiesta)
+
+        """ Inviare una mail/posta gaia al presidente ed una mail a regionale.
+        Il testo contiene elenco dei volontari per comitato (presidente territoriale)
+        """
+        EMAIL_TEMPLATE = 'email_cv_qualifica_regresso_30_gg_passati.html'
+
+        for presidente_regionale, presidenti_territoriali in grouped_by.items():
+            for pt, richieste_non_approvate in presidenti_territoriali.items():
+                sede_regionale = presidente_regionale.presidente_di
+                delega_presidente_territoriale = pt.presidente_di
+
+                num_of_requests = len(richieste_non_approvate)
+                if num_of_requests == 1:
+                    richiesta = richieste_non_approvate[0]
+                    persona = richiesta.richiedente
+
+                    email_title = "Inserimento su GAIA Qualifiche CRI: Volontario %s" % persona
+                    email_context = {
+                        'multiple': False,
+                        'persona': persona,
+                        'presidente_territoriale': pt,
+                        'delega_pt': delega_presidente_territoriale,
+                        'richiesta': richiesta,
+                    }
+
+                    # Se al destinatario c'è solo una mail da inviare - inviarla subito
+                    Messaggio.costruisci_e_accoda(
+                        destinatari=[presidente_regionale],
+                        oggetto=email_title,
+                        modello=EMAIL_TEMPLATE,
+                        corpo=email_context,
+                    )
+
+                    # Invia e-mail alla mail regionale
+                    send_email_to_seede_regionale(sede_regionale, email_title,
+                                                  EMAIL_TEMPLATE, email_context)
+                    continue
+                else:
+                    email_title = "Inserimento su GAIA Qualifiche CRI: %s volontari" % len(richieste_non_approvate)
+                    email_context = {
+                        'multiple': True,
+                        'presidente_territoriale': pt,
+                        'delega_pt': delega_presidente_territoriale,
+                        'richieste': richieste_non_approvate,
+                    }
+
+                    # Invia e-mail e messaggio su GAIA
+                    Messaggio.costruisci_e_accoda(
+                        destinatari=[presidente_regionale],
+                        oggetto=email_title,
+                        modello=EMAIL_TEMPLATE,
+                        corpo=email_context)
+
+                    # Invia e-mail alla mail regionale
+                    send_email_to_seede_regionale(sede_regionale, email_title,
+                                                  EMAIL_TEMPLATE, email_context)
+
+        return grouped_by
 
     @classmethod
     def notifiche_richieste_in_attesa(cls):

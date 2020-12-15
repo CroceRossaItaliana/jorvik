@@ -1,5 +1,7 @@
 from autocomplete_light import shortcuts as autocomplete_light
 
+from django.db.models import Q
+
 from .areas import TITOLO_STUDIO_CHOICES, PATENTE_CIVILE_CHOICES
 from .models import Titolo
 
@@ -65,5 +67,28 @@ class TitoloCRIAutocompletamento(autocomplete_light.AutocompleteModelBase):
         return super().choices_for_request()
 
 
+class QualificaCRIRegressoAutocompletamento(autocomplete_light.AutocompleteModelBase):
+    model = Titolo
+    split_words = True
+    search_fields = ['nome', 'sigla', ]
+    attrs = {
+        'data-autocomplete-minimum-characters': 1,
+    }
+
+    def choices_for_request(self):
+        self.choices = self.choices.filter(
+            Q(meta__inseribile_in_autonomia=str(True)) | Q(inseribile_in_autonomia=True),
+            tipo=Titolo.TITOLO_CRI,
+            is_active=True,
+            sigla__isnull=False,
+            area__isnull=False,
+            nome__isnull=False,
+            cdf_livello__isnull=False,
+        ).order_by('nome').distinct('nome')
+
+        return super().choices_for_request()
+
+
 autocomplete_light.register(TitoloAutocompletamento)
 autocomplete_light.register(TitoloCRIAutocompletamento)
+autocomplete_light.register(QualificaCRIRegressoAutocompletamento)

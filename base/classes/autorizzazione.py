@@ -1,3 +1,4 @@
+from anagrafica.costanti import NAZIONALE
 from anagrafica.models import Trasferimento
 from anagrafica.permessi.applicazioni import PRESIDENTE, UFFICIO_SOCI, COMMISSARIO
 from posta.models import Messaggio
@@ -32,6 +33,52 @@ class AutorizzazioneProcess:
         self._template = 'base_autorizzazioni_nega.html'
         self._autorizzazione_form = self.richiesta.oggetto.autorizzazione_nega_modulo()
         return self._process(concedi=False)
+
+    def qualifica_presa_visione(self):
+        concedi_processed = self.concedi()
+
+        # Un update dei dati
+        qualifica = self.richiesta.oggetto
+        qualifica.certificato_da = self.me
+        qualifica.is_course_title = True  # senza non viene visualizzato sull'albo formazione
+        qualifica.save()
+
+        volontario = self.richiesta.richiedente
+        vo_sede = volontario.sede_riferimento()
+
+        # Alert 2
+        if vo_sede.estensione == NAZIONALE:
+            presidente_regionale = vo_sede.presidente()
+            delegati_formazione_regionale = vo_sede.delegati_formazione()
+        else:
+            vo_sede_regionale = vo_sede.sede_regionale
+            presidente_regionale = vo_sede_regionale.presidente()
+            delegati_formazione_regionale = vo_sede_regionale.delegati_formazione()
+
+        # GAIA-323
+        # Al Presidente/Delegati Formazioni
+        Messaggio.costruisci_e_accoda(
+            oggetto="Inserimento su GAIA Qualifiche CRI: %s" % volontario.nome_completo,
+            modello="email_cv_qualifica_presa_visione_al_presidente.html",
+            corpo={
+                "volontario": volontario,
+            },
+            mittente=None,
+            destinatari=[i for i in delegati_formazione_regionale] + [presidente_regionale,]
+        )
+
+        # Al Volontario
+        Messaggio.costruisci_e_accoda(
+            oggetto="Inserimento negli Albi della Formazione CRI",
+            modello="email_cv_qualifica_inserimento_negli_albi_della_formazione_cri.html",
+            corpo={
+                "volontario": volontario,
+            },
+            mittente=None,
+            destinatari=[volontario,]
+        )
+
+        return concedi_processed
 
     def _process(self, concedi):
         richiesta = self.richiesta
