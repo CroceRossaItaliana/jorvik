@@ -1131,38 +1131,6 @@ def strumenti_delegati(request, me):
             api = TrainingApi()
             api.aggiugi_ruolo(persona=d.persona, corso=oggetto, ruolo=TrainingApi.DIRETTORE)
 
-        if model == 'corsobase' and d.persona.volontario:
-            appartenenza_vo = d.persona.appartenenza_volontario.first()
-            sede_corso = oggetto.sede
-            if appartenenza_vo != sede_corso:
-                # GAIA 306
-                # MAIL al proprio presidente
-                sede_app_vo = appartenenza_vo.sede
-                # Mail
-                oggetto_mail = "Volontario {} direttore presso {}".format(
-                    d.persona.nome_completo,
-                    sede_corso
-                )
-                corpo = {
-                    'volontario': d.persona.nome_completo,
-                    'corso_link': oggetto.link,
-                }
-                destinatario = sede_app_vo.presidente()
-                Messaggio.invia_raw(
-                    oggetto=oggetto_mail,
-                    corpo_html=get_template('email_volontario_direttore_altro_corso.html').render(corpo),
-                    email_mittente=Messaggio.NOREPLY_EMAIL,
-                    lista_email_destinatari=[destinatario.email, ]
-                )
-
-                # Notifica
-                Messaggio.costruisci_e_accoda(
-                    oggetto=oggetto_mail,
-                    modello='email_volontario_direttore_altro_corso.html',
-                    corpo=corpo,
-                    destinatari=[destinatario, ]
-                )
-
         d.inizio = poco_fa()
         d.firmatario = me
         d.tipo = delega

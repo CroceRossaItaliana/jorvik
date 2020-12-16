@@ -2112,14 +2112,31 @@ class LezioneCorsoBase(ModelloSemplice, ConMarcaTemporale, ConGiudizio, ConStori
                     **query_kwargs).count()
 
                     if not msg_already_sent:
+                        print('GAIA- 306')
+                        # GAIA 306
+                        # notifica/mail presidente se nominato docente su un altro comitato
+                        oggetto = "%s è nominato come docente di lezione %s" % (docente, self.nome)
+                        corpo = {
+                            "persona": docente,
+                            "corso": self.corso,
+                            'lezione': self,
+                        }
+                        # NOTIFICA
                         Messaggio.costruisci_e_accoda(
+                            oggetto=oggetto,
                             modello="email_corso_avvisa_presidente_docente_nominato_a_lezione.html",
-                            corpo={
-                                "persona": docente,
-                                "corso": self.corso,
-                                'lezione': self,
-                            },
-                            destinatari=destinatari, **query_kwargs)
+                            corpo=corpo,
+                            destinatari=destinatari,
+                        )
+                        # MAIL
+                        Messaggio.invia_raw(
+                            oggetto=oggetto,
+                            corpo_html=get_template(
+                                "email_corso_avvisa_presidente_docente_nominato_a_lezione.html"
+                            ).render(corpo),
+                            email_mittente=Messaggio.NOREPLY_EMAIL,
+                            lista_email_destinatari=[destinatario.email for destinatario in destinatari]
+                        )
 
     def get_full_scheda_lezioni(self):
         if hasattr(self, 'corso') and self.corso.titolo_cri and self.corso.titolo_cri.scheda_lezioni:
