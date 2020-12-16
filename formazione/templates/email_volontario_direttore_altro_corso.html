@@ -1,0 +1,12 @@
+{% extends 'email.html' %}
+
+{% block corpo %}
+
+    <p>Gentile Presidente, </p>
+
+    <p>
+        la informiamo che il Volontario {{ volontario }} è stato nominato Direttore del Corso {{ corso_link }}
+        qualora ci fossero motivi ostativi la preghiamo di farlo presente al Presidente del Comitato organizzatore entro 10 giorni dalla ricezione di questa mail.
+        Qualora non segua nessuna comunicazione si riterrà valido il silenzio-assenso.</p>
+
+{% endblock %}
