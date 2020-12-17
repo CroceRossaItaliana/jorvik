@@ -797,6 +797,7 @@ class CorsoBase(Corso, ConVecchioID, ConPDF):
         self.save()
 
         task_invia_email_agli_aspiranti.apply_async(args=(self.pk, rispondi_a.pk),)
+        self.mail_attivazione_con_delibera()
 
         return messaggio_generico(request, rispondi_a,
             titolo="Corso attivato con successo",
@@ -1286,44 +1287,46 @@ class CorsoBase(Corso, ConVecchioID, ConPDF):
                 allegati=self.delibera_file
             )
 
+    # GAIA 306
+    def mail_attivazione_con_delibera(self):
+        sede = self.sede.estensione
+        oggetto = "Delibera nuovo corso: %s" % self
+
         if not sede == NAZIONALE:
             sede_regionale = self.sede.sede_regionale
-
             email_to = sede_regionale.presidente()
+
+            corpo = {
+                "corso": self,
+                "direttore": self.direttori_corso().first()
+            }
+
             # Invia posta
             Messaggio.costruisci_e_accoda(
                 oggetto=oggetto,
-                modello='email_corso_invia_delibera_al_presidente.html',
-                corpo={
-                    'corso': self,
-                },
+                modello='email_attivazione_corso_presidente_regionale.html',
+                corpo=corpo,
                 destinatari=[email_to,],
                 allegati=[self.delibera_file,]
             )
 
             delegato_fomazione = sede_regionale.delegati_formazione()
-            for delegato in delegato_fomazione:
+            if delegato_fomazione:
                 # Invia e-mail delegato_fomazione
                 Messaggio.invia_raw(
                     oggetto=oggetto,
-                    corpo_html=get_template('email_corso_invia_delibera_al_delegati_formazione.html').render(
-                        {
-                            'nome': delegato.nome_completo
-                        }
-                    ),
+                    corpo_html=get_template('email_attivazione_corso_responsabile_fomazione_regionale.html').render(corpo),
                     email_mittente=Messaggio.NOREPLY_EMAIL,
-                    lista_email_destinatari=[delegato.email],
+                    lista_email_destinatari=[delegato.email for delegato in delegato_fomazione],
                     allegati=self.delibera_file
                 )
 
                 # Invia posta delegato_fomazione
                 Messaggio.costruisci_e_accoda(
                     oggetto=oggetto,
-                    modello='email_corso_invia_delibera_al_delegati_formazione.html',
-                    corpo={
-                         'nome': delegato.nome_completo
-                    },
-                    destinatari=[delegato, ],
+                    modello='email_attivazione_corso_responsabile_fomazione_regionale.html',
+                    corpo=corpo,
+                    destinatari=delegato_fomazione,
                     allegati=[self.delibera_file, ]
                 )
 
@@ -1801,6 +1804,7 @@ class PartecipazioneCorsoBase(ModelloSemplice, ConMarcaTemporale, ConAutorizzazi
 
     def ritira(self):
         self.autorizzazioni_ritira()
+
 
     def richiedi(self, notifiche_attive=True):
         self.autorizzazione_richiedi(

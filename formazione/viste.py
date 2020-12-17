@@ -333,6 +333,24 @@ def aspirante_corso_base_iscriviti(request, me=None, pk=None):
     p.save()
     p.richiedi()
 
+    # GAIA 306
+    # invio notifica al presidente sui comitato se corso è in un altro comitato
+    appartenenza_vo = me.appartenenza_volontario.first()
+    sede_corso = corso.sede
+    presidente_sede_vo = appartenenza_vo.sede.presidente()
+    if appartenenza_vo.sede != sede_corso:
+        Messaggio.costruisci_e_accoda(
+            oggetto="Volontario {} richiesta di partecipazione corso {}".format(
+                appartenenza_vo.persona, sede_corso
+            ),
+            modello='email_volotario_coso_ritirata.html',
+            corpo={
+                "corso": corso,
+                "persona": appartenenza_vo.persona
+            },
+            destinatari=[presidente_sede_vo, ]
+        )
+
     return messaggio_generico(request, me,
         titolo="Sei iscritt%s al corso" % me.genere_o_a,
         messaggio="Complimenti! La tua richiesta di iscrizione è stata registrata ed inviata al Direttore di Corso. "
@@ -364,6 +382,23 @@ def aspirante_corso_base_ritirati(request, me=None, pk=None):
                 api = TrainingApi()
                 api.cancellazione_iscritto(persona=me, corso=corso)
 
+        appartenenza_vo = me.appartenenza_volontario.first()
+        sede_corso = corso.sede
+        presidente_sede_vo = appartenenza_vo.sede.presidente()
+
+        Messaggio.costruisci_e_accoda(
+            oggetto="Volontario {} richiesta di partecipazione corso {} ritirata".format(
+                appartenenza_vo.persona, sede_corso
+            ),
+            modello='email_volotario_coso_altra_sede.html',
+            corpo={
+                "corso": corso,
+                "persona": appartenenza_vo.persona
+            },
+            destinatari=[presidente_sede_vo, ]
+        )
+
+
         # Informa direttore corso
         posta = Messaggio.costruisci_e_accoda(
             oggetto="Ritiro richiesta di iscrizione a %s da %s" % (corso.nome, partecipazione.persona),
@@ -373,8 +408,6 @@ def aspirante_corso_base_ritirati(request, me=None, pk=None):
                 'partecipante': partecipazione.persona,
             },
             destinatari=corso.direttori_corso())
-
-
 
         if posta:
             messages.success(request, "Il direttore del corso è stato avvisato.")
