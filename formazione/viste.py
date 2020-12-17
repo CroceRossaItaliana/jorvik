@@ -1525,12 +1525,33 @@ def course_commissione_esame(request, me, pk):
                     nuovo_avviso = True
 
             if nuovo_avviso and me != corso.sede.presidente():
+                delegati_formazione = corso.sede.delegati_formazione()
                 Messaggio.costruisci_e_invia(
                     oggetto=oggetto,
                     modello=modello,
                     corpo=corpo,
-                    destinatari=[corso.sede.presidente()]
+                    destinatari=[corso.sede.presidente(),]
                 )
+
+                # Notifica delegato formazione e presidente (Regionale)
+                destinatari = [
+                    corso.sede.sede_regionale.presidente(),  # Presidente Regionale
+                ]
+                Messaggio.costruisci_e_invia(
+                    oggetto=oggetto,
+                    modello=modello,
+                    corpo=corpo,
+                    destinatari=destinatari.extend(delegati_formazione)  # aggiunge delegati formazione regionale
+                )
+
+                # MAIL delegato formazione
+                Messaggio.invia_raw(
+                    oggetto=oggetto,
+                    corpo_html=get_template(modello).render(corpo),
+                    email_mittente=Messaggio.NOREPLY_EMAIL,
+                    lista_email_destinatari=[destinatario.email for destinatario in delegati_formazione]
+                )
+
                 messages.success(request, 'La commissione di esame è stata inserita correttamente.')
                 messages.success(request, 'Il presidente del comitato è stato avvisato del inserimento della commissione esame.')
 

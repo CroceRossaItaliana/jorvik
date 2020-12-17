@@ -1,7 +1,7 @@
 {% extends 'email.html' %}
 
 {% block corpo %}
-    <p class="grassetto">Gentile presidente,</p>
+    <p class="grassetto">Gentilissimi,</p>
     <p>E' stata inserita la commissione di esame del corso <a href="{{ corso.url }}">{{ corso.nome }}</a>:</p>
     <div style="display:none;" data-commissione-names-start="|||{{ corso.commissione_esame_names }}==="></div>
 {% endblock %}
