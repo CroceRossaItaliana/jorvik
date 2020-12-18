@@ -3,14 +3,15 @@ from django.core.management import BaseCommand
 
 from anagrafica.costanti import LOCALE, PROVINCIALE, REGIONALE, NAZIONALE
 from anagrafica.models import Sede
+from anagrafica.permessi.applicazioni import CONSIGLIERE_GIOVANE
 from autenticazione.models import Utenza
 
 
 class Command(BaseCommand):
 
-    NOME_GRUPPO = 'Assemblea'
+    NOME_GRUPPO = 'Assemblea giovani'
 
-    help = 'Creare ilo grupppo {} ed assegna Presidenti e Commissari'.format(NOME_GRUPPO)
+    help = 'Creare il grupppo {} ed assegna dei consiglieri giovani'.format(NOME_GRUPPO)
 
     def add_arguments(self, parser):
         parser.add_argument('clean', nargs='?', type=str, default='')
@@ -34,35 +35,25 @@ class Command(BaseCommand):
 
     def _crea_gruppo_aggancia_utenti(self):
         gruppo = self._crea_gruppo()
-        presidenti = 0
-        commissari = 0
-        presidenti_commissari = 0
-        pr_cm = []
+        cg = []
         for sede in Sede.objects.filter(attiva=True, estensione__in=[LOCALE, PROVINCIALE, REGIONALE, NAZIONALE]):
-            persona = sede.presidente()
-            if persona:
-                if persona not in pr_cm:
-                    utenza = Utenza.objects.filter(persona=persona).order_by('last_login').first()
-                    utenza.groups.add(gruppo)
-                    utenza.save()
-                    pr_cm.append(persona)
-
-                    if persona.is_presidente and persona.is_comissario:
-                        presidenti_commissari += 1
-                    elif persona.is_comissario:
-                        commissari += 1
-                    elif persona.is_presidente:
-                        presidenti += 1
-
+            deleghe = sede.deleghe_attuali(tipo=CONSIGLIERE_GIOVANE)
+            for delega in deleghe:
+                persona = delega.persona
+                if persona:
+                    if persona not in cg:
+                        utenza = Utenza.objects.filter(persona=persona).order_by('last_login').first()
+                        if utenza:
+                            utenza.groups.add(gruppo)
+                            utenza.save()
+                            cg.append(persona)
+                else:
+                    print(delega, persona)
         print(
-            'distinct persone', len(pr_cm), '\n'
-            'presidenti', presidenti, '\n'
-            'commissari', commissari, '\n'
-            'presidenti_commissari', presidenti_commissari, '\n'
+            'consiglieri giovani aggiunti {}'.format(len(cg))
         )
 
     def handle(self, *args, **options):
-
         if options['clean']:
             if options['clean'] == 'clean':
                 msg = "Gruppo {} eliminato".format(self.NOME_GRUPPO) \

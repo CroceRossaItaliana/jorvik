@@ -180,8 +180,8 @@ class Persona(ModelloSemplice, ConMarcaTemporale, ConAllegati, ConVecchioID):
         :return:
         """
         if self.email_contatto:
-            return self.email_contatto
-        return self.email_utenza
+            return self.email_contatto.lower()
+        return self.email_utenza.lower()
 
     @property
     def genere_codice_fiscale(self):
@@ -1243,6 +1243,14 @@ class Persona(ModelloSemplice, ConMarcaTemporale, ConAllegati, ConVecchioID):
         return self.deleghe_attuali(tipo=PRESIDENTE).first()
 
     @property
+    def is_consigliere_giovane(self):
+        return self.deleghe_attuali(tipo=CONSIGLIERE_GIOVANE).exists()
+
+    @property
+    def delega_consigliere_giovane(self):
+        return self.deleghe_attuali(tipo=CONSIGLIERE_GIOVANE).first()
+
+    @property
     def is_comissario(self):
         return self.deleghe_attuali(tipo=COMMISSARIO).exists()
 
@@ -1279,6 +1287,20 @@ class Persona(ModelloSemplice, ConMarcaTemporale, ConAllegati, ConVecchioID):
             if 'IIVV'.lower() in delega.oggetto.__str__().lower():
                 delegato_area = True
         return delegato_area
+
+    @property
+    def is_responsabile_area_delegato_assemblea_nazionale_giovani(self):
+        delegato_area = False
+        for delega in self.deleghe_attuali(tipo=RESPONSABILE_AREA):
+            if 'ASSEMBLEA GIOVANI'.lower() in delega.oggetto.__str__().lower():
+                delegato_area = True
+        return delegato_area
+
+    @property
+    def delega_responsabile_area_delegato_assemblea_nazionale_giovani(self):
+        for delega in self.deleghe_attuali(tipo=RESPONSABILE_AREA):
+            if 'ASSEMBLEA GIOVANI'.lower() in delega.oggetto.__str__().lower():
+                return delega
 
     @property
     def delegato_tempo_della_gentilezza(self):
