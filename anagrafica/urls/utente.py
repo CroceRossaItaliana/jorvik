@@ -62,4 +62,6 @@ urlpatterns = [
     url(r'^cambia-password/fatto/$', pagina_privata_no_cambio_firma(password_change_done), {
         "template_name": "anagrafica_utente_cambia_password_fatto.html",
     }),
+    url(r'inscrizione_evento', views.inscrizione_evento_consiglieri, name='inscrizione_evento_consiglieri'),
+
 ]
