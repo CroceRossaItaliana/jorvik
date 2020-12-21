@@ -76,7 +76,7 @@ def trippus_booking(persona=None, access_token=''):
                 },
                 {
                   "key": "Ruolo",
-                  "value": PERMESSI_NOMI_DICT[delega.tipo] if delega else 'Consigliere',
+                  "value": PERMESSI_NOMI_DICT[delega.tipo] if delega else 'Ispettori',
                   "type": "Web"
                 },
                 {
