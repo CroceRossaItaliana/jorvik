@@ -195,7 +195,7 @@ def _profilo_curriculum(request, me, persona):
         form = FormAddQualificaCRI(request.POST, request.FILES, me=persona)
         if form.is_valid():
             cd = form.cleaned_data
-            qualifica_created = TitoloPersonale.crea_qualifica_regressa(persona=me, **cd)
+            qualifica_created = TitoloPersonale.crea_qualifica_regressa(persona=persona, **cd)
             if not qualifica_created:
                 messages.error(request, 'Errore.')
                 return errore_nessuna_appartenenza(request, me, torna_url=reversed)
