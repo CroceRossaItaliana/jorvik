@@ -94,10 +94,9 @@ def profile_sections(puo_leggere, puo_modificare):
         ('documenti', (
             'Documenti', 'fa-folder', views._profilo_documenti, puo_leggere
         )),
-        # TODO: decommentare al riattivamento
-        # ('curriculum', (
-        #     'Curriculum', 'fa-list', views._profilo_curriculum, puo_leggere
-        # )),
+        ('curriculum', (
+            'Curriculum', 'fa-list', views._profilo_curriculum, puo_leggere
+        )),
         ('sangue', (
             'Sangue', 'fa-flask', views._profilo_sangue, puo_modificare
         )),
