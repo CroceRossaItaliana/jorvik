@@ -364,7 +364,14 @@ def aspirante_corso_base_ritirati(request, me=None, pk=None):
                 api = TrainingApi()
                 api.cancellazione_iscritto(persona=me, corso=corso)
 
-        # Informa direttore corso
+        # Informa direttore corso e il presidente del VO
+        destinatari = corso.direttori_corso()
+
+        appartenenze = partecipazione.persona.appartenenza_volontario
+        if appartenenze:
+            presidenti = [a.sede.presidente() for a in appartenenze]
+            destinatari = [d for d in destinatari] + presidenti
+
         posta = Messaggio.costruisci_e_accoda(
             oggetto="Ritiro richiesta di iscrizione a %s da %s" % (corso.nome, partecipazione.persona),
             modello="email_corso_utente_ritirato_iscrizione.html",
@@ -372,12 +379,12 @@ def aspirante_corso_base_ritirati(request, me=None, pk=None):
                 'corso': corso,
                 'partecipante': partecipazione.persona,
             },
-            destinatari=corso.direttori_corso())
-
-
+            destinatari=destinatari
+        )
 
         if posta:
-            messages.success(request, "Il direttore del corso è stato avvisato.")
+            msg_success = "Il direttore del corso e il presidente della sede di appartenenza attuale sono stati avvisato."
+            messages.success(request, msg_success)
 
         return messaggio_generico(request, me,
             titolo="Ti sei ritirato dal corso",
