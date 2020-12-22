@@ -54,7 +54,8 @@ class MenuUtente:
             ("Patenti Civili", "fa-car", "/utente/curriculum/PP/"),
             ("Titoli di Studio", "fa-graduation-cap", "/utente/curriculum/TS/"),
             ("Patenti CRI", "fa-ambulance", "/utente/curriculum/PC/") if me and (me.volontario or me.dipendente) else None,
-            ("Qualifiche CRI", "fa-plus-square", "/utente/curriculum/TC/") if me and (me.volontario or me.dipendente) else None,
+            # TODO: decommentare al riattivamento
+            # ("Qualifiche CRI", "fa-plus-square", "/utente/curriculum/TC/") if me and (me.volontario or me.dipendente) else None,
         ))
 
     def menu_donatore(self):
