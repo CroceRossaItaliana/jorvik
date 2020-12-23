@@ -182,7 +182,7 @@ class Persona(ModelloSemplice, ConMarcaTemporale, ConAllegati, ConVecchioID):
         """
         if self.email_contatto:
             return self.email_contatto.lower()
-        return self.email_utenza.lower()
+        return self.email_utenza.lower() if self.email_utenza else self.email_utenza
 
     @property
     def genere_codice_fiscale(self):
