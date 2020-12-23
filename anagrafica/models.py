@@ -3,6 +3,7 @@ from datetime import date, timedelta, datetime
 import codicefiscale
 import phonenumbers
 import mptt
+from django.template.loader import get_template
 from mptt.querysets import TreeQuerySet
 from autoslug import AutoSlugField
 
@@ -181,7 +182,7 @@ class Persona(ModelloSemplice, ConMarcaTemporale, ConAllegati, ConVecchioID):
         """
         if self.email_contatto:
             return self.email_contatto.lower()
-        return self.email_utenza.lower()
+        return self.email_utenza.lower() if self.email_utenza else self.email_utenza
 
     @property
     def genere_codice_fiscale(self):
@@ -2394,16 +2395,28 @@ class Delega(ModelloSemplice, ConStorico, ConMarcaTemporale):
             esito = corso.sede.ha_membro(self.persona, membro=Appartenenza.VOLONTARIO)
             if not esito:
                 # Un'altra mail per avvertire il presidente del comitato del nominato
+                # Notifica
+                oggetto = "%s è nominato come direttore di %s" % (self.persona.nome_completo, corso)
+                destinatario = sede.presidente()
+                corpo = {
+                    "delega": self,
+                    "persona": self.persona,
+                    'corso': corso,
+                }
+                # GAIA 306
+                # notifica + mail al presidente nel nominato
                 messaggi += [Messaggio.costruisci_e_invia(
-                    oggetto="%s è nominato come direttore di %s" % (self.persona.nome_completo, corso),
+                    oggetto=oggetto,
                     modello="email_delega_notifica_creazione_per_formazione.html",
-                    corpo={
-                        "delega": self,
-                        "persona": self.persona,
-                        'corso': corso,
-                    },
-                    destinatari=[sede.presidente()],
+                    corpo=corpo,
+                    destinatari=[destinatario],
                 )]
+                Messaggio.invia_raw(
+                    oggetto=oggetto,
+                    corpo_html=get_template('email_delega_notifica_creazione_per_formazione.html').render(corpo),
+                    email_mittente=Messaggio.NOREPLY_EMAIL,
+                    lista_email_destinatari=[destinatario.email, ]
+                )
 
         return messaggi
 

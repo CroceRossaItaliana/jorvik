@@ -2,5 +2,9 @@
 
 {% block corpo %}
     <p class="grassetto">Gentile presidente,</p>
-    <p>la informiamo che {{ persona.nome_completo }}, è stato nominato Docente della lezione {{ lezione.nome }} del corso <a href="{{ corso.url }}">{{ corso.nome }}</a></p>
+    <p>
+        la informiamo che il Volontario {{ persona.nome_completo }} è stato nominato Docente al Corso  <a href="{{ corso.url }}">{{ corso.nome }}</a>;
+        qualora ci fossero motivi ostativi la preghiamo di farlo presente al Direttore del Corso entro 10 giorni dalla ricezione di questa mail.
+        Qualora non segua nessuna comunicazione si riterrà valido il silenzio-assenso.
+    </p>
 {% endblock %}
