@@ -4,8 +4,8 @@ from jorvik import settings
 import requests
 
 
-PRESIDENTE = '211091'
-COMMISSARIO = '211092'
+PRESIDENTE = '213724'
+COMMISSARIO = '213724'
 
 CONSIGLIERE = '213305'
 
@@ -76,7 +76,7 @@ def trippus_booking(persona=None, access_token=''):
                 },
                 {
                   "key": "Ruolo",
-                  "value": PERMESSI_NOMI_DICT[delega.tipo] if delega else 'Consigliere',
+                  "value": PERMESSI_NOMI_DICT[delega.tipo] if delega else 'Ispettori',
                   "type": "Web"
                 },
                 {
