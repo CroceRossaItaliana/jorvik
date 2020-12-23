@@ -271,7 +271,6 @@ class GestioneLezioni:
         form = self._form_nuova_lezione
         if form.is_valid():
             cd = form.cleaned_data
-
             lezione = form.save(commit=False)
             lezione.corso = self.corso
             lezione.save()
@@ -307,6 +306,7 @@ class GestioneLezioni:
             return redirect("%s" % self.corso.url_lezioni)
 
         if form.is_valid() and (self.AZIONE_SALVA or self.AZIONE_DIVIDI):
+
             form.save()
 
             if self.AZIONE_DIVIDI:

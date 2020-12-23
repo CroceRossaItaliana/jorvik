@@ -333,6 +333,24 @@ def aspirante_corso_base_iscriviti(request, me=None, pk=None):
     p.save()
     p.richiedi()
 
+    # GAIA-306
+    # invio notifica al presidente sui comitato se corso è in un altro comitato
+    appartenenza_vo = me.appartenenza_volontario.first()
+    sede_corso = corso.sede
+    presidente_sede_vo = appartenenza_vo.sede.presidente()
+
+    Messaggio.costruisci_e_accoda(
+        oggetto="Volontario {} richiesta di partecipazione corso {}".format(
+            appartenenza_vo.persona, sede_corso
+        ),
+        modello='email_volontario_corso_altra_sede.html',
+        corpo={
+            "corso": corso,
+            "persona": appartenenza_vo.persona
+        },
+        destinatari=[presidente_sede_vo, ]
+    )
+
     return messaggio_generico(request, me,
         titolo="Sei iscritt%s al corso" % me.genere_o_a,
         messaggio="Complimenti! La tua richiesta di iscrizione è stata registrata ed inviata al Direttore di Corso. "
@@ -364,7 +382,14 @@ def aspirante_corso_base_ritirati(request, me=None, pk=None):
                 api = TrainingApi()
                 api.cancellazione_iscritto(persona=me, corso=corso)
 
-        # Informa direttore corso
+        # Informa direttore corso e il presidente del VO
+        destinatari = corso.direttori_corso()
+
+        appartenenze = partecipazione.persona.appartenenza_volontario
+        if appartenenze:
+            presidenti = [a.sede.presidente() for a in appartenenze]
+            destinatari = [d for d in destinatari] + presidenti
+
         posta = Messaggio.costruisci_e_accoda(
             oggetto="Ritiro richiesta di iscrizione a %s da %s" % (corso.nome, partecipazione.persona),
             modello="email_corso_utente_ritirato_iscrizione.html",
@@ -372,12 +397,12 @@ def aspirante_corso_base_ritirati(request, me=None, pk=None):
                 'corso': corso,
                 'partecipante': partecipazione.persona,
             },
-            destinatari=corso.direttori_corso())
-
-
+            destinatari=destinatari
+        )
 
         if posta:
-            messages.success(request, "Il direttore del corso è stato avvisato.")
+            msg_success = "Il direttore del corso e il presidente della sede di appartenenza attuale sono stati avvisato."
+            messages.success(request, msg_success)
 
         return messaggio_generico(request, me,
             titolo="Ti sei ritirato dal corso",
@@ -1492,12 +1517,33 @@ def course_commissione_esame(request, me, pk):
                     nuovo_avviso = True
 
             if nuovo_avviso and me != corso.sede.presidente():
+                delegati_formazione = corso.sede.delegati_formazione()
                 Messaggio.costruisci_e_invia(
                     oggetto=oggetto,
                     modello=modello,
                     corpo=corpo,
-                    destinatari=[corso.sede.presidente()]
+                    destinatari=[corso.sede.presidente(),]
                 )
+
+                # Notifica delegato formazione e presidente (Regionale)
+                destinatari = [
+                    corso.sede.sede_regionale.presidente(),  # Presidente Regionale
+                ]
+                Messaggio.costruisci_e_invia(
+                    oggetto=oggetto,
+                    modello=modello,
+                    corpo=corpo,
+                    destinatari=destinatari.extend(delegati_formazione)  # aggiunge delegati formazione regionale
+                )
+
+                # MAIL delegato formazione
+                Messaggio.invia_raw(
+                    oggetto=oggetto,
+                    corpo_html=get_template(modello).render(corpo),
+                    email_mittente=Messaggio.NOREPLY_EMAIL,
+                    lista_email_destinatari=[destinatario.email for destinatario in delegati_formazione]
+                )
+
                 messages.success(request, 'La commissione di esame è stata inserita correttamente.')
                 messages.success(request, 'Il presidente del comitato è stato avvisato del inserimento della commissione esame.')
 
