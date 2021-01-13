@@ -1,3 +1,4 @@
+from gestione_file.viste import serve_protected_file
 from .settings import MEDIA_ROOT, DEBUG
 from django.contrib import admin
 from django.conf.urls import include, url
@@ -78,7 +79,8 @@ urlpatterns = [
     url(r'^strumenti/delegati/(?P<delega_pk>[0-9]+)/termina/$', anagrafica.viste.strumenti_delegati_termina),
     url(r'^social/commenti/nuovo/', social.viste.commenti_nuovo),
     url(r'^social/commenti/cancella/(?P<pk>[0-9]+)/', social.viste.commenti_cancella),
-    url(r'^media/(?P<path>.*)$', django.views.static.serve, {"document_root": MEDIA_ROOT}),
+    url(r'^media_protected/(?P<path>.*)$', django.views.static.serve, {"document_root": MEDIA_ROOT}),
+    url(r'^media/(?P<path>.*)$', serve_protected_file, {"document_root": MEDIA_ROOT}),
     url(r'^geo/localizzatore/imposta/$', base.viste.geo_localizzatore_imposta, name='geo_localizzatore_imposta'),
     url(r'^geo/localizzatore/$', base.viste.geo_localizzatore, name='geo_localizzatore'),
     url(r'^pdf/(?P<app_label>.*)/(?P<model>.*)/(?P<pk>[0-9]+)/$', base.viste.pdf),
