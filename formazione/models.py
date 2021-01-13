@@ -1205,6 +1205,11 @@ class CorsoBase(Corso, ConVecchioID, ConPDF):
         numero_assenti_no_esame = self.partecipazioni_confermate().filter(
             ammissione=PartecipazioneCorsoBase.ESAME_NON_PREVISTO_ASSENTE)
 
+        if verbale_per_seconda_data_esame:
+            numero_aspiranti = self.partecipazioni_confermate().filter(esaminato_seconda_data=True).count()
+        else:
+            numero_aspiranti = self.partecipazioni_confermate().count()
+
         pdf = PDF(oggetto=self)
         pdf.genera_e_salva_con_python(
             nome="Verbale Esame del Corso Base %d-%d.pdf" % (self.progressivo, self.anno),
@@ -1215,12 +1220,13 @@ class CorsoBase(Corso, ConVecchioID, ConPDF):
                 "partecipazioni": sorted(partecipazioni, key=key_cognome),
                 "numero_idonei": numero_idonei,
                 "numero_non_idonei": numero_non_idonei,
-                "numero_aspiranti": self.partecipazioni_confermate().count(),
+                "numero_aspiranti": numero_aspiranti,
                 'numero_assenti_no_esame': numero_assenti_no_esame,
                 'request': request,
             },
             modello=pdf_template,
         )
+
         return pdf
 
     @property
