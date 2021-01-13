@@ -606,3 +606,16 @@ def informazioni_statistiche(request, me):
 
     contesto = {'statistiche': {'aspiranti': aspiranti}}
     return 'base_informazioni_statistiche.html', contesto
+
+
+@pagina_privata
+def media_protected(request, persona, *args, **kwargs):
+    from filer.server.views import filer_settings
+    from collections import namedtuple
+
+    ProtectedFile = namedtuple('ProtectedFile', 'path')
+    server = filer_settings.FILER_PRIVATEMEDIA_SERVER
+
+    full_path = kwargs['document_root'] + kwargs['path']
+    pf = ProtectedFile(full_path)
+    return server.serve(request, file_obj=pf, save_as=True)
