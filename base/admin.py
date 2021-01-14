@@ -13,7 +13,7 @@ class TokenAdmin(ReadonlyAdminMixin, admin.ModelAdmin):
 
 @admin.register(Menu)
 class MenuAdmin(ReadonlyAdminMixin, admin.ModelAdmin):
-    list_display = ['url', 'order', 'is_active', 'name',]
+    list_display = ['url', 'order', 'is_active', 'name', 'menu']
 
 
 def locazione_aggiorna(modello, request, queryset):

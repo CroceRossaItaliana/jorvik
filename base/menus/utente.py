@@ -1,6 +1,6 @@
 from django.core.urlresolvers import reverse
 from anagrafica.models import Appartenenza
-
+from ..models import Menu
 
 class MenuUtente:
     def __init__(self, me):
@@ -13,6 +13,11 @@ class MenuUtente:
             return self.get_menu()
         else:
             return None
+
+    @staticmethod
+    def _espandi_con_static_pege(menu):
+        return tuple((link.name, link.icon_class, link.url)
+              for link in Menu.objects.filter(is_active=True, menu=menu).order_by('order'))
 
     @property
     def is_volontario(self):
@@ -27,12 +32,13 @@ class MenuUtente:
             ("Estensione", "fa-random", reverse('utente:estensione')),
             ("Trasferimento", "fa-arrow-right", reverse('utente:trasferimento')),
             ("Riserva", "fa-pause", reverse('utente:riserva')),
-        ))
+        ) + self._espandi_con_static_pege(Menu.VOLONTARIO))
 
     def menu_formazione(self):
         from formazione.menus import formazione_menu
         menu = list(formazione_menu('formazione')[0])
         menu[0] = 'Formazione'
+        menu[1] += self._espandi_con_static_pege(Menu.FORMAZIONE)
         return menu
 
     def menu_persona(self):
@@ -46,7 +52,7 @@ class MenuUtente:
             ) else None,
             ("Contatti", "fa-envelope", "/utente/contatti/"),
             ("Fotografie", "fa-credit-card", "/utente/fotografia/"),
-        ))
+        ) + self._espandi_con_static_pege(Menu.PERSONA))
 
     def menu_curriculum(self):
         me = self.me
@@ -55,28 +61,24 @@ class MenuUtente:
             ("Titoli di Studio", "fa-graduation-cap", "/utente/curriculum/TS/"),
             ("Patenti CRI", "fa-ambulance", "/utente/curriculum/PC/") if me and (me.volontario or me.dipendente) else None,
             ("Qualifiche CRI", "fa-plus-square", "/utente/curriculum/TC/") if me and (me.volontario or me.dipendente) else None,
-        ))
+        ) + self._espandi_con_static_pege(Menu.CURRICULUM))
 
     def menu_donatore(self):
         return ("Donatore", (
             ("Profilo Donatore", "fa-user", "/utente/donazioni/profilo/"),
             ("Donazioni di Sangue", "fa-flask", "/utente/donazioni/sangue/") if self.is_donatore else None,
-        ))
+        ) + self._espandi_con_static_pege(Menu.DONATORE))
 
     def menu_sicurezza(self):
         return ("Sicurezza", (
             ("Cambia password", "fa-key", "/utente/cambia-password/"),
             ("Impostazioni Privacy", "fa-cogs", "/utente/privacy/"),
-        ))
+        ) + self._espandi_con_static_pege(Menu.SICUREZZA))
 
     def menu_links(self):
-        from ..models import Menu
-
-        return ("Links", tuple((link.name, link.icon_class, link.url)
-            for link in Menu.objects.filter(is_active=True).order_by('order')))
+        return ("Links", self._espandi_con_static_pege(Menu.LINK))
 
     def get_menu(self):
-        from .utente_monitoraggio import menu_monitoraggio
         from .utente_rubrica import menu_rubrica_base
 
         me = self.me
