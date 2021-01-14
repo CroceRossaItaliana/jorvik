@@ -163,7 +163,7 @@
 		</div><!--/.page-wrapper-->
 	</div><!--/#page_2-->
 
-	{% if corso.titolo_cri.is_titolo_corso_base %}
+	{% if corso.titolo_cri.is_titolo_corso_base or corso.titolo_cri.sigla == 'CRIVT' %}
 		<div id="page_3" class="page" style="height:21cm; background-position: center right; background-image: url('{{SITE_URL}}{% static 'img/attestato/sfondo-vuoto-cropped.png' %}'); page-break-after: always;">
 			<div class="page-wrapper">
 				<div class="page-inner">
