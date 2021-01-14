@@ -23,6 +23,7 @@ app.conf.task_routes = {
     'ufficio_soci.tasks.generate_elenco': {'queue': 'shared_ufficio_soci'},
 
     'static_page.tasks.send_mail': {'queue': 'queue_monitoraggio'},
+    'static_page.tasks.send_mail_regionale': {'queue': 'queue_monitoraggio'},
 
     'formazione.tasks.task_invia_email_agli_aspiranti': {'queue': 'queue_formazione'},
 }

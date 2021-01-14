@@ -13,13 +13,13 @@ from django.core.urlresolvers import reverse
 
 from anagrafica.models import Persona, Sede
 from anagrafica.permessi.applicazioni import COMMISSARIO, PRESIDENTE
-from .tasks import send_mail
+from .tasks import send_mail, send_mail_regionale
 
 
 class TypeForm:
     CELERY_TASK_PREFIX = 'CELERY_TASK_MSG_'
     TYPEFORM_DOMAIN = "https://api.typeform.com"
-    TYPEFORM_TOKEN = settings.DEBUG_CONF.get('typeform', 'token')
+    TYPEFORM_TOKEN = settings.TOKEN_TYPE_FORM
     ENDPOINT = TYPEFORM_DOMAIN + "/forms/%s"
     HEADERS = {
         'Authorization': "Bearer %s" % TYPEFORM_TOKEN,
@@ -294,18 +294,32 @@ class TypeForm:
         # messages.add_message(self.request, messages.INFO, self.CELERY_TASK_PREFIX+task.id)
         return redirect_url
 
+    def send_via_mail_regionale(self, redirect_url, target):
+        task = send_mail_regionale.apply_async(args=(self.get_user_pk, target), task_id=uuid())
+
+        # messages.add_message(self.request, messages.INFO, self.CELERY_TASK_PREFIX+task.id)
+        return redirect_url
+
 
 class TypeFormResponses(TypeForm):
     form_ids = OrderedDict([
-        ('jG811ueg', 'Servizi sanitari'),
-        ('vlnVkzY4', 'Servizi di inclusione sociale'),
+        ('ttOyXCJR', 'A-GOVERNANCE'),
+        ('PZvVJIZq', 'B-Personale Dipendente e Volontario'),
+        ('p5DlUCLt', 'C-Contabilità'),
+        ('o7JfxbE5', 'D-Convenzioni e progetti'),
+        ('ZwMX5rsG', 'E-Relazioni esterne, comunicazione, trasparenza'),
     ])
-    email_body = """Grazie per aver completato il Monitoraggio 2020 (dati 2019).\n
+    email_body = """Grazie per aver completato il Monitoraggio 2021.\n
         Nell'apprezzare la collaborazione prestata, a breve restituiremo i dati 
         aggregati a livello nazionale e regionale per i seguiti di competenza.\n
         Per qualsiasi informazione contattare l'area sociale all'indirizzo mail: sociale@cri.it"""
 
-    email_object = 'Risposte monitoraggio 2020 (dati 2019) di %s'
+    email_body_regionale = """
+        Gentilissimi, \n
+        in allegato la Checklist di autovalutazione del Comitato {}
+    """
+
+    email_object = 'Risposte monitoraggio 2021 di %s'
 
 
 class TypeFormNonSonoUnBersaglio(TypeForm):

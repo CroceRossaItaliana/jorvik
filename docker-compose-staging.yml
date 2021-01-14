@@ -29,6 +29,7 @@ services:
       - TRIPPUS_USERNAME=${TRIPPUS_USERNAME}
       - TRIPPUS_PASSWORD=${TRIPPUS_PASSWORD}
       - MOODLE_KEY=${MOODLE_KEY}
+      - TOKEN_TYPE_FORM=${TOKEN_TYPE_FORM}
     networks:
       - "default"
 

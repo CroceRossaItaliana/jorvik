@@ -2,8 +2,10 @@ from django.shortcuts import render, redirect, get_object_or_404, HttpResponse
 from django.core.urlresolvers import reverse
 from django.contrib.messages import get_messages
 
+from anagrafica.costanti import NAZIONALE
 from autenticazione.funzioni import pagina_privata
 from anagrafica.permessi.applicazioni import COMMISSARIO, PRESIDENTE
+from posta.models import Messaggio
 from .models import Page
 from .monitoraggio import TypeFormResponses, TypeFormNonSonoUnBersaglio, NONSONOUNBERSAGLIO, MONITORAGGIO ,MONITORAGGIOTYPE
 
@@ -96,6 +98,8 @@ def monitoraggio_actions(request, me):
         return responses.print(redirect_url)
     elif action == 'send_via_mail':
         return responses.send_via_mail(redirect_url, target)
+    elif action == 'send_via_mail_regionale':
+        return responses.send_via_mail_regionale(redirect_url, target)
 
 
 @pagina_privata
