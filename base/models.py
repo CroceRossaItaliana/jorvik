@@ -1132,6 +1132,26 @@ class Menu(models.Model):
         ('fn', 'Footer'),
     )
 
+    PERSONA = 'PR'
+    VOLONTARIO = 'VO'
+    FORMAZIONE = 'FR'
+    RUBRICA = 'RU'
+    CURRICULUM = 'CU'
+    DONATORE = 'DO'
+    SICUREZZA = 'SI'
+    LINK = "LK"
+
+    APPS = (
+        (PERSONA, 'Persona'),
+        (VOLONTARIO, 'Volontario'),
+        (FORMAZIONE, "Formazione"),
+        (RUBRICA, 'Rubrica'),
+        (CURRICULUM, 'Curriculum'),
+        (DONATORE, 'Donatore'),
+        (SICUREZZA, 'Sicurezza'),
+        (LINK, "Link"),
+    )
+
     is_active = models.BooleanField(default=True)
     name = models.CharField(max_length=255)
     url = models.URLField(null=True, blank=True)
@@ -1146,6 +1166,8 @@ class Menu(models.Model):
     order = models.IntegerField(null=True, blank=True)
     position = models.CharField(max_length=5, choices=POSITIONS_CHOICES,
                                 null=True, blank=True) #, help_text='not used - not required')
+
+    menu = models.CharField(max_length=20, choices=APPS, null=True, blank=True, default=LINK)
 
     def __str__(self):
         return '%s - %s' % (self.url, self.name)
