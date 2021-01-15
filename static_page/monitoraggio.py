@@ -309,17 +309,14 @@ class TypeFormResponses(TypeForm):
         ('o7JfxbE5', 'D-Convenzioni e progetti'),
         ('ZwMX5rsG', 'E-Relazioni esterne, comunicazione, trasparenza'),
     ])
-    email_body = """Grazie per aver completato il Monitoraggio 2021.\n
-        Nell'apprezzare la collaborazione prestata, a breve restituiremo i dati 
-        aggregati a livello nazionale e regionale per i seguiti di competenza.\n
-        Per qualsiasi informazione contattare l'area sociale all'indirizzo mail: sociale@cri.it"""
+    email_body = """Grazie per aver completato il Questionario autocontrollo."""
 
     email_body_regionale = """
         Gentilissimi, \n
         in allegato la Checklist di autovalutazione del Comitato {}
     """
 
-    email_object = 'Risposte monitoraggio 2021 di %s'
+    email_object = 'Risposte Questionario di autocontrollo di %s'
 
 
 class TypeFormNonSonoUnBersaglio(TypeForm):

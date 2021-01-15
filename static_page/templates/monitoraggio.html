@@ -4,7 +4,7 @@
 
 {% block app_contenuto %}
   <div class="articolo single-page">
-    <h1>Monitoraggio 2021 <span style="color:#555; font-size:24px;">- {{ comitato }}</span></h1>
+    <h1>Questionario autocontrollo <span style="color:#555; font-size:24px;">- {{ comitato }}</span></h1>
     <h3>{{ section.2 }}</h3>
 
     <ul class="typeform_widget">
@@ -25,7 +25,8 @@
 
       <p style="text-align:center;"><strong>
         {% if all_forms_are_completed %}
-          Complimenti! Hai compilato tutto il monitoraggio.
+          Complimenti! Hai compilato il questionario di autocontrollo.<br>
+          Clicca su "Invia via e-mail al regionale" per trasfettere i dati inseriti.
         {% elif is_done %}
           Questa sezione è già compilata.
         {% endif %}
