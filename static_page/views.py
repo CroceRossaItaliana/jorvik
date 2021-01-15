@@ -1,7 +1,6 @@
-from django.shortcuts import render, redirect, get_object_or_404, HttpResponse
+from django.shortcuts import redirect, get_object_or_404
 from django.core.urlresolvers import reverse
-from django.contrib.messages import get_messages
-
+from django.contrib import messages
 from autenticazione.funzioni import pagina_privata
 from anagrafica.permessi.applicazioni import COMMISSARIO, PRESIDENTE
 from .models import Page
@@ -95,7 +94,11 @@ def monitoraggio_actions(request, me):
     if action == 'print':
         return responses.print(redirect_url)
     elif action == 'send_via_mail':
+        messages.success(request, "e-mail inviata correttamente")
         return responses.send_via_mail(redirect_url, target)
+    elif action == 'send_via_mail_regionale':
+        messages.success(request, "e-mail inviata correttamente")
+        return responses.send_via_mail_regionale(redirect_url, target)
 
 
 @pagina_privata

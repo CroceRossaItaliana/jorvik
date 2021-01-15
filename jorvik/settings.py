@@ -153,6 +153,7 @@ DEBUG = DEBUG_CONF.getboolean('debug', 'debug')
 SECRET_KEY = DEBUG_CONF.get('production', 'secret_key')
 JORVIK_LOG_FILE = DEBUG_CONF.get('debug', 'debug_log', fallback=os.path.join('..', 'log', 'debug.log'))
 JORVIK_LOG = os.path.join(BASE_DIR, JORVIK_LOG_FILE)
+TOKEN_TYPE_FORM = DEBUG_CONF.get('typeform', 'token', fallback=os.environ.get("TOKEN_TYPE_FORM"))
 
 PASSWORD_HASHERS = (
     'django.contrib.auth.hashers.PBKDF2PasswordHasher',

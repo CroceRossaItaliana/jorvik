@@ -3,13 +3,23 @@
 {% load bootstrap3 %}
 
 {% block app_contenuto %}
+    {% if messages %}
+        <ul class="messages">
+            {% for message in messages %}
+            <li{% if message.tags %} class="{{ message.tags }}"{% endif %}>{{ message }}</li>
+            {% endfor %}
+        </ul>
+    {% endif %}
   <div class="articolo single-page">
-    <h1>Monitoraggio 2020 (dati 2019) <span style="color:#555; font-size:24px;">- {{ comitato }}</span></h1>
+    <h1>Questionario autocontrollo <span style="color:#555; font-size:24px;">- {{ comitato }}</span></h1>
     <h3>{{ section.2 }}</h3>
 
     <ul class="typeform_widget">
-      <li><a href="?comitato={{user_comitato}}&id=vlnVkzY4" class="{%if type_form.vlnVkzY4.0 %}done{%endif%} typeform_widget__btn">Servizi sanitari</a></li>
-      <li><a href="?comitato={{user_comitato}}&id=jG811ueg" class="{%if type_form.jG811ueg.0 %}done{%endif%} typeform_widget__btn">Servizi di inclusione sociale</a></li>
+      <li><a href="?comitato={{user_comitato}}&id=ttOyXCJR" class="{%if type_form.ttOyXCJR.0 %}done{%endif%} typeform_widget__btn testi-lunghi hand" title="A-Governance">A-Governance</a></li>
+      <li><a href="?comitato={{user_comitato}}&id=PZvVJIZq" class="{%if type_form.PZvVJIZq.0 %}done{%endif%} typeform_widget__btn testi-lunghi hand" title="B-Personale Dipendente e Volontario">B-Personale Dipendente e Volontario</a></li>
+      <li><a href="?comitato={{user_comitato}}&id=p5DlUCLt" class="{%if type_form.p5DlUCLt.0 %}done{%endif%} typeform_widget__btn testi-lunghi hand" title="C-Contabilità">C-Contabilità</a></li>
+      <li><a href="?comitato={{user_comitato}}&id=o7JfxbE5" class="{%if type_form.o7JfxbE5.0 %}done{%endif%} typeform_widget__btn testi-lunghi hand" title="D-Convenzioni e progetti">D-Convenzioni e progetti</a></li>
+      <li><a href="?comitato={{user_comitato}}&id=ZwMX5rsG" class="{%if type_form.ZwMX5rsG.0 %}done{%endif%} typeform_widget__btn testi-lunghi hand" title="E-Relazioni esterne, comunicazione, trasparenza">E-Relazioni esterne, comunicazione, trasparenza</a></li>
     </ul>
 
     <div class="typeform_widget__wrapper">
@@ -22,28 +32,30 @@
 
       <p style="text-align:center;"><strong>
         {% if all_forms_are_completed %}
-          Complimenti! Hai compilato tutto il monitoraggio.
+          Complimenti! Hai compilato il questionario di autocontrollo.<br>
+          Clicca su "Invia via e-mail al regionale" per trasmettere i dati inseriti.
         {% elif is_done %}
           Questa sezione è già compilata.
         {% endif %}
       </strong></p>
     </div>
 
-    <div>
-      <p>Prima di iniziare il questionario, puoi consultare le istruzioni per la compilazione e il glossario ai link di seguito:
-        <a href="https://datafiles.gaia.cri.it/media/filer_public/7a/6e/7a6e0fe0-a3f8-42ac-bca4-5a5873355049/allegato_2-glossario.pdf" target="_blank">glossario</a>, 
-        <a href="https://datafiles.gaia.cri.it/media/filer_public/0a/df/0adf98bf-2789-480d-931e-400850aaff20/allegato_1-_guida_alla_compilazione_questionario_e_faq.pdf" target="_blank">istruzioni</a><br>
-        Per una agevole raccolta dei dati, puoi <a target="_blank" href="https://datafiles.gaia.cri.it/media/filer_public/50/fe/50fe80bf-4f89-4b96-b486-4cc78f6c5c24/questionario_monitoraggio_comitati_2020_dati_2019.pdf">consultare il pdf</a> delle domande prima di procedere alla compilazione del questionario.
-      </p>
-    </div>
+{#    <div>#}
+{#      <p>Prima di iniziare il questionario, puoi consultare le istruzioni per la compilazione e il glossario ai link di seguito:#}
+{#        <a href="https://datafiles.gaia.cri.it/media/filer_public/7a/6e/7a6e0fe0-a3f8-42ac-bca4-5a5873355049/allegato_2-glossario.pdf" target="_blank">glossario</a>, #}
+{#        <a href="https://datafiles.gaia.cri.it/media/filer_public/0a/df/0adf98bf-2789-480d-931e-400850aaff20/allegato_1-_guida_alla_compilazione_questionario_e_faq.pdf" target="_blank">istruzioni</a><br>#}
+{#        Per una agevole raccolta dei dati, puoi <a target="_blank" href="https://datafiles.gaia.cri.it/media/filer_public/50/fe/50fe80bf-4f89-4b96-b486-4cc78f6c5c24/questionario_monitoraggio_comitati_2020_dati_2019.pdf">consultare il pdf</a> delle domande prima di procedere alla compilazione del questionario.#}
+{#      </p>#}
+{#    </div>#}
 
     {% if all_forms_are_completed %}
-    <div class="typeform_widget-tools">
-      <ul class="typeform_widget-tools__list">
-        <li><a class="monitoraggio_action_btn" href="{% url 'pages:monitoraggio_actions' %}?action=print&target={{ target }}" target="_blank"><i class="fa fa-print fa-fw"></i> Stampa le risposte</a></li>
-        <li><a class="monitoraggio_action_btn" href="{% url 'pages:monitoraggio_actions' %}?action=send_via_mail&target={{ target }}" target="_blank"><i class="fa fa-envelope fa-fw"></i> Invia via e-mail</a></li>
-      </ul>
-    </div>
+        <div class="typeform_widget-tools">
+          <ul class="typeform_widget-tools__list">
+            <li><a class="monitoraggio_action_btn" href="{% url 'pages:monitoraggio_actions' %}?action=print&target={{ target }}" target="_blank"><i class="fa fa-print fa-fw"></i> Stampa le risposte</a></li>
+            <li><a class="monitoraggio_action_btn" href="{% url 'pages:monitoraggio_actions' %}?action=send_via_mail&target={{ target }}" target="_blank"><i class="fa fa-envelope fa-fw"></i> Invia via e-mail a te stesso</a></li>
+            <li><a class="monitoraggio_action_btn" href="{% url 'pages:monitoraggio_actions' %}?action=send_via_mail_regionale&target={{ target }}" target="_blank"><i class="fa fa-envelope fa-fw"></i> Invia via e-mail al regionale</a></li>
+          </ul>
+        </div>
     {% endif %}
 
     <script>

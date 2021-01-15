@@ -15,8 +15,8 @@ def menu_monitoraggio(me):
         if len(deleghe_monitoraggio) == 1:
             link_bersaglio += '?comitato=%s&id=%s' % (last_delega_id, first_typeform)
 
-    VOCE_MONITORAGGIO = ("Monitoraggio", (
-        ("Monitoraggio 2020 (dati 2019)", 'fa-user', reverse('pages:monitoraggio')),
+    VOCE_MONITORAGGIO = ("Check-list Comitati", (
+        ("Questionario di autocontrollo", 'fa-user', reverse('pages:monitoraggio')),
         # ("Monitoraggio NON SONO UN BERSAGLIO", 'fa-user', link_bersaglio) if link_bersaglio else None,
     ))
 
