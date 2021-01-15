@@ -3,6 +3,13 @@
 {% load bootstrap3 %}
 
 {% block app_contenuto %}
+    {% if messages %}
+        <ul class="messages">
+            {% for message in messages %}
+            <li{% if message.tags %} class="{{ message.tags }}"{% endif %}>{{ message }}</li>
+            {% endfor %}
+        </ul>
+    {% endif %}
   <div class="articolo single-page">
     <h1>Questionario autocontrollo <span style="color:#555; font-size:24px;">- {{ comitato }}</span></h1>
     <h3>{{ section.2 }}</h3>
@@ -26,7 +33,7 @@
       <p style="text-align:center;"><strong>
         {% if all_forms_are_completed %}
           Complimenti! Hai compilato il questionario di autocontrollo.<br>
-          Clicca su "Invia via e-mail al regionale" per trasfettere i dati inseriti.
+          Clicca su "Invia via e-mail al regionale" per trasmettere i dati inseriti.
         {% elif is_done %}
           Questa sezione è già compilata.
         {% endif %}
@@ -42,13 +49,13 @@
 {#    </div>#}
 
     {% if all_forms_are_completed %}
-    <div class="typeform_widget-tools">
-      <ul class="typeform_widget-tools__list">
-        <li><a class="monitoraggio_action_btn" href="{% url 'pages:monitoraggio_actions' %}?action=print&target={{ target }}" target="_blank"><i class="fa fa-print fa-fw"></i> Stampa le risposte</a></li>
-        <li><a class="monitoraggio_action_btn" href="{% url 'pages:monitoraggio_actions' %}?action=send_via_mail&target={{ target }}" target="_blank"><i class="fa fa-envelope fa-fw"></i> Invia via e-mail</a></li>
-        <li><a class="monitoraggio_action_btn" href="{% url 'pages:monitoraggio_actions' %}?action=send_via_mail_regionale&target={{ target }}" target="_blank"><i class="fa fa-envelope fa-fw"></i> Invia via e-mail al regionale</a></li>
-      </ul>
-    </div>
+        <div class="typeform_widget-tools">
+          <ul class="typeform_widget-tools__list">
+            <li><a class="monitoraggio_action_btn" href="{% url 'pages:monitoraggio_actions' %}?action=print&target={{ target }}" target="_blank"><i class="fa fa-print fa-fw"></i> Stampa le risposte</a></li>
+            <li><a class="monitoraggio_action_btn" href="{% url 'pages:monitoraggio_actions' %}?action=send_via_mail&target={{ target }}" target="_blank"><i class="fa fa-envelope fa-fw"></i> Invia via e-mail a te stesso</a></li>
+            <li><a class="monitoraggio_action_btn" href="{% url 'pages:monitoraggio_actions' %}?action=send_via_mail_regionale&target={{ target }}" target="_blank"><i class="fa fa-envelope fa-fw"></i> Invia via e-mail al regionale</a></li>
+          </ul>
+        </div>
     {% endif %}
 
     <script>

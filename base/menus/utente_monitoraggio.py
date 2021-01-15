@@ -16,7 +16,7 @@ def menu_monitoraggio(me):
             link_bersaglio += '?comitato=%s&id=%s' % (last_delega_id, first_typeform)
 
     VOCE_MONITORAGGIO = ("Check-list Comitati", (
-        ("Questionario Autocontrollora", 'fa-user', reverse('pages:monitoraggio')),
+        ("Questionario di autocontrollo", 'fa-user', reverse('pages:monitoraggio')),
         # ("Monitoraggio NON SONO UN BERSAGLIO", 'fa-user', link_bersaglio) if link_bersaglio else None,
     ))
 
