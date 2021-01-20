@@ -54,13 +54,13 @@
             {% else %}
                 {% if corso.tipo == corso.BASE %}
                     <p>
-                        Nel giorno {{ corso.data_esame|date:"j" }} del mese di {{ corso.data_esame|date:"F" }} dell'anno {{ corso.data_esame|date:"Y" }},
+                        Nel giorno {{ corso.data_esame_2|date:"j" }} del mese di {{ corso.data_esame_2|date:"F" }} dell'anno {{ corso.data_esame_2|date:"Y" }},
                         {% if not corso.online %}{% verbale_indirizzo corso %}{% endif %}, <em>ai sensi del Regolamento dei Corsi di Formazione per Volontari e Dipendenti
                         della Croce Rossa Italiana</em> attualmente vigente, la Commissione d’Esame convocata per la seconda volta composta da:
                     </p>
                 {% elif corso.tipo == corso.CORSO_NUOVO %}
                     <p>
-                        Nel giorno {{ corso.data_esame|date:"j" }} del mese di {{ corso.data_esame|date:"F" }} dell&#39;anno {{ corso.data_esame|date:"Y" }},
+                        Nel giorno {{ corso.data_esame_2|date:"j" }}£ del mese di {{ corso.data_esame_2|date:"F" }} dell&#39;anno {{ corso.data_esame_2|date:"Y" }},
                         {% if not corso.online %}{% verbale_indirizzo corso %}{% endif %}, <em>ai sensi del Regolamento dei Corsi di Formazione per Volontari e Dipendenti
                         della Croce Rossa Italiana</em> attualmente vigente, la Commissione d’Esame è stata convocata per la seconda volta
                         per n.____ candidato/i che, per giustificati e comprovati motivi di impedimento non ha/hanno potuto svolgere l’esame
@@ -105,10 +105,10 @@
                     </p>
                 {% else %}
                     <p>
-                        per sottoporre ad esame finale i n._____ candidati, del Corso di Formazione per Volontari della Croce Rossa Italiana
+                        per sottoporre ad esame finale i n. {{ numero_aspiranti }} candidati, del Corso di Formazione per Volontari della Croce Rossa Italiana
                         attivato con delibera inserita a sistema, che per giustificati e comprovati motivi di impedimento
                         (art.13.8 del “Regolamento dei Corsi di Formazione per Volontari e Dipendenti della Croce Rossa Italiana”)
-                        non hanno potuto svolgere l’esame nel giorno _______________.
+                        non hanno potuto svolgere l’esame nel giorno {{ corso.data_esame }}.
                     </p>
                     <p>
                         L’elenco dei candidati, allegato alla presente, è parte integrante del presente verbale.
