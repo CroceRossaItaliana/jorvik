@@ -1208,8 +1208,10 @@ class CorsoBase(Corso, ConVecchioID, ConPDF):
         if verbale_per_seconda_data_esame:
             numero_aspiranti = self.partecipazioni_confermate().filter(esaminato_seconda_data=True).count()
         else:
-            numero_aspiranti = self.partecipazioni_confermate().exclude(
-                ammissione__in=[PartecipazioneCorsoBase.ASSENTE, PartecipazioneCorsoBase.ASSENTE_MOTIVO]
+            numero_aspiranti = self.partecipazioni_confermate().filter(
+                esaminato_seconda_data=False
+            ).exclude(
+                ammissione__in=[PartecipazioneCorsoBase.ASSENTE, PartecipazioneCorsoBase.ASSENTE_MOTIVO],
             ).count()
 
         pdf = PDF(oggetto=self)
