@@ -799,13 +799,6 @@ class ElencoPerTitoli(ElencoVistaAnagrafica):
         from .forms import ModuloElencoPerTitoli
         return ModuloElencoPerTitoli
 
-    def excel_colonne(self):
-        return super().excel_colonne() + (
-            ("Data inizio", ""),
-            ("Data fine", ""),
-            ("Motivazioni", "")
-        )
-
 
 class ElencoPerTitoliCorso(ElencoPerTitoli):
     def risultati(self):
