@@ -1328,6 +1328,10 @@ def formazione_albo_informatizzato(request, me):
         ids = me.oggetti_permesso(permesso).values_list('pk', flat=True)
         sedi_set.update(ids)
 
+    area = me.is_responsabile_area_albo_formazione
+    if area:
+        sedi_set.update([sede.id for sede in area.oggetto.sede.ottieni_discendenti(includimi=True, solo_attivi=True)])
+
     sedi = Sede.objects.filter(pk__in=sedi_set)
 
     if not sedi:
