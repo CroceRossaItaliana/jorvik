@@ -1,5 +1,6 @@
 from django.core.urlresolvers import reverse
 from anagrafica.models import Appartenenza
+from .utente_monitoraggio import menu_monitoraggio
 from ..models import Menu
 
 class MenuUtente:
@@ -98,5 +99,5 @@ class MenuUtente:
                 self.menu_donatore() if self.is_volontario else None,
                 self.menu_sicurezza(),
                 self.menu_links(),
-                menu_monitoraggio(me),
+                # menu_monitoraggio(me),
             ))
