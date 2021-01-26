@@ -1283,12 +1283,23 @@ class Persona(ModelloSemplice, ConMarcaTemporale, ConAllegati, ConVecchioID):
 
     @property
     def is_responsabile_area_albo_formazione(self):
-
+        aree = [
+            'commissione didattica Salute',
+            'commissione Didattica Inclusione Sociale',
+            'commissione Didattica Emergenza e Resilienza',
+            'commissione Didattica Cooperazione Internazionale decentrata',
+            'commissione Didattica Migrazioni',
+            'commissione Didattica Gioventù',
+            'commissione Didattica sul Diritto Internazionale Umanitario',
+            'commissione Didattica Salute e Sicurezza',
+            'commissione Didattica sulla motorizzazione CRI',
+            'commissione Didattica di Storia della CRI e della Medicina',
+            'commissione didattica per lo Sviluppo Organizzativo',
+        ]
         for delega in self.deleghe_attuali(tipo=RESPONSABILE_AREA):
-            if 'Commissione didattica Salute'.lower() in delega.oggetto.__str__().lower():
-                return delega
-            if 'Commissione Didattica Inclusione Sociale'.lower() in delega.oggetto.__str__().lower():
-                return delega
+            for area in aree:
+                if area.lower() in delega.oggetto.__str__().lower():
+                    return delega
 
         return None
 
