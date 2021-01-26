@@ -322,7 +322,8 @@ class TitoloPersonale(ModelloSemplice, ConMarcaTemporale, ConAutorizzazioni):
         qualifica_nuova.save()
 
         titolo = kwargs['titolo']
-        if titolo.meta.get('richiede_conferma'):
+
+        if titolo.richiede_conferma:
             sede_attuale = persona.sede_riferimento()
             if not sede_attuale:
                 qualifica_nuova.delete()

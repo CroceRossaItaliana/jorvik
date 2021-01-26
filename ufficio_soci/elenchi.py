@@ -799,6 +799,22 @@ class ElencoPerTitoli(ElencoVistaAnagrafica):
         from .forms import ModuloElencoPerTitoli
         return ModuloElencoPerTitoli
 
+    def excel_colonne(self):
+        def titoli(p):
+            return '\n'.join(
+                [
+                    "{} - {} - {}".format(
+                        titolo.titolo.nome,
+                        titolo.data_ottenimento if titolo.data_ottenimento else '',
+                        titolo.data_scadenza if titolo.data_scadenza else ''
+                    ) for titolo in p.titoli_personali_confermati()
+                ]
+            )
+
+        return super().excel_colonne() + (
+            ("Titoli - Data ottenimento - Data scadenza", lambda p: titoli(p)),
+        )
+
 
 class ElencoPerTitoliCorso(ElencoPerTitoli):
     def risultati(self):
