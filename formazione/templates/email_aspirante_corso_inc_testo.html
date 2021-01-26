@@ -5,7 +5,7 @@
 {% endif %}
 
 {% if not corso.online %}
-    <p>Nelle tue vicinanze è stato attivato un corso {% if corso.tipo == Corso.BASE %}base per Aspiranti{% else %}per Volontari{% endif %} CRI!</p>
+    <p>è stato attivato un corso {% if corso.tipo == Corso.BASE %}base per Aspiranti{% else %}per Volontari{% endif %} CRI!</p>
     <p class="grassetto">Il corso è stato organizzato dal {{ corso.sede.link|safe }} ed avrà inizio il {{ corso.data_inizio|date:"SHORT_DATETIME_FORMAT" }},
     al seguente indirizzo: <a href="{{ corso.url_mappa }}">{{ corso.locazione }} (vedi in mappa)</a>.</p>
 {% else %}
