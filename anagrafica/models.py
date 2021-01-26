@@ -2167,12 +2167,16 @@ class Sede(ModelloAlbero, ConMarcaTemporale, ConGeolocalizzazione, ConVecchioID,
         else:
             return queryset
 
-    def comitati_sottostanti(self):
+    def comitati_sottostanti(self, territoriali=False):
         """
         Ritorna un elenco di Comitati sottostanti.
         Es. Regionale -> QuerySet Provinciali
         """
-        return self.ottieni_figli().filter(estensione__in=(REGIONALE, PROVINCIALE, LOCALE))
+        if territoriali:
+            estensioni = (REGIONALE, PROVINCIALE, LOCALE, TERRITORIALE)
+        else:
+            estensioni = (REGIONALE, PROVINCIALE, LOCALE)
+        return self.ottieni_figli().filter(estensione__in=estensioni)
 
     def unita_sottostanti(self):
         return self.ottieni_figli().filter(estensione=TERRITORIALE)

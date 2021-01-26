@@ -91,11 +91,14 @@ def formazione_osserva_corsi(request, me):
         if sede.estensione in [NAZIONALE, REGIONALE,]:
             context['corsi'] = CorsoBase.objects.filter(sede__in=sede.comitati_sottostanti())
         else:
-            context['corsi'] = CorsoBase.objects.filter(sede=sede)
+            sedi = [sede]
+            sedi.extend(sede.comitati_sottostanti(territoriali=True))
+            context['corsi'] = CorsoBase.objects.filter(sede__in=sedi)
 
     if not sede_pk:
 
         for sede in sedi:
+
             comitati = sede.comitati_sottostanti()
 
             if not comitati:  # GAIA-258
@@ -114,11 +117,22 @@ def formazione_osserva_corsi(request, me):
                     roma_corsi = CorsoBase.objects.filter(sede__in=roma_comitato.comitati_sottostanti()).count()
                     add_corsi_count_to_result(sede, roma_comitato, roma_corsi)
 
+                if comitato.pk == 1638:
+                    roma = comitato.comitati_sottostanti()[0]
+                    roma_corsi = CorsoBase.objects.filter(sede=roma).count()
+                    add_corsi_count_to_result(sede, roma, roma_corsi)
+                    for c in roma.comitati_sottostanti():
+                        add_corsi_count_to_result(
+                            sede, c, CorsoBase.objects.filter(sede__in=c.comitati_sottostanti(territoriali=True)).count()
+                        )
+
                 if sede.estensione != REGIONALE:
                     comitati_sott_regione = comitato.comitati_sottostanti()
                     corsi = CorsoBase.objects.filter(sede__in=comitati_sott_regione).count()
                 else:
-                    corsi = CorsoBase.objects.filter(sede=comitato).count()
+                    comitati = [comitato]
+                    comitati.extend(comitato.comitati_sottostanti(territoriali=True))
+                    corsi = CorsoBase.objects.filter(sede__in=comitati).count()
 
                 if corsi:
                     add_corsi_count_to_result(sede, comitato, corsi)
