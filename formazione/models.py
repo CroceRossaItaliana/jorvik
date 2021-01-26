@@ -1190,20 +1190,26 @@ class CorsoBase(Corso, ConVecchioID, ConPDF):
                 raise ValueError("Questo corso non ha un verbale.")
 
         verbale_per_seconda_data_esame = True if 'seconda_data_esame' in request.GET else False
+
         partecipazioni = self.partecipazioni_confermate_assente_motivo(solo=verbale_per_seconda_data_esame)
 
         pdf_template = "pdf_corso_%sesame_verbale.html"
         pdf_template = pdf_template % 'base_' if self.corso_vecchio else pdf_template % ''
 
-        if anteprima:
-            numero_idonei = len([p.pk for p in partecipazioni if p.idoneo])
-            numero_non_idonei = len([p.pk for p in partecipazioni if not p.idoneo])
-        else:
-            numero_idonei = self.idonei().count()
-            numero_non_idonei = self.non_idonei().count()
-
         numero_assenti_no_esame = self.partecipazioni_confermate().filter(
             ammissione=PartecipazioneCorsoBase.ESAME_NON_PREVISTO_ASSENTE)
+
+        if verbale_per_seconda_data_esame:
+            numero_aspiranti = self.partecipazioni_confermate().filter(esaminato_seconda_data=True)
+        else:
+            numero_aspiranti = self.partecipazioni_confermate().filter(
+                esaminato_seconda_data=False
+            ).exclude(
+                ammissione__in=[PartecipazioneCorsoBase.ASSENTE, PartecipazioneCorsoBase.ASSENTE_MOTIVO],
+            )
+
+        numero_idonei = len([p.pk for p in numero_aspiranti if p.idoneo])
+        numero_non_idonei = len([p.pk for p in numero_aspiranti if not p.idoneo])
 
         pdf = PDF(oggetto=self)
         pdf.genera_e_salva_con_python(
@@ -1215,12 +1221,13 @@ class CorsoBase(Corso, ConVecchioID, ConPDF):
                 "partecipazioni": sorted(partecipazioni, key=key_cognome),
                 "numero_idonei": numero_idonei,
                 "numero_non_idonei": numero_non_idonei,
-                "numero_aspiranti": self.partecipazioni_confermate().count(),
+                "numero_aspiranti": numero_aspiranti.count(),
                 'numero_assenti_no_esame': numero_assenti_no_esame,
                 'request': request,
             },
             modello=pdf_template,
         )
+
         return pdf
 
     @property
