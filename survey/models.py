@@ -154,7 +154,11 @@ class SurveyResult(models.Model):
 
         output = io.BytesIO()
         workbook = xlsxwriter.Workbook(output)
-        worksheet = workbook.add_worksheet()
+        bold = workbook.add_format({'bold': True})
+        row_direttore = 0
+        col_direttore = 0
+        is_intestazione_direttore = False
+        worksheet_direttori = workbook.add_worksheet('Direttori')
 
         united_list = list()
 
@@ -169,109 +173,140 @@ class SurveyResult(models.Model):
 
             response_json = OrderedDict(result.response_json)
 
-            direttori = response_json.get('direttori')
-            org_servizi = response_json.get('org_servizi')
-            utilita_lezioni = response_json.get('utilita_lezioni')
-            lezioni = response_json.get('lezioni')
+            direttori = sorted(response_json.get('direttori').items())
+            # org_servizi = response_json.get('org_servizi')
+            # utilita_lezioni = response_json.get('utilita_lezioni')
+            # lezioni = response_json.get('lezioni')
 
-            if direttori:
-                for direttore_pk, voti in direttori.items():
-                    if direttore_pk not in united['direttori']:
-                        united['direttori'][direttore_pk] = list()
-                    united['direttori'][direttore_pk] = voti
+            # direttori = {
+            #     Persona.objects.get(pk=direttore_pk).nome_completo:
+            #         {
+            #             Question.objects.get(pk=domanda_pk).text: risposta
+            #             for domanda_pk, risposta in voti.items()
+            #         }
+            #     for direttore_pk, voti in sorted(response_json.get('direttori').items())
+            # }
 
-            if utilita_lezioni:
-                for lezione_pk, risposta in utilita_lezioni.items():
-                    if lezione_pk not in united['utilita_lezioni']:
-                        united['utilita_lezioni'][lezione_pk] = list()
-                    united['utilita_lezioni'][lezione_pk].append(risposta)
+            # Aggiungere intestazione Direttore
+            if not is_intestazione_direttore:
+                intestazione_direttore = [
+                    Question.objects.get(pk=domanda_pk).text
+                    for direttore_pk, voti in sorted(response_json.get('direttori').items())
+                    for domanda_pk, risposta in voti.items()
+                ]
+                worksheet_direttori.write(
+                    row_direttore, col_direttore, course.direttori_corso().first().nome_completo,
+                    bold
+                )
+                col_direttore += 1
+                row_direttore += 1
+                for intestazione in intestazione_direttore:
+                    worksheet_direttori.write(row_direttore, col_direttore, intestazione, bold)
+                    col_direttore += 1
+                is_intestazione_direttore = True
+                col_direttore = 1
+                row_direttore += 1
 
-            if org_servizi:
-                for question_pk, risposta in org_servizi.items():
-                    if question_pk not in united['org_servizi']:
-                        united['org_servizi'][question_pk] = list()
-                    united['org_servizi'][question_pk].append(risposta)
+            # Aggiungere voti direttore
+            for direttore_pk, voti in sorted(response_json.get('direttori').items()):
+                for domanda_pk, risposta in voti.items():
+                    worksheet_direttori.write(row_direttore, col_direttore, risposta)
+                    col_direttore += 1
+            col_direttore = 1
+            row_direttore += 1
 
-            if lezioni:
-                united['lezioni'] = list()
-                for docente_pk, lezione in lezioni.items():
-                    for k, v in lezione.items():
-                        if docente_pk.isalpha() or '_' in docente_pk:
-                            docente = docente_pk
-                        else:
-                            docente = Persona.objects.get(pk=docente_pk).nome_completo
+            # if utilita_lezioni:
+            #     for lezione_pk, risposta in utilita_lezioni.items():
+            #         if lezione_pk not in united['utilita_lezioni']:
+            #             united['utilita_lezioni'][lezione_pk] = list()
+            #         united['utilita_lezioni'][lezione_pk].append(risposta)
 
-                        v.pop('completed')
+            # if org_servizi:
+            #     for question_pk, risposta in org_servizi.items():
+            #         if question_pk not in united['org_servizi']:
+            #             united['org_servizi'][question_pk] = list()
+            #         united['org_servizi'][question_pk].append(risposta)
+            #
+            # if lezioni:
+            #     united['lezioni'] = list()
+            #     for docente_pk, lezione in lezioni.items():
+            #         for k, v in lezione.items():
+            #             if docente_pk.isalpha() or '_' in docente_pk:
+            #                 docente = docente_pk
+            #             else:
+            #                 docente = Persona.objects.get(pk=docente_pk).nome_completo
+            #
+            #             v.pop('completed')
+            #
+            #             for lez in sorted(v.items()):
+            #                 domanda = Question.objects.get(pk=lez[0])
+            #                 lezione_col = [domanda.text, lez[1]]
+            #
+            #                 united['lezioni'].append(lezione_col + [docente])
 
-                        for lez in sorted(v.items()):
-                            domanda = Question.objects.get(pk=lez[0])
-                            lezione_col = [domanda.text, lez[1]]
+            # org_servizi_columns = [[Question.objects.get(pk=k).text] + [i for i in v] for k, v in united['org_servizi'].items()]
+            #
+            # utilita_lezioni_columns = list()
+            # for lezione_pk, v in united['utilita_lezioni'].items():
+            #     if not LezioneCorsoBase.objects.filter(pk=lezione_pk).count():
+            #         continue
+            #     utilita_lezioni_columns.append([LezioneCorsoBase.objects.get(pk=lezione_pk).nome] + [i for i in v])
+            #
+            # united['org_servizi'] = org_servizi_columns
+            # united['utilita_lezioni'] = utilita_lezioni_columns
+            #
+            # # Valorizzazione campi (nomi direttori)
+            # nomi_direttori_columns = ["Chi era il tuo Direttore di Corso?"]
+            # direttori_domande_columns = dict()
+            #
+            # for direttore_pk, voti in united['direttori'].items():
+            #     # Calcolare lunghezza delle risposte e moltiplicare il nome
+            #     len_voti = len(voti.values())
+            #     p = [Persona.objects.get(pk=direttore_pk).nome_completo] * len_voti
+            #     nomi_direttori_columns.extend(p)
+            #
+            #     for domanda_pk, v in voti.items():
+            #         domanda = Question.objects.get(pk=domanda_pk).text
+            #         if domanda not in direttori_domande_columns:
+            #             direttori_domande_columns[domanda] = list()
+            #         direttori_domande_columns[domanda].append(v)
+            #         q = [None for i in range(len_voti)]
+            #         q.pop(0)
+            #         direttori_domande_columns[domanda].extend(q)
+            #
+            # united['direttori'] = [[k] + v for k,v in direttori_domande_columns.items()]
+            #
+            # united_list.append(united)
+            #
+            # # Inserimento prima colonna (nomi direttori)
+            # for col, data in enumerate([nomi_direttori_columns], 0):
+            #     worksheet.write_column(0, 0, data)
 
-                            united['lezioni'].append(lezione_col + [docente])
-
-            org_servizi_columns = [[Question.objects.get(pk=k).text] + [i for i in v] for k, v in united['org_servizi'].items()]
-
-            utilita_lezioni_columns = list()
-            for lezione_pk, v in united['utilita_lezioni'].items():
-                if not LezioneCorsoBase.objects.filter(pk=lezione_pk).count():
-                    continue
-                utilita_lezioni_columns.append([LezioneCorsoBase.objects.get(pk=lezione_pk).nome] + [i for i in v])
-
-            united['org_servizi'] = org_servizi_columns
-            united['utilita_lezioni'] = utilita_lezioni_columns
-
-            # Valorizzazione campi (nomi direttori)
-            nomi_direttori_columns = ["Chi era il tuo Direttore di Corso?"]
-            direttori_domande_columns = dict()
-
-            for direttore_pk, voti in united['direttori'].items():
-                # Calcolare lunghezza delle risposte e moltiplicare il nome
-                len_voti = len(voti.values())
-                p = [Persona.objects.get(pk=direttore_pk).nome_completo] * len_voti
-                nomi_direttori_columns.extend(p)
-
-                for domanda_pk, v in voti.items():
-                    domanda = Question.objects.get(pk=domanda_pk).text
-                    if domanda not in direttori_domande_columns:
-                        direttori_domande_columns[domanda] = list()
-                    direttori_domande_columns[domanda].append(v)
-                    q = [None for i in range(len_voti)]
-                    q.pop(0)
-                    direttori_domande_columns[domanda].extend(q)
-
-            united['direttori'] = [[k] + v for k,v in direttori_domande_columns.items()]
-
-            united_list.append(united)
-
-            # Inserimento prima colonna (nomi direttori)
-            for col, data in enumerate([nomi_direttori_columns], 0):
-                worksheet.write_column(0, 0, data)
-
-        row = 0
-        for line, united in enumerate(united_list):
-            col = 1
-            row_tmp = 0
-
-            for section_name, values in united.items():
-                if not len(values):
-                    continue
-
-                for data in values:
-                    if section_name == 'direttori':
-                        data = list(filter(bool, data))
-
-                    if section_name == 'lezioni':
-                        domanda, voto, docente = data
-                        data = [domanda, docente, voto]
-
-                    if line != 0:
-                        data = [data[-1:][0]]
-
-                    worksheet.write_column(row, col, data)
-                    col += 1
-                else:
-                    row_tmp = len(data)
-            row += row_tmp
+        # row = 0
+        # for line, united in enumerate(united_list):
+        #     col = 1
+        #     row_tmp = 0
+        #
+        #     for section_name, values in united.items():
+        #         if not len(values):
+        #             continue
+        #
+        #         for data in values:
+        #             if section_name == 'direttori':
+        #                 data = list(filter(bool, data))
+        #
+        #             if section_name == 'lezioni':
+        #                 domanda, voto, docente = data
+        #                 data = [domanda, docente, voto]
+        #
+        #             if line != 0:
+        #                 data = [data[-1:][0]]
+        #
+        #             worksheet.write_column(row, col, data)
+        #             col += 1
+        #         else:
+        #             row_tmp = len(data)
+        #     row += row_tmp
 
         workbook.close()
         output.seek(0)
