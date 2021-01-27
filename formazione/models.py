@@ -129,6 +129,8 @@ class CorsoBase(Corso, ConVecchioID, ConPDF):
         help_text="La data di inizio del corso. Utilizzata per la gestione delle iscrizioni.")
     data_esame = models.DateTimeField(blank=False, null=False)
     data_esame_2 = models.DateTimeField(_('Seconda data esame'), blank=True, null=True)
+    data_esame_pratica = models.DateTimeField(_('Data esame pratica'), blank=True, null=True)
+
     progressivo = models.SmallIntegerField(blank=False, null=False, db_index=True)
     anno = models.SmallIntegerField(blank=False, null=False, db_index=True)
     descrizione = models.TextField(blank=True, null=True)
@@ -711,6 +713,10 @@ class CorsoBase(Corso, ConVecchioID, ConPDF):
         else:
             return self.partecipazioni_confermate().exclude(**condition)
 
+    def partecipazioni_confermate_prova_pratica(self):
+        return self.partecipazioni_confermate().filter(partecipazione_online=True)
+
+
     @property
     def terminabile_con_assenti_motivazione(self):
         ha_assenti = self.has_partecipazioni_confermate_con_assente_motivo
@@ -725,6 +731,10 @@ class CorsoBase(Corso, ConVecchioID, ConPDF):
     def has_partecipazioni_confermate_esame_seconda_data(self):
         return self.partecipazioni_confermate().filter(
             esaminato_seconda_data=True).exists()
+
+    @property
+    def has_partecipazioni_confermate_prova_pratica(self):
+        return self.partecipazioni_confermate().filter(partecipazione_online=True).exists()
 
     @property
     def has_partecipazioni_confermate_con_assente_motivo(self):

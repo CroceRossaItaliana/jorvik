@@ -249,7 +249,7 @@ class ModuloModificaLezione(ModelForm):
 class ModuloModificaCorsoBase(ModelForm):
     class Meta:
         model = CorsoBase
-        fields = ['data_inizio', 'data_esame', 'data_esame_2',
+        fields = ['data_inizio', 'data_esame', 'data_esame_2', 'data_esame_pratica',
                   'min_participants', 'max_participants',
                   'descrizione',]
         widgets = {
@@ -275,6 +275,8 @@ class ModuloModificaCorsoBase(ModelForm):
         if not is_nuovo:
             self.fields.pop('min_participants')
             self.fields.pop('max_participants')
+        else:
+            self.fields.pop('data_esame_pratica')
 
         # The fields are commented because the field's logic was moved to ModuloCreazioneCorsoBase forms step
             # self.fields.pop('titolo_cri')

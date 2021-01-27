@@ -651,6 +651,8 @@ def aspirante_corso_base_attiva(request, me, pk):
 @pagina_privata
 def aspirante_corso_base_termina(request, me, pk):
     seconda_data_esame = '?seconda_data_esame' if 'seconda_data_esame' in request.GET else ""
+    prova_prativa_esame = '?data_esame_prova_pratica' if 'data_esame_prova_pratica' in request.GET else ""
+
     reverse_termina = reverse('aspirante:terminate', args=[pk])
     redirect_termina = redirect(reverse_termina + seconda_data_esame)
 
@@ -664,6 +666,10 @@ def aspirante_corso_base_termina(request, me, pk):
 
     if seconda_data_esame and not corso.data_esame_2:
         messages.error(request, "Impossibile generare il secondo verbale perchè non è impostata la seconda data di esame.")
+        return redirect(corso.url)
+
+    if prova_prativa_esame and not corso.data_esame_pratica:
+        messages.error(request, "Impossibile generare il secondo verbale perchè non è impostata la data di esame pratico.")
         return redirect(corso.url)
 
     torna = {"torna_url": corso.url_modifica, "torna_titolo": "Modifica corso"}
@@ -689,6 +695,9 @@ def aspirante_corso_base_termina(request, me, pk):
     if seconda_data_esame:
         partecipanti_qs = corso.partecipazioni_confermate_assente_motivo(solo=True)
         data_ottenimento = corso.data_esame_2
+    elif prova_prativa_esame:
+        partecipanti_qs = corso.partecipazioni_confermate_prova_pratica()
+        data_ottenimento = corso.data_esame_pratica
     else:
         partecipanti_qs = corso.partecipazioni_confermate_assente_motivo()
         data_ottenimento = corso.data_esame
