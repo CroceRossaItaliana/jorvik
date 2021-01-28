@@ -159,6 +159,13 @@ class SurveyResult(models.Model):
         col_direttore = 0
         is_intestazione_direttore = False
         worksheet_direttori = workbook.add_worksheet('Direttori')
+        medie_direttori = OrderedDict()
+        '''
+            coll_media: {
+                value:
+                count:
+            }
+        '''
 
         united_list = list()
 
@@ -178,15 +185,6 @@ class SurveyResult(models.Model):
             # utilita_lezioni = response_json.get('utilita_lezioni')
             # lezioni = response_json.get('lezioni')
 
-            # direttori = {
-            #     Persona.objects.get(pk=direttore_pk).nome_completo:
-            #         {
-            #             Question.objects.get(pk=domanda_pk).text: risposta
-            #             for domanda_pk, risposta in voti.items()
-            #         }
-            #     for direttore_pk, voti in sorted(response_json.get('direttori').items())
-            # }
-
             # Aggiungere intestazione Direttore
             if not is_intestazione_direttore:
                 intestazione_direttore = [
@@ -194,26 +192,57 @@ class SurveyResult(models.Model):
                     for direttore_pk, voti in sorted(response_json.get('direttori').items())
                     for domanda_pk, risposta in voti.items()
                 ]
+                # Nome direttore
                 worksheet_direttori.write(
                     row_direttore, col_direttore, course.direttori_corso().first().nome_completo,
                     bold
                 )
                 col_direttore += 1
                 row_direttore += 1
+                # Domande direttore
                 for intestazione in intestazione_direttore:
                     worksheet_direttori.write(row_direttore, col_direttore, intestazione, bold)
                     col_direttore += 1
                 is_intestazione_direttore = True
-                col_direttore = 1
-                row_direttore += 1
+
 
             # Aggiungere voti direttore
             for direttore_pk, voti in sorted(response_json.get('direttori').items()):
-                for domanda_pk, risposta in voti.items():
+                items = voti.items()
+                if items:
+                    col_direttore = 1
+                    row_direttore += 1
+                for domanda_pk, risposta in items:
+                    domanda = Question.objects.get(pk=domanda_pk)
+                    if domanda.question_type == Question.RADIO:
+                        if str(col_direttore) not in medie_direttori:
+                            medie_direttori[str(col_direttore)] = {
+                                'value': int(risposta),
+                                'count': col_direttore
+                            }
+                        else:
+                            medie_direttori[str(col_direttore)]['value'] += int(risposta)
+                            medie_direttori[str(col_direttore)]['count'] += 1
                     worksheet_direttori.write(row_direttore, col_direttore, risposta)
                     col_direttore += 1
-            col_direttore = 1
-            row_direttore += 1
+
+        row_direttore += 1
+        worksheet_direttori.write(row_direttore, 0, 'Media', bold)
+        value_chat = '=Grafici!$0$1'
+        for col, value in medie_direttori.items():
+            worksheet_direttori.write(row_direttore, int(col), round(value['value']/value['count'], 1))
+
+        # worksheet_grafici = workbook.add_worksheet('Grafici')
+        # worksheet_grafici.write_column('A1', [1, 2, 3])
+        #
+        # chart = workbook.add_chart({'type': 'bar', 'subtype': 'stacked'})
+        # chart.add_series({'values': ['Grafici', 0, 0, 2, 0]})
+        # chart.add_series({'values': ['Grafici', 0, 1, 0, 1]})
+        # chart.add_series({'values': ['Grafici', 0, 2, 0, 2]})
+
+        worksheet_grafici.insert_chart(10, 3, chart)
+
+
 
             # if utilita_lezioni:
             #     for lezione_pk, risposta in utilita_lezioni.items():
