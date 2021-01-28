@@ -198,6 +198,7 @@ def cv_qualifica_errata_notifica_comitato_regionale(request, me, pk=None):
             corpo={
                 "volontario": volontario,
                 'destinatario': destinatario_title,
+                'qualifica': richiesta.oggetto.titolo.nome
             },
             mittente=None,
             destinatari=destinatari,

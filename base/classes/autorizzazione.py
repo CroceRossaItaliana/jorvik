@@ -61,6 +61,7 @@ class AutorizzazioneProcess:
             oggetto="Inserimento su GAIA Qualifiche CRI: %s" % volontario.nome_completo,
             modello="email_cv_qualifica_presa_visione_al_presidente.html",
             corpo={
+                "qualifica": qualifica,
                 "volontario": volontario,
             },
             mittente=None,
