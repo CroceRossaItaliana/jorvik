@@ -232,10 +232,19 @@ class SurveyResult(models.Model):
                         for l, questions in lezione.items():
                             for question, voto in questions.items():
                                 if l.nome not in lezioni_sheet:
-                                    lezioni_sheet[l.nome] = {'domande': [question.text]}
+                                    lezioni_sheet[l.nome] = {'domande': [question.text], 'risposte': {}, 'medie': {}}
                                 else:
                                     lezioni_sheet[l.nome]['domande'].append(question.text)
                     is_intestazione_lezioni = True
+
+                # Recupero risposte per lezioni per ogni docente
+                for docente, lezione in sorted(lezioni_dict_new.items()):
+                    for l, questions in lezione.items():
+                        for question, voto in questions.items():
+                            if str(docente) not in lezioni_sheet[l.nome]['risposte']:
+                                lezioni_sheet[l.nome]['risposte'][str(docente)] = [voto]
+                            else:
+                                lezioni_sheet[l.nome]['risposte'][docente].append(voto)
 
             # Utilità lezioni
             if utilita_lezioni:
@@ -289,8 +298,6 @@ class SurveyResult(models.Model):
                         for direttore_pk, voti in sorted(response_json.get('direttori').items())
                         for domanda_pk, risposta in voti.items()
                     ]
-                    # if not intestazione_direttore:
-                    #     continue
 
                     # Nome direttore
                     worksheet_direttori.write(
@@ -331,8 +338,35 @@ class SurveyResult(models.Model):
             worksheet_lezione.write(0, 0, name_sheet, bold)
             col_lezioni = 1
             row_lezioni = 1
+            media_lezione = []
+            # Intestazione
             for intestazione in obj['domande']:
+                media_lezione.append(0)
                 worksheet_lezione.write(row_lezioni, col_lezioni, intestazione, bold)
+                col_lezioni += 1
+            col_lezioni = 1
+            row_lezioni += 1
+            # Docenti e Voti
+            count = 0
+            for docente, voti in obj['risposte'].items():
+                worksheet_lezione.write(row_lezioni, 0, docente, bold)
+                index = 0
+                for voto in voti:
+                    media_lezione[index] += int(voto)
+                    worksheet_lezione.write(row_lezioni, col_lezioni, voto)
+                    col_lezioni += 1
+                    index += 1
+                col_lezioni = 1
+                row_lezioni += 1
+                count += 1
+
+            row_lezioni += 1
+            worksheet_lezione.write(row_lezioni, 0, 'Medie', bold)
+
+            # Medie
+            for media in media_lezione:
+                if media:
+                    worksheet_lezione.write(row_lezioni, col_lezioni, round(media/count))
                 col_lezioni += 1
 
         # MEDIE Utilitò Lezioni
