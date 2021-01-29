@@ -325,9 +325,9 @@ class TitoloPersonale(ModelloSemplice, ConMarcaTemporale, ConAutorizzazioni):
 
         if titolo.meta and titolo.meta.get('richiede_conferma'):
             from anagrafica.models import Appartenenza
-            sede_attuale = persona.sede_riferimento(membro=Appartenenza.VOLONTARIO)
+            sede_attuale = persona.sede_riferimento(membro=[Appartenenza.VOLONTARIO])
             if not sede_attuale:
-                sede_attuale = persona.sede_riferimento(membro=Appartenenza.DIPENDENTE)
+                sede_attuale = persona.sede_riferimento(membro=[Appartenenza.DIPENDENTE])
             if not sede_attuale:
                 qualifica_nuova.delete()
                 return None
