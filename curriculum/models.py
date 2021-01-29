@@ -301,7 +301,12 @@ class TitoloPersonale(ModelloSemplice, ConMarcaTemporale, ConAutorizzazioni):
         return True
 
     def richiedi_autorizzazione(self, qualifica_nuova, me, sede_attuale):
-        qualifica_nuova.autorizzazione_richiedi_sede_riferimento(me, INCARICO_GESTIONE_TITOLI)
+
+        qualifica_nuova.autorizzazione_richiedi_sede_riferimento(
+            me,
+            INCARICO_GESTIONE_TITOLI,
+            forza_sede_riferimento=sede_attuale
+        )
 
         vo_nome_cognome = "%s %s" % (me.nome, me.cognome)
         Messaggio.costruisci_e_accoda(
