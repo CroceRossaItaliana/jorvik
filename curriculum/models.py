@@ -201,6 +201,7 @@ class TitoloPersonale(ModelloSemplice, ConMarcaTemporale, ConAutorizzazioni):
         1074: 'formazione@fvg.cri.it',
         1105: 'formazione@toscana.cri.it',
         524: 'formazione@lazio.cri.it',
+        1638: 'formazione@lazio.cri.it',
         957: 'formazione@marche.cri.it',
         1364: 'formazione@umbria.cri.it',
         1393: 'formazione@molise.cri.it',
