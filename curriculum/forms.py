@@ -85,7 +85,8 @@ class FormAddQualificaCRI(autocomplete_light.ModelForm):
             app = app.last() if app_vo or app_di else None
             if app and hasattr(app.sede, 'sede_regionale'):
                 sede_regionale = app.sede.sede_regionale
-                email = sede_regionale.email if hasattr(sede_regionale, 'email') else email
+                # email = sede_regionale.email if hasattr(sede_regionale, 'email') else email
+                email = TitoloPersonale.MAIL_FORMAZIONE[sede_regionale.pk]
 
         show_alert = False
         required_fields = ['titolo', 'data_ottenimento', 'tipo_documentazione', 'attestato_file']
