@@ -27,10 +27,17 @@
 
                             {# Titolo.TITOLO_CRI #}
                             {% if richiesta.oggetto.titolo.tipo == 'TC' %}
-                                <p style="padding-top:6px;">
-                                    <a href="{% url 'cv:notifica_comitato_regionale_dati_errati' richiesta.pk %}"><i class="fas fa-exclamation-circle"></i>
-                                        Comunicare al Comitato Regionale che i dati inseriti sono errati</a>
-                                </p>
+                                {% if not richiesta.mail_verifica %}
+                                    <p style="padding-top:6px;">
+                                        <a href="{% url 'cv:notifica_comitato_regionale_dati_errati' richiesta.pk %}"><i class="fas fa-exclamation-circle"></i>
+                                            Comunicare al Comitato Regionale che i dati inseriti sono errati</a>
+                                    </p>
+                                {% else %}
+                                    <p style="padding-top:6px;">
+                                        <i class="fas fa-exclamation-circle"></i>
+                                        Comunicare al Comitato Regionale che i dati inseriti sono errati
+                                    </p>
+                                {% endif %}
                             {% endif %}
                         </div>
                     </div>

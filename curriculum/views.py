@@ -171,7 +171,8 @@ def cv_cancel(request, me, pk=None):
 @pagina_privata
 def cv_qualifica_errata_notifica_comitato_regionale(request, me, pk=None):
     richiesta = Autorizzazione.objects.get(pk=pk)
-
+    richiesta.mail_verifica = True
+    richiesta.save()
     volontario = richiesta.richiedente
     vo_sede = volontario.sede_riferimento()
 
@@ -217,6 +218,7 @@ def cv_qualifica_errata_notifica_comitato_regionale(request, me, pk=None):
     if vo_sede.estensione != NAZIONALE:
         _costruisci_e_accoda('Presidente', [presidente_regionale])
     _costruisci_e_accoda('Volontario', [volontario])
+
     _costruisci_e_accoda('Delegato Formazione', [i for i in delegati_formazione_regionale])
 
     messages.success(request, "Sono stati avvisati il presidente regionale %s e "

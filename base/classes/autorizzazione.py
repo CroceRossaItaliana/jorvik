@@ -63,9 +63,11 @@ class AutorizzazioneProcess:
             corpo={
                 "qualifica": qualifica,
                 "volontario": volontario,
+                "comitato": "comitato"
             },
             mittente=None,
-            destinatari=[i for i in delegati_formazione_regionale] + [presidente_regionale,]
+            destinatari=[i for i in delegati_formazione_regionale] + [presidente_regionale,],
+            allegati=[]
         )
 
         # Al Volontario
