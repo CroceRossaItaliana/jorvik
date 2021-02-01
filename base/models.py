@@ -143,6 +143,7 @@ class Autorizzazione(ModelloSemplice, ConMarcaTemporale):
     scadenza = models.DateTimeField(blank=True, null=True, db_index=True)
     tipo_gestione = models.CharField(default=MANUALE, max_length=1, choices=TIPO_GESTIONE)
     automatica = models.BooleanField("Approvata automaticamente", default=False, db_index=True)
+    mail_verifica = models.BooleanField(default=False)
 
     @property
     def giorni_automatici(self):

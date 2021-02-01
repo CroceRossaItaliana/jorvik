@@ -188,6 +188,32 @@ class TitleGoal(models.Model):
 
 
 class TitoloPersonale(ModelloSemplice, ConMarcaTemporale, ConAutorizzazioni):
+
+    MAIL_FORMAZIONE = {
+        1189: 'formazione@vda.cri.it',
+        1193: 'formazione@piemonte.cri.it',
+        1416: 'formazione@trentino.cri.it',
+        835: 'formazione@veneto.cri.it',
+        253: 'formazione@liguria.cri.it',
+        155: 'formazione@emiliaromagna.cri.it',
+        1409: 'formazione@bz.cri.it',
+        329: 'formazione@lombardia.cri.it',
+        1074: 'formazione@fvg.cri.it',
+        1105: 'formazione@toscana.cri.it',
+        524: 'formazione@lazio.cri.it',
+        1638: 'formazione@lazio.cri.it',
+        957: 'formazione@marche.cri.it',
+        1364: 'formazione@umbria.cri.it',
+        1393: 'formazione@molise.cri.it',
+        645: 'formazione@campania.cri.it',
+        493: 'formazione@sardegna.cri.it',
+        109: 'formazione@basilicata.cri.it',
+        1008: 'formazione@abruzzo.cri.it',
+        893: 'formazione@puglia.cri.it',
+        761: 'formazione@calabria.cri.it',
+        2: 'formazione@sicilia.cri.it',
+    }
+
     RICHIESTA_NOME = 'titolo'
 
     ATTESTATO = 'a'
