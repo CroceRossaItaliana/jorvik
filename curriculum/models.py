@@ -301,7 +301,12 @@ class TitoloPersonale(ModelloSemplice, ConMarcaTemporale, ConAutorizzazioni):
         return True
 
     def richiedi_autorizzazione(self, qualifica_nuova, me, sede_attuale):
-        qualifica_nuova.autorizzazione_richiedi_sede_riferimento(me, INCARICO_GESTIONE_TITOLI)
+
+        qualifica_nuova.autorizzazione_richiedi_sede_riferimento(
+            me,
+            INCARICO_GESTIONE_TITOLI,
+            forza_sede_riferimento=sede_attuale
+        )
 
         vo_nome_cognome = "%s %s" % (me.nome, me.cognome)
         Messaggio.costruisci_e_accoda(
@@ -324,7 +329,10 @@ class TitoloPersonale(ModelloSemplice, ConMarcaTemporale, ConAutorizzazioni):
         titolo = kwargs['titolo']
 
         if titolo.meta and titolo.meta.get('richiede_conferma'):
-            sede_attuale = persona.sede_riferimento()
+            from anagrafica.models import Appartenenza
+            sede_attuale = persona.sede_riferimento(membro=[Appartenenza.VOLONTARIO])
+            if not sede_attuale:
+                sede_attuale = persona.sede_riferimento(membro=[Appartenenza.DIPENDENTE])
             if not sede_attuale:
                 qualifica_nuova.delete()
                 return None
