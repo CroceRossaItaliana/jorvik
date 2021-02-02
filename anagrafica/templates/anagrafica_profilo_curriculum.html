@@ -110,30 +110,30 @@
         </div>
     </div>
 
-{#    <div class="col-lg-4">#}
-{#        {% if puo_modificare %}#}
-{#        <form method="POST" enctype="multipart/form-data">#}
-{##}
-{#            {% csrf_token %}#}
-{#                <div class="panel panel-primary">#}
-{#                    <div class="panel-heading">#}
-{#                        <h4 class="panel-title">#}
-{#                            <i class="fa fa-plus"></i> Aggiungi titolo#}
-{#                        </h4>#}
-{#                    </div>#}
-{##}
-{#                    <div class="panel-body">#}
-{#                        {% bootstrap_form modulo %}#}
-{##}
-{#                        <button class="btn btn-primary btn-block">#}
-{#                            <i class="fa fa-check"></i>#}
-{#                            Carica#}
-{#                        </button>#}
-{#                    </div>#}
-{#                </div>#}
-{#        </form>#}
-{#        {% endif %}#}
-{##}
-{#    </div>#}
+    <div class="col-lg-4">
+        {% if puo_modificare %}
+        <form method="POST" enctype="multipart/form-data">
+
+            {% csrf_token %}
+                <div class="panel panel-primary">
+                    <div class="panel-heading">
+                        <h4 class="panel-title">
+                            <i class="fa fa-plus"></i> Aggiungi titolo
+                        </h4>
+                    </div>
+
+                    <div class="panel-body">
+                        {% bootstrap_form modulo %}
+
+                        <button class="btn btn-primary btn-block">
+                            <i class="fa fa-check"></i>
+                            Carica
+                        </button>
+                    </div>
+                </div>
+        </form>
+        {% endif %}
+
+    </div>
 </div>
 {% endblock %}

@@ -3,10 +3,11 @@ from datetime import timedelta
 from django.contrib import messages
 from django.core.urlresolvers import reverse
 from django.http import JsonResponse
+from django.template.loader import get_template
 from django.utils.timezone import now
 from django.shortcuts import render_to_response, redirect, get_object_or_404
 
-from anagrafica.costanti import NAZIONALE
+from anagrafica.costanti import NAZIONALE, REGIONALE
 from anagrafica.permessi.costanti import ERRORE_PERMESSI
 from anagrafica.permessi.incarichi import INCARICO_GESTIONE_TITOLI
 from autenticazione.funzioni import pagina_privata
@@ -171,9 +172,12 @@ def cv_cancel(request, me, pk=None):
 @pagina_privata
 def cv_qualifica_errata_notifica_comitato_regionale(request, me, pk=None):
     richiesta = Autorizzazione.objects.get(pk=pk)
-
+    richiesta.mail_verifica = True
+    richiesta.save()
     volontario = richiesta.richiedente
     vo_sede = volontario.sede_riferimento()
+
+    regionale_sede = vo_sede.superiore(estensione=REGIONALE)
 
     if vo_sede.estensione == NAZIONALE:
         presidente_regionale = vo_sede.presidente()
@@ -198,26 +202,27 @@ def cv_qualifica_errata_notifica_comitato_regionale(request, me, pk=None):
             corpo={
                 "volontario": volontario,
                 'destinatario': destinatario_title,
+                'qualifica': richiesta.oggetto.titolo.nome
             },
             mittente=None,
             destinatari=destinatari,
         )
 
-    date_from = now() - timedelta(days=2)
-    mail_exists = Messaggio.objects.filter(oggetto=oggetto,
-                                           terminato__gte=date_from,
-                                           terminato__lte=now(),
-                                           ).exists()
-    mail_already_sent = True if mail_exists else False
-    if mail_already_sent:
-        messages.success(request, "La comunicazione è stata già effettuata.")
-        return redirect(reverse('autorizzazioni:aperte'))
-
-    if vo_sede.estensione != NAZIONALE:
-        _costruisci_e_accoda('Presidente', [presidente_regionale])
     _costruisci_e_accoda('Volontario', [volontario])
-    _costruisci_e_accoda('Delegato Formazione', [i for i in delegati_formazione_regionale])
 
-    messages.success(request, "Sono stati avvisati il presidente regionale %s e "
-                              "i delegati formazione regionale" % (presidente_regionale, ))
+    Messaggio.invia_raw(
+        oggetto="Inserimento su GAIA Qualifiche CRI: %s" % volontario.nome_completo,
+        corpo_html=get_template('email_cv_qualifica_regressa_inserimento_errato.html').render(
+            {
+                "volontario": volontario,
+                'qualifica': richiesta.oggetto.titolo.nome,
+                'comitato': vo_sede
+            },
+        ),
+        email_mittente=Messaggio.NOREPLY_EMAIL,
+        lista_email_destinatari=[TitoloPersonale.MAIL_FORMAZIONE[regionale_sede.pk]],
+        allegati=richiesta.oggetto.attestato_file
+    )
+
+    messages.success(request, "La notifica è stata inviata a %s" % (TitoloPersonale.MAIL_FORMAZIONE[regionale_sede.pk], ))
     return redirect(reverse('autorizzazioni:aperte'))

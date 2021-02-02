@@ -544,7 +544,9 @@ class Persona(ModelloSemplice, ConMarcaTemporale, ConAllegati, ConVecchioID):
             [('/veicoli/', "Veicoli", "fa-car"), self.ha_permesso(GESTIONE_AUTOPARCHI_SEDE)],
             # [(reverse('so:index'), "SO", "fa-compass"), visibilita_menu_top(self)],
             [('/centrale-operativa/', "CO", "fa-compass"), self.ha_permesso(GESTIONE_CENTRALE_OPERATIVA_SEDE)],
-            [('/formazione/', 'Formazione', 'fa-graduation-cap'), self.ha_permesso(GESTIONE_CORSO) or self.ha_permesso(GESTIONE_CORSI_SEDE)],
+            [('/formazione/', 'Formazione', 'fa-graduation-cap'),
+             self.ha_permesso(GESTIONE_CORSO) or self.ha_permesso(GESTIONE_CORSI_SEDE) or self.is_responsabile_area_albo_formazione != None
+             ],
             [('/articoli/', 'Articoli', 'fa-newspaper'), True],
             [('/documenti/', 'Documenti', 'fa-folder'), True],
         ]
@@ -1278,6 +1280,28 @@ class Persona(ModelloSemplice, ConMarcaTemporale, ConAllegati, ConVecchioID):
         return self.deleghe_attuali(tipo=VICE_PRESIDENTE).first() or \
                self.deleghe_attuali(tipo=CONSIGLIERE).first() or \
                self.deleghe_attuali(tipo=CONSIGLIERE_GIOVANE).first()
+
+    @property
+    def is_responsabile_area_albo_formazione(self):
+        aree = [
+            'commissione didattica Salute',
+            'commissione Didattica Inclusione Sociale',
+            'commissione Didattica Emergenza e Resilienza',
+            'commissione Didattica Cooperazione Internazionale decentrata',
+            'commissione Didattica Migrazioni',
+            'commissione Didattica Gioventù',
+            'commissione Didattica sul Diritto Internazionale Umanitario',
+            'commissione Didattica Salute e Sicurezza',
+            'commissione Didattica sulla motorizzazione CRI',
+            'commissione Didattica di Storia della CRI e della Medicina',
+            'commissione didattica per lo Sviluppo Organizzativo',
+        ]
+        for delega in self.deleghe_attuali(tipo=RESPONSABILE_AREA):
+            for area in aree:
+                if area.lower() in delega.oggetto.__str__().lower():
+                    return delega
+
+        return None
 
     @property
     def is_responsabile_area_delegato_assemblea_nazionale(self):

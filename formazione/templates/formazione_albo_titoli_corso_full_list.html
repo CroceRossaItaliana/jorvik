@@ -10,14 +10,14 @@
     <thead>
       <th>Titolo</th>
       <th>Comitato riferimento</th>
-      <th>Creazione</th>
+      <th>Data ottenimento</th>
       <th>Data Scadenza</th>
     </thead>
     {% for title in titles %}
     <tr>
       <td>{{ title }}</td>
       <td>{{ title.persona.sede_riferimento.comitato }}</td>
-      <td>{{ title.creazione|date:"d/m/Y" }}</td>
+      <td>{{ title.data_ottenimento|date:"d/m/Y" }}</td>
       <td>{{ title.data_scadenza|date:"d/m/Y" }}</td>
     </tr>
     {% empty %}

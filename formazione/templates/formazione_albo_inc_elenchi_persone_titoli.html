@@ -5,7 +5,7 @@
 {% block elenco_intestazione %}
     <th>Cognome Nome</th>
     <th>Comitato di app.</th>
-    <th>Titolo/Scadenza</th>
+    <th>Titolo/Ottenimento</th>
     {% block elenco_intestazione_extra %}{% endblock %}
 {% endblock %}
 
@@ -20,7 +20,7 @@
         {{ title.titolo|truncatechars:80 }} -
 
         <!-- <span style="{% if title.is_expired_course_title %}background-color:red;color:white;padding:1px 2px;{% endif %}"></span> -->
-        <span>{{ title.data_scadenza|date:"d/m/Y" }}</span><br>
+        <span><b>{{ title.data_ottenimento|date:"d/m/Y" }}</b></span><br>
 
       {% empty %}
         {% if not titoli.num_of_titles %}

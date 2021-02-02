@@ -31,7 +31,9 @@ def formazione_menu(menu_name, me=None):
             ('Schema equipollenze Del. N° 66-20', 'fa-file-alt', 'https://datafiles.gaia.cri.it/media/filer_public/22/c4/22c446a7-d981-4cb9-be95-f6afec4b53d2/schema_per_equipollenze_del_66-20_per_gaia_1.pdf'),
             ('Schema equipollenze Del. N° 94-20', 'fa-file-alt', 'https://datafiles.gaia.cri.it/media/filer_public/a6/1b/a61b14e5-7286-4028-8aeb-255e0a4a7209/schema_per_equipollenze_94-20_per_gaia.pdf'),
             ('Albo Informatizzato', 'fa-list', reverse(
-                'formazione:albo_info')) if to_show(me, RUBRICA_DELEGATI_OBIETTIVO_ALL + [GESTIONE_CORSI_SEDE]) else None,
+                'formazione:albo_info')) if to_show(
+                me, RUBRICA_DELEGATI_OBIETTIVO_ALL + [GESTIONE_CORSI_SEDE]
+            ) or (me and me.is_responsabile_area_albo_formazione) else None,
         )),
     )
 

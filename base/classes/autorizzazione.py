@@ -1,6 +1,9 @@
-from anagrafica.costanti import NAZIONALE
+from django.template.loader import get_template
+
+from anagrafica.costanti import NAZIONALE, REGIONALE
 from anagrafica.models import Trasferimento
 from anagrafica.permessi.applicazioni import PRESIDENTE, UFFICIO_SOCI, COMMISSARIO
+from curriculum.models import TitoloPersonale
 from posta.models import Messaggio
 from ..errori import errore_generico
 
@@ -46,6 +49,8 @@ class AutorizzazioneProcess:
         volontario = self.richiesta.richiedente
         vo_sede = volontario.sede_riferimento()
 
+        regionale_sede = vo_sede.superiore(estensione=REGIONALE)
+
         # Alert 2
         if vo_sede.estensione == NAZIONALE:
             presidente_regionale = vo_sede.presidente()
@@ -57,14 +62,31 @@ class AutorizzazioneProcess:
 
         # GAIA-323
         # Al Presidente/Delegati Formazioni
-        Messaggio.costruisci_e_accoda(
+        # Messaggio.costruisci_e_accoda(
+        #     oggetto="Inserimento su GAIA Qualifiche CRI: %s" % volontario.nome_completo,
+        #     modello="email_cv_qualifica_presa_visione_al_presidente.html",
+        #     corpo={
+        #         "qualifica": qualifica,
+        #         "volontario": volontario,
+        #         "comitato": "comitato"
+        #     },
+        #     mittente=None,
+        #     destinatari=[i for i in delegati_formazione_regionale] + [presidente_regionale,],
+        #     allegati=[qualifica.attestato_file]
+        # )
+
+        Messaggio.invia_raw(
             oggetto="Inserimento su GAIA Qualifiche CRI: %s" % volontario.nome_completo,
-            modello="email_cv_qualifica_presa_visione_al_presidente.html",
-            corpo={
-                "volontario": volontario,
-            },
-            mittente=None,
-            destinatari=[i for i in delegati_formazione_regionale] + [presidente_regionale,]
+            corpo_html=get_template('email_cv_qualifica_presa_visione_al_presidente.html').render(
+                {
+                    "qualifica": qualifica,
+                    "volontario": volontario,
+                    "comitato": vo_sede
+                },
+            ),
+            email_mittente=Messaggio.NOREPLY_EMAIL,
+            lista_email_destinatari=[TitoloPersonale.MAIL_FORMAZIONE[regionale_sede.pk]],
+            allegati=qualifica.attestato_file
         )
 
         # Al Volontario

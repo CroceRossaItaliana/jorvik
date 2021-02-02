@@ -350,20 +350,21 @@ def aspirante_corso_base_iscriviti(request, me=None, pk=None):
     # GAIA-306
     # invio notifica al presidente sui comitato se corso è in un altro comitato
     appartenenza_vo = me.appartenenza_volontario.first()
-    sede_corso = corso.sede
-    presidente_sede_vo = appartenenza_vo.sede.presidente()
+    if appartenenza_vo:
+        sede_corso = corso.sede
+        presidente_sede_vo = appartenenza_vo.sede.presidente()
 
-    Messaggio.costruisci_e_accoda(
-        oggetto="Volontario {} richiesta di partecipazione corso {}".format(
-            appartenenza_vo.persona, sede_corso
-        ),
-        modello='email_volontario_corso_altra_sede.html',
-        corpo={
-            "corso": corso,
-            "persona": appartenenza_vo.persona
-        },
-        destinatari=[presidente_sede_vo, ]
-    )
+        Messaggio.costruisci_e_accoda(
+            oggetto="Volontario {} richiesta di partecipazione corso {}".format(
+                appartenenza_vo.persona, sede_corso
+            ),
+            modello='email_volontario_corso_altra_sede.html',
+            corpo={
+                "corso": corso,
+                "persona": appartenenza_vo.persona
+            },
+            destinatari=[presidente_sede_vo, ]
+        )
 
     return messaggio_generico(request, me,
         titolo="Sei iscritt%s al corso" % me.genere_o_a,
@@ -1354,6 +1355,16 @@ def formazione_albo_informatizzato(request, me):
     for permesso in ALL_PERMESSI_TO_CHECK:
         ids = me.oggetti_permesso(permesso).values_list('pk', flat=True)
         sedi_set.update(ids)
+
+    if 1 in sedi_set:
+        sedi_set = set()
+        sedi_set.update(
+            [sede.id for sede in Sede.objects.get(pk=1).ottieni_discendenti(includimi=True, solo_attivi=True)]
+        )
+
+    area = me.is_responsabile_area_albo_formazione
+    if area:
+        sedi_set.update([sede.id for sede in area.oggetto.sede.ottieni_discendenti(includimi=True, solo_attivi=True)])
 
     sedi = Sede.objects.filter(pk__in=sedi_set)
 

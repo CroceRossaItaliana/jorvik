@@ -13,7 +13,19 @@
   <div class="articolo single-page">
     <h1>Questionario autocontrollo <span style="color:#555; font-size:24px;">- {{ comitato }}</span></h1>
     <h3>{{ section.2 }}</h3>
-
+    <p>
+        Di seguito il <b>"questionario di autocontrollo" (o check list)</b> presisto dall' <b>art. 6.4 del "Regolamento sulla trasparenza e sui controlli"</b>
+        La compilazione del questionario è rimessa al <b>Presidente del Comitato CRI o, nel caso di Comitato commissariato, al suo commissario</b>.
+        Il questionario è suddiviso in <b>n. 5 aree tematiche</b> (A -Governance; B- Personale dipendente e volontario; C- contabilità; D-convenzioni e progetti; E- relazioni esterne, comunicazioni, trasparenza).
+        Le cinque sezioni sono inizialmente contrassegnate in <b>rosso</b> e man mano che vengono completate diventano <b>verdi</b>.
+        È possibile compilare il questionario anche in momenti diversi: tutto quello che si compila viene automaticamente salvato.
+        A fine compilazione, basta premere l'apposito bottone <b>"Invia e-mail al Regionale"</b>
+        e il questionario viene immediatamente inviato alla casella istituzionale del Comitato Regionale di riferimento.
+        Il questionario potrà essere consegnato anche brevi manu al Presidente Regionale o al Consigliere regionale all’uopo delegato, premendo il tasto
+        <b>Stampa</b> una volta conclusa la compilazione.
+        Buon lavoro!
+    </p>
+    <a href="https://datafiles.gaia.cri.it/media/filer_public/66/d8/66d8aba2-ea4d-4f0d-b429-a17b89f09e16/nota_presidente_nazionale_check_list_comitati.pdf" target="_blank">Nota presidente nazionale</a>
     <ul class="typeform_widget">
       <li><a href="?comitato={{user_comitato}}&id=ttOyXCJR" class="{%if type_form.ttOyXCJR.0 %}done{%endif%} typeform_widget__btn testi-lunghi hand" title="A-Governance">A-Governance</a></li>
       <li><a href="?comitato={{user_comitato}}&id=PZvVJIZq" class="{%if type_form.PZvVJIZq.0 %}done{%endif%} typeform_widget__btn testi-lunghi hand" title="B-Personale Dipendente e Volontario">B-Personale Dipendente e Volontario</a></li>
@@ -33,7 +45,7 @@
       <p style="text-align:center;"><strong>
         {% if all_forms_are_completed %}
           Complimenti! Hai compilato il questionario di autocontrollo.<br>
-          Clicca su "Invia via e-mail al regionale" per trasmettere i dati inseriti.
+          Clicca su "Invia via e-mail al Regionale" per trasmettere i dati inseriti.
         {% elif is_done %}
           Questa sezione è già compilata.
         {% endif %}
