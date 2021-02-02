@@ -740,6 +740,10 @@ def aspirante_corso_base_termina(request, me, pk):
 
         if form.is_valid():
             instance = form.save(commit=False)
+
+            if corso.tipo == Corso.BASE and instance.partecipazione_online:
+                instance.partecipazione_online_da_sostenere = True
+
             if instance.ammissione == PartecipazioneCorsoBase.ASSENTE_MOTIVO:
                 # Serve per distinguere partecipanti per la generazione
                 # dell'attestato e impostazione titolo cv.

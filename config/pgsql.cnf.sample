@@ -1,6 +1,6 @@
 [client]
 host = db
 port = 5432
-database = jorvik
+database = gaia_363
 user = postgres
 password =
