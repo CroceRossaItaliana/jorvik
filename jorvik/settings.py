@@ -429,3 +429,8 @@ FINE_ASSEMBLEA_NAZIONALE = '12/30/2020 15:00:00'
 
 INIZIO_ASSEMBLEA_NAZIONALE_COMMISSARI = '12/20/2020 09:00:00'
 FINE_ASSEMBLEA_NAZIONALE_COMMISSARI = '12/20/2020 14:00:00'
+
+CELERY_BROKER_URL = "sentinel://criredis01.cri.it:26379/0;sentinel://criredis02.cri.it:26379/0;sentinel://criredis03.cri.it:26379/0"
+CELERY_RESULT_BACKEND = "sentinel://criredis01.cri.it:26379/0;sentinel://criredis02.cri.it:26379/0;sentinel://criredis03.cri.it:26379/0"
+CELERY_BROKER_TRANSPORT_OPTIONS = {"visibility_timeout": 3600, "master_name": "django"}
+CELERY_RESULT_BACKEND_TRANSPORT_OPTIONS = {"visibility_timeout": 3600, "master_name": "django"}

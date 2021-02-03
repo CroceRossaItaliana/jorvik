@@ -1,7 +1,7 @@
 [celery]
 
-broker_url = redis://broker
-result_backend = redis://broker
+broker_url = sentinel://criredis01.cri.it:26379/2;sentinel://criredis02.cri.it:26379/2;sentinel://criredis03.cri.it:26379/2
+result_backend = sentinel://criredis01.cri.it:26379/2;sentinel://criredis02.cri.it:26379/2;sentinel://criredis03.cri.it:26379/2
 
 [riaccoda]
 # 3600s = 1h
