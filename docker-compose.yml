@@ -18,7 +18,6 @@ services:
     links:
       - db
       - pdf
-      - broker
     depends_on:
       - db
       - pdf
@@ -26,18 +25,11 @@ services:
     environment:
       - "DJANGO_LIVE_TEST_SERVER_ADDRESS=web:8081-8181"
 
-  broker:
-    image: redis
-    ports:
-      - "6379:6379"  # Redis TCP
-
   celery:
     build: .
     volumes:
       - .:/code
       - /tmp/media:/tmp/media
-    depends_on:
-      - broker
     environment:
       - "SKIP_DJANGO_COLLECSTATIC=1"
       - "SKIP_DJANGO_MIGRATE=1"

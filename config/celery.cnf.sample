@@ -4,8 +4,12 @@
 
 #broker_url = redis://:password@hostname:port/db_number
 
-broker_url = redis://localhost
-result_backend = redis://localhost
+#broker_url = redis://localhost
+#result_backend = redis://localhost
+
+broker_url = sentinel://criredis01.cri.it:26379/2;sentinel://criredis02.cri.it:26379/2;sentinel://criredis03.cri.it:26379/2
+result_backend = sentinel://criredis01.cri.it:26379/2;sentinel://criredis02.cri.it:26379/2;sentinel://criredis03.cri.it:26379/2
+
 
 [riaccoda]
 # 3600s = 1h

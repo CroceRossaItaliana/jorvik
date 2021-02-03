@@ -11,6 +11,8 @@ os.environ.setdefault('DJANGO_SETTINGS_MODULE', 'jorvik.settings')
 
 app = Celery('jorvik')
 app.conf.update(CELERY_CONF.items('celery'))
+app.conf.broker_transport_options = { 'master_name': 'django' }
+app.conf.result_backend_transport_options = { 'master_name': 'django' }
 
 # Per favore, ricordati di aggiornare anche i seguenti file:
 # - /docker-compose.yml
