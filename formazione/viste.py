@@ -653,6 +653,8 @@ def aspirante_corso_base_attiva(request, me, pk):
 def aspirante_corso_base_termina(request, me, pk):
     seconda_data_esame = '?seconda_data_esame' if 'seconda_data_esame' in request.GET else ""
     prova_prativa_esame = '?data_esame_prova_pratica' if 'data_esame_prova_pratica' in request.GET else ""
+    genera_verbale = True if 'terminate_course' in request.GET else False
+
 
     reverse_termina = reverse('aspirante:terminate', args=[pk])
     redirect_termina = redirect(reverse_termina + seconda_data_esame)
@@ -774,6 +776,20 @@ def aspirante_corso_base_termina(request, me, pk):
         # poter eseguire il codice sottostante)
         messages.success(request, 'Il verbale è stato salvato.')
         return redirect_termina
+
+    if genera_verbale and not corso.is_nuovo_corso:
+        for partecipante in partecipanti_qs:
+            if partecipante.idoneo:  # Se idoneo, volontarizza
+                partecipante.esito_esame = partecipante.IDONEO
+                partecipante.persona.da_aspirante_a_volontario(
+                    inizio=data_ottenimento,
+                    sede=partecipante.destinazione,
+                    mittente=me
+                )
+            else:
+                partecipante.esito_esame = partecipante.NON_IDONEO
+
+            partecipante.save()
 
     if termina_corso:  # Se premuto pulsante "Genera verbale e termina corso"
         # Verifica se la relazione è compilata

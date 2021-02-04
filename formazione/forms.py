@@ -267,7 +267,7 @@ class ModuloModificaCorsoBase(ModelForm):
                 self.add_error('max_participants', "Numero massimo di "
                     "partecipanti non può essere minore del numero minimo.")
 
-        if 'data_esame_pratica' in cd:
+        if 'data_esame_pratica' in cd and cd['data_esame_pratica']:
             delta = (cd['data_esame_pratica'] - cd['data_esame']).days
             if delta < 0:
                 self.add_error('data_esame_pratica', "Questa data non può essere precedente alla prima data esame")
