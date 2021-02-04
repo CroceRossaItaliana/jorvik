@@ -1,5 +1,7 @@
-from django.contrib import admin
+from django.conf.urls import url
+from django.contrib import admin, messages
 from django.contrib.postgres.fields import JSONField
+from django.shortcuts import render
 
 from prettyjson import PrettyJSONWidget
 
@@ -55,7 +57,33 @@ class AdminTitoloPersonale(ReadonlyAdminMixin, admin.ModelAdmin):
     raw_id_fields = ("persona", "certificato_da", "titolo", 'corso_partecipazione',)
     inlines = [InlineAutorizzazione]
 
+    def get_urls(self):
+        urls = super(AdminTitoloPersonale, self).get_urls()
+        custom_urls = [
+            url(r'^albi/$',
+                self.admin_site.admin_view(self.import_albi),
+                name='anagrafica_titolopersonale_import_albi'),
+        ]
+
+        return custom_urls + urls
+
     def corso_partecipazione__corso(self, obj):
         return obj.corso_partecipazione.corso \
             if hasattr(obj.corso_partecipazione, 'corso') else ''
     corso_partecipazione__corso.short_description = 'Corso Partecipazione'
+
+    def import_albi(self, request):
+
+        if request.POST:
+            files = request.FILES.getlist('file')
+            for file in files:
+                if not file.name.split('.')[1] == 'csv':
+                    messages.error(request, "Il file deve avere un fomato .csv")
+
+            # self._import_servizio_civile(request, files[0])
+
+        contesto = {
+            'opts': self.model._meta
+        }
+
+        return render(request, 'admin/curriculum/import_albi.html', contesto)
