@@ -24,4 +24,11 @@
         <input type="file" accept=".csv, text/csv" name="file" required/>
         <input type="submit" style="padding: 5px 8px 5px 8px" data-toggle="tooltip" data-placement="top" title='Assicurarsi che i campi del file csv siano separati dal carattere ","' value="Carica">
     </form>
+    <br/>
+    <br/>
+    {% if counts %}
+        <b>Processati:</b> {{ counts.totale }}
+        <b>Inseriti:</b> {{ counts.inserite }}
+        <b>Non inseriti:</b> {{ counts.non_inserite }}
+    {% endif %}
 {% endblock %}

@@ -1,5 +1,6 @@
 import csv
 import io
+from datetime import datetime
 
 from django.conf.urls import url
 from django.contrib import admin, messages
@@ -79,6 +80,11 @@ class AdminTitoloPersonale(ReadonlyAdminMixin, admin.ModelAdmin):
     def _import_albi(self, request, file):
 
         qualifiche_non_caricate = []
+        count = {
+            'totale': 0,
+            'inserite': 0,
+            'non_inserite': 0
+        }
 
         fieldnames = (
             'Nome partecipante',
@@ -90,36 +96,150 @@ class AdminTitoloPersonale(ReadonlyAdminMixin, admin.ModelAdmin):
             'Cognome Direttore',
             'Codice fiscale direttore',
             'Qualifica conseguita',
-            'Codice Titolo'
+            'codice'
         )
 
         reader = csv.DictReader(io.StringIO(file.read().decode('utf-8')), delimiter=',', fieldnames=fieldnames)
 
         next(reader)
         for row in reader:
+            count['totale'] += 1
+            # CERCO PERSONA
             persona = None
-            cf_persona = row['Codice fiscale partecipante'].strip()
-            nome_persona = row['Nome partecipante'].strip()
-            cognome_persona = row['Cognome partecipante'].strip()
+            cf_persona = row['Codice fiscale partecipante']
+            nome_persona = row['Nome partecipante']
+            cognome_persona = row['Cognome partecipante']
             if cf_persona:
-                persona = Persona.objects.filter(codice_fiscale=cf_persona).first()
+                persona = Persona.objects.filter(codice_fiscale=cf_persona.strip()).first()
+                if not persona:
+                    qualifiche_non_caricate.append(
+                        self._aggiungi_errore(
+                            row,
+                            'Non è possibilte trovare la persona il Codice Fiscale Non esiste'.upper()
+                        )
+                    )
+                    continue
             elif nome_persona and cognome_persona:
                 persone = Persona.objects.filter(
-                    cognome=cognome_persona, nome=nome_persona
+                    cognome=cognome_persona.strip(), nome=nome_persona.strip()
                 )
                 if persone.count() == 1:
                     persona = persone.first()
                 else:
-                    print('Ci sono Ambiguità')
+                    qualifiche_non_caricate.append(self._aggiungi_errore(row, 'Ci sono Ambiguità sulla persona'.upper()))
                     continue
             else:
-                print('Non è possibilte trovare la persona senza conosce Codice Fiscale o Nome e cognome')
+                qualifiche_non_caricate.append(
+                    self._aggiungi_errore(
+                        row,
+                        'Non è possibilte trovare la persona senza conosce Codice Fiscale o Nome e cognome'.upper()
+                    )
+                )
                 continue
 
-            print(persona)
+            # Luogo Conseguimento
+            luogo_conseguimento = row['Luogo conseguimento'].strip()
 
+            # Data Consegumento
+            data = row['Data Conseguimento'].strip()
+            data_conseguimento = None
+            if data:
+                data_conseguimento = datetime.strptime(data, '%d/%m/%Y')
+
+            # Direttore
+            direttore = None
+            cf_direttore = row['Codice fiscale direttore']
+            nome_direttore = row['Nome Direttore']
+            cognome_direttore = row['Cognome Direttore']
+            if cf_direttore:
+                direttore = Persona.objects.filter(codice_fiscale=cf_direttore.strip()).first()
+                if not direttore:
+                    qualifiche_non_caricate.append(
+                        self._aggiungi_errore(
+                            row,
+                            'Non è possibilte trovare il direttore il Codice fiscale non esite'.upper()
+                        )
+                    )
+                    continue
+            elif nome_direttore and cognome_direttore:
+                direttori = Persona.objects.filter(
+                    cognome=cognome_direttore.strip(), nome=nome_direttore.strip()
+                )
+
+                if direttori.count() == 1:
+                    direttore = direttori.first()
+                else:
+                    qualifiche_non_caricate.append(self._aggiungi_errore(row, 'Ci sono Ambiguità sul direttore'.upper()))
+                    continue
+            else:
+                qualifiche_non_caricate.append(
+                    self._aggiungi_errore(
+                        row,
+                        'Non è possibilte trovare il direttore senza conosce Codice Fiscale o Nome e cognome'.upper()
+                    )
+                )
+                continue
+
+            titolo = None
+            codice_qualifica = row['codice']
+            nome_qualifica = row['Qualifica conseguita']
+
+            if codice_qualifica:
+                titolo = Titolo.objects.filter(sigla=codice_qualifica.strip()).first()
+            elif nome_qualifica:
+                titoli = Titolo.objects.filter(nome=nome_qualifica.strip())
+
+                if titoli.count() == 1:
+                    titolo = titoli.first()
+                else:
+                    qualifiche_non_caricate.append(
+                        self._aggiungi_errore(row, 'Ci sono Ambiguità sul titolo'.upper()))
+                    continue
+            else:
+                qualifiche_non_caricate.append(
+                    self._aggiungi_errore(
+                        row,
+                        'Non è possibilte trovare il titolo senza conosce sigla o Nome Titolo'.upper()
+                    )
+                )
+                continue
+
+            titolo_personale = TitoloPersonale(
+                persona=persona,
+                titolo=titolo,
+                direttore_corso=direttore,
+                data_ottenimento=data_conseguimento,
+                luogo_ottenimento=luogo_conseguimento,
+                is_course_title=True,
+                automatica=True
+            )
+            titolo_personale.save()
+            count['inserite'] += 1
+
+        count['non_inserite'] += len(qualifiche_non_caricate)
+        return qualifiche_non_caricate, count
+
+    def _aggiungi_errore(self, row, errore):
+
+        return '{} - {} - {} - {} - {} - {} - {} - {} - {} - {} "{}"'.format(
+            row['Nome partecipante'] if row['Nome partecipante'] else 'VUOTO',
+            row['Cognome partecipante'] if row['Cognome partecipante'] else 'VUOTO',
+            row['Codice fiscale partecipante'] if row['Codice fiscale partecipante'] else 'VUOTO',
+            row['Luogo conseguimento'] if row['Luogo conseguimento'] else 'VUOTO',
+            row['Data Conseguimento'] if row['Data Conseguimento'] else 'VUOTO',
+            row['Nome Direttore'] if row['Nome Direttore'] else 'VUOTO',
+            row['Cognome Direttore'] if row['Cognome Direttore'] else 'VUOTO',
+            row['Codice fiscale direttore'] if row['Codice fiscale direttore'] else 'VUOTO',
+            row['Qualifica conseguita'] if row['Qualifica conseguita'] else 'VUOTO',
+            row['codice'] if row['codice'] else 'VUOTO',
+            errore
+        )
 
     def import_albi(self, request):
+
+        contesto = {
+            'opts': self.model._meta
+        }
 
         if request.POST:
             files = request.FILES.getlist('file')
@@ -127,10 +247,12 @@ class AdminTitoloPersonale(ReadonlyAdminMixin, admin.ModelAdmin):
                 if not file.name.split('.')[1] == 'csv':
                     messages.error(request, "Il file deve avere un fomato .csv")
 
-            self._import_albi(request, files[0])
+            qualifiche_non_caricate, counts = self._import_albi(request, files[0])
 
-        contesto = {
-            'opts': self.model._meta
-        }
+            contesto['counts'] = counts
+
+            if qualifiche_non_caricate:
+                for warning in qualifiche_non_caricate:
+                    messages.warning(request, warning)
 
         return render(request, 'admin/curriculum/import_albi.html', contesto)
