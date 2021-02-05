@@ -99,7 +99,7 @@ class AdminTitoloPersonale(ReadonlyAdminMixin, admin.ModelAdmin):
             'codice'
         )
 
-        reader = csv.DictReader(io.StringIO(file.read().decode('utf-8')), delimiter=',', fieldnames=fieldnames)
+        reader = csv.DictReader(io.StringIO(file.read().decode('utf-8')), delimiter=';', fieldnames=fieldnames)
 
         next(reader)
         for row in reader:
@@ -244,8 +244,8 @@ class AdminTitoloPersonale(ReadonlyAdminMixin, admin.ModelAdmin):
         if request.POST:
             files = request.FILES.getlist('file')
             for file in files:
-                if not file.name.split('.')[1] == 'csv':
-                    messages.error(request, "Il file deve avere un fomato .csv")
+                if not file.name.split('.')[1].lower() in 'csv':
+                    messages.error(request, "Il file deve avere un fomato .csv separato da ;")
 
             qualifiche_non_caricate, counts = self._import_albi(request, files[0])
 
