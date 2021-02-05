@@ -1,3 +1,6 @@
+import csv
+import io
+
 from django.conf.urls import url
 from django.contrib import admin, messages
 from django.contrib.postgres.fields import JSONField
@@ -5,6 +8,7 @@ from django.shortcuts import render
 
 from prettyjson import PrettyJSONWidget
 
+from anagrafica.models import Persona
 from base.admin import InlineAutorizzazione
 from gruppi.readonly_admin import ReadonlyAdminMixin
 from .models import (Titolo, TitleGoal, TitoloPersonale)
@@ -72,6 +76,49 @@ class AdminTitoloPersonale(ReadonlyAdminMixin, admin.ModelAdmin):
             if hasattr(obj.corso_partecipazione, 'corso') else ''
     corso_partecipazione__corso.short_description = 'Corso Partecipazione'
 
+    def _import_albi(self, request, file):
+
+        qualifiche_non_caricate = []
+
+        fieldnames = (
+            'Nome partecipante',
+            'Cognome partecipante',
+            'Codice fiscale partecipante',
+            'Luogo conseguimento',
+            'Data Conseguimento',
+            'Nome Direttore',
+            'Cognome Direttore',
+            'Codice fiscale direttore',
+            'Qualifica conseguita',
+            'Codice Titolo'
+        )
+
+        reader = csv.DictReader(io.StringIO(file.read().decode('utf-8')), delimiter=',', fieldnames=fieldnames)
+
+        next(reader)
+        for row in reader:
+            persona = None
+            cf_persona = row['Codice fiscale partecipante'].strip()
+            nome_persona = row['Nome partecipante'].strip()
+            cognome_persona = row['Cognome partecipante'].strip()
+            if cf_persona:
+                persona = Persona.objects.filter(codice_fiscale=cf_persona).first()
+            elif nome_persona and cognome_persona:
+                persone = Persona.objects.filter(
+                    cognome=cognome_persona, nome=nome_persona
+                )
+                if persone.count() == 1:
+                    persona = persone.first()
+                else:
+                    print('Ci sono Ambiguità')
+                    continue
+            else:
+                print('Non è possibilte trovare la persona senza conosce Codice Fiscale o Nome e cognome')
+                continue
+
+            print(persona)
+
+
     def import_albi(self, request):
 
         if request.POST:
@@ -80,7 +127,7 @@ class AdminTitoloPersonale(ReadonlyAdminMixin, admin.ModelAdmin):
                 if not file.name.split('.')[1] == 'csv':
                     messages.error(request, "Il file deve avere un fomato .csv")
 
-            # self._import_servizio_civile(request, files[0])
+            self._import_albi(request, files[0])
 
         contesto = {
             'opts': self.model._meta
