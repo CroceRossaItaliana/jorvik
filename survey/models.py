@@ -242,11 +242,11 @@ class SurveyResult(models.Model):
                         if domanda.question_type == Question.RADIO:
                             if str(col_org_servizi) not in medie_org_servizi:
                                 medie_org_servizi[str(col_org_servizi)] = {
-                                    'value': int(risposta) if risposte else 0,
+                                    'value': int(risposta) if risposta else 0,
                                     'count': 1
                                 }
                             else:
-                                medie_org_servizi[str(col_org_servizi)]['value'] += int(risposta) if risposte else 0
+                                medie_org_servizi[str(col_org_servizi)]['value'] += int(risposta) if risposta else 0
                                 medie_org_servizi[str(col_org_servizi)]['count'] += 1
                         worksheet_org_servizi.write(
                             row_org_servizi,
@@ -300,8 +300,9 @@ class SurveyResult(models.Model):
 
                     # LEZIONI INTESTAZIONE
                     for lezione in course.lezioni.all():
-                        if lezione.nome not in sheet_lezioni:
-                            sheet = workbook.add_worksheet((''.join(e for e in lezione.nome if e.isalnum()))[:30])
+                        nome_lezione = lezione.nome
+                        if nome_lezione not in sheet_lezioni:
+                            sheet = workbook.add_worksheet(nome_lezione[:30])
                             sheet_lezioni[lezione.nome] = {
                                 'sheet': sheet,
                                 'coll': 1,
@@ -311,47 +312,47 @@ class SurveyResult(models.Model):
                             sheet.write(0, 0, lezione.nome, bold)
                             for intestazione in intestazione_lezioni:
                                 sheet.write(
-                                    sheet_lezioni[lezione.nome]['row'],
-                                    sheet_lezioni[lezione.nome]['coll'],
+                                    sheet_lezioni[nome_lezione]['row'],
+                                    sheet_lezioni[nome_lezione]['coll'],
                                     intestazione,
                                     bold
                                 )
-                                sheet_lezioni[lezione.nome]['coll'] += 1
+                                sheet_lezioni[nome_lezione]['coll'] += 1
 
-                            sheet_lezioni[lezione.nome]['coll'] = 1
-                            sheet_lezioni[lezione.nome]['row'] += 1
+                            sheet_lezioni[nome_lezione]['coll'] = 1
+                            sheet_lezioni[nome_lezione]['row'] += 1
 
                 for docente, lezioni in lezioni_dict_new.items():
 
                     for lezione, domande_risposte in sorted(lezioni.items(), key=lambda x: x[0].pk):
-
+                        nome_lezione = lezione.nome
                         for domanda, risposta in sorted(domande_risposte.items(), key=lambda x: x[0].pk):
-                            sheet_lezione = sheet_lezioni[lezione.nome]
-                            if sheet_lezioni[lezione.nome]['coll'] == 1:
+                            sheet_lezione = sheet_lezioni[nome_lezione]
+                            if sheet_lezioni[nome_lezione]['coll'] == 1:
                                 sheet_lezione['sheet'].write(
-                                    sheet_lezioni[lezione.nome]['row'],
+                                    sheet_lezioni[nome_lezione]['row'],
                                     0,
                                     docente,
                                     bold
                                 )
                             sheet_lezione['sheet'].write(
-                                sheet_lezioni[lezione.nome]['row'],
-                                sheet_lezioni[lezione.nome]['coll'],
+                                sheet_lezioni[nome_lezione]['row'],
+                                sheet_lezioni[nome_lezione]['coll'],
                                 risposta
                             )
-                            if sheet_lezioni[lezione.nome]['coll'] not in sheet_lezione['medie']:
-                                sheet_lezione['medie'][sheet_lezioni[lezione.nome]['coll']] = {
-                                    'value': int(risposta) if risposte else 0,
+                            if sheet_lezioni[nome_lezione]['coll'] not in sheet_lezione['medie']:
+                                sheet_lezione['medie'][sheet_lezioni[nome_lezione]['coll']] = {
+                                    'value': int(risposta) if risposta else 0,
                                     'count': 1
                                 }
                             else:
-                                sheet_lezione['medie'][sheet_lezioni[lezione.nome]['coll']]['value'] += int(risposta) if risposte else 0
-                                sheet_lezione['medie'][sheet_lezioni[lezione.nome]['coll']]['count'] += 1
+                                sheet_lezione['medie'][sheet_lezioni[nome_lezione]['coll']]['value'] += int(risposta) if risposta else 0
+                                sheet_lezione['medie'][sheet_lezioni[nome_lezione]['coll']]['count'] += 1
 
-                            sheet_lezioni[lezione.nome]['coll'] += 1
+                            sheet_lezioni[nome_lezione]['coll'] += 1
 
-                        sheet_lezioni[lezione.nome]['coll'] = 1
-                        sheet_lezioni[lezione.nome]['row'] += 1
+                        sheet_lezioni[nome_lezione]['coll'] = 1
+                        sheet_lezioni[nome_lezione]['row'] += 1
 
             # Utilità lezioni
             if utilita_lezioni:
