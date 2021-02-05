@@ -1,6 +1,5 @@
 import io
 import csv
-import json
 
 import xlsxwriter
 
@@ -206,7 +205,10 @@ class SurveyResult(models.Model):
         risposte = SurveyResult.objects.filter(course=course)
         for num, result in enumerate(risposte):
 
-            response_json = OrderedDict(result.response_json)
+            if result.response_json:
+                response_json = OrderedDict(result.response_json)
+            else:
+                continue
 
             direttori = sorted(response_json.get('direttori').items())
             utilita_lezioni = sorted(response_json.get('utilita_lezioni').items())
@@ -240,11 +242,11 @@ class SurveyResult(models.Model):
                         if domanda.question_type == Question.RADIO:
                             if str(col_org_servizi) not in medie_org_servizi:
                                 medie_org_servizi[str(col_org_servizi)] = {
-                                    'value': int(risposta),
+                                    'value': int(risposta) if risposte else 0,
                                     'count': 1
                                 }
                             else:
-                                medie_org_servizi[str(col_org_servizi)]['value'] += int(risposta)
+                                medie_org_servizi[str(col_org_servizi)]['value'] += int(risposta) if risposte else 0
                                 medie_org_servizi[str(col_org_servizi)]['count'] += 1
                         worksheet_org_servizi.write(
                             row_org_servizi,
@@ -299,7 +301,7 @@ class SurveyResult(models.Model):
                     # LEZIONI INTESTAZIONE
                     for lezione in course.lezioni.all():
                         if lezione.nome not in sheet_lezioni:
-                            sheet = workbook.add_worksheet(lezione.nome[:30])
+                            sheet = workbook.add_worksheet((''.join(e for e in lezione.nome if e.isalnum()))[:30])
                             sheet_lezioni[lezione.nome] = {
                                 'sheet': sheet,
                                 'coll': 1,
@@ -339,11 +341,11 @@ class SurveyResult(models.Model):
                             )
                             if sheet_lezioni[lezione.nome]['coll'] not in sheet_lezione['medie']:
                                 sheet_lezione['medie'][sheet_lezioni[lezione.nome]['coll']] = {
-                                    'value': int(risposta),
+                                    'value': int(risposta) if risposte else 0,
                                     'count': 1
                                 }
                             else:
-                                sheet_lezione['medie'][sheet_lezioni[lezione.nome]['coll']]['value'] += int(risposta)
+                                sheet_lezione['medie'][sheet_lezioni[lezione.nome]['coll']]['value'] += int(risposta) if risposte else 0
                                 sheet_lezione['medie'][sheet_lezioni[lezione.nome]['coll']]['count'] += 1
 
                             sheet_lezioni[lezione.nome]['coll'] += 1
@@ -429,11 +431,11 @@ class SurveyResult(models.Model):
                         if domanda.question_type == Question.RADIO and risposta:
                             if str(col_direttore) not in medie_direttori:
                                 medie_direttori[str(col_direttore)] = {
-                                    'value': int(risposta),
+                                    'value': int(risposta) if risposte else 0,
                                     'count': 1
                                 }
                             else:
-                                medie_direttori[str(col_direttore)]['value'] += int(risposta)
+                                medie_direttori[str(col_direttore)]['value'] += int(risposta) if risposte else 0
                                 medie_direttori[str(col_direttore)]['count'] += 1
                         worksheet_direttori.write(row_direttore, col_direttore, risposta)
                         col_direttore += 1
@@ -533,11 +535,12 @@ class SurveyResult(models.Model):
                 somma += media['value'] / media['count']
                 index += 1
             worksheet_grafici.write(88, col, nome)
-            worksheet_grafici.write(
-                89,
-                col,
-                round(somma/index, 1)
-            )
+            if index != 0:
+                worksheet_grafici.write(
+                    89,
+                    col,
+                    round(somma/index, 1)
+                )
             col += 1
 
         # GRAFICI MEDIA PER LEZIONE
