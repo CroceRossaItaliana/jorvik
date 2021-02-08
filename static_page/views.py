@@ -79,6 +79,69 @@ def monitoraggio(request, me):
 
     return 'monitoraggio.html', context
 
+@pagina_privata
+def monitoraggio_trasparenza(request, me):
+    if True not in [me.is_comissario, me.is_presidente]: return redirect('/')
+    if not hasattr(me, 'sede_riferimento'): return redirect('/')
+
+    request_comitato = request.GET.get('comitato')
+    if me.is_comissario and not request_comitato:
+        # GAIA-58: Seleziona comitato
+        if me.is_presidente:
+            deleghe = me.deleghe_attuali(tipo__in=[COMMISSARIO, PRESIDENTE])
+        else:
+            deleghe = me.deleghe_attuali(tipo__in=[COMMISSARIO])
+
+        return 'monitoraggio_choose_comitato.html', {
+            'deleghe': deleghe.distinct('oggetto_id'),
+            'url': 'monitoraggio',
+            'titolo': 'Monitoraggio Trasparenza',
+            'target': MONITORAGGIO
+        }
+
+    # Comitato selezionato, mostrare le form di typeform
+    context = dict()
+    typeform = TypeFormResponses(request=request, me=me)
+
+    # Make test request (API/connection availability, etc)
+    if not typeform.make_test_request_to_api:
+        return 'monitoraggio_trasparenza.html', context
+
+    context['type_form'] = typeform.context_typeform
+
+    typeform.get_responses_for_all_forms()  # checks for already compiled forms
+
+    is_done = False
+    typeform_id = request.GET.get('id', False)
+    if typeform_id:
+        typeform_ctx = context['type_form'][typeform_id]
+        is_done = typeform_ctx[0]
+        context['section'] = typeform_ctx
+        context['typeform_id'] = typeform_id
+
+    if is_done:
+        context['is_done'] = True
+
+    context['comitato'] = typeform.comitato
+    context['user_comitato'] = typeform.comitato_id
+    context['user_id'] = typeform.get_user_pk
+    context['all_forms_are_completed'] = typeform.all_forms_are_completed
+
+    context['target'] = MONITORAGGIO
+    # Get celery_task_id
+    # TODO: ajax polling task is ready
+    # prefix = typeform.CELERY_TASK_PREFIX
+    # message_storage = get_messages(request)
+    # if len(message_storage) > 0:
+    #     for line, msg in enumerate(message_storage):
+    #         if msg.message.startswith(prefix):
+    #             context['celery_task_id'] = msg.message.replace(prefix, '').strip()
+    #             del message_storage._loaded_messages[line]
+
+    return 'monitoraggio_traparenza.html', context
+
+
+
 
 @pagina_privata
 def monitoraggio_actions(request, me):

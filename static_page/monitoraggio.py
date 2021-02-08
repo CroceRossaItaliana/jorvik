@@ -334,10 +334,30 @@ class TypeFormNonSonoUnBersaglio(TypeForm):
         return list(self.form_ids.items())[0][0]
 
 
+class TypeFormResponsesTrasparenza(TypeForm):
+    form_ids = OrderedDict([
+        ('UefRCHAG', 'A-Autorizzazione e Privacy'),
+        ('XXz4OBuM', 'B-Sovvenzioni, sussidi, vantaggi, contributi o aiuti'),
+        ('OaeI2X1L', 'C-Vantaggi indiretti'),
+        ('Q0Y9JlKq', 'D-Dichiarazioni finali'),
+    ])
+    email_body = """Grazie per aver completato il Questionario sulla trasparenza."""
+
+    email_body_regionale = """
+        Gentilissimi, \n
+        in allegato la Checklist di autovalutazione del Comitato {}
+    """
+
+    email_object = 'Risposte Questionario trasparenza di %s'
+
+
 MONITORAGGIO = 'monitoraggio'
 NONSONOUNBERSAGLIO = 'nonsonounbersaglio'
+MONITORAGGIO_TRASPARENZA = 'monitoraggiotrasparenza'
+
 
 MONITORAGGIOTYPE = {
     MONITORAGGIO: (TypeFormResponses, 'pages:monitoraggio'),
+    MONITORAGGIO_TRASPARENZA: (TypeFormResponsesTrasparenza, 'pages:monitoraggio-trasparenza'),
     NONSONOUNBERSAGLIO: (TypeFormNonSonoUnBersaglio, 'pages:monitoraggio-nonsonounbersaglio')
 }

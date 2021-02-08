@@ -17,6 +17,7 @@ def menu_monitoraggio(me):
 
     VOCE_MONITORAGGIO = ("Check-list Comitati", (
         ("Questionario di autocontrollo", 'fa-user', reverse('pages:monitoraggio')),
+        ("Trasparenza", 'fa-user', reverse('pages:monitoraggio-trasparenza')),
         # ("Monitoraggio NON SONO UN BERSAGLIO", 'fa-user', link_bersaglio) if link_bersaglio else None,
     ))
 
