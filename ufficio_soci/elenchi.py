@@ -490,15 +490,15 @@ class ElencoTrasferiti(ElencoVistaAnagrafica):
         qs_sedi = self.args[0]
         return Persona.objects.filter(
             appartenenze__sede__in=qs_sedi,
-            appartenenze__terminazione__in=[Appartenenza.TRASFERIMENTO,],
+            appartenenze__terminazione__in=[Appartenenza.TRASFERIMENTO, ],
 
         ).exclude(  # Escludi tutti i membri attuali delle mie sedi (es. trasf. interni)
             pk__in=Persona.objects.filter(
                 Appartenenza.query_attuale(
-                    sede__in=qs_sedi
+                    sede__in=qs_sedi,
+                    terminazione__in=[Appartenenza.TRASFERIMENTO, ],
                 ).via("appartenenze")
             ).values_list('id', flat=True)
-
         ).prefetch_related(
             'appartenenze', 'appartenenze__sede',
             'utenza', 'numeri_telefono'
