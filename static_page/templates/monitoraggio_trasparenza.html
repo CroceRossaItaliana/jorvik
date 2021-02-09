@@ -15,16 +15,16 @@
     <h3>{{ section.2 }}</h3>
 {#    <a href="https://datafiles.gaia.cri.it/media/filer_public/66/d8/66d8aba2-ea4d-4f0d-b429-a17b89f09e16/nota_presidente_nazionale_check_list_comitati.pdf" target="_blank">Nota presidente nazionale</a>#}
     <ul class="typeform_widget">
-      <li><a href="?comitato={{user_comitato}}&id=ttOyXCJR" class="{%if type_form.UefRCHAG.0 %}done{%endif%} typeform_widget__btn testi-lunghi hand" title="A-Autorizzazione e Privacy">A-Autorizzazione e Privacy</a></li>
-      <li><a href="?comitato={{user_comitato}}&id=PZvVJIZq" class="{%if type_form.XXz4OBuM.0 %}done{%endif%} typeform_widget__btn testi-lunghi hand" title="B-Sovvenzioni, sussidi, vantaggi, contributi o aiuti">B-Sovvenzioni, sussidi, vantaggi, contributi o aiuti</a></li>
-      <li><a href="?comitato={{user_comitato}}&id=p5DlUCLt" class="{%if type_form.OaeI2X1L.0 %}done{%endif%} typeform_widget__btn testi-lunghi hand" title="C-Vantaggi indiretti">C-Vantaggi indiretti</a></li>
-      <li><a href="?comitato={{user_comitato}}&id=o7JfxbE5" class="{%if type_form.Q0Y9JlKq.0 %}done{%endif%} typeform_widget__btn testi-lunghi hand" title="D-Dichiarazioni finali">D-Dichiarazioni finali</a></li>
+      <li><a href="?comitato={{user_comitato}}&id=UefRCHAG" class="{%if type_form.UefRCHAG.0 %}done{%endif%} typeform_widget__btn testi-lunghi hand" title="A-Autorizzazione e Privacy">A-Autorizzazione e Privacy</a></li>
+      <li><a href="?comitato={{user_comitato}}&id=XXz4OBuM" class="{%if type_form.XXz4OBuM.0 %}done{%endif%} typeform_widget__btn testi-lunghi hand" title="B-Sovvenzioni, sussidi, vantaggi, contributi o aiuti">B-Sovvenzioni, sussidi, vantaggi, contributi o aiuti</a></li>
+      <li><a href="?comitato={{user_comitato}}&id=OaeI2X1L" class="{%if type_form.OaeI2X1L.0 %}done{%endif%} typeform_widget__btn testi-lunghi hand" title="C-Vantaggi indiretti">C-Vantaggi indiretti</a></li>
+      <li><a href="?comitato={{user_comitato}}&id=Q0Y9JlKq" class="{%if type_form.Q0Y9JlKq.0 %}done{%endif%} typeform_widget__btn testi-lunghi hand" title="D-Dichiarazioni finali">D-Dichiarazioni finali</a></li>
     </ul>
 
     <div class="typeform_widget__wrapper">
       {% if not is_done %}
         {% if typeform_id and user_comitato and user_id %}
-          <div class="typeform-widget" data-url="https://crocerossaitaliana.typeform.com/to/{{typeform_id}}?c={{user_comitato}}&u={{user_id}}" data-transparency="100" data-hide-headers=true data-hide-footer=true style="width: 100%; height: 500px;"></div>
+          <div class="typeform-widget" data-url="https://crocerossaitaliana.typeform.com/to/{{typeform_id}}?c={{user_comitato}}&u={{user_id}}&nc={{nome_comitato}}&nr={{nome_regionale}}" data-transparency="100" data-hide-headers=true data-hide-footer=true style="width: 100%; height: 500px;"></div>
           <script> (function() { var qs,js,q,s,d=document, gi=d.getElementById, ce=d.createElement, gt=d.getElementsByTagName, id="typef_orm", b="https://embed.typeform.com/"; if(!gi.call(d,id)) { js=ce.call(d,"script"); js.id=id; js.src=b+"embed.js"; q=gt.call(d,"script")[0]; q.parentNode.insertBefore(js,q) } })() </script>
         {% endif %}
       {% endif %}

@@ -4,7 +4,8 @@ from django.contrib import messages
 from autenticazione.funzioni import pagina_privata
 from anagrafica.permessi.applicazioni import COMMISSARIO, PRESIDENTE
 from .models import Page
-from .monitoraggio import TypeFormResponses, TypeFormNonSonoUnBersaglio, NONSONOUNBERSAGLIO, MONITORAGGIO ,MONITORAGGIOTYPE
+from .monitoraggio import TypeFormResponses, TypeFormNonSonoUnBersaglio, NONSONOUNBERSAGLIO, MONITORAGGIO, \
+    MONITORAGGIOTYPE, MONITORAGGIO_TRASPARENZA, TypeFormResponsesTrasparenza
 
 
 @pagina_privata
@@ -94,14 +95,14 @@ def monitoraggio_trasparenza(request, me):
 
         return 'monitoraggio_choose_comitato.html', {
             'deleghe': deleghe.distinct('oggetto_id'),
-            'url': 'monitoraggio',
+            'url': 'monitoraggio-trasparenza',
             'titolo': 'Monitoraggio Trasparenza',
-            'target': MONITORAGGIO
+            'target': MONITORAGGIO_TRASPARENZA
         }
 
     # Comitato selezionato, mostrare le form di typeform
     context = dict()
-    typeform = TypeFormResponses(request=request, me=me)
+    typeform = TypeFormResponsesTrasparenza(request=request, me=me)
 
     # Make test request (API/connection availability, etc)
     if not typeform.make_test_request_to_api:
@@ -125,9 +126,12 @@ def monitoraggio_trasparenza(request, me):
     context['comitato'] = typeform.comitato
     context['user_comitato'] = typeform.comitato_id
     context['user_id'] = typeform.get_user_pk
+    context['nome_comitato'] = context['comitato'].nome_completo
+    context['nome_regionale'] = context['comitato'].sede_regionale.nome_completo
     context['all_forms_are_completed'] = typeform.all_forms_are_completed
 
-    context['target'] = MONITORAGGIO
+    context['target'] = MONITORAGGIO_TRASPARENZA
+
     # Get celery_task_id
     # TODO: ajax polling task is ready
     # prefix = typeform.CELERY_TASK_PREFIX
@@ -138,7 +142,7 @@ def monitoraggio_trasparenza(request, me):
     #             context['celery_task_id'] = msg.message.replace(prefix, '').strip()
     #             del message_storage._loaded_messages[line]
 
-    return 'monitoraggio_traparenza.html', context
+    return 'monitoraggio_trasparenza.html', context
 
 
 
