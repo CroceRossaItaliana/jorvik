@@ -249,7 +249,7 @@ class ModuloModificaLezione(ModelForm):
 class ModuloModificaCorsoBase(ModelForm):
     class Meta:
         model = CorsoBase
-        fields = ['data_inizio', 'data_esame', 'data_esame_2',
+        fields = ['data_inizio', 'data_esame', 'data_esame_2', 'data_esame_pratica',
                   'min_participants', 'max_participants',
                   'descrizione',]
         widgets = {
@@ -266,6 +266,16 @@ class ModuloModificaCorsoBase(ModelForm):
             if max < min:
                 self.add_error('max_participants', "Numero massimo di "
                     "partecipanti non può essere minore del numero minimo.")
+
+        if 'data_esame_pratica' in cd and cd['data_esame_pratica']:
+            delta = (cd['data_esame_pratica'] - cd['data_esame']).days
+            if delta < 0:
+                self.add_error('data_esame_pratica', "Questa data non può essere precedente alla prima data esame")
+            if delta > 30:
+                self.add_error(
+                    'data_esame_pratica',
+                    "La prova pratica deve essere svolta nei 30gg successivi alla prima data esame"
+                )
         return cd
 
     def __init__(self, *args, **kwargs):
@@ -275,6 +285,8 @@ class ModuloModificaCorsoBase(ModelForm):
         if not is_nuovo:
             self.fields.pop('min_participants')
             self.fields.pop('max_participants')
+        else:
+            self.fields.pop('data_esame_pratica')
 
         # The fields are commented because the field's logic was moved to ModuloCreazioneCorsoBase forms step
             # self.fields.pop('titolo_cri')
