@@ -144,7 +144,15 @@ class AdminTitoloPersonale(ReadonlyAdminMixin, admin.ModelAdmin):
             data = row['Data Conseguimento'].strip()
             data_conseguimento = None
             if data:
-                data_conseguimento = datetime.strptime(data, '%d/%m/%Y')
+                try:
+                    data_conseguimento = datetime.strptime(data, '%d/%m/%Y')
+                except:
+                    qualifiche_non_caricate.append(
+                        self._aggiungi_errore(
+                            row,
+                            'la data {} non segue il formato %d/%m/%Y'.format(data).upper()
+                        )
+                    )
 
             # Direttore
             direttore = None
