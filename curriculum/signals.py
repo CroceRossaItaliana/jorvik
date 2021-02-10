@@ -5,5 +5,5 @@ from curriculum.models import TitoloPersonale
 
 
 @receiver(post_save, sender=TitoloPersonale)
-def foo(sender, instance, **kwargs):
+def save_titolo_personale(sender, instance, **kwargs):
     print('segnale', instance)
