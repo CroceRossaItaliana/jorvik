@@ -3,6 +3,7 @@ import hashlib
 from rest_framework import serializers
 
 from anagrafica.models import Persona, Appartenenza
+from curriculum.serializers import TitoliCRISerializer, TitoliStudioSerializer
 
 
 class AppartenenzaSerializer(serializers.ModelSerializer):
@@ -16,6 +17,8 @@ class PersonaSerializer(serializers.ModelSerializer):
     id = serializers.SerializerMethodField('get_id_hash')
     id_persona = serializers.SerializerMethodField('get_id')
     appartenenze = AppartenenzaSerializer(read_only=True, many=True)
+    titoli_cri = TitoliCRISerializer(read_only=True, many=True)
+    titoli_studio = TitoliStudioSerializer(read_only=True, many=True)
 
     def get_id(self, instance):
         return instance.id
@@ -25,4 +28,4 @@ class PersonaSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = Persona
-        fields = ['id', 'id_persona', 'nome', 'cognome', 'codice_fiscale', 'appartenenze']
+        fields = ['id', 'id_persona', 'nome', 'cognome', 'codice_fiscale', 'appartenenze', 'titoli_cri', 'titoli_studio']
