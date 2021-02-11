@@ -226,14 +226,17 @@ class Persona(ModelloSemplice, ConMarcaTemporale, ConAllegati, ConVecchioID):
     def ultimo_tesserino(self):
         return self.tesserini.all().order_by("creazione").last()
 
-
     @property
-    def titoli_cri(self):
-        return TitoloPersonale.objects.filter(persona=self, titolo__tipo=Titolo.TITOLO_CRI)\
+    def titoli(self):
+        return TitoloPersonale.objects.filter(persona=self)
 
-    @property
-    def titoli_studio(self):
-        return TitoloPersonale.objects.filter(persona=self, titolo__tipo=Titolo.TITOLO_STUDIO)
+    # @property
+    # def titoli_cri(self):
+    #     return TitoloPersonale.objects.filter(persona=self, titolo__tipo=Titolo.TITOLO_CRI)\
+    #
+    # @property
+    # def titoli_studio(self):
+    #     return TitoloPersonale.objects.filter(persona=self, titolo__tipo=Titolo.TITOLO_STUDIO)
 
     # Q: Qual e' il numero di telefono di questa persona?
     # A: Una persona puo' avere da zero ad illimitati numeri di telefono.

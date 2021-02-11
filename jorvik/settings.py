@@ -137,6 +137,7 @@ DEBUG_CONF_FILE = 'config/debug.cnf' if os.path.isfile('config/debug.cnf') else 
 APIS_CONF_FILE = 'config/apis.cnf' if os.path.isfile('config/apis.cnf') else 'config/apis.cnf.sample'
 GENERAL_CONF_FILE = 'config/general.cnf' if os.path.isfile('config/general.cnf') else 'config/general.cnf.sample'
 CELERY_CONF_FILE = 'config/celery.cnf' if os.path.isfile('config/celery.cnf') else 'config/celery.cnf.sample'
+ELASTIC_CONF_FILE = 'config/elastic.cnf' if os.path.isfile('config/elastic.cnf') else 'config/elastic.cnf.sample'
 
 # MySQL
 MYSQL_CONF = configparser.ConfigParser()
@@ -145,6 +146,11 @@ MYSQL_CONF.read(MYSQL_CONF_FILE)
 # PGSQL
 PGSQL_CONF = configparser.ConfigParser()
 PGSQL_CONF.read(PGSQL_CONF_FILE)
+
+# ELASTIC
+ELASTIC_CONF = configparser.ConfigParser()
+ELASTIC_CONF.read(ELASTIC_CONF_FILE)
+
 
 # Configurazione debug e produzione
 DEBUG_CONF = configparser.ConfigParser()
@@ -271,6 +277,10 @@ TRIPPUS_PASSWORD = APIS_CONF.get('trippus', 'password', fallback=os.environ.get(
 
 MOODLE_KEY = APIS_CONF.get('moodle', 'token', fallback=os.environ.get("MOODLE_KEY"))
 MOODLE_DOMAIN = APIS_CONF.get('moodle', 'domain', fallback=os.environ.get("MOODLE_DOMAIN"))
+
+ELASTIC_HOST = ELASTIC_CONF.get('elastic', 'host', fallback=os.environ.get("ELASTIC_HOST"))
+ELASTIC_CURRICULUM_INDEX = ELASTIC_CONF.get('elastic', 'curriculum_index', fallback=os.environ.get("ELASTIC_CURRICULUM_INDEX"))
+ELASTIC_CORSO_INDEX = ELASTIC_CONF.get('elastic', 'corso_index', fallback=os.environ.get("ELASTIC_CORSO_INDEX"))
 
 
 DESTINATARI_REPORT = ['sviluppo@cri.it', 'info@gaia.cri.it']
