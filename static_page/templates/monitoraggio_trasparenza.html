@@ -31,7 +31,7 @@
 
       <p style="text-align:center;"><strong>
         {% if all_forms_are_completed %}
-          Complimenti! Hai compilato il questionario trasparenza.<br>
+          Complimenti! Hai compilato il questionario "Sovvenzioni, contributi, incarichi retribuzioni e vantagi economici L.N. 14/2017, Art. 1 Comma 125" per l'anno 2020".<br>
           Clicca su "Invia via e-mail al Regionale" per trasmettere i dati inseriti.
         {% elif is_done %}
           Questa sezione è già compilata.
@@ -52,7 +52,7 @@
           <ul class="typeform_widget-tools__list">
             <li><a class="monitoraggio_action_btn" href="{% url 'pages:monitoraggio_actions' %}?action=print&target={{ target }}" target="_blank"><i class="fa fa-print fa-fw"></i> Stampa le risposte</a></li>
             <li><a class="monitoraggio_action_btn" href="{% url 'pages:monitoraggio_actions' %}?action=send_via_mail&target={{ target }}" target="_blank"><i class="fa fa-envelope fa-fw"></i> Invia via e-mail a te stesso</a></li>
-            <li><a class="monitoraggio_action_btn" href="{% url 'pages:monitoraggio_actions' %}?action=send_via_mail_regionale&target={{ target }}" target="_blank"><i class="fa fa-envelope fa-fw"></i> Invia via e-mail al regionale</a></li>
+            <li><a class="monitoraggio_action_btn" href="{% url 'pages:monitoraggio_actions' %}?action=send_via_mail_regionale&target={{ target }}" target="_blank"><i class="fa fa-envelope fa-fw"></i> Invia via e-mail al regionale e al Nazionale</a></li>
           </ul>
         </div>
     {% endif %}

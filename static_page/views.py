@@ -145,8 +145,6 @@ def monitoraggio_trasparenza(request, me):
     return 'monitoraggio_trasparenza.html', context
 
 
-
-
 @pagina_privata
 def monitoraggio_actions(request, me):
     action = request.GET.get('action')

@@ -343,12 +343,21 @@ class TypeFormResponsesTrasparenza(TypeForm):
     ])
     email_body = """Grazie per aver completato il Questionario sulla trasparenza."""
 
+    # REGIONALE
     email_body_regionale = """
         Gentilissimi, \n
         in allegato la Checklist di autovalutazione del Comitato {}
     """
 
     email_object = 'Risposte Questionario trasparenza di %s'
+
+    # NAZIONALE
+    email_body_regionale_n = """
+            Gentilissimi, \n
+            in allegato la Checklist di autovalutazione del Comitato {}
+        """
+
+    email_object_n = 'Risposte Questionario trasparenza di %s'
 
 
 MONITORAGGIO = 'monitoraggio'
