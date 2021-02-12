@@ -14,7 +14,7 @@ class Command(BaseCommand):
 
     def handle(self, *args, **options):
         index = options['index']
-
+        print('** {}'.format(index))
         for persona in Persona.objects.all():
             s_persona = PersonaSerializer(persona)
             data = json.dumps(s_persona.data)

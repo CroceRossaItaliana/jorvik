@@ -1,5 +1,7 @@
 import re
 import datetime
+import uuid
+
 from dateutil.relativedelta import relativedelta
 
 from django.conf import settings
@@ -163,6 +165,8 @@ class CorsoBase(Corso, ConVecchioID, ConPDF):
                                  null=True, blank=True)
     survey = models.ForeignKey(Survey, blank=True, null=True,
                                verbose_name='Questionario di gradimento')
+
+    signature = models.UUIDField(default = uuid.uuid4, editable = False)
 
     PUOI_ISCRIVERTI_OK = "IS"
     PUOI_ISCRIVERTI = (PUOI_ISCRIVERTI_OK,)
