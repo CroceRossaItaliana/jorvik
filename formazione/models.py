@@ -131,6 +131,8 @@ class CorsoBase(Corso, ConVecchioID, ConPDF):
         help_text="La data di inizio del corso. Utilizzata per la gestione delle iscrizioni.")
     data_esame = models.DateTimeField(blank=False, null=False)
     data_esame_2 = models.DateTimeField(_('Seconda data esame'), blank=True, null=True)
+    data_esame_pratica = models.DateTimeField(_('Data esame pratica'), blank=True, null=True)
+
     progressivo = models.SmallIntegerField(blank=False, null=False, db_index=True)
     anno = models.SmallIntegerField(blank=False, null=False, db_index=True)
     descrizione = models.TextField(blank=True, null=True)
@@ -715,6 +717,10 @@ class CorsoBase(Corso, ConVecchioID, ConPDF):
         else:
             return self.partecipazioni_confermate().exclude(**condition)
 
+    def partecipazioni_confermate_prova_pratica(self):
+        return self.partecipazioni_confermate().filter(partecipazione_online_da_sostenere=True)
+
+
     @property
     def terminabile_con_assenti_motivazione(self):
         ha_assenti = self.has_partecipazioni_confermate_con_assente_motivo
@@ -729,6 +735,10 @@ class CorsoBase(Corso, ConVecchioID, ConPDF):
     def has_partecipazioni_confermate_esame_seconda_data(self):
         return self.partecipazioni_confermate().filter(
             esaminato_seconda_data=True).exists()
+
+    @property
+    def has_partecipazioni_confermate_prova_pratica(self):
+        return self.partecipazioni_confermate().filter(partecipazione_online_da_sostenere=True).exists()
 
     @property
     def has_partecipazioni_confermate_con_assente_motivo(self):
@@ -1793,6 +1803,9 @@ class PartecipazioneCorsoBase(ModelloSemplice, ConMarcaTemporale, ConAutorizzazi
     esito_parte_2 = models.CharField(max_length=1, choices=ESITO, default=None, blank=True, null=True, db_index=True, help_text="Gesti e manovre salvavita.")
     argomento_parte_2 = models.CharField(max_length=1024, blank=True, null=True, help_text="es. BLS, colpo di calore.")
     partecipazione_online = models.BooleanField(verbose_name="Prova pratica su Parte 2 sostituita da colloquio ONLINE", default=False)
+
+    partecipazione_online_da_sostenere = models.BooleanField(default=False)
+
     extra_1 = models.BooleanField(verbose_name="Prova pratica su Parte 2 sostituita da colloquio.", default=False)
     extra_2 = models.BooleanField(verbose_name="Verifica effettuata solo sulla Parte 1 del programma del corso.", default=False)
     destinazione = models.ForeignKey("anagrafica.Sede", verbose_name="Sede di destinazione", related_name="aspiranti_destinati", default=None, null=True, blank=True, help_text="La Sede presso la quale verrà registrato come Volontario l'aspirante "

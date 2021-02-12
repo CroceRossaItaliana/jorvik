@@ -248,6 +248,17 @@
                     </tr>
                 </table>
             {% endif %}
+            {% if corso.has_partecipazioni_confermate_prova_pratica %}
+                <hr>
+                <h3 class="verbale__seconda-data-esame">Data esame prova pratica:</h3>
+                <table class="verbale__table">
+                    <tr>
+                        <td><a class="btn btn-default" href="{{ corso.url_termina }}?data_esame_prova_pratica"><i class="fa fa-fw fa-check-circle"></i> Compila il verbale</a></td>
+{#                        <td><a class="btn btn-info" href="{{ corso.url_pdf }}?anteprima&seconda_data_esame" target="_blank"><i class="fa fa-fw fa-times-circle"></i> Anteprima verbale</a></td>#}
+                        <td><a class="btn btn-danger" href="{{ corso.url_termina }}?terminate_course&data_esame_prova_pratica"><i class="fa fa-fw fa-times-circle"></i> Genera il verbale</a></td>
+                    </tr>
+                </table>
+            {% endif %}
             {% endif %}{# endif corso.terminabile #}
 
             {% if corso.esame_previsto %}
