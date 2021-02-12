@@ -4,14 +4,12 @@ import requests
 from celery import shared_task
 
 from anagrafica.serializers import PersonaSerializer
-from jorvik.settings import ELASTIC_HOST, ELASTIC_CURRICULUM_INDEX
+from formazione.serielizers import CorsoBaseSerializer
+from jorvik.settings import ELASTIC_HOST, ELASTIC_CURRICULUM_INDEX, ELASTIC_CORSO_INDEX
 
 
-@shared_task(bind=True)
-def task_volontario_elastic(self, persona):
-    s_persona = PersonaSerializer(persona)
-    data = json.dumps(s_persona.data)
-    url = "{}/{}/_doc".format(ELASTIC_HOST, ELASTIC_CURRICULUM_INDEX)
+def serilizer_elastic(data, index):
+    url = "{}/{}/_doc".format(ELASTIC_HOST, index)
     headers = {
         'Content-Type': 'application/json'
     }
@@ -21,5 +19,12 @@ def task_volontario_elastic(self, persona):
 
 
 @shared_task(bind=True)
+def task_volontario_elastic(self, persona):
+    s_persona = PersonaSerializer(persona)
+    return serilizer_elastic(data=json.dumps(s_persona.data), index=ELASTIC_CURRICULUM_INDEX)
+
+
+@shared_task(bind=True)
 def task_corso_elastic(self, corso):
-    pass
+    s_corso = CorsoBaseSerializer(corso)
+    return serilizer_elastic(data=json.dumps(s_corso.data), index=ELASTIC_CORSO_INDEX)

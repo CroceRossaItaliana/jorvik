@@ -29,6 +29,7 @@ services:
       - TRIPPUS_PASSWORD=${TRIPPUS_PASSWORD}
       - MOODLE_KEY=${MOODLE_KEY}
       - TOKEN_TYPE_FORM=${TOKEN_TYPE_FORM}
+      - ELASTIC_HOST=${ELASTIC_HOST}
     networks:
       - "default"
 
