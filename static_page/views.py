@@ -1,11 +1,16 @@
+from collections import OrderedDict
+
 from django.shortcuts import redirect, get_object_or_404
 from django.core.urlresolvers import reverse
 from django.contrib import messages
+
+from anagrafica.costanti import REGIONALE, LOCALE
+from anagrafica.models import Sede
 from autenticazione.funzioni import pagina_privata
 from anagrafica.permessi.applicazioni import COMMISSARIO, PRESIDENTE
 from .models import Page
 from .monitoraggio import TypeFormResponses, TypeFormNonSonoUnBersaglio, NONSONOUNBERSAGLIO, MONITORAGGIO, \
-    MONITORAGGIOTYPE, MONITORAGGIO_TRASPARENZA, TypeFormResponsesTrasparenza
+    MONITORAGGIOTYPE, MONITORAGGIO_TRASPARENZA, TypeFormResponsesTrasparenza, TypeFormResponsesTrasparenzaCheck
 
 
 @pagina_privata
@@ -215,3 +220,27 @@ def monitoraggio_nonsonounbersaglio(request, me):
     context['target'] = NONSONOUNBERSAGLIO
 
     return 'monitoraggio_nonsonounbersaglio.html', context
+
+
+@pagina_privata
+def monitora_trasparenza(request, me):
+    context = {}
+    id_regionale = request.GET.get('r', None)
+
+    if id_regionale:
+        struttura = OrderedDict()
+        regionale = Sede.objects.get(pk=id_regionale)
+        locali = regionale.ottieni_discendenti(includimi=True).filter(estensione__in=[LOCALE, REGIONALE]).order_by('-estensione')
+        for locale in locali:
+            delegato = locale.presidente()
+            typeform = TypeFormResponsesTrasparenzaCheck(
+                persona=delegato, user_pk=delegato.id, comitato_id=locale.id
+            )
+            typeform.get_responses_for_all_forms()
+            struttura[locale] = typeform.all_forms_are_completed
+
+        context['struttura'] = struttura
+    else:
+        context['regionali'] = Sede.objects.filter(estensione=REGIONALE, attiva=True)
+
+    return 'monitora_trasparenza.html', context

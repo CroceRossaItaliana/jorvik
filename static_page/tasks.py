@@ -40,12 +40,3 @@ def send_mail_regionale(self, user_pk, target):
 
     email.attach('file.pdf', pdf)
     email.send()
-
-    if target == MONITORAGGIO_TRASPARENZA:
-        email_n = EmailMessage(responses.email_object_n % responses.persona,
-                             responses.email_body_regionale_n.format(responses.comitato),
-                             DEFAULT_FROM_EMAIL,
-                             ['elena.valletta@cri.it'],
-                            )
-        email_n.attach('file.pdf', pdf)
-        email_n.send()

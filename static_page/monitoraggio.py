@@ -337,9 +337,9 @@ class TypeFormNonSonoUnBersaglio(TypeForm):
 class TypeFormResponsesTrasparenza(TypeForm):
     form_ids = OrderedDict([
         ('UefRCHAG', 'A-Autorizzazione e Privacy'),
-        ('XXz4OBuM', 'B-Sovvenzioni, sussidi, vantaggi, contributi o aiuti'),
-        ('OaeI2X1L', 'C-Vantaggi indiretti'),
-        ('Q0Y9JlKq', 'D-Dichiarazioni finali'),
+        # ('XXz4OBuM', 'B-Sovvenzioni, sussidi, vantaggi, contributi o aiuti'),
+        # ('OaeI2X1L', 'C-Vantaggi indiretti'),
+        # ('Q0Y9JlKq', 'D-Dichiarazioni finali'),
     ])
     email_body = """Grazie per aver completato il Questionario sulla trasparenza."""
 
@@ -370,3 +370,75 @@ MONITORAGGIOTYPE = {
     MONITORAGGIO_TRASPARENZA: (TypeFormResponsesTrasparenza, 'pages:monitoraggio-trasparenza'),
     NONSONOUNBERSAGLIO: (TypeFormNonSonoUnBersaglio, 'pages:monitoraggio-nonsonounbersaglio')
 }
+
+
+class TypeFormResponsesTrasparenzaCheck:
+
+    CELERY_TASK_PREFIX = 'CELERY_TASK_MSG_'
+    TYPEFORM_DOMAIN = "https://api.typeform.com"
+    TYPEFORM_TOKEN = settings.TOKEN_TYPE_FORM
+    ENDPOINT = TYPEFORM_DOMAIN + "/forms/%s"
+    HEADERS = {
+        'Authorization': "Bearer %s" % TYPEFORM_TOKEN,
+        'Content-Type': 'application/json'
+    }
+
+    form_ids = OrderedDict([
+        ('UefRCHAG', 'A-Autorizzazione e Privacy')
+    ])
+
+    def __init__(self, persona=None, user_pk=None, comitato_id=None):
+        # self.request = request
+        self.me = persona
+        self.comitato_id = comitato_id
+        self.user_pk = user_pk  # Celery
+
+        self.context_typeform = self._set_typeform_context()
+
+    def _set_typeform_context(self):
+        # This method generates a dict values,
+        # False as default value means that form_id is not completed yet.
+        return {k: [False, self.comitato_id, v] for k, v in self.form_ids.items()}
+
+    def get_responses_for_all_forms(self):
+        comitato_id = str(self.comitato_id)
+        for _id, bottone_name in self.form_ids.items():
+            json = self.get_json_from_responses(_id)
+            for item in json['items']:
+                c = item.get('hidden', OrderedDict())
+                c = c.get('c')
+
+                if c and c == comitato_id:
+                    self.context_typeform[_id][0] = True
+                    break  # bottone spento
+
+    def get_json_from_responses(self, form_id=None, instance=None):
+        if instance:
+            return instance.json()
+        else:
+            if form_id is not None:
+                # Make complete request
+                # return self.get_responses(form_id).json()
+                return self.get_completed_responses(form_id)
+            else:
+                raise BaseException('You must pass form_id')
+
+    def get_completed_responses(self, form_id):
+        response = self.make_request(form_id,
+                                     path='/responses',
+                                     query=self.user_pk,
+                                     completed=True)
+        return response.json()
+
+    @classmethod
+    def make_request(cls, form_id, path='', **kwargs):
+        url = cls.ENDPOINT % form_id + path
+        if kwargs.get('completed') == True and kwargs.get('query'):
+            url += '?completed=true'
+            url += '&query=%s' % kwargs.get('query')
+        response = requests.get(url, headers=cls.HEADERS)
+        return response
+
+    @property
+    def all_forms_are_completed(self):
+        return 0 if False in [v[0] for k, v in self.context_typeform.items()] else 1

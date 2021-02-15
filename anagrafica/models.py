@@ -1314,6 +1314,15 @@ class Persona(ModelloSemplice, ConMarcaTemporale, ConAllegati, ConVecchioID):
         return delegato_area
 
     @property
+    def is_responsabile_area_monitoraggio_trasparenza(self):
+        delegato_area = False
+        print(self.deleghe_attuali(tipo=RESPONSABILE_AREA))
+        for delega in self.deleghe_attuali(tipo=RESPONSABILE_AREA):
+            if 'Monitoraggio Traspazenza'.lower() in delega.oggetto.__str__().lower():
+                delegato_area = True
+        return delegato_area
+
+    @property
     def is_responsabile_area_delegato_assemblea_nazionale_giovani(self):
         delegato_area = False
         for delega in self.deleghe_attuali(tipo=RESPONSABILE_AREA):
@@ -1964,7 +1973,7 @@ class Sede(ModelloAlbero, ConMarcaTemporale, ConGeolocalizzazione, ConVecchioID,
 
     @property
     def link(self):
-        return "<a href='%s' target='_new'>%s</a>" % (
+        return "<a href='%s' target='_blank'>%s</a>" % (
             self.url, self.nome_completo
         )
 
