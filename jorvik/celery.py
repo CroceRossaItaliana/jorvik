@@ -30,7 +30,7 @@ app.conf.task_routes = {
     'formazione.tasks.task_invia_email_agli_aspiranti': {'queue': 'queue_formazione'},
 
     'anagrafica.tasks.task_volontario_elastic': {'queue': 'queue_elastic'},
-    # 'anagrafica.tasks.task_corso_elastic': {'queue': 'queue_elastic'},
+    'anagrafica.tasks.task_corso_elastic': {'queue': 'queue_elastic'},
 }
 
 # Load task modules from all registered Django app configs.
