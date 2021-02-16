@@ -82,9 +82,18 @@ class FormAddQualificaCRI(autocomplete_light.ModelForm):
         if app:
             app_vo = app.filter(membro=Appartenenza.VOLONTARIO)
             app_di = app.filter(membro=Appartenenza.DIPENDENTE)
-            app = app.last() if app_vo or app_di else None
+
+            if app_vo or app_di:
+                if app_vo:
+                    app = app_vo.last()
+                elif app_di:
+                    app = app_di.last()
+            else:
+                app = None
+
             if app and hasattr(app.sede, 'sede_regionale'):
                 sede_regionale = app.sede.sede_regionale
+                print(sede_regionale)
                 # email = sede_regionale.email if hasattr(sede_regionale, 'email') else email
                 email = TitoloPersonale.MAIL_FORMAZIONE[sede_regionale.pk]
 

@@ -2,10 +2,9 @@ import io
 import csv
 
 import xlsxwriter
-
+import re
 from django.db import models
 from django.http import HttpResponse
-from django.core.urlresolvers import reverse
 from django.contrib.postgres.fields import JSONField
 
 from anagrafica.models import Persona
@@ -300,16 +299,18 @@ class SurveyResult(models.Model):
 
                     # LEZIONI INTESTAZIONE
                     for lezione in course.lezioni.all():
-                        nome_lezione = lezione.nome
+
+                        nome_lezione = re.sub(r'[\[\]:*?\/\\]*', '', lezione.nome)
+
                         if nome_lezione not in sheet_lezioni:
                             sheet = workbook.add_worksheet(nome_lezione[:30])
-                            sheet_lezioni[lezione.nome] = {
+                            sheet_lezioni[nome_lezione] = {
                                 'sheet': sheet,
                                 'coll': 1,
                                 'row': 1,
                                 'medie': OrderedDict()
                             }
-                            sheet.write(0, 0, lezione.nome, bold)
+                            sheet.write(0, 0, nome_lezione, bold)
                             for intestazione in intestazione_lezioni:
                                 sheet.write(
                                     sheet_lezioni[nome_lezione]['row'],
@@ -325,7 +326,8 @@ class SurveyResult(models.Model):
                 for docente, lezioni in lezioni_dict_new.items():
 
                     for lezione, domande_risposte in sorted(lezioni.items(), key=lambda x: x[0].pk):
-                        nome_lezione = lezione.nome
+                        nome_lezione = re.sub(r'[\[\]:*?\/\\]*', '', lezione.nome)
+
                         for domanda, risposta in sorted(domande_risposte.items(), key=lambda x: x[0].pk):
                             sheet_lezione = sheet_lezioni[nome_lezione]
                             if sheet_lezioni[nome_lezione]['coll'] == 1:
