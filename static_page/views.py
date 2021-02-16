@@ -87,7 +87,7 @@ def monitoraggio(request, me):
 
 @pagina_privata
 def monitoraggio_trasparenza(request, me):
-    if True not in [me.is_comissario, me.is_presidente]: return redirect('/')
+    if True not in [me.is_comissario, me.is_presidente, me.is_delega_responsabile_area_trasparenza]: return redirect('/')
     if not hasattr(me, 'sede_riferimento'): return redirect('/')
 
     request_comitato = request.GET.get('comitato')
@@ -137,16 +137,6 @@ def monitoraggio_trasparenza(request, me):
 
     context['target'] = MONITORAGGIO_TRASPARENZA
 
-    # Get celery_task_id
-    # TODO: ajax polling task is ready
-    # prefix = typeform.CELERY_TASK_PREFIX
-    # message_storage = get_messages(request)
-    # if len(message_storage) > 0:
-    #     for line, msg in enumerate(message_storage):
-    #         if msg.message.startswith(prefix):
-    #             context['celery_task_id'] = msg.message.replace(prefix, '').strip()
-    #             del message_storage._loaded_messages[line]
-
     return 'monitoraggio_trasparenza.html', context
 
 
@@ -158,7 +148,7 @@ def monitoraggio_actions(request, me):
 
     if not action: return redirect_url
     if not hasattr(me, 'sede_riferimento'): return redirect_url
-    if True not in [me.is_comissario, me.is_presidente]: return redirect('/')
+    if True not in [me.is_comissario, me.is_presidente, me.is_delega_responsabile_area_trasparenza]: return redirect('/')
 
     responses = MONITORAGGIOTYPE[target][0](request=request, me=me)
     if action == 'print':
@@ -226,13 +216,24 @@ def monitoraggio_nonsonounbersaglio(request, me):
 def monitora_trasparenza(request, me):
     context = {}
     id_regionale = request.GET.get('r', None)
+    action = request.GET.get('action', None)
+    comitato = request.GET.get('comitato', None)
+
+    if action and comitato:
+        sede = Sede.objects.get(pk=comitato)
+        delegato = sede.delegato_monitoraggio_trasparenza()
+        typeform = TypeFormResponsesTrasparenzaCheck(
+            persona=delegato, user_pk=delegato.id, comitato_id=comitato
+        )
+        typeform.get_responses_for_all_forms()
+        return typeform.print()
 
     if id_regionale:
         struttura = OrderedDict()
         regionale = Sede.objects.get(pk=id_regionale)
         locali = regionale.ottieni_discendenti(includimi=True).filter(estensione__in=[LOCALE, REGIONALE]).order_by('-estensione')
         for locale in locali:
-            delegato = locale.presidente()
+            delegato = locale.delegato_monitoraggio_trasparenza()
             typeform = TypeFormResponsesTrasparenzaCheck(
                 persona=delegato, user_pk=delegato.id, comitato_id=locale.id
             )
@@ -244,3 +245,4 @@ def monitora_trasparenza(request, me):
         context['regionali'] = Sede.objects.filter(estensione=REGIONALE, attiva=True)
 
     return 'monitora_trasparenza.html', context
+

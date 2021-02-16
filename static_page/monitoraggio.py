@@ -55,6 +55,7 @@ class TypeForm:
     @property
     def comitato_id(self):
         persona = self.persona
+
         deleghe = persona.deleghe_attuali(tipo__in=[COMMISSARIO, PRESIDENTE])
 
         request_comitato = self.request.GET.get('comitato') if self.request else None
@@ -336,10 +337,7 @@ class TypeFormNonSonoUnBersaglio(TypeForm):
 
 class TypeFormResponsesTrasparenza(TypeForm):
     form_ids = OrderedDict([
-        ('UefRCHAG', 'A-Autorizzazione e Privacy'),
-        # ('XXz4OBuM', 'B-Sovvenzioni, sussidi, vantaggi, contributi o aiuti'),
-        # ('OaeI2X1L', 'C-Vantaggi indiretti'),
-        # ('Q0Y9JlKq', 'D-Dichiarazioni finali'),
+        ('UefRCHAG', 'A-Autorizzazione e Privacy')
     ])
     email_body = """Grazie per aver completato il Questionario sulla trasparenza."""
 
@@ -351,13 +349,30 @@ class TypeFormResponsesTrasparenza(TypeForm):
 
     email_object = 'Risposte Questionario trasparenza di %s'
 
-    # NAZIONALE
-    email_body_regionale_n = """
-            Gentilissimi, \n
-            in allegato la Checklist di autovalutazione del Comitato {}
-        """
+    @property
+    def comitato_id(self):
+        persona = self.persona
 
-    email_object_n = 'Risposte Questionario trasparenza di %s'
+        delegato = persona.delega_responsabile_area_trasparenza
+
+        if delegato:
+            return delegato.oggetto.sede.pk
+
+        deleghe = persona.deleghe_attuali(tipo__in=[COMMISSARIO, PRESIDENTE])
+
+        request_comitato = self.request.GET.get('comitato') if self.request else None
+        if request_comitato:
+            # Check comitato_id validity
+            if int(request_comitato) not in deleghe.values_list('oggetto_id', flat=True):
+                raise ValueError("L'utenza non ha una delega con l'ID del comitato indicato.")
+            return request_comitato
+        else:
+            if persona.is_presidente:
+                # Il ruolo presidente può avere soltanto una delega attiva,
+                # quindi vado sicuro a prendere <oggetto_id> dell'unico record
+                return deleghe.filter(tipo=PRESIDENTE).last().oggetto_id
+
+
 
 
 MONITORAGGIO = 'monitoraggio'
@@ -442,3 +457,139 @@ class TypeFormResponsesTrasparenzaCheck:
     @property
     def all_forms_are_completed(self):
         return 0 if False in [v[0] for k, v in self.context_typeform.items()] else 1
+
+    def _render_to_string(self, to_print=False):
+        return render_to_string('monitoraggio_print.html', {
+            'user_details': self.me,
+            # 'request': self.request,
+            'results': self._retrieve_data(),
+            'to_print': to_print,
+        })
+
+    def has_answers(self, json):
+        try:
+            items = json['items'][0]
+            has_answers = 'answers' in items and len(items['answers']) > 0
+        except IndexError:
+            # print('items IndexError Exception')
+            return False
+        else:
+            return has_answers  # must return True
+
+    def get_answers_from_json(self, json):
+        items = json['items'][0]
+        answers = items['answers']
+        return answers
+
+    def _retrieve_data(self):
+        retrieved = OrderedDict()
+        for form_id, form_name in self.form_ids.items():
+            responses_for_form_id = self.get_completed_responses(form_id)
+
+            if self.has_answers(responses_for_form_id):
+                answers = self.get_answers_from_json(responses_for_form_id)
+                answers_refactored = OrderedDict([(i['field']['ref'], [i]) for i in answers])
+
+                questions_fields = self.collect_questions(form_id)
+                for answer_ref, answer_data in answers_refactored.items():
+                    if answer_ref in questions_fields.keys():
+                        question = questions_fields[answer_ref]
+                        combined = self.combine_question_with_user_answer(
+                                question=question,
+                                answer=answer_data,
+                                form_name=form_name
+                        )
+
+                        if form_id not in retrieved:
+                            retrieved[form_id] = [combined]
+                        else:
+                            retrieved[form_id].append(combined)
+
+        if not retrieved:
+            self._no_data_retrieved = True
+
+        return retrieved
+
+    def collect_questions(self, form_id):
+        # requested url:  https://api.typeform.com/forms/<form_id>
+
+        questions = self.get_form_questions(form_id)
+        questions_without_hierarchy = OrderedDict()
+
+        # eh si, lo so è un bella camminata...
+        for field in questions['fields']:
+            if 'properties' in field:
+                if 'fields' in field['properties']:
+                    question_parent = {i: field[i] for i in ['id', 'title']}
+
+                    questions_without_hierarchy[field['ref']] = {i: field[i] for i in ['id', 'title']}
+
+                    for i in field['properties']['fields']:
+                        questions_without_hierarchy[i['ref']] = {_: i[_] for _ in ['id', 'title']}
+
+                        if question_parent:
+                            questions_without_hierarchy[i['ref']]['parent'] = question_parent
+                            # reset variable, to avoid displaying data in each table row (show only 1 time)
+                            question_parent = OrderedDict()
+
+                        if 'properties' in i:
+                            for k, v in i['properties'].items():
+                                if 'choices' in k:
+                                    labels = [label for label in v]
+                                    questions_without_hierarchy[i['ref']]['labels'] = labels
+                else:
+                    questions_without_hierarchy[field['ref']] = {i: field[i] for i in ['id', 'title']}
+            else:
+                questions_without_hierarchy[field['ref']] = {i: field[i] for i in ['id', 'title']}
+
+        return questions_without_hierarchy
+
+    def combine_question_with_user_answer(self, **kwargs):
+        question = kwargs.get('question')
+        answer = kwargs.get('answer')
+        answer = answer[0] if len(answer) > 0 else None
+
+        type = answer['type']
+
+        if question and answer:
+            return {
+                'question_id': question['id'],
+                # 'question_ref': question['ref'],
+                'question_title': question['title'],
+                'question_parent': question['parent'] if 'parent' in question else dict(),
+                'answer_field_id': answer['field']['id'],
+                'answer_field_type': answer['field']['type'],
+                'answer_field_ref': answer['field']['ref'],
+                'answer_type': type,
+                'answer': self.handle_answer_by_type(type, answer[type]),
+                'form_name': kwargs.get('form_name'),
+            }
+        else:
+            return None
+
+    def get_form_questions(self, form_id):
+        response = self.make_request(form_id)
+        return response.json()
+
+    def handle_answer_by_type(self, type, answer):
+        if type == 'boolean':
+            return 'Si' if answer == True else 'No'
+        elif type == 'choices':
+            if 'labels' in answer:
+                return ', '.join(answer['labels'])
+            elif 'other' in answer:
+                return answer.get('other')
+        elif type == 'choice':
+            return answer.get('label') or answer.get('other')
+        elif type in ['text', 'number', 'email', 'url', 'file_url', 'date', 'payment']:
+            return answer
+
+    def print(self):
+        html = self._render_to_string(to_print=True)
+
+        # if hasattr(self, '_no_data_retrieved'):
+        #     messages.add_message(self.request, messages.ERROR,
+        #                          'Non ci sono i dati per generare il report.')
+        #     return redirect(reverse('pages:monitoraggio'))
+
+        return HttpResponse(html)

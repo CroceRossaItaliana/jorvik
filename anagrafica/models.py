@@ -26,7 +26,7 @@ from .validators import (valida_codice_fiscale, ottieni_genere_da_codice_fiscale
     valida_iban, valida_email_personale) # valida_almeno_14_anni, crea_validatore_dimensione_file)
 from .permessi.shortcuts import *
 from .permessi.costanti import RUBRICA_DELEGATI_OBIETTIVO_ALL, GESTIONE_SOCI_CM, GESTIONE_SOCI_IIVV
-from attivita.models import Turno, Partecipazione
+from attivita.models import Turno, Partecipazione, Area
 from base.files import PDF, Excel, FoglioExcel
 from base.geo import ConGeolocalizzazione, Locazione
 from base.stringhe import normalizza_nome, GeneratoreNomeFile
@@ -1316,9 +1316,28 @@ class Persona(ModelloSemplice, ConMarcaTemporale, ConAllegati, ConVecchioID):
     @property
     def is_responsabile_area_monitoraggio_trasparenza(self):
         delegato_area = False
-        print(self.deleghe_attuali(tipo=RESPONSABILE_AREA))
         for delega in self.deleghe_attuali(tipo=RESPONSABILE_AREA):
-            if 'Monitoraggio Traspazenza'.lower() in delega.oggetto.__str__().lower():
+            if 'Monitoraggio Trasparenza'.lower() in delega.oggetto.__str__().lower():
+                delegato_area = True
+        return delegato_area
+
+    @property
+    def delega_responsabile_area_monitoraggio_trasparenza(self):
+        for delega in self.deleghe_attuali(tipo=RESPONSABILE_AREA):
+            if 'Monitoraggio Trasparenza'.lower() in delega.oggetto.__str__().lower():
+                return delega
+
+    @property
+    def delega_responsabile_area_trasparenza(self):
+        for delega in self.deleghe_attuali(tipo=RESPONSABILE_AREA):
+            if 'Trasparenza'.lower() in delega.oggetto.__str__().lower():
+                return delega
+
+    @property
+    def is_delega_responsabile_area_trasparenza(self):
+        delegato_area = False
+        for delega in self.deleghe_attuali(tipo=RESPONSABILE_AREA):
+            if 'Trasparenza'.lower() in delega.oggetto.__str__().lower():
                 delegato_area = True
         return delegato_area
 
@@ -1329,12 +1348,6 @@ class Persona(ModelloSemplice, ConMarcaTemporale, ConAllegati, ConVecchioID):
             if 'ASSEMBLEA GIOVANI'.lower() in delega.oggetto.__str__().lower():
                 delegato_area = True
         return delegato_area
-
-    @property
-    def delega_responsabile_area_delegato_assemblea_nazionale_giovani(self):
-        for delega in self.deleghe_attuali(tipo=RESPONSABILE_AREA):
-            if 'ASSEMBLEA GIOVANI'.lower() in delega.oggetto.__str__().lower():
-                return delega
 
     @property
     def delegato_tempo_della_gentilezza(self):
@@ -2069,6 +2082,14 @@ class Sede(ModelloAlbero, ConMarcaTemporale, ConGeolocalizzazione, ConVecchioID,
         if not delega_presidenziale:
             delega_presidenziale = self.comitato.delegati_attuali(tipo=COMMISSARIO, solo_deleghe_attive=True).first()
         return delega_presidenziale
+
+    def delegato_monitoraggio_trasparenza(self):
+        area = Area.objects.filter(sede=self, nome__iexact='Trasparenza')
+        if area:
+            delega = Delega.objects.filter(tipo=RESPONSABILE_AREA, oggetto_id=area.first().id).first()
+            return delega.persona
+        presidente = self.presidente()
+        return presidente
 
     def delegati_formazione(self):
         return self.comitato.delegati_attuali(tipo=RESPONSABILE_FORMAZIONE, solo_deleghe_attive=True)

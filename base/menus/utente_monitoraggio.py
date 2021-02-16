@@ -20,7 +20,7 @@ def menu_monitoraggio(me):
                 me.is_presidente or me.is_comissario
         ) else None,
         ("Trasparenza L. 124/2017", 'fa-user', reverse('pages:monitoraggio-trasparenza')) if (
-                me.is_presidente or me.is_comissario
+                me.is_presidente or me.is_comissario or me.delega_responsabile_area_trasparenza
         ) else None,
         ("Monitora Trasparenza L. 124/2017", 'fa-user', reverse('pages:monitora-trasparenza')) if
                 me.is_responsabile_area_monitoraggio_trasparenza else None,
@@ -28,5 +28,5 @@ def menu_monitoraggio(me):
     ))
 
     return VOCE_MONITORAGGIO if me and (
-            (me.is_presidente or me.is_comissario) or me.is_responsabile_area_monitoraggio_trasparenza
+            me.is_presidente or me.is_comissario or me.is_responsabile_area_monitoraggio_trasparenza or me.delega_responsabile_area_trasparenza
     ) else None
