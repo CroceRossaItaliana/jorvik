@@ -15,6 +15,11 @@ def menu_monitoraggio(me):
         if len(deleghe_monitoraggio) == 1:
             link_bersaglio += '?comitato=%s&id=%s' % (last_delega_id, first_typeform)
 
+    delega_regionale = me.delega_presdente_regionale
+    id_regionale = None
+    if delega_regionale:
+        id_regionale = delega_regionale.oggetto.id
+
     VOCE_MONITORAGGIO = ("Check-list Comitati", (
         ("Questionario di autocontrollo", 'fa-user', reverse('pages:monitoraggio')) if (
                 me.is_presidente or me.is_comissario
@@ -22,6 +27,8 @@ def menu_monitoraggio(me):
         ("Trasparenza L. 124/2017", 'fa-user', reverse('pages:monitoraggio-trasparenza')) if (
                 me.is_presidente or me.is_comissario or me.delega_responsabile_area_trasparenza
         ) else None,
+        ("Monitora Trasparenza L. 124/2017", 'fa-user', reverse('pages:monitora-trasparenza')+'?r={}'.format(id_regionale)) if
+                delega_regionale else None,
         ("Monitora Trasparenza L. 124/2017", 'fa-user', reverse('pages:monitora-trasparenza')) if
                 me.is_responsabile_area_monitoraggio_trasparenza else None,
         # ("Monitoraggio NON SONO UN BERSAGLIO", 'fa-user', link_bersaglio) if link_bersaglio else None,

@@ -25,4 +25,4 @@ url = http://selenium:4444/wd/hub
 browser = firefox
 
 [typeform]
-# token =
+token = CR9AVaAkLnpp51jKe1x6QmZLWAmkpMDR8ztCYZPfYVrm

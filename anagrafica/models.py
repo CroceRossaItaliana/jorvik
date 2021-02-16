@@ -1314,6 +1314,14 @@ class Persona(ModelloSemplice, ConMarcaTemporale, ConAllegati, ConVecchioID):
         return delegato_area
 
     @property
+    def delega_presdente_regionale(self):
+        delega = self.delega_presidente or self.delega_commissario
+        if delega:
+            return delega if delega.oggetto.estensione == REGIONALE else None
+        else:
+            return None
+
+    @property
     def is_responsabile_area_monitoraggio_trasparenza(self):
         delegato_area = False
         for delega in self.deleghe_attuali(tipo=RESPONSABILE_AREA):
@@ -1329,14 +1337,14 @@ class Persona(ModelloSemplice, ConMarcaTemporale, ConAllegati, ConVecchioID):
 
     @property
     def delega_responsabile_area_trasparenza(self):
-        for delega in self.deleghe_attuali(tipo=RESPONSABILE_AREA):
+        for delega in self.deleghe_attuali(tipo=DELEGATO_AREA):
             if 'Trasparenza'.lower() in delega.oggetto.__str__().lower():
                 return delega
 
     @property
     def is_delega_responsabile_area_trasparenza(self):
         delegato_area = False
-        for delega in self.deleghe_attuali(tipo=RESPONSABILE_AREA):
+        for delega in self.deleghe_attuali(tipo=DELEGATO_AREA):
             if 'Trasparenza'.lower() in delega.oggetto.__str__().lower():
                 delegato_area = True
         return delegato_area
@@ -2086,8 +2094,9 @@ class Sede(ModelloAlbero, ConMarcaTemporale, ConGeolocalizzazione, ConVecchioID,
     def delegato_monitoraggio_trasparenza(self):
         area = Area.objects.filter(sede=self, nome__iexact='Trasparenza')
         if area:
-            delega = Delega.objects.filter(tipo=RESPONSABILE_AREA, oggetto_id=area.first().id).first()
-            return delega.persona
+            delega = Delega.objects.filter(tipo=DELEGATO_AREA, oggetto_id=area.first().id).first()
+            if delega:
+                return delega.persona
         presidente = self.presidente()
         return presidente
 

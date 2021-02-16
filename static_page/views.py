@@ -245,4 +245,3 @@ def monitora_trasparenza(request, me):
         context['regionali'] = Sede.objects.filter(estensione=REGIONALE, attiva=True)
 
     return 'monitora_trasparenza.html', context
-
