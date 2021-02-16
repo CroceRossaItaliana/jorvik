@@ -1,5 +1,5 @@
 [elastic]
-host = https://es.staging.gaia.cri.it
+# host =
 curriculum_index = curriculum_index_dev
 corso_index = corso_index_dev
 
