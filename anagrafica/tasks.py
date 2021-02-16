@@ -20,8 +20,7 @@ def serilizer_elastic(data, index):
 
 @shared_task(bind=True)
 def task_volontario_elastic(self, persona):
-    s_persona = PersonaSerializer(persona)
-    return serilizer_elastic(data=json.dumps(s_persona.data), index=ELASTIC_CURRICULUM_INDEX)
+    return serilizer_elastic(data=persona, index=ELASTIC_CURRICULUM_INDEX)
 
 
 @shared_task(bind=True)
