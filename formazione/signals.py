@@ -7,5 +7,5 @@ from anagrafica.tasks import task_corso_elastic
 
 @receiver(post_save, sender=CorsoBase)
 def save_corso_base(sender, instance, **kwargs):
-    task = task_corso_elastic.apply_async(args=(instance,), task_id=uuid.uuid4())
-    return task
+    pass
+    # return task_corso_elastic.apply_async(args=(instance,), task_id=uuid.uuid4())
