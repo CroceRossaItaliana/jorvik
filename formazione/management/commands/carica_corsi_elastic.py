@@ -16,14 +16,15 @@ class Command(BaseCommand):
         print('** {}'.format(index))
         for corso in CorsoBase.objects.all():
             s_corso = CorsoBaseSerializer(corso)
-            data = json.dumps(s_corso.data)
-            url = "{}/{}/_doc".format(ELASTIC_HOST, index)
+            data = s_corso.data
+            url = "{}/{}/_doc/{}?op_type=create".format(ELASTIC_HOST, index, data['id'])
             headers = {
                 'Content-Type': 'application/json'
             }
 
-            response = requests.post(url, headers=headers, data=data)
+            response = requests.post(url, headers=headers, data=json.dumps(data))
 
             if response.status_code != 201:
                 print(corso, response.status_code, data)
                 print(response.text)
+            break

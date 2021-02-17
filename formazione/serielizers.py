@@ -13,10 +13,18 @@ class LezioneCorsoBaseSerializer(serializers.ModelSerializer):
 
 
 class CorsoBaseSerializer(serializers.ModelSerializer):
+    id = serializers.SerializerMethodField('get_signature')
+    id_corso = serializers.SerializerMethodField('get_id')
     nome = serializers.SlugRelatedField(source='titolo_cri', read_only=True, slug_field='nome')
     direttore = serializers.SerializerMethodField()
     tipo = serializers.SerializerMethodField()
     lezioni = LezioneCorsoBaseSerializer(many=True, read_only=True)
+
+    def get_id(self, instance):
+        return instance.id
+
+    def get_signature(self, instance):
+        return str(instance.signature)
 
     def get_direttore(self, instance):
         return instance.direttori_corso(as_delega=True).first().persona.nome_completo
@@ -27,5 +35,5 @@ class CorsoBaseSerializer(serializers.ModelSerializer):
     class Meta:
         model = CorsoBase
         fields = [
-            'nome', 'tipo', 'data_esame', 'data_esame_2', 'data_esame_pratica', 'direttore', 'lezioni'
+            'id', 'id_corso', 'nome', 'tipo', 'data_esame', 'data_esame_2', 'data_esame_pratica', 'direttore', 'lezioni'
         ]
