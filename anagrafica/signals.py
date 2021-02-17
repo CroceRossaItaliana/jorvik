@@ -6,16 +6,17 @@ from kombu import uuid
 
 from anagrafica.models import Persona, Appartenenza
 from anagrafica.serializers import PersonaSerializer
-from anagrafica.tasks import task_volontario_elastic
+from anagrafica.tasks import load_elastic
+from jorvik.settings import ELASTIC_HOST, ELASTIC_CURRICULUM_INDEX
 
 
 @receiver(post_save, sender=Persona)
 def save_persona(sender, instance, **kwargs):
     s_persona = PersonaSerializer(instance)
-    task_volontario_elastic.apply_async(args=(json.dumps(s_persona.data),), task_id=uuid())
+    load_elastic.apply_async(args=(json.dumps(s_persona.data), ELASTIC_HOST, ELASTIC_CURRICULUM_INDEX), task_id=uuid())
 
 
 @receiver(post_save, sender=Appartenenza)
 def save_appartenenza(sender, instance, **kwargs):
     s_persona = PersonaSerializer(instance.persona)
-    task_volontario_elastic.apply_async(args=(json.dumps(s_persona.data),), task_id=uuid())
+    load_elastic.apply_async(args=(json.dumps(s_persona.data), ELASTIC_HOST, ELASTIC_CURRICULUM_INDEX), task_id=uuid())
