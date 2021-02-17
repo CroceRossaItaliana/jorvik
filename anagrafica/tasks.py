@@ -10,4 +10,4 @@ def load_elastic(self, data, host, index):
     }
     response = requests.post(url, headers=headers, data=data)
 
-    return response.status_code
+    # return response.status_code
