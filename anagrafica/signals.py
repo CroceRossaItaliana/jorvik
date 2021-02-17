@@ -13,10 +13,12 @@ from jorvik.settings import ELASTIC_HOST, ELASTIC_CURRICULUM_INDEX
 @receiver(post_save, sender=Persona)
 def save_persona(sender, instance, **kwargs):
     s_persona = PersonaSerializer(instance)
-    load_elastic.apply_async(args=(json.dumps(s_persona.data), ELASTIC_HOST, ELASTIC_CURRICULUM_INDEX), task_id=uuid())
+    data = json.dumps(s_persona.data)
+    load_elastic.apply_async(args=(data, ELASTIC_HOST, ELASTIC_CURRICULUM_INDEX), task_id=uuid())
 
 
 @receiver(post_save, sender=Appartenenza)
 def save_appartenenza(sender, instance, **kwargs):
     s_persona = PersonaSerializer(instance.persona)
-    load_elastic.apply_async(args=(json.dumps(s_persona.data), ELASTIC_HOST, ELASTIC_CURRICULUM_INDEX), task_id=uuid())
+    data = json.dumps(s_persona.data)
+    load_elastic.apply_async(args=(data, ELASTIC_HOST, ELASTIC_CURRICULUM_INDEX), task_id=uuid())
