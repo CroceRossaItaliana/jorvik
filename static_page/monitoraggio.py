@@ -114,6 +114,7 @@ class TypeForm:
         comitato_id = str(self.comitato_id)
         for _id, bottone_name in self.form_ids.items():
             json = self.get_json_from_responses(_id)
+            print(json)
             for item in json['items']:
                 c = item.get('hidden', OrderedDict())
                 c = c.get('c')
@@ -337,7 +338,7 @@ class TypeFormNonSonoUnBersaglio(TypeForm):
 
 class TypeFormResponsesTrasparenza(TypeForm):
     form_ids = OrderedDict([
-        ('UefRCHAG', 'A-Autorizzazione e Privacy')
+        ('Jo7AmkVU', 'Questionatio Trasparenza L. 124/2017'),
     ])
     email_body = """Grazie per aver completato il Questionario sulla trasparenza."""
 
@@ -348,7 +349,6 @@ class TypeFormResponsesTrasparenza(TypeForm):
     """
 
     email_object = 'Risposte Questionario trasparenza di %s'
-
     @property
     def comitato_id(self):
         persona = self.persona
@@ -399,7 +399,7 @@ class TypeFormResponsesTrasparenzaCheck:
     }
 
     form_ids = OrderedDict([
-        ('UefRCHAG', 'A-Autorizzazione e Privacy')
+        ('Jo7AmkVU', 'Questionatio Trasparenza L. 124/2017')
     ])
 
     def __init__(self, persona=None, user_pk=None, comitato_id=None):
@@ -413,6 +413,7 @@ class TypeFormResponsesTrasparenzaCheck:
     def _set_typeform_context(self):
         # This method generates a dict values,
         # False as default value means that form_id is not completed yet.
+        print()
         return {k: [False, self.comitato_id, v] for k, v in self.form_ids.items()}
 
     def get_responses_for_all_forms(self):
