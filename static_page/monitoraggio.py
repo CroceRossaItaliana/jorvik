@@ -399,7 +399,7 @@ class TypeFormResponsesTrasparenzaCheck:
     }
 
     form_ids = OrderedDict([
-        ('Jo7AmkVU', 'Questionatio Trasparenza L. 124/2017')
+        ('Jo7AmkVU', 'Questionario Trasparenza L. 124/2017')
     ])
 
     def __init__(self, persona=None, user_pk=None, comitato_id=None):

@@ -13,12 +13,14 @@
   <div class="articolo single-page">
     <h1>Questionario Trasparenza <span style="color:#555; font-size:24px;">- {{ comitato }}</span></h1>
     <h3>{{ section.2 }}</h3>
-{#    <a href="https://datafiles.gaia.cri.it/media/filer_public/66/d8/66d8aba2-ea4d-4f0d-b429-a17b89f09e16/nota_presidente_nazionale_check_list_comitati.pdf" target="_blank">Nota presidente nazionale</a>#}
+    <p>
+        TESTO
+    </p>
+    <a href="" target="_blank" download>Link 1</a>
+    <a href="" target="_blank" download>Link 2</a>
+    <a href="" target="_blank" download>Link 3</a>
     <ul class="typeform_widget">
-      <li><a href="?comitato={{user_comitato}}&id=Jo7AmkVU" class="{%if type_form.Jo7AmkVU.0 %}done{%endif%} typeform_widget__btn testi-lunghi hand" title="Questionatio Trasparenza L. 124/2017">Questionatio Trasparenza L. 124/2017</a></li>
-{#      <li><a href="?comitato={{user_comitato}}&id=XXz4OBuM" class="{%if type_form.XXz4OBuM.0 %}done{%endif%} typeform_widget__btn testi-lunghi hand" title="B-Sovvenzioni, sussidi, vantaggi, contributi o aiuti">B-Sovvenzioni, sussidi, vantaggi, contributi o aiuti</a></li>#}
-{#      <li><a href="?comitato={{user_comitato}}&id=OaeI2X1L" class="{%if type_form.OaeI2X1L.0 %}done{%endif%} typeform_widget__btn testi-lunghi hand" title="C-Vantaggi indiretti">C-Vantaggi indiretti</a></li>#}
-{#      <li><a href="?comitato={{user_comitato}}&id=Q0Y9JlKq" class="{%if type_form.Q0Y9JlKq.0 %}done{%endif%} typeform_widget__btn testi-lunghi hand" title="D-Dichiarazioni finali">D-Dichiarazioni finali</a></li>#}
+      <li><a href="?comitato={{user_comitato}}&id=Jo7AmkVU" class="{%if type_form.Jo7AmkVU.0 %}done{%endif%} typeform_widget__btn testi-lunghi hand" title="Questionario Trasparenza L. 124/2017">Questionario Trasparenza L. 124/2017</a></li>
     </ul>
 
     <div class="typeform_widget__wrapper">
@@ -52,7 +54,7 @@
           <ul class="typeform_widget-tools__list">
             <li><a class="monitoraggio_action_btn" href="{% url 'pages:monitoraggio_actions' %}?action=print&target={{ target }}" target="_blank"><i class="fa fa-print fa-fw"></i> Stampa le risposte</a></li>
             <li><a class="monitoraggio_action_btn" href="{% url 'pages:monitoraggio_actions' %}?action=send_via_mail&target={{ target }}" target="_blank"><i class="fa fa-envelope fa-fw"></i> Invia via e-mail a te stesso</a></li>
-            <li><a class="monitoraggio_action_btn" href="{% url 'pages:monitoraggio_actions' %}?action=send_via_mail_regionale&target={{ target }}" target="_blank"><i class="fa fa-envelope fa-fw"></i> Invia via e-mail al regionale e al Nazionale</a></li>
+            <li><a class="monitoraggio_action_btn" href="{% url 'pages:monitoraggio_actions' %}?action=send_via_mail_regionale&target={{ target }}" target="_blank"><i class="fa fa-envelope fa-fw"></i> Invia via e-mail al regionale</a></li>
           </ul>
         </div>
     {% endif %}

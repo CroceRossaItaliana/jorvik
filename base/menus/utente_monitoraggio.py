@@ -24,7 +24,7 @@ def menu_monitoraggio(me):
         ("Questionario di autocontrollo", 'fa-user', reverse('pages:monitoraggio')) if (
                 me.is_presidente or me.is_comissario
         ) else None,
-        ("Trasparenza L. 124/2017", 'fa-user', reverse('pages:monitoraggio-trasparenza')) if (
+        ("Questionario L. 124/2017", 'fa-user', reverse('pages:monitoraggio-trasparenza')) if (
                 me.is_presidente or me.is_comissario or me.delega_responsabile_area_trasparenza
         ) else None,
         ("Monitora Trasparenza L. 124/2017", 'fa-user', reverse('pages:monitora-trasparenza')+'?r={}'.format(id_regionale)) if
