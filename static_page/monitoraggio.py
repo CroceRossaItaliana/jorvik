@@ -338,7 +338,7 @@ class TypeFormNonSonoUnBersaglio(TypeForm):
 
 class TypeFormResponsesTrasparenza(TypeForm):
     form_ids = OrderedDict([
-        ('Jo7AmkVU', 'Questionatio Trasparenza L. 124/2017'),
+        ('Jo7AmkVU', 'Questionario Trasparenza L. 124/2017'),
     ])
     email_body = """Grazie per aver completato il Questionario sulla trasparenza."""
 
