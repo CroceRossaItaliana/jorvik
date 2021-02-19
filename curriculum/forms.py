@@ -147,6 +147,7 @@ class FormAddAltreQualifica(autocomplete_light.ModelForm):
     altri_titolo = autocomplete_light.ModelChoiceField('QualificaAltrePartnershipAutocompletamento', required=False)
     argomento = forms.CharField(required=False, widget=forms.Select(choices=[]))
     no_corso = forms.BooleanField(initial=False, required=False)
+    no_argomento = forms.BooleanField(initial=False, required=False)
     nome_corso = forms.CharField(required=False)
     argomento_nome = forms.CharField(required=False)
 
@@ -160,6 +161,7 @@ class FormAddAltreQualifica(autocomplete_light.ModelForm):
             'no_corso',
             'nome_corso',
             'argomento',
+            'no_argomento',
             'argomento_nome',
             'data_ottenimento',
             'attestato_file'
@@ -178,3 +180,4 @@ class FormAddAltreQualifica(autocomplete_light.ModelForm):
         self.fields['titoli_in_partnership'].label = 'Corsi in partnership con CRI'
         self.fields['altri_titolo'].label = 'Corsi esterni'
         self.fields['no_corso'].label = 'Non trovo la mia qualifica'
+        self.fields['no_argomento'].label = "Non trovo l'argomento"

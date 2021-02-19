@@ -176,12 +176,48 @@ def cv_add_qualifica_cri(request, me):
                 )
                 titolo_personale.save()
             elif tipo_altro == TitoloPersonale.ALTRO:
-                print(cd['altri_titolo'])
+                no_corso = cd['no_corso']
+                if not no_corso:
+                    titolo = cd['altri_titolo']
+                    if cd['no_argomento']:
+                        argomento = cd['argomento_nome']
+                        argomenti = titolo.argomenti.split(',')
+                        argomenti.append(argomento)
+                        titolo.argomenti = ','.join(argomenti)
+                        titolo.save()
+                    else:
+                        argomento = cd['argomento']
+                    titolo_personale = TitoloPersonale(
+                        persona=me,
+                        confermata=True,
+                        data_ottenimento=cd['data_ottenimento'],
+                        titolo=titolo,
+                        attestato_file=cd['attestato_file'],
+                        argomento=argomento,
+                        tipo_altro_titolo=cd['tipo_altro_titolo']
+                    )
+                    titolo_personale.save()
+                else: # DEVO CREARE IL TITOLO
+                    titolo = Titolo(
+                        tipo=Titolo.ALTRI_TITOLI,
+                        nome=cd['nome_corso'],
+                        argomenti=cd['argomento_nome']
+                    )
+                    titolo.save()
+                    titolo_personale = TitoloPersonale(
+                        persona=me,
+                        confermata=True,
+                        data_ottenimento=cd['data_ottenimento'],
+                        titolo=titolo,
+                        attestato_file=cd['attestato_file'],
+                        argomento=cd['argomento_nome'],
+                        tipo_altro_titolo=cd['tipo_altro_titolo']
+                    )
+                    titolo_personale.save()
             else:
                 messages.error(request, "La qualifica non è stata inserita correttamente")
                 return redirect_url
         else:
-            print(form.errors)
             messages.error(request, "La qualifica non è stata inserita correttamente")
     return redirect_url
 

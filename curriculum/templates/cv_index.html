@@ -205,6 +205,7 @@
         let tipo_titoli_altri = $('#id_altri_titolo');
         let argomenti = $('#id_argomento');
         let no_corso = $('#id_no_corso');
+        let no_argomento = $('#id_no_argomento');
         let nome_corso = $('#id_nome_corso');
         let argomento_nome = $('#id_argomento_nome');
 
@@ -212,6 +213,7 @@
         let tipo_titoli_altri_blocco = tipo_titoli_altri.parent().parent();
         let argomenti_blocco = argomenti.parent();
         let no_corso_blocco = no_corso.parent();
+        let no_argomento_blocco = no_argomento.parent();
         let nome_corso_blocco = nome_corso.parent();
         let argomento_nome_blocco = argomento_nome.parent();
 
@@ -221,6 +223,7 @@
         no_corso_blocco.hide();
         nome_corso_blocco.hide();
         argomento_nome_blocco.hide();
+        no_argomento_blocco.hide();
 
         let tipo_titolo = $('#id_tipo_altro_titolo');
 
@@ -233,6 +236,7 @@
                 no_corso_blocco.hide();
                 nome_corso_blocco.hide();
                 argomento_nome_blocco.hide();
+                no_argomento_blocco.hide();
             }else if(select_val === 'AL'){
                 tipo_partnership_blocco.hide();
                 tipo_titoli_altri_blocco.show();
@@ -240,6 +244,7 @@
                 no_corso_blocco.show();
                 nome_corso_blocco.hide();
                 argomento_nome_blocco.hide();
+                no_argomento_blocco.hide();
             }else{
                 tipo_partnership_blocco.hide();
                 tipo_titoli_altri_blocco.hide();
@@ -247,6 +252,7 @@
                 no_corso_blocco.hide();
                 nome_corso_blocco.hide();
                 argomento_nome_blocco.hide();
+                no_argomento_blocco.hide();
             }
         })
 
@@ -269,6 +275,7 @@
                                 }));
                             });
                             argomenti_blocco.show();
+                            no_argomento_blocco.show();
                             return data;
                         },
                         error: function(jqXHR, textStatus) {
@@ -291,6 +298,15 @@
             }else{
                 tipo_titoli_altri_blocco.show();
                 nome_corso_blocco.hide();
+            }
+        });
+        no_argomento.on('change', function (e){
+            if ($(this).is(':checked')){
+                argomenti_blocco.hide()
+                argomento_nome_blocco.show()
+            }else{
+                argomenti_blocco.show()
+                argomento_nome_blocco.hide()
             }
         });
         nome_corso.keypress(function (e){
