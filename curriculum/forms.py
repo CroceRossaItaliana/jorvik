@@ -131,3 +131,50 @@ class ModuloDettagliTitoloPersonale(forms.ModelForm):
         super().__init__(*args, **kwargs)
         for key in self.fields:
             self.fields[key].required = True
+
+
+def popola_titoli_in_partnership():
+    l = [('', '--------')]
+    l.extend([(choice.pk, choice) for choice in Titolo.objects.filter(tipo=Titolo.ALTRI_TITOLI, is_partnership=True)])
+    return l
+
+
+class FormAddAltreQualifica(autocomplete_light.ModelForm):
+    titoli_in_partnership = forms.ChoiceField(
+        choices=popola_titoli_in_partnership(),
+        required=False
+    )
+    altri_titolo = autocomplete_light.ModelChoiceField('QualificaAltrePartnershipAutocompletamento', required=False)
+    argomento = forms.CharField(required=False, widget=forms.Select(choices=[]))
+    no_corso = forms.BooleanField(initial=False)
+    nome_corso = forms.CharField(required=False)
+    argomento_nome = forms.CharField(required=False)
+
+    class Meta:
+        model = TitoloPersonale
+        fields = [
+            'settore_di_riferimento',
+            'tipo_altro_titolo',
+            'titoli_in_partnership',
+            'altri_titolo',
+            'no_corso',
+            'nome_corso',
+            'argomento',
+            'argomento_nome',
+            'data_ottenimento',
+            'attestato_file'
+        ]
+
+        help_texts = {
+            'data_ottenimento': '',
+        }
+
+    def __init__(self, *args, **kwargs):
+
+        super().__init__(*args, **kwargs)
+
+        self.fields['altri_titolo'].widget.attrs['placeholder'] = 'Inizia a digitare ...'
+        self.fields['tipo_altro_titolo'].label = 'Tipo Qualifica'
+        self.fields['titoli_in_partnership'].label = 'Corsi in partnership con CRI'
+        self.fields['altri_titolo'].label = 'Corsi esterni'
+        self.fields['no_corso'].label = 'Non trovo la mia qualifica'
