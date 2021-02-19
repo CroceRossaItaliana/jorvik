@@ -146,7 +146,7 @@ class FormAddAltreQualifica(autocomplete_light.ModelForm):
     )
     altri_titolo = autocomplete_light.ModelChoiceField('QualificaAltrePartnershipAutocompletamento', required=False)
     argomento = forms.CharField(required=False, widget=forms.Select(choices=[]))
-    no_corso = forms.BooleanField(initial=False)
+    no_corso = forms.BooleanField(initial=False, required=False)
     nome_corso = forms.CharField(required=False)
     argomento_nome = forms.CharField(required=False)
 
