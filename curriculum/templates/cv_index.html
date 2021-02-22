@@ -51,14 +51,18 @@
                                                 Scaduto titolo del corso
                                             </span> -->
 
-                                        {% elif t.esito == t.ESITO_OK %}
+                                        {% elif t.esito == t.ESITO_OK and not tipo == 'AT' %}
                                             <span class="text-success"><i class="fas fa-check"></i> {{ t.esito }}</span>
 
                                         {% elif t.esito == t.ESITO_PENDING %}
                                             <span class="alert-warning"><i class="far fa-clock"></i> In attesa di conferma</span>
 
                                         {% else %}
-                                            <span class="text-danger">{{ t.esito }}</span>
+                                            {% if not tipo == 'AT'%}
+                                                <span class="text-danger">{{ t.esito }}</span>
+                                            {% else %}
+                                                <span>{{ t.argomento }}</span>
+                                            {% endif %}
                                         {% endif %}
 
                                     </td>
