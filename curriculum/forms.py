@@ -139,10 +139,7 @@ class FormAddAltreQualifica(autocomplete_light.ModelForm):
         required=False
     )
     altri_titolo = autocomplete_light.ModelChoiceField('QualificaAltrePartnershipAutocompletamento', required=False)
-    argomento = forms.MultipleChoiceField(required=False, choices=[
-        (argomento, argomento) for choice in Titolo.objects.filter(
-            tipo=Titolo.ALTRI_TITOLI, is_partnership=True) for argomento in choice.argomenti.split(',')
-    ])
+    argomento = forms.MultipleChoiceField(required=False, choices=())
     # argomento = forms.MultipleChoiceField(choices=(), required=False)
     no_corso = forms.BooleanField(initial=False, required=False)
     no_argomento = forms.BooleanField(initial=False, required=False)
@@ -179,6 +176,10 @@ class FormAddAltreQualifica(autocomplete_light.ModelForm):
         self.fields['argomento_nome'].label = 'Argomento'
         self.fields['tipo_altro_titolo'].label = 'Tipo Qualifica'
         self.fields['titoli_in_partnership'].label = 'Corsi in partnership con CRI'
+        self.fields['argomento'].choices = [
+            (argomento, argomento) for choice in Titolo.objects.filter(
+                tipo=Titolo.ALTRI_TITOLI, is_partnership=True) for argomento in choice.argomenti.split(',')
+        ]
         self.fields['titoli_in_partnership'].choices = list(self.DEFAULT_BLANK_LEVEL) + [
             (choice.pk, choice) for choice in Titolo.objects.filter(tipo=Titolo.ALTRI_TITOLI, is_partnership=True)
         ]
