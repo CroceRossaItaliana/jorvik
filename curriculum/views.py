@@ -173,7 +173,7 @@ def cv_add_qualifica_cri(request, me):
                     titolo.argomenti = ','.join(argomenti)
                     titolo.save()
                 else:
-                    argomento = cd['argomento']
+                    argomento = ','.join(cd['argomento'])
 
                 titolo_personale = TitoloPersonale(
                     persona=me,
@@ -196,7 +196,7 @@ def cv_add_qualifica_cri(request, me):
                         titolo.argomenti = ','.join(argomenti)
                         titolo.save()
                     else:
-                        argomento = cd['argomento']
+                        argomento = ','.join(cd['argomento'])
                     titolo_personale = TitoloPersonale(
                         persona=me,
                         confermata=True,
@@ -228,6 +228,7 @@ def cv_add_qualifica_cri(request, me):
                 messages.error(request, "La qualifica non è stata inserita correttamente")
                 return redirect_url
         else:
+            print(form.errors)
             messages.error(request, "La qualifica non è stata inserita correttamente")
     return redirect_url
 
