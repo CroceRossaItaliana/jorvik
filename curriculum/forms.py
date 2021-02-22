@@ -133,15 +133,9 @@ class ModuloDettagliTitoloPersonale(forms.ModelForm):
             self.fields[key].required = True
 
 
-def popola_titoli_in_partnership():
-    l = [('', '--------')]
-    l.extend([(choice.pk, choice) for choice in Titolo.objects.filter(tipo=Titolo.ALTRI_TITOLI, is_partnership=True)])
-    return l
-
-
 class FormAddAltreQualifica(autocomplete_light.ModelForm):
     titoli_in_partnership = forms.ChoiceField(
-        choices=popola_titoli_in_partnership(),
+        choices=(),
         required=False
     )
     altri_titolo = autocomplete_light.ModelChoiceField('QualificaAltrePartnershipAutocompletamento', required=False)
@@ -150,6 +144,16 @@ class FormAddAltreQualifica(autocomplete_light.ModelForm):
     no_argomento = forms.BooleanField(initial=False, required=False)
     nome_corso = forms.CharField(required=False)
     argomento_nome = forms.CharField(required=False)
+
+    # @staticmethod
+    # def popola_titoli_in_partnership():
+    #     l = [('', '--------')]
+    #     l.extend(
+    #         [(choice.pk, choice) for choice in Titolo.objects.filter(tipo=Titolo.ALTRI_TITOLI, is_partnership=True)])
+    #     return l
+
+
+    DEFAULT_BLANK_LEVEL = ('', '---------'),
 
     class Meta:
         model = TitoloPersonale
@@ -178,6 +182,9 @@ class FormAddAltreQualifica(autocomplete_light.ModelForm):
         self.fields['altri_titolo'].widget.attrs['placeholder'] = 'Inizia a digitare ...'
         self.fields['tipo_altro_titolo'].label = 'Tipo Qualifica'
         self.fields['titoli_in_partnership'].label = 'Corsi in partnership con CRI'
+        self.fields['titoli_in_partnership'].choices = list(self.DEFAULT_BLANK_LEVEL) + [
+            (choice.pk, choice) for choice in Titolo.objects.filter(tipo=Titolo.ALTRI_TITOLI, is_partnership=True)
+        ]
         self.fields['altri_titolo'].label = 'Corsi esterni'
         self.fields['no_corso'].label = 'Non trovo la mia qualifica'
         self.fields['no_argomento'].label = "Non trovo l'argomento"

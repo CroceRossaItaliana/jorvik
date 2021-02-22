@@ -165,13 +165,23 @@ def cv_add_qualifica_cri(request, me):
             cd = form.cleaned_data
             tipo_altro = cd['tipo_altro_titolo']
             if tipo_altro == TitoloPersonale.PARTNERSHIP:
+                titolo = Titolo.objects.get(pk=cd['titoli_in_partnership'])
+                if cd['no_argomento']:
+                    argomento = cd['argomento_nome']
+                    argomenti = titolo.argomenti.split(',')
+                    argomenti.append(argomento)
+                    titolo.argomenti = ','.join(argomenti)
+                    titolo.save()
+                else:
+                    argomento = cd['argomento']
+
                 titolo_personale = TitoloPersonale(
                     persona=me,
                     confermata=True,
                     data_ottenimento=cd['data_ottenimento'],
                     titolo=Titolo.objects.get(pk=cd['titoli_in_partnership']),
                     attestato_file=cd['attestato_file'],
-                    argomento=cd['argomento'],
+                    argomento=argomento,
                     tipo_altro_titolo=cd['tipo_altro_titolo']
                 )
                 titolo_personale.save()

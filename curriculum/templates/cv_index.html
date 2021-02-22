@@ -299,9 +299,15 @@
             if ($(this).is(':checked')){
                 tipo_titoli_altri_blocco.hide();
                 nome_corso_blocco.show();
+                argomento_nome_blocco.show();
+                argomenti_blocco.hide();
+                no_argomento_blocco.hide();
             }else{
                 tipo_titoli_altri_blocco.show();
                 nome_corso_blocco.hide();
+                argomento_nome_blocco.hide();
+                argomenti_blocco.hide();
+                no_argomento_blocco.hide();
             }
         });
         no_argomento.on('change', function (e){
