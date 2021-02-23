@@ -498,7 +498,6 @@ class ModuloCreazioneDelega(autocomplete_light.ModelForm):
 
     def _validate_delega(self, persona):
         me_sede = self.me.sede_riferimento()
-
         """
         Possible cases:
         1) [OK] Persona è estesa (ES) nel mio comitato.
@@ -515,7 +514,6 @@ class ModuloCreazioneDelega(autocomplete_light.ModelForm):
             any([a.appartiene_a(me_sede) for a in self.persona_volontario]),
             any([a for a in self.persona_volontario if a.sede.presidente() == self.me])
         )
-
         if not any(CASES):
             # All CASES return False, so the form returns validation error.
             raise forms.ValidationError(
