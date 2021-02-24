@@ -1,0 +1,34 @@
+{% extends 'formazione_vuota.html' %}
+
+{% load staticfiles %}
+{% load bootstrap3 %}
+
+{% block app_contenuto %}
+    <link rel="stylesheet" href="{% static 'css/so/calendar.css' %}">
+    <table class="table">
+        <thead>
+            <tr>
+                <th style="text-align: center">Didascalia</th>
+            </tr>
+        </thead>
+        <tbody>
+            <tr>
+                <td style="text-align: center">
+                    <span class="glyphicon glyphicon-stop" style="color: #FF3333"></span> Nazionale
+                    <span class="glyphicon glyphicon-stop" style="color: #4C9900"></span> Regionale
+                    <span class="glyphicon glyphicon-stop" style="color: #00CCCC"></span> Provinciale
+                    <span class="glyphicon glyphicon-stop" style="color: #FF9323"></span> Locale
+                    <span class="glyphicon glyphicon-stop" style="color: #FF007F"></span> Territoriale
+                </td>
+            </tr>
+        </tbody>
+    </table>
+    <table class="so-calendar table" border="0" cellpadding="0" cellspacing="0">
+        {% include 'formazione_calendar_nav_inc.html' %}
+
+        {{ calendario }}
+
+        {% include 'formazione_calendar_nav_inc.html' %}
+    </table>
+
+{% endblock %}
