@@ -40,7 +40,7 @@ def monitoraggio(request, me):
         return 'monitoraggio_choose_comitato.html', {
             'deleghe': deleghe.distinct('oggetto_id'),
             'url': 'monitoraggio',
-            'titolo': 'Monitoraggio 2019 (dati 2018)',
+            'titolo': 'Questionario autocontrollo',
             'target': MONITORAGGIO
         }
 
