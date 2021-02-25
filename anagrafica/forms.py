@@ -531,7 +531,10 @@ class ModuloCreazioneDelega(autocomplete_light.ModelForm):
         # Queries for possible cases
         persona_appartenenze = persona.appartenenze_attuali(membro__in=Appartenenza.MEMBRO_ATTIVITA)
         self.persona_estesa = persona_appartenenze.filter(sede=me_sede).count()
-        self.persona_volontario = persona_appartenenze.filter(membro=Appartenenza.VOLONTARIO)
+        self.persona_volontario = persona_appartenenze.filter(
+            membro__in=[Appartenenza.VOLONTARIO, Appartenenza.DIPENDENTE]
+        )
+
         self.stesse_sedi = me_sede == persona.sede_riferimento()
 
         if type(oggetto) is Sede:
