@@ -131,3 +131,58 @@ class ModuloDettagliTitoloPersonale(forms.ModelForm):
         super().__init__(*args, **kwargs)
         for key in self.fields:
             self.fields[key].required = True
+
+
+class FormAddAltreQualifica(autocomplete_light.ModelForm):
+    titoli_in_partnership = forms.ChoiceField(
+        choices=(),
+        required=False
+    )
+    altri_titolo = autocomplete_light.ModelChoiceField('QualificaAltrePartnershipAutocompletamento', required=False)
+    argomento = forms.MultipleChoiceField(required=False, choices=())
+    # argomento = forms.MultipleChoiceField(choices=(), required=False)
+    no_corso = forms.BooleanField(initial=False, required=False)
+    no_argomento = forms.BooleanField(initial=False, required=False)
+    nome_corso = forms.CharField(required=False)
+    argomento_nome = forms.CharField(required=False)
+
+    DEFAULT_BLANK_LEVEL = ('', '---------'),
+
+    class Meta:
+        model = TitoloPersonale
+        fields = [
+            'settore_di_riferimento',
+            'tipo_altro_titolo',
+            'titoli_in_partnership',
+            'altri_titolo',
+            'no_corso',
+            'nome_corso',
+            'argomento',
+            'no_argomento',
+            'argomento_nome',
+            'data_ottenimento',
+            'attestato_file'
+        ]
+
+        help_texts = {
+            'data_ottenimento': '',
+        }
+
+    def __init__(self, *args, **kwargs):
+
+        super().__init__(*args, **kwargs)
+
+        self.fields['altri_titolo'].widget.attrs['placeholder'] = 'Inizia a digitare ...'
+        self.fields['argomento_nome'].label = 'Argomento'
+        self.fields['tipo_altro_titolo'].label = 'Tipo Qualifica'
+        self.fields['titoli_in_partnership'].label = 'Corsi in partnership con CRI'
+        self.fields['argomento'].choices = [
+            (argomento, argomento) for choice in Titolo.objects.filter(
+                tipo=Titolo.ALTRI_TITOLI, is_partnership=True) for argomento in choice.argomenti.split(',')
+        ]
+        self.fields['titoli_in_partnership'].choices = list(self.DEFAULT_BLANK_LEVEL) + [
+            (choice.pk, choice) for choice in Titolo.objects.filter(tipo=Titolo.ALTRI_TITOLI, is_partnership=True)
+        ]
+        self.fields['altri_titolo'].label = 'Corsi esterni'
+        self.fields['no_corso'].label = 'Non trovo la mia qualifica'
+        self.fields['no_argomento'].label = "Non trovo l'argomento"
