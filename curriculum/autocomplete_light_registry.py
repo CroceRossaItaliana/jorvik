@@ -89,6 +89,24 @@ class QualificaCRIRegressoAutocompletamento(autocomplete_light.AutocompleteModel
         return super().choices_for_request()
 
 
+class QualificaAltrePartnershipAutocompletamento(autocomplete_light.AutocompleteModelBase):
+
+    model = Titolo
+    split_words = True
+    search_fields = ['nome', 'sigla', ]
+    attrs = {
+        'data-autocomplete-minimum-characters': 1,
+    }
+
+    def choices_for_request(self):
+        self.choices = self.choices.filter(
+            tipo=Titolo.ALTRI_TITOLI, is_partnership=False
+        ).order_by('nome').distinct('nome')
+
+        return super().choices_for_request()
+
+
 autocomplete_light.register(TitoloAutocompletamento)
 autocomplete_light.register(TitoloCRIAutocompletamento)
 autocomplete_light.register(QualificaCRIRegressoAutocompletamento)
+autocomplete_light.register(QualificaAltrePartnershipAutocompletamento)

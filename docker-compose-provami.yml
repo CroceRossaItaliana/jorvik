@@ -13,11 +13,6 @@ services:
       - "traefik-public"
       - "provami-network"
 
-  broker:
-    container_name: provami_broker
-    networks:
-      - "provami-network"
-
   celery:
     image: gaia:release
     container_name: provami_celery
