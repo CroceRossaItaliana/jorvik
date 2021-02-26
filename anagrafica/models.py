@@ -1314,12 +1314,18 @@ class Persona(ModelloSemplice, ConMarcaTemporale, ConAllegati, ConVecchioID):
         return delegato_area
 
     @property
-    def delega_presdente_regionale(self):
+    def delega_presidente_regionale(self):
         delega = self.delega_presidente or self.delega_commissario
         if delega:
-            return delega if delega.oggetto.estensione == REGIONALE else None
+            return delega.oggetto.id if delega.oggetto.estensione == REGIONALE else None
         else:
             return None
+
+    @property
+    def delgato_regionale_monitoraggio_trasparenza(self):
+        for delega in self.deleghe_attuali(tipo=DELEGATO_AREA):
+            if 'Monitoraggio Regionale Trasparenza'.lower() in delega.oggetto.__str__().lower():
+                return delega.oggetto.sede.id
 
     @property
     def is_responsabile_area_monitoraggio_trasparenza(self):

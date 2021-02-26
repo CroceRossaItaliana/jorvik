@@ -261,7 +261,6 @@ class TypeForm:
 
     def _render_to_string(self, to_print=False):
         return render_to_string('monitoraggio_print.html', {
-            'comitato': self.get_json_from_responses('Jo7AmkVU')['items'][0]['hidden']['nc'],
             'user_details': self.user_details,
             'request': self.request,
             'results': self._retrieve_data(),
@@ -373,7 +372,14 @@ class TypeFormResponsesTrasparenza(TypeForm):
                 # quindi vado sicuro a prendere <oggetto_id> dell'unico record
                 return deleghe.filter(tipo=PRESIDENTE).last().oggetto_id
 
-
+    def _render_to_string(self, to_print=False):
+        return render_to_string('monitoraggio_print.html', {
+            'comitato': self.get_json_from_responses('Jo7AmkVU')['items'][0]['hidden']['nc'],
+            'user_details': self.user_details,
+            'request': self.request,
+            'results': self._retrieve_data(),
+            'to_print': to_print,
+        })
 
 
 MONITORAGGIO = 'monitoraggio'
@@ -462,6 +468,7 @@ class TypeFormResponsesTrasparenzaCheck:
 
     def _render_to_string(self, to_print=False):
         return render_to_string('monitoraggio_print.html', {
+            'comitato': self.get_json_from_responses('Jo7AmkVU')['items'][0]['hidden']['nc'],
             'user_details': self.me,
             # 'request': self.request,
             'results': self._retrieve_data(),
