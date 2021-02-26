@@ -17,7 +17,8 @@ from formazione.constants import FORMAZIONE_ROLES
 from formazione.models import CorsoBase
 from posta.models import Messaggio
 
-from .forms import (FormAddQualificaCRI, ModuloNuovoTitoloPersonale, ModuloDettagliTitoloPersonale)
+from .forms import (FormAddQualificaCRI, ModuloNuovoTitoloPersonale, ModuloDettagliTitoloPersonale,
+                    FormAddAltreQualifica)
 from .models import Titolo, TitoloPersonale
 
 
@@ -71,6 +72,7 @@ def curriculum(request, me, tipo=None):
     # Instantiate forms
     form = ModuloNuovoTitoloPersonale(tipo, tipo_display, request.POST or None, me=me)
     form_add_qualifica = FormAddQualificaCRI()
+    form_add_altra_qualifica = FormAddAltreQualifica()
 
     if form.is_valid():
         cd = form.cleaned_data
@@ -121,6 +123,7 @@ def curriculum(request, me, tipo=None):
         "passo": passo,
         "modulo": form,
         "form_add_qualifica": form_add_qualifica,
+        "form_add_altra_qualifica": form_add_altra_qualifica,
         "titoli": titoli.order_by('-creazione', '-data_ottenimento', '-data_scadenza'),
         "titolo": titolo_selezionato
     }
@@ -149,6 +152,84 @@ def cv_add_qualifica_cri(request, me):
 
     return redirect_url
 
+
+@pagina_privata
+def cv_add_qualifica_cri(request, me):
+    cv_tc_url = '/utente/curriculum/AT/'
+    redirect_url = redirect(cv_tc_url)
+
+    if request.method == 'POST':
+        form = FormAddAltreQualifica(request.POST, request.FILES)
+
+        if form.is_valid():
+            cd = form.cleaned_data
+            tipo_altro = cd['tipo_altro_titolo']
+            if tipo_altro == TitoloPersonale.PARTNERSHIP:
+                titolo = Titolo.objects.get(pk=cd['titoli_in_partnership'])
+                if cd['no_argomento']:
+                    argomento = cd['argomento_nome']
+                    argomenti = titolo.argomenti.split(',')
+                    argomenti.append(argomento)
+                    titolo.argomenti = ','.join(argomenti)
+                    titolo.save()
+                else:
+                    argomento = ','.join(cd['argomento'])
+
+                titolo_personale = TitoloPersonale(
+                    persona=me,
+                    confermata=True,
+                    data_ottenimento=cd['data_ottenimento'],
+                    titolo=Titolo.objects.get(pk=cd['titoli_in_partnership']),
+                    attestato_file=cd['attestato_file'],
+                    argomento=argomento,
+                    tipo_altro_titolo=cd['tipo_altro_titolo']
+                )
+                titolo_personale.save()
+            elif tipo_altro == TitoloPersonale.ALTRO:
+                no_corso = cd['no_corso']
+                if not no_corso:
+                    titolo = cd['altri_titolo']
+                    if cd['no_argomento']:
+                        argomento = cd['argomento_nome']
+                        argomenti = titolo.argomenti.split(',')
+                        argomenti.append(argomento)
+                        titolo.argomenti = ','.join(argomenti)
+                        titolo.save()
+                    else:
+                        argomento = ','.join(cd['argomento'])
+                    titolo_personale = TitoloPersonale(
+                        persona=me,
+                        confermata=True,
+                        data_ottenimento=cd['data_ottenimento'],
+                        titolo=titolo,
+                        attestato_file=cd['attestato_file'],
+                        argomento=argomento,
+                        tipo_altro_titolo=cd['tipo_altro_titolo']
+                    )
+                    titolo_personale.save()
+                else: # DEVO CREARE IL TITOLO
+                    titolo = Titolo(
+                        tipo=Titolo.ALTRI_TITOLI,
+                        nome=cd['nome_corso'],
+                        argomenti=cd['argomento_nome']
+                    )
+                    titolo.save()
+                    titolo_personale = TitoloPersonale(
+                        persona=me,
+                        confermata=True,
+                        data_ottenimento=cd['data_ottenimento'],
+                        titolo=titolo,
+                        attestato_file=cd['attestato_file'],
+                        argomento=cd['argomento_nome'],
+                        tipo_altro_titolo=cd['tipo_altro_titolo']
+                    )
+                    titolo_personale.save()
+            else:
+                messages.error(request, "La qualifica non è stata inserita correttamente")
+                return redirect_url
+        else:
+            messages.error(request, "La qualifica non è stata inserita correttamente correggere i dati nel form")
+    return redirect_url
 
 @pagina_privata
 def cv_cancel(request, me, pk=None):
@@ -226,3 +307,18 @@ def cv_qualifica_errata_notifica_comitato_regionale(request, me, pk=None):
 
     messages.success(request, "La notifica è stata inviata a %s" % (TitoloPersonale.MAIL_FORMAZIONE[regionale_sede.pk], ))
     return redirect(reverse('autorizzazioni:aperte'))
+
+
+def argomenti_corsi_json(request):
+    if request.is_ajax:
+        id_titolo = request.POST.get('id', None)
+
+        if id_titolo:
+
+            titolo = Titolo.objects.get(pk=id_titolo)
+
+            options_for_select = {argomento: argomento for argomento in titolo.argomenti.split(',')}
+
+            return JsonResponse(options_for_select)
+
+        return JsonResponse({})
