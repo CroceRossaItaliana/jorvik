@@ -228,8 +228,7 @@ def cv_add_qualifica_cri(request, me):
                 messages.error(request, "La qualifica non è stata inserita correttamente")
                 return redirect_url
         else:
-            print(form.errors)
-            messages.error(request, "La qualifica non è stata inserita correttamente")
+            messages.error(request, "La qualifica non è stata inserita correttamente correggere i dati nel form")
     return redirect_url
 
 @pagina_privata
