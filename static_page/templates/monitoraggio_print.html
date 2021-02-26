@@ -19,7 +19,7 @@
 </head>
 <body {% if to_print %}onload="window.print()"{% endif %}>
     <div align="center">
-        <strong>{{ user_details.cognome }} {{ user_details.nome }}</strong> - {{ user_details.sede_riferimento }}<br>
+        <strong>{{ user_details.cognome }} {{ user_details.nome }}</strong> - {{ comitato }}<br>
         <a href="mailto:{{ user_details.utenza.email }}">{{ user_details.utenza.email }}</a> - {{ user_details.codice_fiscale }}
     </div>
     {% for result in results.items %}

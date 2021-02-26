@@ -114,7 +114,6 @@ class TypeForm:
         comitato_id = str(self.comitato_id)
         for _id, bottone_name in self.form_ids.items():
             json = self.get_json_from_responses(_id)
-            print(json)
             for item in json['items']:
                 c = item.get('hidden', OrderedDict())
                 c = c.get('c')
@@ -237,6 +236,7 @@ class TypeForm:
 
             if self.has_answers(responses_for_form_id):
                 answers = self.get_answers_from_json(responses_for_form_id)
+
                 answers_refactored = OrderedDict([(i['field']['ref'], [i]) for i in answers])
 
                 questions_fields = self.collect_questions(form_id)
@@ -261,6 +261,7 @@ class TypeForm:
 
     def _render_to_string(self, to_print=False):
         return render_to_string('monitoraggio_print.html', {
+            'comitato': self.get_json_from_responses('Jo7AmkVU')['items'][0]['hidden']['nc'],
             'user_details': self.user_details,
             'request': self.request,
             'results': self._retrieve_data(),
