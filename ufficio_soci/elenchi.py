@@ -598,7 +598,9 @@ class ElencoQuote(ElencoVistaSoci):
         return super(ElencoQuote, self).excel_colonne() + (
             ("Importo quota", lambda p: ', '.join([testo_euro(q.importo_totale) for q in p.quote_anno(anno, stato=Quota.REGISTRATA)])),
             ("Data versamento", lambda p: ', '.join([q.data_versamento.strftime('%d/%m/%y') for q in p.quote_anno(anno, stato=Quota.REGISTRATA)])),
-            ("Registrata da", lambda p: ', '.join([q.registrato_da.nome_completo for q in p.quote_anno(anno, stato=Quota.REGISTRATA)])),
+            ("Registrata da", lambda p: ', '.join(
+                [q.registrato_da.nome_completo for q in p.quote_anno(anno, stato=Quota.REGISTRATA) if q.registrato_da])
+             ),
         )
 
     def template(self):
