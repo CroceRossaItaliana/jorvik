@@ -23,12 +23,14 @@ class Titolo(ModelloSemplice, ConVecchioID):
     PATENTE_CRI         = "PC"
     TITOLO_STUDIO       = "TS"
     TITOLO_CRI          = "TC"
+    ALTRI_TITOLI        = "AT"
     TIPO = (
         (COMPETENZA_PERSONALE, "Competenza Personale"),
         (PATENTE_CIVILE, "Patente Civile"),
         (PATENTE_CRI, "Patente CRI"),
         (TITOLO_STUDIO, "Titolo di Studio"),
         (TITOLO_CRI, "Qualifica CRI"),
+        (ALTRI_TITOLI, "Altra Qualifica"),
     )
 
     CDF_LIVELLO_I = '1'
@@ -61,6 +63,8 @@ class Titolo(ModelloSemplice, ConVecchioID):
     moodle = models.BooleanField(default=False, blank=True)
     sigla = models.CharField(max_length=50, null=True, blank=True)
     description = models.CharField(max_length=255, null=True, blank=True)
+    argomenti = models.CharField(max_length=255, null=True, blank=True)
+    is_partnership = models.BooleanField(default=False)
     is_active = models.BooleanField(default=True)
     expires_after = models.IntegerField(null=True, blank=True, verbose_name="Scadenza",
         help_text='Indicare in giorni (es: per 1 anno indicare 365)')
@@ -228,7 +232,45 @@ class TitoloPersonale(ModelloSemplice, ConMarcaTemporale, ConAutorizzazioni):
         (ALTRO_DOC, 'Altro documento inerente al corso'),
     )
 
+    PARTNERSHIP = 'PT'
+    ALTRO = 'AL'
+
+    TIPO_ALTRO_TITOLO = (
+        (PARTNERSHIP, 'Corsi in partnership con CRI'),
+        (ALTRO, 'Altri tipo di corso'),
+    )
+
+    SALUTE = 'SA'
+    SALUTE_E_SICUREZZA = 'SS'
+    INCLUSIONE_SOCIALE = 'IS'
+    EMERGENZA = 'EM'
+    PRINCIPI_E_VALORI = 'PV'
+    GIOVANI = 'GO'
+    SVILUPPO_ORGNIZATIVO = 'SO'
+    MIGRAZIONI = 'MG'
+    COOPERAZIONI_INTERNAZIONALI = 'CI'
+    ALTRO = 'AL'
+
+    SETTORE_DI_RIFERIMENTO = (
+        (SALUTE, 'Salute'),
+        (SALUTE_E_SICUREZZA, 'Salute e sicurezza'),
+        (INCLUSIONE_SOCIALE, 'inclusione sociale'),
+        (EMERGENZA, 'Emergenza'),
+        (PRINCIPI_E_VALORI, 'Principi e valori'),
+        (GIOVANI, 'Giovani'),
+        (MIGRAZIONI, 'Migrazione'),
+        (COOPERAZIONI_INTERNAZIONALI, 'Cooperazione internazionale'),
+        (ALTRO, 'Altro'),
+    )
+
+    settore_di_riferimento = models.CharField(max_length=2, blank=True,
+                                           null=True, choices=SETTORE_DI_RIFERIMENTO)
+
+    tipo_altro_titolo = models.CharField(max_length=2, blank=True,
+                                           null=True, choices=TIPO_ALTRO_TITOLO)
+
     titolo = models.ForeignKey(Titolo, on_delete=models.CASCADE)
+    argomento = models.CharField(max_length=100, blank=True, null=True)
     persona = models.ForeignKey("anagrafica.Persona",
                                 related_name="titoli_personali",
                                 on_delete=models.CASCADE)

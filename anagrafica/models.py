@@ -1828,10 +1828,18 @@ class Appartenenza(ModelloSemplice, ConStorico, ConMarcaTemporale, ConAutorizzaz
             return False
 
     def appartiene_a(self, sede):
+        if self.sede.estensione == TERRITORIALE:
+            regionale = self.sede.superiore(estensione=REGIONALE)
+            reg_sottostanti = sede in regionale.ottieni_discendenti(includimi=True)
+        elif sede.estensione == TERRITORIALE:
+            regionale = sede.superiore(estensione=REGIONALE)
+            reg_sottostanti = self.sede in regionale.ottieni_discendenti(includimi=True)
+        else:
+            reg_sottostanti = False
         return self.sede == sede or \
                self.sede.genitore == sede or \
                self.sede == sede.genitore or \
-               self.sede.genitore == sede.genitore
+               self.sede.genitore == sede.genitore or reg_sottostanti
 
 
 class SedeQuerySet(TreeQuerySet):
