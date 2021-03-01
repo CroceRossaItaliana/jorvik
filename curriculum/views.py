@@ -154,7 +154,7 @@ def cv_add_qualifica_cri(request, me):
 
 
 @pagina_privata
-def cv_add_qualifica_cri(request, me):
+def cv_add_qualifica_altre_cri(request, me):
     cv_tc_url = '/utente/curriculum/AT/'
     redirect_url = redirect(cv_tc_url)
 

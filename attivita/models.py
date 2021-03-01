@@ -81,6 +81,10 @@ class Attivita(ModelloSemplice, ConGeolocalizzazione, ConMarcaTemporale,
     chiusa_automaticamente = models.DateTimeField(default=None, null=True, blank=True)
 
     @property
+    def is_docenza(self):
+        return self.nome == 'Docenza turni'
+
+    @property
     def cancellabile(self):
         return not self.turni.all().exists()
 
@@ -323,7 +327,7 @@ class Attivita(ModelloSemplice, ConGeolocalizzazione, ConMarcaTemporale,
 class Turno(ModelloSemplice, ConMarcaTemporale, ConGiudizio):
     attivita = models.ForeignKey(Attivita, related_name='turni', on_delete=models.CASCADE)
 
-    nome = models.CharField(max_length=128, default="Nuovo turno", db_index=True)
+    nome = models.CharField(max_length=256, default="Nuovo turno", db_index=True)
 
     inizio = models.DateTimeField("Data e ora di inizio", db_index=True, null=False)
     fine = models.DateTimeField("Data e ora di fine", db_index=True, null=True, blank=True, default=None)
