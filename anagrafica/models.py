@@ -1,3 +1,4 @@
+import uuid
 from datetime import date, timedelta, datetime
 
 import codicefiscale
@@ -66,6 +67,7 @@ class Persona(ModelloSemplice, ConMarcaTemporale, ConAllegati, ConVecchioID):
     data_nascita = models.DateField("Data di nascita", db_index=True, null=True)
     genere = models.CharField("Sesso", max_length=1, choices=GENERE, db_index=True)
     stato = models.CharField("Stato", max_length=1, choices=STATO, default=PERSONA, db_index=True)
+    signature = models.UUIDField(default=uuid.uuid4, editable=False)
 
     # Informazioni anagrafiche aggiuntive
     # Residenza

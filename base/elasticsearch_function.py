@@ -1,8 +1,8 @@
 import json
 
-from anagrafica.serializers import PersonaSerializer
+from anagrafica.serializers import CurriculumPersonaSerializer
 
 
 def serializer_persona(persona):
-    s_persona = PersonaSerializer(persona)
+    s_persona = CurriculumPersonaSerializer(persona)
     print(json.dumps(s_persona.data))

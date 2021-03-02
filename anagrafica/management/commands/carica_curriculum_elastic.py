@@ -3,7 +3,7 @@ import requests
 
 from django.core.management import BaseCommand
 from anagrafica.models import Persona
-from anagrafica.serializers import PersonaSerializer
+from anagrafica.serializers import CurriculumPersonaSerializer
 from jorvik.settings import ELASTIC_HOST, ELASTIC_CURRICULUM_INDEX
 
 
@@ -16,7 +16,7 @@ class Command(BaseCommand):
         index = options['index']
         print('** {}'.format(index))
         for persona in Persona.objects.all():
-            s_persona = PersonaSerializer(persona)
+            s_persona = CurriculumPersonaSerializer(persona)
             data = s_persona.data
 
             url = "{}/{}/_doc/{}?op_type=create".format(ELASTIC_HOST, index, data['id'])

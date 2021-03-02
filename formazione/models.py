@@ -168,7 +168,7 @@ class CorsoBase(Corso, ConVecchioID, ConPDF):
     survey = models.ForeignKey(Survey, blank=True, null=True,
                                verbose_name='Questionario di gradimento')
 
-    signature = models.UUIDField(default = uuid.uuid4, editable = False)
+    signature = models.UUIDField(default=uuid.uuid4, editable=False)
 
     PUOI_ISCRIVERTI_OK = "IS"
     PUOI_ISCRIVERTI = (PUOI_ISCRIVERTI_OK,)
