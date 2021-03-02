@@ -828,7 +828,7 @@ class Persona(ModelloSemplice, ConMarcaTemporale, ConAllegati, ConVecchioID):
             | Q(attivita__in=self.oggetti_permesso(GESTIONE_ATTIVITA))
             , inizio__gte=inizio, fine__lt=(fine + timedelta(1)),
               attivita__stato=Attivita.VISIBILE,
-        ).order_by('inizio')
+        ).exclude(attivita__nome='Docenza turni').order_by('inizio')
 
     @property
     def ha_pannello_autorizzazioni(self):
