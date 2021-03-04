@@ -123,7 +123,8 @@ def serve_image(request, persona, image_id, thumb_options=None, width=None, heig
 
 @pagina_privata
 def documenti_comitato(request, me):
-    sede = me.delega_presidente.oggetto
+    delega = me.delega_presidente or me.delega_commissario
+    sede = delega.oggetto
     from django.db.models import Q
     if request.method == 'POST':
         form = ModuloAggiungiDocumentoComitato(request.POST, request.FILES)
