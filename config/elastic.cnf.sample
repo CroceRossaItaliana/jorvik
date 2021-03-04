@@ -1,4 +1,6 @@
 [elastic]
-curriculum_index = curriculum_index_dev
-corso_index = corso_index_dev
+curriculum_index=curriculum_index_dev
+corso_index=corso_index_dev
+comitato_index=comitato_index_dev
+persona_index=persona_index_dev
 

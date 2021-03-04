@@ -1930,6 +1930,9 @@ class Sede(ModelloAlbero, ConMarcaTemporale, ConGeolocalizzazione, ConVecchioID,
                                    validators=[valida_partita_iva])
 
     attiva = models.BooleanField("Attiva", default=True, db_index=True)
+
+    signature = models.UUIDField(default=uuid.uuid4, editable=False)
+
     __attiva_default = None
 
     def sorgente_slug(self):
@@ -2135,6 +2138,14 @@ class Sede(ModelloAlbero, ConMarcaTemporale, ConGeolocalizzazione, ConVecchioID,
         :return: QuerySet.
         """
         return self.ottieni_discendenti(includimi=includi_me)
+
+    @property
+    def comitati(self):
+        return self.ottieni_figli()
+
+    @property
+    def comitati_ids(self):
+        return self.ottieni_discendenti().values_list('signature', flat=True)
 
     @property
     def comitato(self):

@@ -26,5 +26,10 @@ class Migration(migrations.Migration):
             name='signature',
             field=models.UUIDField(default=uuid.uuid4, editable=False),
         ),
+        migrations.AddField(
+            model_name='sede',
+            name='signature',
+            field=models.UUIDField(default=uuid.uuid4, editable=False),
+        ),
         # migrations.RunPython(add_signature_to_persona),
     ]

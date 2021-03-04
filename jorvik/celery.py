@@ -10,13 +10,14 @@ from .settings import CELERY_CONF
 os.environ.setdefault('DJANGO_SETTINGS_MODULE', 'jorvik.settings')
 
 app = Celery('jorvik')
-app.conf.update({
-    "broker_url": "redis://broker",
-    "result_backend": "redis://broker",
-})
-# app.conf.update(CELERY_CONF.items('celery'))
-# app.conf.broker_transport_options = { 'master_name': 'django' }
-# app.conf.result_backend_transport_options = { 'master_name': 'django' }
+app.conf.update(CELERY_CONF.items('celery'))
+app.conf.broker_transport_options = {'master_name': 'django'}
+app.conf.result_backend_transport_options = {'master_name': 'django'}
+# Decomenta per debug locale
+# app.conf.update({
+#     "broker_url": "redis://broker",
+#     "result_backend": "redis://broker",
+# })
 
 # Per favore, ricordati di aggiornare anche i seguenti file:
 # - /docker-compose.yml

@@ -281,6 +281,8 @@ MOODLE_DOMAIN = APIS_CONF.get('moodle', 'domain', fallback=os.environ.get("MOODL
 ELASTIC_HOST = ELASTIC_CONF.get('elastic', 'host', fallback=os.environ.get("ELASTIC_HOST"))
 ELASTIC_CURRICULUM_INDEX = ELASTIC_CONF.get('elastic', 'curriculum_index', fallback=os.environ.get("ELASTIC_CURRICULUM_INDEX"))
 ELASTIC_CORSO_INDEX = ELASTIC_CONF.get('elastic', 'corso_index', fallback=os.environ.get("ELASTIC_CORSO_INDEX"))
+ELASTIC_PERSONA_INDEX = ELASTIC_CONF.get('elastic', 'persona_index', fallback=os.environ.get("ELASTIC_PERSONA_INDEX"))
+ELASTIC_COMITATO_INDEX = ELASTIC_CONF.get('elastic', 'comitato_index', fallback=os.environ.get("ELASTIC_COMITATO_INDEX"))
 
 
 DESTINATARI_REPORT = ['sviluppo@cri.it', 'info@gaia.cri.it']
@@ -301,7 +303,7 @@ LOGGING = {
         'console': {
             'level': 'DEBUG',
             'class': 'logging.StreamHandler',
-            'formatter': 'simple'
+            'formatter': 'verbose'
         },
         'file': {
             'level': 'DEBUG',
@@ -314,6 +316,11 @@ LOGGING = {
         'posta': {
             'handlers': ['file'],
             'level': 'DEBUG',
+            'propagate': True,
+        },
+        'anagrafica': {
+            'handlers': ['console', 'file'],
+            'level': 'INFO',
             'propagate': True,
         },
         'two_factor': {
