@@ -319,6 +319,11 @@ LOGGING = {
             'propagate': True,
         },
         'anagrafica': {
+            'handlers': ['file'],
+            'level': 'INFO',
+            'propagate': True,
+        },
+        'anagrafica.management.commands': {
             'handlers': ['console', 'file'],
             'level': 'INFO',
             'propagate': True,
