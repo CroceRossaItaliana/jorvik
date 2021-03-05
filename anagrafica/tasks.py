@@ -24,7 +24,6 @@ def load_elastic(self, data, host, index):
         url = "{}/{}/_update/{}".format(host, index, data['id_persona'])
         response = requests.post(url, headers=headers, data=json.dumps({"doc": data}))
 
-    # logger.info('elastic url:{} status_code:{}'.find(url, response.status_code))
     if response.status_code not in [HTTPStatus.CREATED, HTTPStatus.OK]:
         logger.error('{} {}'.format(url, response.text))
 

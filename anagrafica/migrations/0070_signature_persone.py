@@ -20,6 +20,13 @@ class Migration(migrations.Migration):
             perosna.signature = uuid.uuid4()
             perosna.save()
 
+    def add_signature_to_sede(apps, schema_editor):
+        Sede = apps.get_model('anagrafica', 'Sede')
+
+        for sede in Sede.objects.all():
+            sede.signature = uuid.uuid4()
+            sede.save()
+
     operations = [
         migrations.AddField(
             model_name='persona',
@@ -32,4 +39,5 @@ class Migration(migrations.Migration):
             field=models.UUIDField(default=uuid.uuid4, editable=False),
         ),
         # migrations.RunPython(add_signature_to_persona),
+        # migrations.RunPython(add_signature_to_sede),
     ]

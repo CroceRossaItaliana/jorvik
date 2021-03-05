@@ -44,7 +44,7 @@ class SedeSerializer(serializers.ModelSerializer):
         return dict(ESTENSIONE)[instance.estensione]
 
     def get_id(self, instance):
-        return instance.signature
+        return str(instance.signature)
 
     class Meta:
         model = Sede
@@ -58,10 +58,10 @@ class AppartenenzaSerializer(serializers.ModelSerializer):
     data_fine = serializers.SerializerMethodField('get_fine')
 
     def get_inizio(self, instance):
-        return instance.inizio
+        return str(instance.inizio)
 
     def get_fine(self, instance):
-        return instance.fine
+        return str(instance.fine)
 
     def get_membro(self, instance):
         return dict(Appartenenza.MEMBRO)[instance.membro]
@@ -77,7 +77,7 @@ class CurriculumPersonaSerializer(serializers.ModelSerializer):
     titoli = TitoloSerializer(read_only=True, many=True)
 
     def get_id(self, instance):
-        return instance.signature
+        return str(instance.signature)
 
     class Meta:
         model = Persona
@@ -96,7 +96,7 @@ class PersonaSerializer(serializers.ModelSerializer):
         return instance.iv
 
     def get_id(self, instance):
-        return instance.signature
+        return str(instance.signature)
 
     class Meta:
         model = Persona
