@@ -9,13 +9,19 @@ from anagrafica.models import Persona, Sede
 
 class Command(BaseCommand):
 
+    DEFAULT_BATCH_SIZE = 200
+
+    def add_arguments(self, parser):
+        parser.add_argument('batch_size', nargs='?', type=int, default=self.DEFAULT_BATCH_SIZE)
+
     def handle(self, *args, **options):
         count_persone = 0
         count_sedi = 0
+        batch_size = options['batch_size']
 
         print('** Signature Persone start')
         persone_all = Persona.objects.all()
-        persone_paginator = Paginator(persone_all, 500)
+        persone_paginator = Paginator(persone_all, batch_size)
 
         for num_page in persone_paginator.page_range:
             for persona in persone_paginator.page(num_page):
@@ -28,7 +34,7 @@ class Command(BaseCommand):
         print('** Signature Sede start')
         
         sedi_all = Sede.objects.all()
-        sedi_paginator = Paginator(sedi_all, 500)
+        sedi_paginator = Paginator(sedi_all, batch_size)
 
         for num_page in sedi_paginator.page_range:
             for sede in sedi_paginator.page(num_page):
