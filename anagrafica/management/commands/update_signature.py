@@ -23,6 +23,7 @@ class Command(BaseCommand):
         persone_paginator = Paginator(queyset, batch_size)
 
         for num_page in persone_paginator.page_range:
+            logger.info('** batch {} di {}'.format(num_page, persone_paginator.num_pages))
             for persona in persone_paginator.page(num_page):
                 persona.signature = uuid.uuid4()
                 persona.save()
