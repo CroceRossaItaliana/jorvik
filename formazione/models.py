@@ -2268,7 +2268,7 @@ class LezioneCorsoBase(ModelloSemplice, ConMarcaTemporale, ConGiudizio, ConStori
         """ GAIA-130: Questa lezione è obbligatoria peri Volontari e senza di essa
         non possono essere ammessi all' esame. """
 
-        if self.precaricata and self.corso.titolo_cri.sigla == 'CRIVT'
+        if self.precaricata and self.corso.titolo_cri.sigla == 'CRIVT' and self.lezione_id_univoco.endswith("6NER"):
             return True
         return False
 
