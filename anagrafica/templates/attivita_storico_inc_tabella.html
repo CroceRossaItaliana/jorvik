@@ -30,7 +30,11 @@
                         {{ richiesta.turno.link|safe }}
                     {% endif %}
                 </span><br />
-                {{ richiesta.turno.attivita.link|safe }}
+                {% if richiesta.turno.attivita.is_docenza %}
+                    <b>{{ richiesta.turno.attivita }}</b>
+                {% else %}
+                     {{ richiesta.turno.attivita.link|safe }}
+                {% endif %}
             </td>
             <td>
                 Inizio: <strong>{{ richiesta.turno.inizio|date:"SHORT_DATETIME_FORMAT" }}</strong><br />

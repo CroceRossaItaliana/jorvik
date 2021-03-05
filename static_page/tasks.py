@@ -24,7 +24,7 @@ def send_mail(self, user_pk, target):
 
 @shared_task(bind=True)
 def send_mail_regionale(self, user_pk, target):
-    from .monitoraggio import MONITORAGGIOTYPE
+    from .monitoraggio import MONITORAGGIOTYPE, MONITORAGGIO_TRASPARENZA
 
     responses = MONITORAGGIOTYPE[target][0](user_pk=user_pk)
     pdf = responses.convert_html_to_pdf()
