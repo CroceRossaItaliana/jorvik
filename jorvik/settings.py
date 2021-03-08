@@ -279,10 +279,11 @@ MOODLE_KEY = APIS_CONF.get('moodle', 'token', fallback=os.environ.get("MOODLE_KE
 MOODLE_DOMAIN = APIS_CONF.get('moodle', 'domain', fallback=os.environ.get("MOODLE_DOMAIN"))
 
 ELASTIC_HOST = ELASTIC_CONF.get('elastic', 'host', fallback=os.environ.get("ELASTIC_HOST"))
-ELASTIC_CURRICULUM_INDEX = ELASTIC_CONF.get('elastic', 'curriculum_index', fallback=os.environ.get("ELASTIC_CURRICULUM_INDEX"))
-ELASTIC_CORSO_INDEX = ELASTIC_CONF.get('elastic', 'corso_index', fallback=os.environ.get("ELASTIC_CORSO_INDEX"))
-ELASTIC_PERSONA_INDEX = ELASTIC_CONF.get('elastic', 'persona_index', fallback=os.environ.get("ELASTIC_PERSONA_INDEX"))
-ELASTIC_COMITATO_INDEX = ELASTIC_CONF.get('elastic', 'comitato_index', fallback=os.environ.get("ELASTIC_COMITATO_INDEX"))
+ELASTIC_ACTIVE = int(ELASTIC_CONF.get('elastic', 'active', fallback=os.environ.get("ELASTIC_ACTIVE")))
+ELASTIC_CURRICULUM_INDEX = ELASTIC_CONF.get('index', 'curriculum_index', fallback=os.environ.get("ELASTIC_CURRICULUM_INDEX"))
+ELASTIC_CORSO_INDEX = ELASTIC_CONF.get('index', 'corso_index', fallback=os.environ.get("ELASTIC_CORSO_INDEX"))
+ELASTIC_PERSONA_INDEX = ELASTIC_CONF.get('index', 'persona_index', fallback=os.environ.get("ELASTIC_PERSONA_INDEX"))
+ELASTIC_COMITATO_INDEX = ELASTIC_CONF.get('index', 'comitato_index', fallback=os.environ.get("ELASTIC_COMITATO_INDEX"))
 
 
 DESTINATARI_REPORT = ['sviluppo@cri.it', 'info@gaia.cri.it']

@@ -13,7 +13,7 @@ class SediSottostantiSerializer(serializers.ModelSerializer):
         return dict(ESTENSIONE)[instance.estensione]
 
     def get_id(self, instance):
-        return instance.signature
+        return str(instance.signature)
 
     class Meta:
         model = Sede
@@ -30,7 +30,7 @@ class ComitatoSerializer(serializers.ModelSerializer):
         return dict(ESTENSIONE)[instance.estensione]
 
     def get_id(self, instance):
-        return instance.signature
+        return str(instance.signature)
 
     class Meta:
         model = Sede

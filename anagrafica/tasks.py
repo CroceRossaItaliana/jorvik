@@ -21,7 +21,13 @@ def load_elastic(self, data, host, index):
     }
     response = requests.put(url, headers=headers, data=json.dumps(data))
     if response.status_code == HTTPStatus.CONFLICT:
-        url = "{}/{}/_update/{}".format(host, index, data['id_persona'])
+        if 'id_persona' in data:
+            url = "{}/{}/_update/{}".format(host, index, data['id_persona'] )
+        elif 'id_comitato' in data:
+            url = "{}/{}/_update/{}".format(host, index, data['id_comitato'])
+        else:
+            return 'id not found'
+
         response = requests.post(url, headers=headers, data=json.dumps({"doc": data}))
 
     if response.status_code not in [HTTPStatus.CREATED, HTTPStatus.OK]:

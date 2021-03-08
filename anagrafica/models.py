@@ -2190,7 +2190,7 @@ class Sede(ModelloAlbero, ConMarcaTemporale, ConGeolocalizzazione, ConVecchioID,
 
     @property
     def comitati_ids(self):
-        return self.ottieni_discendenti().values_list('signature', flat=True)
+        return [str(signature) for signature in self.ottieni_discendenti().values_list('signature', flat=True)]
 
     @property
     def comitato(self):
