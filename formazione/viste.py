@@ -1368,9 +1368,16 @@ def formazione_albo_informatizzato(request, me):
     sedi_set = set()
 
     ALL_PERMESSI_TO_CHECK = RUBRICA_DELEGATI_OBIETTIVO_ALL + [GESTIONE_CORSI_SEDE]
+
     for permesso in ALL_PERMESSI_TO_CHECK:
-        ids = me.oggetti_permesso(permesso).values_list('pk', flat=True)
-        sedi_set.update(ids)
+        sedi = me.oggetti_permesso(permesso)
+        for sede in sedi:
+            if sede.estensione == REGIONALE:
+                sedi_set.update(
+                    [sede.id for sede in sede.ottieni_discendenti(includimi=True, solo_attivi=True)]
+                )
+            else:
+                sedi_set.update([sede.id])
 
     if 1 in sedi_set:
         sedi_set = set()
