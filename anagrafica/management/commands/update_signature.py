@@ -28,14 +28,15 @@ class Command(BaseCommand):
 
     def _update_signature(self, queyset=None, batch_size=DEFAULT_BATCH_SIZE):
         count = 0
-        paginator = Paginator(queyset, batch_size)
-
-        for num_page in paginator.page_range:
-            for record in paginator.page(num_page):
-                record.signature = self._unique_signature(queyset)
+        # paginator = Paginator(queyset, batch_size)
+        #
+        # for num_page in paginator.page_range:
+        #     for record in paginator.page(num_page):
+        for record in queyset:
+                record.signature = self._unique_signature()
                 record.save()
                 count += 1
-            logger.info('** batch {} di {} completo'.format(num_page, paginator.num_pages))
+            # logger.info('** batch {} di {} completo'.format(num_page, paginator.num_pages))
 
         return count
 
