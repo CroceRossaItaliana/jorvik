@@ -324,11 +324,6 @@ LOGGING = {
             'level': 'INFO',
             'propagate': True,
         },
-        'anagrafica.management.commands': {
-            'handlers': ['file'],
-            'level': 'INFO',
-            'propagate': True,
-        },
         'two_factor': {
             'handlers': ['console'],
             'level': 'INFO',
