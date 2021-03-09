@@ -14,16 +14,13 @@ class Command(BaseCommand):
 
     DEFAULT_BATCH_SIZE = 500
 
-    UUID = []
-
     def add_arguments(self, parser):
         parser.add_argument('batch_size', nargs='?', type=int, default=self.DEFAULT_BATCH_SIZE)
 
-    def _unique_signature(self):
+    def _unique_signature(self, queyset=None):
         while True:
             signature = uuid.uuid4()
-            if str(signature) not in self.UUID:
-                self.UUID.append(str(signature))
+            if not queyset.filter(signature=signature).exists():
                 return signature
 
     def _update_signature(self, queyset=None, batch_size=DEFAULT_BATCH_SIZE):
@@ -32,7 +29,7 @@ class Command(BaseCommand):
 
         for num_page in paginator.page_range:
             for record in paginator.page(num_page):
-                record.signature = self._unique_signature()
+                record.signature = self._unique_signature(queyset)
                 record.save()
                 count += 1
             logger.info('** batch {} di {} completo'.format(num_page, paginator.num_pages))
