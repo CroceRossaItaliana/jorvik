@@ -19,14 +19,12 @@ class Command(BaseCommand):
     def add_arguments(self, parser):
         parser.add_argument('batch_size', nargs='?', type=int, default=self.DEFAULT_BATCH_SIZE)
 
-    def _unique_signature(self, queyset=None):
+    def _unique_signature(self):
         while True:
             signature = uuid.uuid4()
             if str(signature) not in self.UUID:
                 self.UUID.append(str(signature))
                 return signature
-            else:
-                logger.info('signature {} esistente'.format(str(signature)))
 
     def _update_signature(self, queyset=None, batch_size=DEFAULT_BATCH_SIZE):
         count = 0
