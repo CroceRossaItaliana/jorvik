@@ -28,8 +28,8 @@ class Command(BaseCommand):
                 record.signature = unique_signature(record.id, record.creazione)
                 try:
                     record.save()
-                except :
-                    logger.error('** {} '.format(record.id))
+                except Exception as e:
+                    logger.exception('** id:{} signature:{} errore:{}'.format(record.id, record.signature, e))
                 count += 1
             logger.info('** batch {} di {} completo'.format(num_page, paginator.num_pages))
 
