@@ -1,11 +1,11 @@
 import logging
-import uuid
 from time import time
 
 from django.core.management import BaseCommand
 from django.core.paginator import Paginator
 
 from anagrafica.models import Persona, Sede
+from formazione.utils import unique_signature
 
 logger = logging.getLogger(__name__)
 
@@ -19,24 +19,16 @@ class Command(BaseCommand):
     def add_arguments(self, parser):
         parser.add_argument('batch_size', nargs='?', type=int, default=self.DEFAULT_BATCH_SIZE)
 
-    def _unique_signature(self):
-        while True:
-            signature = uuid.uuid4()
-            if str(signature) not in self.UUID:
-                self.UUID.append(str(signature))
-                return signature
-
     def _update_signature(self, queyset=None, batch_size=DEFAULT_BATCH_SIZE):
         count = 0
-        # paginator = Paginator(queyset, batch_size)
-        #
-        # for num_page in paginator.page_range:
-        #     for record in paginator.page(num_page):
-        for record in queyset:
-                record.signature = self._unique_signature()
+        paginator = Paginator(queyset, batch_size)
+
+        for num_page in paginator.page_range:
+            for record in paginator.page(num_page):
+                record.signature = unique_signature(record.id, record.creazione)
                 record.save()
                 count += 1
-            # logger.info('** batch {} di {} completo'.format(num_page, paginator.num_pages))
+                logger.info('** batch {} di {} completo'.format(num_page, paginator.num_pages))
 
         return count
 

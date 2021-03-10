@@ -13,31 +13,15 @@ class Migration(migrations.Migration):
         ('anagrafica', '0069_auto_20201124_1223'),
     ]
 
-    def add_signature_to_persona(apps, schema_editor):
-        Persona = apps.get_model('anagrafica', 'Persona')
-
-        for perosna in Persona.objects.all():
-            perosna.signature = uuid.uuid4()
-            perosna.save()
-
-    def add_signature_to_sede(apps, schema_editor):
-        Sede = apps.get_model('anagrafica', 'Sede')
-
-        for sede in Sede.objects.all():
-            sede.signature = uuid.uuid4()
-            sede.save()
-
     operations = [
         migrations.AddField(
             model_name='persona',
             name='signature',
-            field=models.UUIDField(default=uuid.uuid4, editable=False),
+            field=models.CharField(default=None, max_length=50, null=True, blank=True),
         ),
         migrations.AddField(
             model_name='sede',
             name='signature',
-            field=models.UUIDField(default=uuid.uuid4, editable=False),
-        ),
-        # migrations.RunPython(add_signature_to_persona),
-        # migrations.RunPython(add_signature_to_sede),
+            field=models.CharField(default=None, max_length=50, null=True, blank=True),
+        )
     ]

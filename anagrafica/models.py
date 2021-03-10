@@ -1,4 +1,3 @@
-import uuid
 from datetime import date, timedelta, datetime
 
 import codicefiscale
@@ -20,6 +19,7 @@ from django.utils import timezone
 from django.utils.functional import cached_property
 from django_countries.fields import CountryField
 
+from formazione.utils import unique_signature
 from .costanti import (ESTENSIONE, TERRITORIALE, LOCALE, PROVINCIALE, REGIONALE, NAZIONALE)
 from .permessi.applicazioni import DELEGATO_AREA, DELEGATO_SO
 from .validators import (valida_codice_fiscale, ottieni_genere_da_codice_fiscale,
@@ -67,7 +67,8 @@ class Persona(ModelloSemplice, ConMarcaTemporale, ConAllegati, ConVecchioID):
     data_nascita = models.DateField("Data di nascita", db_index=True, null=True)
     genere = models.CharField("Sesso", max_length=1, choices=GENERE, db_index=True)
     stato = models.CharField("Stato", max_length=1, choices=STATO, default=PERSONA, db_index=True)
-    signature = models.UUIDField(default=uuid.uuid4, editable=False)
+    # signature = models.UUIDField(default=uuid.uuid4, editable=False)
+    signature = models.CharField(max_length=50, null=True, blank=True, default=None)
 
     # Informazioni anagrafiche aggiuntive
     # Residenza
@@ -1515,7 +1516,8 @@ class Persona(ModelloSemplice, ConMarcaTemporale, ConAllegati, ConVecchioID):
         # FIxed JO-733
         if self.genere_codice_fiscale and not self.genere:
             self.genere = self.genere_codice_fiscale
-            
+        if not self.signature:
+            self.signature = unique_signature(self.id, self.creazione)
         super().save(*args, **kwargs)
 
     class Meta:
@@ -1967,7 +1969,8 @@ class Sede(ModelloAlbero, ConMarcaTemporale, ConGeolocalizzazione, ConVecchioID,
 
     attiva = models.BooleanField("Attiva", default=True, db_index=True)
 
-    signature = models.UUIDField(default=uuid.uuid4, editable=False)
+    # signature = models.UUIDField(default=uuid.uuid4, editable=False)
+    signature = models.CharField(max_length=50, null=True, blank=True, default=None)
 
     __attiva_default = None
 
@@ -2190,7 +2193,7 @@ class Sede(ModelloAlbero, ConMarcaTemporale, ConGeolocalizzazione, ConVecchioID,
 
     @property
     def comitati_ids(self):
-        return [str(signature) for signature in self.ottieni_discendenti().values_list('signature', flat=True)]
+        return self.ottieni_discendenti().values_list('signature', flat=True)
 
     @property
     def comitato(self):
@@ -2364,6 +2367,8 @@ class Sede(ModelloAlbero, ConMarcaTemporale, ConGeolocalizzazione, ConVecchioID,
         )
 
     def save(self, *args, **kwargs):
+        if not self.signature:
+            self.signature = unique_signature(self.id, self.creazione)
         super().save(*args, **kwargs)
         if self.__attiva_default is not None and not self.attiva and self.__attiva_default != self.attiva:
             for sottosede in self.ottieni_figli(solo_attivi=False):
