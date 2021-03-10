@@ -78,4 +78,7 @@ class Command(BaseCommand):
             logger.info('Curriculum {} caricati {}'.format(tot_persone, curriculum))
             logger.info('Persone {} caricati {}'.format(tot_persone, curriculum))
 
-        logger.info('Completato in {} min.'.format((time() - start_time) / 60))
+        total_time = round((time() - start_time) / 60)
+        total_time = total_time if total_time < 60 else total_time / 60
+
+        logger.info('Completato in {} min.'.format(total_time))

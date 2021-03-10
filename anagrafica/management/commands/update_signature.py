@@ -21,16 +21,13 @@ class Command(BaseCommand):
 
     def _update_signature(self, queyset=None, batch_size=DEFAULT_BATCH_SIZE):
         count = 0
-        # paginator = Paginator(queyset, batch_size)
-
-        # for num_page in paginator.page_range:
-        #     for record in paginator.page(num_page):
         for record in queyset:
             record.signature = unique_signature(record.id, record.creazione)
             record.save()
             count += 1
             sleep(1/100)
-        # logger.info('** batch {} di {} completo'.format(num_page, paginator.num_pages))
+            if count % batch_size == 0:
+                logger.info('** Completati {} di {}'.format(count, queyset.count()))
 
         return count
 
@@ -52,16 +49,19 @@ class Command(BaseCommand):
         count_sedi = self._update_signature(queyset=sedi_queryset, batch_size=batch_size)
         logger.info('** Signature Sede finish')
 
+        total_time = round((time() - start_time) / 60)
+        total_time = total_time if total_time < 60 else total_time / 60
+
         if count_persone != persone_tot or count_sedi != sedi_tot:
             logger.warning(
                 'Persone tot:{} update:{} - Sedi tot:{} update:{} in {} min.'.format(
-                    persone_tot, count_persone, sedi_tot, count_sedi, (time() - start_time) / 60
+                    persone_tot, count_persone, sedi_tot, count_sedi, total_time
                 )
             )
         else:
             logger.info(
                 'Persone tot:{} update:{} - Sedi tot:{} update:{} in {} min.'.format(
-                    persone_tot, count_persone, sedi_tot, count_sedi, (time() - start_time) / 60
+                    persone_tot, count_persone, sedi_tot, count_sedi, total_time
                 )
             )
 

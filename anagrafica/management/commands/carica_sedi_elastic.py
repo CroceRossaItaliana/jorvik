@@ -53,8 +53,11 @@ class Command(BaseCommand):
 
         count_sedi = self._insert_sedi_in_elastic(queyset=sedi, batch_size=batch_size)
 
+        total_time = round((time() - start_time) / 60)
+        total_time = total_time if total_time < 60 else total_time / 60
+
         if count_sedi == sedi.count():
-            logger.info('Sedi {} caricate {} Completato in {} min.'.format(sedi.count(), count_sedi, (time() - start_time) / 60))
+            logger.info('Sedi {} caricate {} Completato in {} min.'.format(sedi.count(), count_sedi, total_time))
         else:
-            logger.warning('Sedi {} caricate {} Completato in {} min.'.format(sedi.count(), count_sedi, (time() - start_time) / 60))
+            logger.warning('Sedi {} caricate {} Completato in {} min.'.format(sedi.count(), count_sedi, total_time))
 
