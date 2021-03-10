@@ -26,10 +26,7 @@ class Command(BaseCommand):
         for num_page in paginator.page_range:
             for record in paginator.page(num_page):
                 record.signature = unique_signature(record.id, record.creazione)
-                try:
-                    record.save()
-                except Exception as e:
-                    logger.exception('** id:{} signature:{} errore:{}'.format(record.id, record.signature, e))
+                record.save()
                 count += 1
             logger.info('** batch {} di {} completo'.format(num_page, paginator.num_pages))
 

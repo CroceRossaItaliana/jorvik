@@ -1,4 +1,5 @@
 import hashlib
+import random
 from collections import OrderedDict
 
 from curriculum.areas import OBBIETTIVI_STRATEGICI
@@ -30,10 +31,12 @@ def costruisci_titoli(context={}, qs=None, search_query='', key=''):
 
 
 def unique_signature(pk=None, creazione=None):
+    import sys
     signature = hashlib.md5(
-        '{}{}'.format(
+        '{}{}{}'.format(
             pk,
-            creazione.strftime("%m/%d/%Y, %H:%M:%S:%f")
+            creazione.strftime("%m/%d/%Y, %H:%M:%S:%f"),
+            random.randint(-sys.maxsize, sys.maxsize - 1)
         ).encode()
     )
     return signature.hexdigest()
