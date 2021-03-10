@@ -31,6 +31,9 @@ def costruisci_titoli(context={}, qs=None, search_query='', key=''):
 
 def unique_signature(pk=None, creazione=None):
     signature = hashlib.md5(
-        '{}{}'.format(pk, creazione.strftime("%m/%d/%Y, %H:%M:%S:%f")).encode()
+        '{}{}'.format(
+            pk,
+            creazione.strftime("%m/%d/%Y, %H:%M:%S:%f")
+        ).encode()
     )
     return signature.hexdigest()
