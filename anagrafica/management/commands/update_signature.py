@@ -28,7 +28,7 @@ class Command(BaseCommand):
                 record.signature = unique_signature(record.id, record.creazione)
                 record.save()
                 count += 1
-                logger.info('** batch {} di {} completo'.format(num_page, paginator.num_pages))
+            logger.info('** batch {} di {} completo'.format(num_page, paginator.num_pages))
 
         return count
 
