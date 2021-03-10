@@ -1,5 +1,5 @@
 import logging
-from time import time
+from time import time, sleep
 
 from django.core.management import BaseCommand
 from django.core.paginator import Paginator
@@ -28,6 +28,7 @@ class Command(BaseCommand):
                 record.signature = unique_signature(record.id, record.creazione)
                 record.save()
                 count += 1
+                sleep(1/100)
             logger.info('** batch {} di {} completo'.format(num_page, paginator.num_pages))
 
         return count
@@ -36,18 +37,19 @@ class Command(BaseCommand):
         batch_size = options['batch_size']
 
         start_time = time()
-        persona_queryset = Persona.objects.all()
-        logger.info('** Signature Persone start')
+        persona_queryset = Persona.objects.filter(signature__isnull=True)
+        persone_tot = persona_queryset.count()
+
+        logger.info('** Signature Persone start count:{}'.format(persone_tot))
         count_persone = self._update_signature(queyset=persona_queryset, batch_size=batch_size)
         logger.info('** Signature Persone finish')
 
-        sedi_queryset = Sede.objects.all()
-        logger.info('** Signature Sede start')
+        sedi_queryset = Sede.objects.filter(signature__isnull=True)
+        sedi_tot = sedi_queryset.count()
+
+        logger.info('** Signature Sede start count:{}'.format(sedi_tot))
         count_sedi = self._update_signature(queyset=sedi_queryset, batch_size=batch_size)
         logger.info('** Signature Sede finish')
-
-        persone_tot = persona_queryset.count()
-        sedi_tot = sedi_queryset.count()
 
         if count_persone != persone_tot or count_sedi != sedi_tot:
             logger.warning(

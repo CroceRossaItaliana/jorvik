@@ -49,7 +49,7 @@ class Command(BaseCommand):
         start_time = time()
 
         logger.info('** Inserimento Comitati start')
-        sedi = Sede.objects.all()
+        sedi = Sede.objects.filter(signature__isnull=False)
 
         count_sedi = self._insert_sedi_in_elastic(queyset=sedi, batch_size=batch_size)
 
