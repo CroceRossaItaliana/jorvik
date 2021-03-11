@@ -33,29 +33,29 @@ class Command(BaseCommand):
         count_curriculum = 0
         count_persone = 0
 
-        paginator = Paginator(queyset, batch_size)
+        for persona in queyset:
+            s_curriculum = CurriculumPersonaSerializer(persona)
+            data = s_curriculum.data
+            url = "{}/{}/_doc/{}?op_type=create".format(ELASTIC_HOST, ELASTIC_CURRICULUM_INDEX, data['id_persona'])
+            headers = {
+                'Content-Type': 'application/json'
+            }
 
-        for num_page in paginator.page_range:
-            for persona in paginator.page(num_page):
-                s_curriculum = CurriculumPersonaSerializer(persona)
-                data = s_curriculum.data
-                url = "{}/{}/_doc/{}?op_type=create".format(ELASTIC_HOST, ELASTIC_CURRICULUM_INDEX, data['id_persona'])
-                headers = {
-                    'Content-Type': 'application/json'
-                }
+            response = requests.put(url, headers=headers, data=json.dumps(data))
 
-                response = requests.put(url, headers=headers, data=json.dumps(data))
+            count_curriculum += self._check_insert(url=url, response=response)
 
-                count_curriculum += self._check_insert(url=url, response=response)
+            s_persona = PersonaSerializer(persona)
+            data = s_persona.data
+            url = "{}/{}/_doc/{}?op_type=create".format(ELASTIC_HOST, ELASTIC_PERSONA_INDEX, data['id_persona'])
 
-                s_persona = PersonaSerializer(persona)
-                data = s_persona.data
-                url = "{}/{}/_doc/{}?op_type=create".format(ELASTIC_HOST, ELASTIC_PERSONA_INDEX, data['id_persona'])
+            response = requests.put(url, headers=headers, data=json.dumps(data))
 
-                response = requests.put(url, headers=headers, data=json.dumps(data))
+            count_persone += self._check_insert(url=url, response=response)
 
-                count_persone += self._check_insert(url=url, response=response)
-            logger.info('** batch {} di {} completo'.format(num_page, paginator.num_pages))
+            if count_curriculum % batch_size == 0 or count_persone % batch_size == 0:
+                logger.info('** Persone Completati {} di {}'.format(count_persone, queyset.count()))
+                logger.info('** Curriculum Completati {} di {}'.format(count_curriculum, queyset.count()))
 
         return count_curriculum, count_persone
 
@@ -64,8 +64,8 @@ class Command(BaseCommand):
 
         start_time = time()
 
-        logger.info('** Inserimento Persone/Curriculum start')
-        persone_queryset = Persona.objects.all()
+        persone_queryset = Persona.objects.filter(signature__isnull=False).distinct('signature')
+        logger.info('** Inserimento Persone/Curriculum start count:{}'.format(persone_queryset))
 
         curriculum, persone = self._insert_curriculum_persone_elastic(queyset=persone_queryset, batch_size=batch_size)
 
