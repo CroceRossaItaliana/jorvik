@@ -65,7 +65,7 @@ class Command(BaseCommand):
         start_time = time()
 
         logger.info('** Inserimento Persone/Curriculum start')
-        persone_queryset = Persona.objects.filter()
+        persone_queryset = Persona.objects.all()
 
         curriculum, persone = self._insert_curriculum_persone_elastic(queyset=persone_queryset, batch_size=batch_size)
 

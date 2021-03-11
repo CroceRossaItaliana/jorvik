@@ -31,12 +31,11 @@ def costruisci_titoli(context={}, qs=None, search_query='', key=''):
 
 
 def unique_signature(pk=None, creazione=None):
-    import sys
+    # import sys
     signature = hashlib.md5(
-        '{}{}{}'.format(
+        '{}{}'.format(
             pk,
-            creazione.strftime("%m/%d/%Y, %H:%M:%S:%f"),
-            random.randint(-sys.maxsize, sys.maxsize - 1)
+            creazione.strftime("%m/%d/%Y, %H:%M:%S:%f")
         ).encode()
     )
     return signature.hexdigest()
