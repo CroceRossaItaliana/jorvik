@@ -1,4 +1,5 @@
 from datetime import timedelta
+import logging
 
 from django.contrib import messages
 from django.core.urlresolvers import reverse
@@ -20,6 +21,9 @@ from posta.models import Messaggio
 from .forms import (FormAddQualificaCRI, ModuloNuovoTitoloPersonale, ModuloDettagliTitoloPersonale,
                     FormAddAltreQualifica, FormAddTitoloStudio)
 from .models import Titolo, TitoloPersonale
+
+
+logger = logging.getLogger(__name__)
 
 
 @pagina_privata
@@ -157,6 +161,8 @@ def cv_add_qualifica_cri(request, me):
 
 @pagina_privata
 def cv_add_titoli_studio(request, me):
+    logger.info('cv_add_titoli_studio')
+
     cv_tc_url = '/utente/curriculum/TS/'
     redirect_url = redirect(cv_tc_url)
     if request.method == 'POST':
@@ -171,6 +177,7 @@ def cv_add_titoli_studio(request, me):
                     nome="Scuola dell'obblico", tipo=Titolo.TITOLO_STUDIO
                 ).first()
                 if not scuola_obbligo:
+                    logger.info('Creo titolo "Scuola dell\'obblico"')
                     scuola_obbligo = Titolo(nome="Scuola dell'obblico", tipo=Titolo.TITOLO_STUDIO)
                     scuola_obbligo.save()
                 titolo_personale = TitoloPersonale(
@@ -181,13 +188,16 @@ def cv_add_titoli_studio(request, me):
                     data_ottenimento=cd['data_ottenimento'],
                 )
                 titolo_personale.save()
+                logger.info("Creato titolo personale {}".format(titolo_personale))
             elif tipo_titolo_studio == TitoloPersonale.DIPLOMA:
                 if cd['no_diploma']:
+                    logger.info("Titolo diploma non esistente")
                     nome_titolo = cd['nuovo_diploma'].capitalize()
                     diploma_titolo = Titolo(
                         nome=nome_titolo, tipo=Titolo.TITOLO_STUDIO, tipo_titolo_studio=Titolo.DIPLOMA
                     )
                     diploma_titolo.save()
+                    logger.info("Creato Titolo diploma {}".format(diploma_titolo))
                 else:
                     diploma_titolo = cd['diploma']
 
@@ -199,13 +209,16 @@ def cv_add_titoli_studio(request, me):
                     data_ottenimento=cd['data_ottenimento'],
                 )
                 titolo_personale.save()
+                logger.info("Creato titolo personale {}".format(titolo_personale))
             elif tipo_titolo_studio in TitoloPersonale.TITOLO_DI_STUDIO_LAUREE:
                 if cd['no_laurea']:
+                    logger.info("Titolo laurea non esistente")
                     nome_titolo = cd['nuova_laurea'].capitalize()
                     laurea_titolo = Titolo(
                         nome=nome_titolo, tipo=Titolo.TITOLO_STUDIO, tipo_titolo_studio=Titolo.LAUREA
                     )
                     laurea_titolo.save()
+                    logger.info("Creato Titolo laurea {}".format(laurea_titolo))
                 else:
                     laurea_titolo = cd['laurea']
 
@@ -217,9 +230,12 @@ def cv_add_titoli_studio(request, me):
                     data_ottenimento=cd['data_ottenimento'],
                 )
                 titolo_personale.save()
+                logger.info("Creato titolo personale {}".format(titolo_personale))
             else:
+                logger.info('tipo_titolo_studio non presente nella lista')
                 messages.error(request, "Il titolo di studio non è stato inserito correttamente")
         else:
+            logger.info('Errore Validazione form {}'.format(form.errors))
             messages.error(request, "Il titolo di studio non è stato inserito correttamente, correggere i dati nel form")
 
     return redirect_url

@@ -306,6 +306,11 @@ LOGGING = {
             'level': 'DEBUG',
             'propagate': True,
         },
+        'curriculum': {
+            'handlers': ['file'],
+            'level': 'INFO',
+            'propagate': True,
+        },
         'two_factor': {
             'handlers': ['console'],
             'level': 'INFO',
