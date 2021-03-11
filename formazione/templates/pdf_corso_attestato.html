@@ -188,9 +188,15 @@
 								<div class="front-page-labels">
 									<div style="width: 33%;">{{ corso.locazione }}<br>{{ corso.data_esame|date:"d/m/Y" }}</div>
 									<div style="width: 33%;">Il Docente<br>
-										{% for docente in corso.lezione_salute_sicurezza.docente.all %}
-											{{ docente }}<br>
-										{% endfor %}
+                                        {% if corso.titolo_cri.sigla == 'CRIVT' %}
+                                            {% for docente in corso.nominativa_ruoli.docente.all %}
+                                                {{ docente }}<br>
+                                            {% endfor %}
+                                        {% else %}
+                                            {% for docente in corso.lezione_salute_sicurezza.docente.all %}
+                                                {{ docente }}<br>
+                                            {% endfor %}
+                                        {% endif %}
 									</div>
 									<div style="width: 33%;">Il Presidente<br>{{ corso.presidente_corso.nome_completo|default:"" }}</div>
 								</div>
