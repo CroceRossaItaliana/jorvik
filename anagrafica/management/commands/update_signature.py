@@ -35,14 +35,14 @@ class Command(BaseCommand):
         batch_size = options['batch_size']
 
         start_time = time()
-        persona_queryset = Persona.objects.all()
+        persona_queryset = Persona.objects.filter(signature__isnull=True)
         persone_tot = persona_queryset.count()
 
         logger.info('** Signature Persone start count:{}'.format(persone_tot))
         count_persone = self._update_signature(queyset=persona_queryset, batch_size=batch_size)
         logger.info('** Signature Persone finish')
 
-        sedi_queryset = Sede.objects.all()
+        sedi_queryset = Sede.objects.filter(signature__isnull=True)
         sedi_tot = sedi_queryset.count()
 
         logger.info('** Signature Sede start count:{}'.format(sedi_tot))
