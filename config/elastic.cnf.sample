@@ -1,6 +1,5 @@
 [elastic]
 active=0
-host=https://es.staging.gaia.cri.it
 
 [index]
 curriculum_index=curriculum_index_dev
