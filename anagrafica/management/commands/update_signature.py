@@ -25,7 +25,7 @@ class Command(BaseCommand):
             record.signature = unique_signature(record.id, record.creazione)
             record.save()
             count += 1
-            sleep(1/100)
+            sleep(1/1000)
             if count % batch_size == 0:
                 logger.info('** Completati {} di {}'.format(count, queyset.count()))
 
@@ -50,18 +50,18 @@ class Command(BaseCommand):
         logger.info('** Signature Sede finish')
 
         total_time = round((time() - start_time) / 60)
-        total_time = total_time if total_time < 60 else total_time / 60
+        total_time, tmp = (total_time, 'min') if total_time < 60 else ((total_time / 60), 'ore')
 
         if count_persone != persone_tot or count_sedi != sedi_tot:
             logger.warning(
-                'Persone tot:{} update:{} - Sedi tot:{} update:{} in {} min.'.format(
-                    persone_tot, count_persone, sedi_tot, count_sedi, total_time
+                'Persone tot:{} update:{} - Sedi tot:{} update:{} in {} {}.'.format(
+                    persone_tot, count_persone, sedi_tot, count_sedi, total_time, tmp
                 )
             )
         else:
             logger.info(
-                'Persone tot:{} update:{} - Sedi tot:{} update:{} in {} min.'.format(
-                    persone_tot, count_persone, sedi_tot, count_sedi, total_time
+                'Persone tot:{} update:{} - Sedi tot:{} update:{} in {} {}.'.format(
+                    persone_tot, count_persone, sedi_tot, count_sedi, total_time, tmp
                 )
             )
 

@@ -65,7 +65,7 @@ class Command(BaseCommand):
         start_time = time()
 
         logger.info('** Inserimento Persone/Curriculum start')
-        persone_queryset = Persona.objects.filter(signature__isnull=False)
+        persone_queryset = Persona.objects.filter()
 
         curriculum, persone = self._insert_curriculum_persone_elastic(queyset=persone_queryset, batch_size=batch_size)
 
@@ -79,6 +79,6 @@ class Command(BaseCommand):
             logger.info('Persone {} caricati {}'.format(tot_persone, curriculum))
 
         total_time = round((time() - start_time) / 60)
-        total_time = total_time if total_time < 60 else total_time / 60
+        total_time, tmp = (total_time, 'min') if total_time < 60 else ((total_time / 60), 'ore')
 
-        logger.info('Completato in {} min.'.format(total_time))
+        logger.info('Completato in {} {}.'.format(total_time, tmp))

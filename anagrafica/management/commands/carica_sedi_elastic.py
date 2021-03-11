@@ -49,15 +49,22 @@ class Command(BaseCommand):
         start_time = time()
 
         logger.info('** Inserimento Comitati start')
-        sedi = Sede.objects.filter(signature__isnull=False)
+        sedi = Sede.objects.filter()
 
         count_sedi = self._insert_sedi_in_elastic(queyset=sedi, batch_size=batch_size)
 
         total_time = round((time() - start_time) / 60)
-        total_time = total_time if total_time < 60 else total_time / 60
+        total_time, tmp = (total_time, 'min') if total_time < 60 else ((total_time / 60), 'ore')
 
         if count_sedi == sedi.count():
-            logger.info('Sedi {} caricate {} Completato in {} min.'.format(sedi.count(), count_sedi, total_time))
+            logger.info(
+                'Sedi {} caricate {} Completato in {} {}.'.format(
+                    sedi.count(), count_sedi, total_time, tmp
+                )
+            )
         else:
-            logger.warning('Sedi {} caricate {} Completato in {} min.'.format(sedi.count(), count_sedi, total_time))
+            logger.warning('Sedi {} caricate {} Completato in {} {}.'.format(
+                sedi.count(), count_sedi, total_time, tmp
+                )
+            )
 
