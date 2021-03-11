@@ -16,12 +16,12 @@ logger = logging.getLogger(__name__)
 
 
 class Command(BaseCommand):
-    DEFAULT_BATCH_SIZE = 500
+    # DEFAULT_BATCH_SIZE = 500
+    #
+    # def add_arguments(self, parser):
+    #     parser.add_argument('batch_size', nargs='?', type=int, default=self.DEFAULT_BATCH_SIZE)
 
-    def add_arguments(self, parser):
-        parser.add_argument('batch_size', nargs='?', type=int, default=self.DEFAULT_BATCH_SIZE)
-
-    def _insert_sedi_in_elastic(self, queyset=None, count=0, batch_size=DEFAULT_BATCH_SIZE):
+    def _insert_sedi_in_elastic(self, queyset=None):
         count_sedi = 0
 
         for sede in queyset:
@@ -38,25 +38,21 @@ class Command(BaseCommand):
             else:
                 logger.warning('{} {}'.format(url, response.status_code))
 
-            if count_sedi % batch_size == 0:
-                logger.info('** Comitati Completati {} di {}'.format(count_sedi, count))
-
         return count_sedi
 
     def handle(self, *args, **options):
-        batch_size = options['batch_size']
         start_time = time()
 
         sedi = Sede.objects.filter(signature__isnull=False)
         count = sedi.count()
         logger.info('** Inserimento Comitati start count:{}'.format(count))
 
-        count_sedi = self._insert_sedi_in_elastic(queyset=sedi, batch_size=batch_size, count=count)
+        count_sedi = self._insert_sedi_in_elastic(queyset=sedi)
 
         total_time = round((time() - start_time) / 60)
         total_time, tmp = (total_time, 'min') if total_time < 60 else ((total_time / 60), 'ore')
 
-        if count_sedi == sedi.count():
+        if count_sedi == count:
             logger.info(
                 'Sedi {} caricate {} Completato in {} {}.'.format(
                     sedi.count(), count_sedi, total_time, tmp
