@@ -66,9 +66,9 @@ class Titolo(ModelloSemplice, ConVecchioID):
     area = models.CharField(max_length=5, null=True, blank=True, db_index=True,
         choices=OBBIETTIVI_STRATEGICI)
 
-    tipo_titolo_studio = models.CharField(max_length=2, choices=TIPO_TOTOLO_STUDIO, db_index=True, null=True, blank=True)
-
     tipo = models.CharField(max_length=2, choices=TIPO, db_index=True)
+    tipo_titolo_studio = models.CharField(max_length=2, choices=TIPO_TOTOLO_STUDIO, db_index=True, null=True,
+                                          blank=True)
     modalita_titoli_cri = models.CharField(max_length=2, choices=MODALITA, db_index=True, null=True, blank=True)
     moodle = models.BooleanField(default=False, blank=True)
     sigla = models.CharField(max_length=50, null=True, blank=True)
@@ -273,11 +273,45 @@ class TitoloPersonale(ModelloSemplice, ConMarcaTemporale, ConAutorizzazioni):
         (ALTRO, 'Altro'),
     )
 
+    SCUOLA_OBBLIGO = 'SO'
+    DIPLOMA = 'DI'
+    LAUREANDO_3_ANNI = 'L3'
+    LAUREANDO_SPECIALIZZAZIONE = 'LS'
+    LAUREA = 'LS'
+    LAUREA_VECCHIO_ORDINAMENTO = 'LV'
+    LAUREA_SPECIALISTICA = 'LS'
+    SPEZIALIZZAZIONE_POST_LAURA = 'SP'
+    MASTER = 'MA'
+    DOTTORATO = 'DT'
+
+    TITOLO_DI_STUDIO = (
+        (SCUOLA_OBBLIGO, "Scuola dell'obbligo"),
+        (DIPLOMA, "Diploma"),
+        (LAUREANDO_3_ANNI, "Laureando/a 3 anni"),
+        (LAUREANDO_SPECIALIZZAZIONE, "Laureando/a specialistica o vecchio ordinamento"),
+        (LAUREA, "Laurea 3 anni"),
+        (LAUREA_VECCHIO_ORDINAMENTO, "Laurea vecchio ordinamento"),
+        (LAUREA_SPECIALISTICA, "Laurea specialistica"),
+        (SPEZIALIZZAZIONE_POST_LAURA, "Specializzazione post-laurea"),
+        (MASTER, "Master"),
+        (DOTTORATO, "Dottorato"),
+    )
+
+    TITOLO_DI_STUDIO_LAUREE = [
+        LAUREANDO_3_ANNI, LAUREANDO_SPECIALIZZAZIONE, LAUREA, LAUREA_VECCHIO_ORDINAMENTO,
+        LAUREA_SPECIALISTICA, SPEZIALIZZAZIONE_POST_LAURA, MASTER, DOTTORATO
+    ]
+
+
     settore_di_riferimento = models.CharField(max_length=2, blank=True,
                                            null=True, choices=SETTORE_DI_RIFERIMENTO)
 
     tipo_altro_titolo = models.CharField(max_length=2, blank=True,
                                            null=True, choices=TIPO_ALTRO_TITOLO)
+
+    tipo_titolo_di_studio = models.CharField(
+        max_length=2, blank=True, null=True, choices=TITOLO_DI_STUDIO
+    )
 
     titolo = models.ForeignKey(Titolo, on_delete=models.CASCADE)
     argomento = models.CharField(max_length=100, blank=True, null=True)

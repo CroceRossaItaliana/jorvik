@@ -189,36 +189,24 @@ class FormAddAltreQualifica(autocomplete_light.ModelForm):
 
 class FormAddTitoloStudio(autocomplete_light.ModelForm):
 
-    TITOLO_DI_STUDIO = (
-        (0, "--------------------------------------"),
-        (1, "Scuola dell'obbligo"),
-        (2, "Diploma"),
-        (3, "Laureando/a 3 anni"),
-        (4, "Laureando/a specialistica o vecchio ordinamento"),
-        (5, "Laurea 3 anni"),
-        (6, "Laurea vecchio ordinamento"),
-        (7, "Laurea specialistica"),
-        (8, "Specializzazione post-laurea"),
-        (9, "Master"),
-        (10, "Dottorato"),
-    )
-
-    titolo_di_studio = forms.ChoiceField(
-        choices=TITOLO_DI_STUDIO,
-        required=True
-    )
-
     diploma = autocomplete_light.ModelChoiceField('TitoliStudioDiplomaAutocompletamento', required=False)
     no_diploma = forms.BooleanField(required=False)
     nuovo_diploma = forms.CharField(required=False)
+    laurea = autocomplete_light.ModelChoiceField('TitoliStudioLaureaAutocompletamento', required=False)
+    no_laurea = forms.BooleanField(required=False)
+    nuova_laurea = forms.CharField(required=False)
 
     class Meta:
         model = TitoloPersonale
         fields = [
-            'titolo_di_studio',
+            'tipo_titolo_di_studio',
             'diploma',
             'no_diploma',
-            'nuovo_diploma'
+            'nuovo_diploma',
+            'laurea',
+            'no_laurea',
+            'nuova_laurea',
+            'data_ottenimento'
         ]
 
     def __init__(self, *args, **kwargs):
@@ -226,3 +214,5 @@ class FormAddTitoloStudio(autocomplete_light.ModelForm):
         super().__init__(*args, **kwargs)
         self.fields['diploma'].widget.attrs['placeholder'] = 'Inizia a digitare ...'
         self.fields['no_diploma'].label = 'Non trovo il mio diploma'
+
+        self.fields['laurea'].widget.attrs['placeholder'] = 'Inizia a digitare ...'

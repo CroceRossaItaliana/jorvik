@@ -156,6 +156,76 @@ def cv_add_qualifica_cri(request, me):
 
 
 @pagina_privata
+def cv_add_titoli_studio(request, me):
+    cv_tc_url = '/utente/curriculum/TS/'
+    redirect_url = redirect(cv_tc_url)
+    if request.method == 'POST':
+        form = FormAddTitoloStudio(request.POST)
+        if form.is_valid():
+            cd = form.cleaned_data
+
+            tipo_titolo_studio = cd['tipo_titolo_di_studio']
+
+            if tipo_titolo_studio == TitoloPersonale.SCUOLA_OBBLIGO:
+                scuola_obbligo = Titolo.objects.filter(
+                    nome="Scuola dell'obblico", tipo=Titolo.TITOLO_STUDIO
+                ).first()
+                if not scuola_obbligo:
+                    scuola_obbligo = Titolo(nome="Scuola dell'obblico", tipo=Titolo.TITOLO_STUDIO)
+                    scuola_obbligo.save()
+                titolo_personale = TitoloPersonale(
+                    persona=me,
+                    confermata=True,
+                    tipo_titolo_di_studio=tipo_titolo_studio,
+                    titolo=scuola_obbligo,
+                    data_ottenimento=cd['data_ottenimento'],
+                )
+                titolo_personale.save()
+            elif tipo_titolo_studio == TitoloPersonale.DIPLOMA:
+                if cd['no_diploma']:
+                    nome_titolo = cd['nuovo_diploma'].capitalize()
+                    diploma_titolo = Titolo(
+                        nome=nome_titolo, tipo=Titolo.TITOLO_STUDIO, tipo_titolo_studio=Titolo.DIPLOMA
+                    )
+                    diploma_titolo.save()
+                else:
+                    diploma_titolo = cd['diploma']
+
+                titolo_personale = TitoloPersonale(
+                    persona=me,
+                    confermata=True,
+                    titolo=diploma_titolo,
+                    tipo_titolo_di_studio=tipo_titolo_studio,
+                    data_ottenimento=cd['data_ottenimento'],
+                )
+                titolo_personale.save()
+            elif tipo_titolo_studio in TitoloPersonale.TITOLO_DI_STUDIO_LAUREE:
+                if cd['no_laurea']:
+                    nome_titolo = cd['nuova_laurea'].capitalize()
+                    laurea_titolo = Titolo(
+                        nome=nome_titolo, tipo=Titolo.TITOLO_STUDIO, tipo_titolo_studio=Titolo.LAUREA
+                    )
+                    laurea_titolo.save()
+                else:
+                    laurea_titolo = cd['laurea']
+
+                titolo_personale = TitoloPersonale(
+                    persona=me,
+                    confermata=True,
+                    titolo=laurea_titolo,
+                    tipo_titolo_di_studio=tipo_titolo_studio,
+                    data_ottenimento=cd['data_ottenimento'],
+                )
+                titolo_personale.save()
+            else:
+                messages.error(request, "Il titolo di studio non è stato inserito correttamente")
+        else:
+            messages.error(request, "Il titolo di studio non è stato inserito correttamente, correggere i dati nel form")
+
+    return redirect_url
+
+
+@pagina_privata
 def cv_add_qualifica_altre_cri(request, me):
     cv_tc_url = '/utente/curriculum/AT/'
     redirect_url = redirect(cv_tc_url)
