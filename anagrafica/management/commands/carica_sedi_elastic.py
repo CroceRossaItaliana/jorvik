@@ -47,7 +47,7 @@ class Command(BaseCommand):
         batch_size = options['batch_size']
         start_time = time()
 
-        sedi = Sede.objects.filter(signature__isnull=False).distinct('signature')
+        sedi = Sede.objects.filter(signature__isnull=False)
         logger.info('** Inserimento Comitati start count:{}'.format(sedi))
 
         count_sedi = self._insert_sedi_in_elastic(queyset=sedi, batch_size=batch_size)

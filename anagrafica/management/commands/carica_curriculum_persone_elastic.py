@@ -64,7 +64,7 @@ class Command(BaseCommand):
 
         start_time = time()
 
-        persone_queryset = Persona.objects.filter(signature__isnull=False).distinct('signature')
+        persone_queryset = Persona.objects.filter(signature__isnull=False)
         logger.info('** Inserimento Persone/Curriculum start count:{}'.format(persone_queryset))
 
         curriculum, persone = self._insert_curriculum_persone_elastic(queyset=persone_queryset, batch_size=batch_size)
