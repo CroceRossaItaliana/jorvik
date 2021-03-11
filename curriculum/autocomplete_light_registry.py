@@ -106,7 +106,25 @@ class QualificaAltrePartnershipAutocompletamento(autocomplete_light.Autocomplete
         return super().choices_for_request()
 
 
+class TitoliStudioDiplomaAutocompletamento(autocomplete_light.AutocompleteModelBase):
+
+    model = Titolo
+    split_words = True
+    search_fields = ['nome', ]
+    attrs = {
+        'data-autocomplete-minimum-characters': 1,
+    }
+
+    def choices_for_request(self):
+        self.choices = self.choices.filter(
+            tipo=Titolo.TITOLO_STUDIO, tipo_titolo_studio=Titolo.DIPLOMA
+        ).order_by('nome').distinct('nome')
+
+        return super().choices_for_request()
+
+
 autocomplete_light.register(TitoloAutocompletamento)
 autocomplete_light.register(TitoloCRIAutocompletamento)
 autocomplete_light.register(QualificaCRIRegressoAutocompletamento)
 autocomplete_light.register(QualificaAltrePartnershipAutocompletamento)
+autocomplete_light.register(TitoliStudioDiplomaAutocompletamento)

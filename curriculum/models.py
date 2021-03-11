@@ -53,11 +53,21 @@ class Titolo(ModelloSemplice, ConVecchioID):
         (CORSO_EQUIPOLLENZA, 'Corso equipollenza'),
     )
 
+    DIPLOMA = 'DP'
+    LAUREA = 'LA'
+
+    TIPO_TOTOLO_STUDIO = (
+        (DIPLOMA, 'DIPLOMA'),
+        (LAUREA, 'LAUREA')
+    )
     goal = models.ForeignKey('TitleGoal', null=True, blank=True,
         verbose_name="Obbiettivo", on_delete=models.PROTECT)
     nome = models.CharField(max_length=255, db_index=True)
     area = models.CharField(max_length=5, null=True, blank=True, db_index=True,
         choices=OBBIETTIVI_STRATEGICI)
+
+    tipo_titolo_studio = models.CharField(max_length=2, choices=TIPO_TOTOLO_STUDIO, db_index=True, null=True, blank=True)
+
     tipo = models.CharField(max_length=2, choices=TIPO, db_index=True)
     modalita_titoli_cri = models.CharField(max_length=2, choices=MODALITA, db_index=True, null=True, blank=True)
     moodle = models.BooleanField(default=False, blank=True)

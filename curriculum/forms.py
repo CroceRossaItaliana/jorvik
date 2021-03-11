@@ -140,7 +140,6 @@ class FormAddAltreQualifica(autocomplete_light.ModelForm):
     )
     altri_titolo = autocomplete_light.ModelChoiceField('QualificaAltrePartnershipAutocompletamento', required=False)
     argomento = forms.MultipleChoiceField(required=False, choices=())
-    # argomento = forms.MultipleChoiceField(choices=(), required=False)
     no_corso = forms.BooleanField(initial=False, required=False)
     no_argomento = forms.BooleanField(initial=False, required=False)
     nome_corso = forms.CharField(required=False)
@@ -186,3 +185,44 @@ class FormAddAltreQualifica(autocomplete_light.ModelForm):
         self.fields['altri_titolo'].label = 'Corsi esterni'
         self.fields['no_corso'].label = 'Non trovo la mia qualifica'
         self.fields['no_argomento'].label = "Non trovo l'argomento"
+
+
+class FormAddTitoloStudio(autocomplete_light.ModelForm):
+
+    TITOLO_DI_STUDIO = (
+        (0, "--------------------------------------"),
+        (1, "Scuola dell'obbligo"),
+        (2, "Diploma"),
+        (3, "Laureando/a 3 anni"),
+        (4, "Laureando/a specialistica o vecchio ordinamento"),
+        (5, "Laurea 3 anni"),
+        (6, "Laurea vecchio ordinamento"),
+        (7, "Laurea specialistica"),
+        (8, "Specializzazione post-laurea"),
+        (9, "Master"),
+        (10, "Dottorato"),
+    )
+
+    titolo_di_studio = forms.ChoiceField(
+        choices=TITOLO_DI_STUDIO,
+        required=True
+    )
+
+    diploma = autocomplete_light.ModelChoiceField('TitoliStudioDiplomaAutocompletamento', required=False)
+    no_diploma = forms.BooleanField(required=False)
+    nuovo_diploma = forms.CharField(required=False)
+
+    class Meta:
+        model = TitoloPersonale
+        fields = [
+            'titolo_di_studio',
+            'diploma',
+            'no_diploma',
+            'nuovo_diploma'
+        ]
+
+    def __init__(self, *args, **kwargs):
+
+        super().__init__(*args, **kwargs)
+        self.fields['diploma'].widget.attrs['placeholder'] = 'Inizia a digitare ...'
+        self.fields['no_diploma'].label = 'Non trovo il mio diploma'

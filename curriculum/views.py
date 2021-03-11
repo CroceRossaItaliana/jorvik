@@ -18,7 +18,7 @@ from formazione.models import CorsoBase
 from posta.models import Messaggio
 
 from .forms import (FormAddQualificaCRI, ModuloNuovoTitoloPersonale, ModuloDettagliTitoloPersonale,
-                    FormAddAltreQualifica)
+                    FormAddAltreQualifica, FormAddTitoloStudio)
 from .models import Titolo, TitoloPersonale
 
 
@@ -73,6 +73,7 @@ def curriculum(request, me, tipo=None):
     form = ModuloNuovoTitoloPersonale(tipo, tipo_display, request.POST or None, me=me)
     form_add_qualifica = FormAddQualificaCRI()
     form_add_altra_qualifica = FormAddAltreQualifica()
+    form_add_titolo_studio = FormAddTitoloStudio()
 
     if form.is_valid():
         cd = form.cleaned_data
@@ -124,6 +125,7 @@ def curriculum(request, me, tipo=None):
         "modulo": form,
         "form_add_qualifica": form_add_qualifica,
         "form_add_altra_qualifica": form_add_altra_qualifica,
+        "form_add_titolo_studio": form_add_titolo_studio,
         "titoli": titoli.order_by('-creazione', '-data_ottenimento', '-data_scadenza'),
         "titolo": titolo_selezionato
     }
