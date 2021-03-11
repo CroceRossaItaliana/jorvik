@@ -28,7 +28,7 @@ class Command(BaseCommand):
             logger.warning('{} {} {}'.format(url, response.status_code, response.text))
             return 0
 
-    def _insert_curriculum_persone_elastic(self, queyset=None, batch_size=DEFAULT_BATCH_SIZE):
+    def _insert_curriculum_persone_elastic(self, queyset=None, count=0, batch_size=DEFAULT_BATCH_SIZE):
 
         count_curriculum = 0
         count_persone = 0
@@ -53,9 +53,11 @@ class Command(BaseCommand):
 
             count_persone += self._check_insert(url=url, response=response)
 
-            if count_curriculum % batch_size == 0 or count_persone % batch_size == 0:
-                logger.info('** Persone Completati {} di {}'.format(count_persone, queyset.count()))
-                logger.info('** Curriculum Completati {} di {}'.format(count_curriculum, queyset.count()))
+            if count_curriculum % batch_size == 0:
+                logger.info('** Curriculum Completati {} di {}'.format(count_curriculum, count))
+
+            if count_persone % batch_size == 0:
+                logger.info('** Persone Completati {} di {}'.format(count_persone, count))
 
         return count_curriculum, count_persone
 
@@ -65,9 +67,12 @@ class Command(BaseCommand):
         start_time = time()
 
         persone_queryset = Persona.objects.filter(signature__isnull=False)
-        logger.info('** Inserimento Persone/Curriculum start count:{}'.format(persone_queryset))
+        count = persone_queryset.count()
+        logger.info('** Inserimento Persone/Curriculum start count:{}'.format(count))
 
-        curriculum, persone = self._insert_curriculum_persone_elastic(queyset=persone_queryset, batch_size=batch_size)
+        curriculum, persone = self._insert_curriculum_persone_elastic(
+            queyset=persone_queryset, batch_size=batch_size, count=count
+        )
 
         tot_persone = persone_queryset.count()
 

@@ -21,8 +21,8 @@ class Command(BaseCommand):
     def add_arguments(self, parser):
         parser.add_argument('batch_size', nargs='?', type=int, default=self.DEFAULT_BATCH_SIZE)
 
-    def _insert_sedi_in_elastic(self, queyset=None, batch_size=DEFAULT_BATCH_SIZE):
-        count = 0
+    def _insert_sedi_in_elastic(self, queyset=None, count=0, batch_size=DEFAULT_BATCH_SIZE):
+        count_sedi = 0
 
         for sede in queyset:
             s_sede = ComitatoSerializer(sede)
@@ -34,23 +34,24 @@ class Command(BaseCommand):
             }
             response = requests.put(url, headers=headers, data=json.dumps(data))
             if response.status_code == HTTPStatus.CREATED:
-                count += 1
+                count_sedi += 1
             else:
                 logger.warning('{} {}'.format(url, response.status_code))
 
-            if count % batch_size == 0:
-                logger.info('** Comitati Completati {} di {}'.format(count, queyset.count()))
+            if count_sedi % batch_size == 0:
+                logger.info('** Comitati Completati {} di {}'.format(count_sedi, count))
 
-        return count
+        return count_sedi
 
     def handle(self, *args, **options):
         batch_size = options['batch_size']
         start_time = time()
 
         sedi = Sede.objects.filter(signature__isnull=False)
-        logger.info('** Inserimento Comitati start count:{}'.format(sedi))
+        count = sedi.count()
+        logger.info('** Inserimento Comitati start count:{}'.format(count))
 
-        count_sedi = self._insert_sedi_in_elastic(queyset=sedi, batch_size=batch_size)
+        count_sedi = self._insert_sedi_in_elastic(queyset=sedi, batch_size=batch_size, count=count)
 
         total_time = round((time() - start_time) / 60)
         total_time, tmp = (total_time, 'min') if total_time < 60 else ((total_time / 60), 'ore')
