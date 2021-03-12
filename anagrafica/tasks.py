@@ -34,3 +34,18 @@ def load_elastic(self, data, host, index):
         logger.error('{} {}'.format(url, response.text))
 
     return response.status_code
+
+
+@shared_task(bind=True)
+def delete_elastic(self, host, index, id):
+    url = "{}/{}/_doc/{}".format(host, index, id)
+
+    headers = {
+        'Content-Type': 'application/json'
+    }
+    response = requests.delete(url, headers=headers)
+
+    if response.status_code != HTTPStatus.OK:
+        logger.error('{} {}'.format(url, response.text))
+
+    return response.status_code
