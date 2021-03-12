@@ -1,8 +1,38 @@
 {% extends 'anagrafica_profilo.html' %}
+{% load static %}
 
 {% load bootstrap3 %}
 {% block profilo_corpo %}
-
+{% if sezione %}
+    <div class="row">
+        <div class="col-lg-3" style="padding: 5px">
+            <a class="btn btn-primary btn-block" href="{% url 'profilo:profilo' pk=pk sezione=sezione %}?modifica=qualificacri">
+                Carica Qualifica CRI
+            </a>
+        </div>
+        <div class="col-lg-3" style="padding: 5px">
+            <a class="btn btn-primary btn-block" href="{% url 'profilo:profilo' pk=pk sezione=sezione %}?modifica=altrequalifiche">
+                Carica Altre qualifiche
+            </a>
+        </div>
+        <div class="col-lg-3" style="padding: 5px">
+            <a class="btn btn-primary btn-block" href="{% url 'profilo:profilo' pk=pk sezione=sezione %}?modifica=titolistudio">
+                Carica Titolo di studio
+            </a>
+        </div>
+        <div class="col-lg-3" style="padding: 5px">
+            <a class="btn btn-primary btn-block" href="{% url 'profilo:profilo' pk=pk sezione=sezione %}?modifica=">
+                Carica Esperienze professionali
+            </a>
+        </div>
+        <div class="col-lg-3" style="padding: 5px">
+            <a class="btn btn-primary btn-block" href="{% url 'profilo:profilo' pk=pk sezione=sezione %}?modifica=">
+                Carica Competenza e skill
+            </a>
+        </div>
+    </div>
+    <br>
+{% endif %}
 <div class="row">
     <div class="col-lg-8">
         <div class="panel panel-info">
@@ -11,7 +41,6 @@
                     <i class="fa fa-folder fa-fw"></i> Curriculum ({{ persona.titoli_personali.count }})
                 </h4>
             </div>
-
             <div class="panel-body">
                 <p>Il curriculum di un volontario include competenze personali, titoli CRI, patenti civili e CRI.</p>
 
@@ -111,29 +140,35 @@
     </div>
 
     <div class="col-lg-4">
-        {% if puo_modificare %}
-        <form method="POST" enctype="multipart/form-data">
+        {% if puo_modificare and modulo %}
+            <form method="POST" enctype="multipart/form-data">
 
-            {% csrf_token %}
-                <div class="panel panel-primary">
-                    <div class="panel-heading">
-                        <h4 class="panel-title">
-                            <i class="fa fa-plus"></i> Aggiungi titolo
-                        </h4>
+                {% csrf_token %}
+                    <div class="panel panel-primary">
+                        <div class="panel-heading">
+                            <h4 class="panel-title">
+                                <i class="fa fa-plus"></i> Aggiungi {{ tipo_titolo }}
+                            </h4>
+                        </div>
+
+                        <div class="panel-body">
+                            {% bootstrap_form modulo %}
+
+                            <button class="btn btn-primary btn-block">
+                                <i class="fa fa-check"></i>
+                                Carica
+                            </button>
+                        </div>
                     </div>
-
-                    <div class="panel-body">
-                        {% bootstrap_form modulo %}
-
-                        <button class="btn btn-primary btn-block">
-                            <i class="fa fa-check"></i>
-                            Carica
-                        </button>
-                    </div>
-                </div>
-        </form>
+            </form>
         {% endif %}
 
     </div>
 </div>
+<script>
+    const url_cv_cdf_titolo_json = "{% url 'cv:argomenti_corsi_json' %}";
+    const _csrf_token = "{{ csrf_token }}";
+</script>
+<script src="{% static 'js/curriculum/altre_qualifiche.js' %}"></script>
+<script src="{% static 'js/curriculum/titoli_studio.js' %}"></script>
 {% endblock %}

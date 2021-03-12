@@ -12,8 +12,10 @@ from base.errori import (errore_generico, messaggio_generico,
                          errore_nessuna_appartenenza)
 from base.models import Log
 from curriculum.models import TitoloPersonale
+from curriculum.utils import carica_altri_titoli, carica_titolo_studio
 from posta.models import Messaggio
 from sangue.models import Donatore
+from .menu import FORMS, QUALIFICA_CRI, ALTRE_QIALIFICHE, TITOLI_STUDIO
 from ..permessi.costanti import (ERRORE_PERMESSI, MODIFICA, LETTURA)
 from ..forms import (ModuloCreazioneDocumento, ModuloCreazioneTelefono, ModuloDonatore,
     ModuloDonazione, ModuloNuovaFototessera, ModuloProfiloModificaAnagrafica,
@@ -185,28 +187,43 @@ def _profilo_riserve(request, me, persona):
 
 
 def _profilo_curriculum(request, me, persona):
-    from curriculum.forms import FormAddQualificaCRI
+    from curriculum.forms import FormAddQualificaCRI, FormAddTitoloStudio, FormAddAltreQualifica
 
     reversed = reverse('profilo:profilo', args=[persona.pk, 'curriculum'])
     redirect_url = redirect(reversed)
 
-    form = FormAddQualificaCRI()
+    modifica = request.GET.get('modifica', '')
+
+    form = FORMS[modifica][0] if FORMS[modifica] else None
+
     if request.method == 'POST':
-        form = FormAddQualificaCRI(request.POST, request.FILES, me=persona)
-        if form.is_valid():
-            cd = form.cleaned_data
-            qualifica_created = TitoloPersonale.crea_qualifica_regressa(persona=persona, **cd)
-            if not qualifica_created:
-                messages.error(request, 'Errore.')
-                return errore_nessuna_appartenenza(request, me, torna_url=reversed)
+        if modifica == QUALIFICA_CRI:
+            form = form(request.POST, request.FILES, me=persona)
+            if form.is_valid():
+                cd = form.cleaned_data
+                qualifica_created = TitoloPersonale.crea_qualifica_regressa(persona=persona, **cd)
+                if not qualifica_created:
+                    messages.error(request, 'Errore.')
+                    return errore_nessuna_appartenenza(request, me, torna_url=reversed)
 
-            messages.success(request, "La qualifica è stata inserita.")
-            return redirect_url
+                messages.success(request, "La qualifica è stata inserita.")
+                return redirect_url
 
-        messages.success(request, "La qualifica non è stata inserita.")
+            messages.success(request, "La qualifica non è stata inserita.")
+        elif modifica == ALTRE_QIALIFICHE:
+            carica_altri_titoli(request, persona, redirect_url)
+        elif modifica == TITOLI_STUDIO:
+            carica_titolo_studio(request, persona, redirect_url)
+
+    else:
+        # FORM VUOTO
+        form = form() if form else None
 
     context = {
         "modulo": form,
+        "pk": persona.pk,
+        "sezione": "curriculum",
+        "tipo_titolo": FORMS[modifica][1] if FORMS[modifica] else None
     }
     return 'anagrafica_profilo_curriculum.html', context
 
