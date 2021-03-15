@@ -56,7 +56,7 @@ class Titolo(ModelloSemplice, ConVecchioID):
         (CORSO_EQUIPOLLENZA, 'Corso equipollenza'),
     )
 
-    DIPLOMA = 'DP'
+    DIPLOMA = 'DI'
     LAUREA = 'LA'
 
     TIPO_TOTOLO_STUDIO = (

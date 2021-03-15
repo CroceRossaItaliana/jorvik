@@ -42,6 +42,141 @@ class AdminTitolo(ReadonlyAdminMixin, admin.ModelAdmin):
     goal_propedeuticita.short_description = 'Propedeuticità'
     goal_unit_reference.short_description = 'Unità  riferimento'
 
+    def get_urls(self):
+        urls = super(AdminTitolo, self).get_urls()
+        custom_urls = [
+            url(r'^titoli/lingua/$',
+                self.admin_site.admin_view(self.import_titoli_lingua),
+                name='anagrafica_titolo_import_titoli_lingua'),
+            url(r'^titoli/studio/$',
+                self.admin_site.admin_view(self.import_titoli_studio),
+                name='anagrafica_titolo_import_titoli_studio'),
+        ]
+
+        return custom_urls + urls
+
+    def _import_titoli_lingua(self, request, file):
+        titoli_non_caricati = []
+
+        count = {
+            'totale': 0,
+            'inserite': 0,
+            'non_inserite': 0
+        }
+
+        fieldnames = (
+            'nome',
+        )
+
+        reader = csv.DictReader(io.StringIO(file.read().decode('utf-8')), delimiter=';', fieldnames=fieldnames)
+
+        next(reader)
+        for row in reader:
+            count['totale'] += 1
+
+            nome = row['nome']
+
+            if not Titolo.objects.filter(tipo=Titolo.CONOSCENZA_LINGUISTICHE, nome__exact=nome.capitalize()).exists():
+                titolo = Titolo(tipo=Titolo.CONOSCENZA_LINGUISTICHE, nome=nome.capitalize())
+                titolo.save()
+                count['inserite'] += 1
+            else:
+                count['non_inserite'] += 1
+                titoli_non_caricati.append('Non è possibilte aggiungere "{}" già esiste un titolo con questo nome'.format(nome))
+
+        return titoli_non_caricati, count
+
+    def import_titoli_lingua(self, request):
+
+        contesto = {
+            'opts': self.model._meta
+        }
+
+        if request.POST:
+            files = request.FILES.getlist('file')
+            for file in files:
+                if not file.name.split('.')[1].lower() in 'csv':
+                    messages.error(request, "Il file deve avere un fomato .csv separato da ;")
+
+            titoli_non_caricate, counts = self._import_titoli_lingua(request, files[0])
+
+            contesto['counts'] = counts
+
+            if titoli_non_caricate:
+                for warning in titoli_non_caricate:
+                    messages.warning(request, warning)
+
+        return render(request, 'admin/curriculum/import_titoli_lingua.html', contesto)
+
+    def _import_titoli_studio(self, request, file):
+        titoli_non_caricati = []
+
+        count = {
+            'totale': 0,
+            'inserite': 0,
+            'non_inserite': 0
+        }
+
+        fieldnames = (
+            'nome', 'tipo',
+        )
+
+        reader = csv.DictReader(io.StringIO(file.read().decode('utf-8')), delimiter=';', fieldnames=fieldnames)
+
+        next(reader)
+        for row in reader:
+            count['totale'] += 1
+            nome = row['nome']
+            tipo = row['tipo']
+
+            if tipo not in [Titolo.DIPLOMA, Titolo.LAUREA]:
+                count['non_inserite'] += 1
+                titoli_non_caricati.append(
+                    'Non è possibilte aggiungere "{}" il tipo non è {} '.format(nome, Titolo.TIPO_TOTOLO_STUDIO)
+                )
+            elif not Titolo.objects.filter(
+                    tipo=Titolo.TITOLO_STUDIO,
+                    nome__exact=nome.capitalize(),
+                    tipo_titolo_studio=tipo
+            ).exists():
+                titolo = Titolo(
+                    tipo=Titolo.TITOLO_STUDIO,
+                    nome=nome.capitalize(),
+                    tipo_titolo_studio=tipo
+                )
+                titolo.save()
+                count['inserite'] += 1
+            else:
+                count['non_inserite'] += 1
+                titoli_non_caricati.append(
+                    'Non è possibilte aggiungere "{}" già esiste un titolo con questo nome'.format(nome)
+                )
+
+        return titoli_non_caricati, count
+
+    def import_titoli_studio(self, request):
+
+        contesto = {
+            'opts': self.model._meta
+        }
+
+        if request.POST:
+            files = request.FILES.getlist('file')
+            for file in files:
+                if not file.name.split('.')[1].lower() in 'csv':
+                    messages.error(request, "Il file deve avere un fomato .csv separato da ;")
+
+            titoli_non_caricate, counts = self._import_titoli_studio(request, files[0])
+
+            contesto['counts'] = counts
+
+            if titoli_non_caricate:
+                for warning in titoli_non_caricate:
+                    messages.warning(request, warning)
+
+        return render(request, 'admin/curriculum/import_titoli_studio.html', contesto)
+
+
 
 @admin.register(TitleGoal)
 class AdminTitleGoal(admin.ModelAdmin):
