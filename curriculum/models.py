@@ -24,6 +24,8 @@ class Titolo(ModelloSemplice, ConVecchioID):
     TITOLO_STUDIO       = "TS"
     TITOLO_CRI          = "TC"
     ALTRI_TITOLI        = "AT"
+    CONOSCENZA_LINGUISTICHE = "CL"
+
     TIPO = (
         (COMPETENZA_PERSONALE, "Competenza Personale"),
         (PATENTE_CIVILE, "Patente Civile"),
@@ -31,6 +33,7 @@ class Titolo(ModelloSemplice, ConVecchioID):
         (TITOLO_STUDIO, "Titolo di Studio"),
         (TITOLO_CRI, "Qualifica CRI"),
         (ALTRI_TITOLI, "Altra Qualifica"),
+        (CONOSCENZA_LINGUISTICHE, "Conoscenze Linguistiche"),
     )
 
     CDF_LIVELLO_I = '1'
@@ -302,6 +305,28 @@ class TitoloPersonale(ModelloSemplice, ConMarcaTemporale, ConAutorizzazioni):
         LAUREA_SPECIALISTICA, SPEZIALIZZAZIONE_POST_LAURA, MASTER, DOTTORATO
     ]
 
+    BASE = 'A1'
+    ELEMENTARE = 'A2'
+    PRE_INTERMEDIO = 'B1'
+    INTERMEDIO = 'B2'
+    POST_INTERMEDIO = 'C1'
+    AVANZATO = 'C2'
+
+    LIVELLO_LINGUISTICO = (
+        (BASE, 'Base A1'),
+        (ELEMENTARE, 'Elementare A2'),
+        (PRE_INTERMEDIO, 'Pre-intermedio B1'),
+        (INTERMEDIO, 'Intermedio B2'),
+        (POST_INTERMEDIO, 'Post-intermedio C1'),
+        (AVANZATO, 'Avanzato C2'),
+    )
+
+    livello_linguistico_orale = models.CharField(max_length=2, blank=True,
+                                           null=True, choices=LIVELLO_LINGUISTICO)
+    livello_linguistico_lettura = models.CharField(max_length=2, blank=True,
+                                           null=True, choices=LIVELLO_LINGUISTICO)
+    livello_linguistico_scrittura = models.CharField(max_length=2, blank=True,
+                                           null=True, choices=LIVELLO_LINGUISTICO)
 
     settore_di_riferimento = models.CharField(max_length=2, blank=True,
                                            null=True, choices=SETTORE_DI_RIFERIMENTO)

@@ -206,7 +206,8 @@ class FormAddTitoloStudio(autocomplete_light.ModelForm):
             'laurea',
             'no_laurea',
             'nuova_laurea',
-            'data_ottenimento'
+            'data_ottenimento',
+            'attestato_file'
         ]
 
     def __init__(self, *args, **kwargs):
@@ -216,3 +217,28 @@ class FormAddTitoloStudio(autocomplete_light.ModelForm):
         self.fields['no_diploma'].label = 'Non trovo il mio diploma'
 
         self.fields['laurea'].widget.attrs['placeholder'] = 'Inizia a digitare ...'
+
+
+class FormAddConoscenzeLinguistiche(autocomplete_light.ModelForm):
+    lingua = autocomplete_light.ModelChoiceField('ConoscenzaLinguisticaAutocompletamento', required=False)
+    no_lingua = forms.BooleanField(required=False)
+    nuova_lingua = forms.CharField(required=False)
+
+    class Meta:
+        model = TitoloPersonale
+        fields = [
+            'lingua',
+            'no_lingua',
+            'nuova_lingua',
+            'livello_linguistico_orale',
+            'livello_linguistico_lettura',
+            'livello_linguistico_scrittura',
+            'data_ottenimento',
+            'data_scadenza',
+            'attestato_file'
+        ]
+
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+
+        self.fields['lingua'].widget.attrs['placeholder'] = 'Inizia a digitare ...'

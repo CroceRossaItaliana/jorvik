@@ -140,9 +140,27 @@ class TitoliStudioLaureaAutocompletamento(autocomplete_light.AutocompleteModelBa
         return super().choices_for_request()
 
 
+class ConoscenzaLinguisticaAutocompletamento(autocomplete_light.AutocompleteModelBase):
+
+    model = Titolo
+    split_words = True
+    search_fields = ['nome', ]
+    attrs = {
+        'data-autocomplete-minimum-characters': 1,
+    }
+
+    def choices_for_request(self):
+        self.choices = self.choices.filter(
+            tipo=Titolo.CONOSCENZA_LINGUISTICHE
+        ).order_by('nome').distinct('nome')
+
+        return super().choices_for_request()
+
+
 autocomplete_light.register(TitoloAutocompletamento)
 autocomplete_light.register(TitoloCRIAutocompletamento)
 autocomplete_light.register(QualificaCRIRegressoAutocompletamento)
 autocomplete_light.register(QualificaAltrePartnershipAutocompletamento)
 autocomplete_light.register(TitoliStudioDiplomaAutocompletamento)
 autocomplete_light.register(TitoliStudioLaureaAutocompletamento)
+autocomplete_light.register(ConoscenzaLinguisticaAutocompletamento)

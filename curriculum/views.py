@@ -19,7 +19,7 @@ from formazione.models import CorsoBase
 from posta.models import Messaggio
 
 from .forms import (FormAddQualificaCRI, ModuloNuovoTitoloPersonale, ModuloDettagliTitoloPersonale,
-                    FormAddAltreQualifica, FormAddTitoloStudio)
+                    FormAddAltreQualifica, FormAddTitoloStudio, FormAddConoscenzeLinguistiche)
 from .models import Titolo, TitoloPersonale
 from .utils import carica_altri_titoli, carica_titolo_studio
 
@@ -78,6 +78,7 @@ def curriculum(request, me, tipo=None):
     form_add_qualifica = FormAddQualificaCRI()
     form_add_altra_qualifica = FormAddAltreQualifica()
     form_add_titolo_studio = FormAddTitoloStudio()
+    form_add_conoscenza_linguistica = FormAddConoscenzeLinguistiche()
 
     if form.is_valid():
         cd = form.cleaned_data
@@ -130,6 +131,7 @@ def curriculum(request, me, tipo=None):
         "form_add_qualifica": form_add_qualifica,
         "form_add_altra_qualifica": form_add_altra_qualifica,
         "form_add_titolo_studio": form_add_titolo_studio,
+        'form_add_conoscenza_linguistica': form_add_conoscenza_linguistica,
         "titoli": titoli.order_by('-creazione', '-data_ottenimento', '-data_scadenza'),
         "titolo": titolo_selezionato
     }
@@ -178,6 +180,17 @@ def cv_add_qualifica_altre_cri(request, me):
 
     if request.method == 'POST':
         return carica_altri_titoli(request, me, redirect_url)
+    return redirect_url
+
+
+@pagina_privata
+def cv_add_conoscenze_linguistiche(request, me):
+    cv_tc_url = '/utente/curriculum/CL/'
+    redirect_url = redirect(cv_tc_url)
+
+    if request.method == 'POST':
+        return carica_altri_titoli(request, me, redirect_url)
+
     return redirect_url
 
 
@@ -272,3 +285,6 @@ def argomenti_corsi_json(request):
             return JsonResponse(options_for_select)
 
         return JsonResponse({})
+
+
+

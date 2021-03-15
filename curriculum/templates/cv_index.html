@@ -143,6 +143,7 @@
                 </div>
             </div>
             {% endif %}
+
             {% if tipo == 'AT' %}
                 <div class="panel panel-primary">
                     <div class="panel-heading">
@@ -159,6 +160,7 @@
                     </div>
                 </div>
             {% endif %}
+
             {% if tipo == 'TS' %}
                 <div class="panel panel-primary">
                     <div class="panel-heading">
@@ -176,8 +178,25 @@
                 </div>
             {% endif %}
 
+            {% if tipo == 'CL' %}
+                <div class="panel panel-primary">
+                    <div class="panel-heading">
+                        <h4 class="panel-title">
+                            <i class="fa fa-fw fa-plus-circle"></i> Aggiungi Conoscenza Linguistica
+                        </h4>
+                    </div>
+                    <div class="panel-body">
+                        <form action="{% url 'cv:add_conoscenze_linguistiche' %}" method="POST" enctype="multipart/form-data">
+                            {% csrf_token %}
+                            {% bootstrap_form form_add_conoscenza_linguistica %}
+                            <button type="submit" class="btn btn-sm btn-primary btn-block"><i class="fa fa-fw fa-check"></i> Aggiungi {{ tipo_display }}</button>
+                        </form>
+                    </div>
+                </div>
+            {% endif %}
 
-            {% if tipo != 'TC' and tipo != 'AT' and tipo != 'TS' %}
+
+            {% if tipo != 'TC' and tipo != 'AT' and tipo != 'TS' and tipo != 'CL' %}
             <div class="panel panel-primary">
                 <div class="panel-heading">
                     <h4 class="panel-title">
@@ -221,4 +240,5 @@
     </script>
     <script src="{% static 'js/curriculum/altre_qualifiche.js' %}"></script>
     <script src="{% static 'js/curriculum/titoli_studio.js' %}"></script>
+    <script src="{% static 'js/curriculum/competenze_linguistiche.js' %}"></script>
 {% endblock %}

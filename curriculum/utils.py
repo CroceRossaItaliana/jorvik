@@ -2,7 +2,7 @@ import logging
 
 from django.contrib import messages
 
-from curriculum.forms import FormAddAltreQualifica, FormAddTitoloStudio
+from curriculum.forms import FormAddAltreQualifica, FormAddTitoloStudio, FormAddConoscenzeLinguistiche
 from curriculum.models import TitoloPersonale, Titolo
 
 logger = logging.getLogger(__name__)
@@ -155,5 +155,14 @@ def carica_altri_titoli(request, me, redirect_url):
             return redirect_url
     else:
         messages.error(request, "La qualifica non è stata inserita correttamente correggere i dati nel form")
+
+    return redirect_url
+
+
+def carica_conoscenze_linguistiche(request, me, redirect_url):
+    form = FormAddConoscenzeLinguistiche(request.POST, request.FILES)
+
+    if form.is_valid():
+        cd = form.cleaned_data
 
     return redirect_url
