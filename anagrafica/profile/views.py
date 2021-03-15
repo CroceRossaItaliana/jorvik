@@ -12,10 +12,10 @@ from base.errori import (errore_generico, messaggio_generico,
                          errore_nessuna_appartenenza)
 from base.models import Log
 from curriculum.models import TitoloPersonale
-from curriculum.utils import carica_altri_titoli, carica_titolo_studio
+from curriculum.utils import carica_altri_titoli, carica_titolo_studio, carica_conoscenze_linguistiche
 from posta.models import Messaggio
 from sangue.models import Donatore
-from .menu import FORMS, QUALIFICA_CRI, ALTRE_QIALIFICHE, TITOLI_STUDIO
+from .menu import FORMS, QUALIFICA_CRI, ALTRE_QIALIFICHE, TITOLI_STUDIO, COMPETENZE_LINGUISTICHE
 from ..permessi.costanti import (ERRORE_PERMESSI, MODIFICA, LETTURA)
 from ..forms import (ModuloCreazioneDocumento, ModuloCreazioneTelefono, ModuloDonatore,
     ModuloDonazione, ModuloNuovaFototessera, ModuloProfiloModificaAnagrafica,
@@ -214,6 +214,8 @@ def _profilo_curriculum(request, me, persona):
             carica_altri_titoli(request, persona, redirect_url)
         elif modifica == TITOLI_STUDIO:
             carica_titolo_studio(request, persona, redirect_url)
+        elif modifica == COMPETENZE_LINGUISTICHE:
+            carica_conoscenze_linguistiche(request, persona, redirect_url)
 
     else:
         # FORM VUOTO

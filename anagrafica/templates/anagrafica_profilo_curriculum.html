@@ -21,8 +21,8 @@
             </a>
         </div>
         <div class="col-lg-3" style="padding: 5px">
-            <a class="btn btn-primary btn-block" href="{% url 'profilo:profilo' pk=pk sezione=sezione %}?modifica=">
-                Carica Esperienze professionali
+            <a class="btn btn-primary btn-block" href="{% url 'profilo:profilo' pk=pk sezione=sezione %}?modifica=competenzelinguistiche">
+                Carica Competenze Linguistiche
             </a>
         </div>
         <div class="col-lg-3" style="padding: 5px">
@@ -60,7 +60,18 @@
                                     {{ t.titolo.get_tipo_display }}
                                 </td>
                                 <td>
-                                    <p class="grassetto">{{ t.titolo.nome }}</p>
+                                    <p class="grassetto">
+                                        {{ t.titolo.nome }}
+                                        {% if t.titolo.tipo == 'CL' %}
+                                            <br>
+                                            Oralità: {{ t.livello_linguistico_orale }}
+                                            <br>
+                                            Lettura: {{ t.livello_linguistico_lettura }}
+                                            <br>
+                                            Scrittura: {{ t.livello_linguistico_scrittura }}
+                                        {% endif %}
+
+                                    </p>
 
                                     {% if t.certificato %}
                                         <span class="text-success">
@@ -171,4 +182,5 @@
 </script>
 <script src="{% static 'js/curriculum/altre_qualifiche.js' %}"></script>
 <script src="{% static 'js/curriculum/titoli_studio.js' %}"></script>
+<script src="{% static 'js/curriculum/competenze_linguistiche.js' %}"></script>
 {% endblock %}

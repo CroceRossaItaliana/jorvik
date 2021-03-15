@@ -113,16 +113,21 @@ def profile_sections(puo_leggere, puo_modificare):
 
     return (x for x in r if len(x[1]) < 4 or x[1][3] == True)
 
-from curriculum.forms import FormAddQualificaCRI, FormAddTitoloStudio, FormAddAltreQualifica
+
+from curriculum.forms import (
+    FormAddQualificaCRI, FormAddTitoloStudio, FormAddAltreQualifica, FormAddConoscenzeLinguistiche
+)
 
 
 QUALIFICA_CRI = 'qualificacri'
 ALTRE_QIALIFICHE = 'altrequalifiche'
 TITOLI_STUDIO = 'titolistudio'
+COMPETENZE_LINGUISTICHE = 'competenzelinguistiche'
 
 FORMS = {
     '': None,
     QUALIFICA_CRI: (FormAddQualificaCRI, "Qualifica CRI"),
     ALTRE_QIALIFICHE: (FormAddAltreQualifica, "Altra Qualifica"),
     TITOLI_STUDIO: (FormAddTitoloStudio, "Titolo di studio"),
+    COMPETENZE_LINGUISTICHE: (FormAddConoscenzeLinguistiche, 'Competenze Linguistiche')
 }
