@@ -242,3 +242,7 @@ class FormAddConoscenzeLinguistiche(autocomplete_light.ModelForm):
         super().__init__(*args, **kwargs)
 
         self.fields['lingua'].widget.attrs['placeholder'] = 'Inizia a digitare ...'
+        self.fields['no_lingua'].label = 'Non trovo la lingua'
+        self.fields['livello_linguistico_orale'].label = 'Oralità'
+        self.fields['livello_linguistico_lettura'].label = 'Lettura'
+        self.fields['livello_linguistico_scrittura'].label = 'Scrittura'

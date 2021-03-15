@@ -21,7 +21,7 @@ from posta.models import Messaggio
 from .forms import (FormAddQualificaCRI, ModuloNuovoTitoloPersonale, ModuloDettagliTitoloPersonale,
                     FormAddAltreQualifica, FormAddTitoloStudio, FormAddConoscenzeLinguistiche)
 from .models import Titolo, TitoloPersonale
-from .utils import carica_altri_titoli, carica_titolo_studio
+from .utils import carica_altri_titoli, carica_titolo_studio, carica_conoscenze_linguistiche
 
 logger = logging.getLogger(__name__)
 
@@ -189,7 +189,7 @@ def cv_add_conoscenze_linguistiche(request, me):
     redirect_url = redirect(cv_tc_url)
 
     if request.method == 'POST':
-        return carica_altri_titoli(request, me, redirect_url)
+        return carica_conoscenze_linguistiche(request, me, redirect_url)
 
     return redirect_url
 

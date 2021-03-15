@@ -85,6 +85,7 @@ def carica_titolo_studio(request, me, redirect_url):
 
 
 def carica_altri_titoli(request, me, redirect_url):
+
     form = FormAddAltreQualifica(request.POST, request.FILES)
 
     if form.is_valid():
@@ -160,9 +161,36 @@ def carica_altri_titoli(request, me, redirect_url):
 
 
 def carica_conoscenze_linguistiche(request, me, redirect_url):
+    logger.info('carica_conoscenze_linguistiche')
     form = FormAddConoscenzeLinguistiche(request.POST, request.FILES)
 
     if form.is_valid():
         cd = form.cleaned_data
+        if cd['no_lingua']:
+            logger.info('Lingua campo libero')
+            titolo = Titolo(
+                nome=cd['nuova_lingua'].capitalize(), tipo=Titolo.CONOSCENZA_LINGUISTICHE
+            )
+            titolo.save()
+            logger.info('Creato nuovo titolo lingua {}'.format(titolo))
+        else:
+            titolo = cd['lingua']
+            logger.info('Lingua campo autocomplete {}'.format(titolo))
+
+        titolo_personale = TitoloPersonale(
+            persona=me,
+            titolo=titolo,
+            livello_linguistico_orale=cd['livello_linguistico_orale'],
+            livello_linguistico_lettura=cd['livello_linguistico_lettura'],
+            livello_linguistico_scrittura=cd['livello_linguistico_scrittura'],
+            data_ottenimento=cd['data_ottenimento'],
+            data_scadenza=cd['data_scadenza'],
+            attestato_file=cd['attestato_file'],
+        )
+        titolo_personale.save()
+        logger.info('Nuovo titolo peronale {}'.format(titolo_personale))
+    else:
+        messages.error(request, "La competenza linguistica non è stata inserita campo form non validi")
+        logger.info('form non valido {}'.format(form.error))
 
     return redirect_url
