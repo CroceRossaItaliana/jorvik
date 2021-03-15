@@ -56,12 +56,7 @@ class TitoloCRIAutocompletamento(autocomplete_light.AutocompleteModelBase):
 
     def choices_for_request(self):
         self.choices = self.choices.filter(
-            tipo=Titolo.TITOLO_CRI,
-            is_active=True,
-            inseribile_in_autonomia=False,
-            area__isnull=False,
-            nome__isnull=False,
-            cdf_livello__isnull=False,
+            is_active=True
         ).order_by('nome').distinct('nome')
 
         return super().choices_for_request()
