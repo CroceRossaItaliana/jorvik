@@ -19,7 +19,7 @@ from formazione.models import CorsoBase
 from posta.models import Messaggio
 
 from .forms import (FormAddQualificaCRI, ModuloNuovoTitoloPersonale, ModuloDettagliTitoloPersonale,
-                    FormAddAltreQualifica, FormAddTitoloStudio, FormAddConoscenzeLinguistiche)
+                    FormAddAltreQualifica, FormAddTitoloStudio, FormAddConoscenzeLinguistiche, FormAddCompetenzeSkills)
 from .models import Titolo, TitoloPersonale
 from .utils import carica_altri_titoli, carica_titolo_studio, carica_conoscenze_linguistiche
 
@@ -79,6 +79,7 @@ def curriculum(request, me, tipo=None):
     form_add_altra_qualifica = FormAddAltreQualifica()
     form_add_titolo_studio = FormAddTitoloStudio()
     form_add_conoscenza_linguistica = FormAddConoscenzeLinguistiche()
+    form_competenze_skill = FormAddCompetenzeSkills()
 
     if form.is_valid():
         cd = form.cleaned_data
@@ -132,6 +133,7 @@ def curriculum(request, me, tipo=None):
         "form_add_altra_qualifica": form_add_altra_qualifica,
         "form_add_titolo_studio": form_add_titolo_studio,
         'form_add_conoscenza_linguistica': form_add_conoscenza_linguistica,
+        "form_competenze_skill": form_competenze_skill,
         "titoli": titoli.order_by('-creazione', '-data_ottenimento', '-data_scadenza'),
         "titolo": titolo_selezionato
     }

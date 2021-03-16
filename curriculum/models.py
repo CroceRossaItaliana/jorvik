@@ -25,6 +25,7 @@ class Titolo(ModelloSemplice, ConVecchioID):
     TITOLO_CRI          = "TC"
     ALTRI_TITOLI        = "AT"
     CONOSCENZA_LINGUISTICHE = "CL"
+    COMPETENZE_SKILL = "CS"
 
     TIPO = (
         (COMPETENZA_PERSONALE, "Competenza Personale"),
@@ -34,6 +35,7 @@ class Titolo(ModelloSemplice, ConVecchioID):
         (TITOLO_CRI, "Qualifica CRI"),
         (ALTRI_TITOLI, "Altra Qualifica"),
         (CONOSCENZA_LINGUISTICHE, "Conoscenze Linguistiche"),
+        (COMPETENZE_SKILL, "Competenze/Skills"),
     )
 
     CDF_LIVELLO_I = '1'

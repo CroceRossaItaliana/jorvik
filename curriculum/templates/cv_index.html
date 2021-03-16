@@ -202,8 +202,24 @@
                 </div>
             {% endif %}
 
+            {% if tipo == 'CS' %}
+                <div class="panel panel-primary">
+                    <div class="panel-heading">
+                        <h4 class="panel-title">
+                            <i class="fa fa-fw fa-plus-circle"></i> Aggiungi Competenza Skills
+                        </h4>
+                    </div>
+                    <div class="panel-body">
+                        <form action="{% url 'cv:add_conoscenze_linguistiche' %}" method="POST" enctype="multipart/form-data">
+                            {% csrf_token %}
+                            {% bootstrap_form form_competenze_skill %}
+                            <button type="submit" class="btn btn-sm btn-primary btn-block"><i class="fa fa-fw fa-check"></i> Aggiungi {{ tipo_display }}</button>
+                        </form>
+                    </div>
+                </div>
+            {% endif %}
 
-            {% if tipo != 'TC' and tipo != 'AT' and tipo != 'TS' and tipo != 'CL' %}
+            {% if tipo != 'TC' and tipo != 'AT' and tipo != 'TS' and tipo != 'CL' and tipo != 'CS' %}
             <div class="panel panel-primary">
                 <div class="panel-heading">
                     <h4 class="panel-title">

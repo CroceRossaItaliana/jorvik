@@ -246,3 +246,13 @@ class FormAddConoscenzeLinguistiche(autocomplete_light.ModelForm):
         self.fields['livello_linguistico_orale'].label = 'Oralità'
         self.fields['livello_linguistico_lettura'].label = 'Lettura'
         self.fields['livello_linguistico_scrittura'].label = 'Scrittura'
+
+
+class FormAddCompetenzeSkills(autocomplete_light.ModelForm):
+    # professione =
+
+    class Meta:
+        model = TitoloPersonale
+        fields = [
+            'attestato_file',
+        ]
