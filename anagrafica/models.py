@@ -26,7 +26,7 @@ from .validators import (valida_codice_fiscale, ottieni_genere_da_codice_fiscale
     valida_iban, valida_email_personale) # valida_almeno_14_anni, crea_validatore_dimensione_file)
 from .permessi.shortcuts import *
 from .permessi.costanti import RUBRICA_DELEGATI_OBIETTIVO_ALL, GESTIONE_SOCI_CM, GESTIONE_SOCI_IIVV
-from attivita.models import Turno, Partecipazione
+from attivita.models import Turno, Partecipazione, Area
 from base.files import PDF, Excel, FoglioExcel
 from base.geo import ConGeolocalizzazione, Locazione
 from base.stringhe import normalizza_nome, GeneratoreNomeFile
@@ -828,7 +828,7 @@ class Persona(ModelloSemplice, ConMarcaTemporale, ConAllegati, ConVecchioID):
             | Q(attivita__in=self.oggetti_permesso(GESTIONE_ATTIVITA))
             , inizio__gte=inizio, fine__lt=(fine + timedelta(1)),
               attivita__stato=Attivita.VISIBILE,
-        ).order_by('inizio')
+        ).exclude(attivita__nome='Docenza turni').order_by('inizio')
 
     @property
     def ha_pannello_autorizzazioni(self):
@@ -1314,18 +1314,54 @@ class Persona(ModelloSemplice, ConMarcaTemporale, ConAllegati, ConVecchioID):
         return delegato_area
 
     @property
+    def delega_presidente_regionale(self):
+        delega = self.delega_presidente or self.delega_commissario
+        if delega:
+            return delega.oggetto.id if delega.oggetto.estensione == REGIONALE else None
+        else:
+            return None
+
+    @property
+    def delgato_regionale_monitoraggio_trasparenza(self):
+        for delega in self.deleghe_attuali(tipo=DELEGATO_AREA):
+            if 'Monitoraggio Regionale Trasparenza'.lower() in delega.oggetto.__str__().lower():
+                return delega.oggetto.sede.id
+
+    @property
+    def is_responsabile_area_monitoraggio_trasparenza(self):
+        delegato_area = False
+        for delega in self.deleghe_attuali(tipo=RESPONSABILE_AREA):
+            if 'Monitoraggio Trasparenza'.lower() in delega.oggetto.__str__().lower():
+                delegato_area = True
+        return delegato_area
+
+    @property
+    def delega_responsabile_area_monitoraggio_trasparenza(self):
+        for delega in self.deleghe_attuali(tipo=RESPONSABILE_AREA):
+            if 'Monitoraggio Trasparenza'.lower() in delega.oggetto.__str__().lower():
+                return delega
+
+    @property
+    def delega_responsabile_area_trasparenza(self):
+        for delega in self.deleghe_attuali(tipo=DELEGATO_AREA):
+            if 'Trasparenza'.lower() in delega.oggetto.__str__().lower():
+                return delega
+
+    @property
+    def is_delega_responsabile_area_trasparenza(self):
+        delegato_area = False
+        for delega in self.deleghe_attuali(tipo=DELEGATO_AREA):
+            if 'Trasparenza'.lower() in delega.oggetto.__str__().lower():
+                delegato_area = True
+        return delegato_area
+
+    @property
     def is_responsabile_area_delegato_assemblea_nazionale_giovani(self):
         delegato_area = False
         for delega in self.deleghe_attuali(tipo=RESPONSABILE_AREA):
             if 'ASSEMBLEA GIOVANI'.lower() in delega.oggetto.__str__().lower():
                 delegato_area = True
         return delegato_area
-
-    @property
-    def delega_responsabile_area_delegato_assemblea_nazionale_giovani(self):
-        for delega in self.deleghe_attuali(tipo=RESPONSABILE_AREA):
-            if 'ASSEMBLEA GIOVANI'.lower() in delega.oggetto.__str__().lower():
-                return delega
 
     @property
     def delegato_tempo_della_gentilezza(self):
@@ -1816,10 +1852,18 @@ class Appartenenza(ModelloSemplice, ConStorico, ConMarcaTemporale, ConAutorizzaz
             return False
 
     def appartiene_a(self, sede):
+        if self.sede.estensione == TERRITORIALE:
+            regionale = self.sede.superiore(estensione=REGIONALE)
+            reg_sottostanti = sede in regionale.ottieni_discendenti(includimi=True)
+        elif sede.estensione == TERRITORIALE:
+            regionale = sede.superiore(estensione=REGIONALE)
+            reg_sottostanti = self.sede in regionale.ottieni_discendenti(includimi=True)
+        else:
+            reg_sottostanti = False
         return self.sede == sede or \
                self.sede.genitore == sede or \
                self.sede == sede.genitore or \
-               self.sede.genitore == sede.genitore
+               self.sede.genitore == sede.genitore or reg_sottostanti
 
 
 class SedeQuerySet(TreeQuerySet):
@@ -1964,7 +2008,7 @@ class Sede(ModelloAlbero, ConMarcaTemporale, ConGeolocalizzazione, ConVecchioID,
 
     @property
     def link(self):
-        return "<a href='%s' target='_new'>%s</a>" % (
+        return "<a href='%s' target='_blank'>%s</a>" % (
             self.url, self.nome_completo
         )
 
@@ -2060,6 +2104,15 @@ class Sede(ModelloAlbero, ConMarcaTemporale, ConGeolocalizzazione, ConVecchioID,
         if not delega_presidenziale:
             delega_presidenziale = self.comitato.delegati_attuali(tipo=COMMISSARIO, solo_deleghe_attive=True).first()
         return delega_presidenziale
+
+    def delegato_monitoraggio_trasparenza(self):
+        area = Area.objects.filter(sede=self, nome__iexact='Trasparenza')
+        if area:
+            delega = Delega.objects.filter(tipo=DELEGATO_AREA, oggetto_id=area.first().id).first()
+            if delega:
+                return delega.persona
+        presidente = self.presidente()
+        return presidente
 
     def delegati_formazione(self):
         return self.comitato.delegati_attuali(tipo=RESPONSABILE_FORMAZIONE, solo_deleghe_attive=True)

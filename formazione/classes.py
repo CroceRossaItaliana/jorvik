@@ -9,6 +9,7 @@ from django.contrib import messages
 
 from anagrafica.models import Persona
 from anagrafica.permessi.costanti import MODIFICA
+from attivita.models import Turno, Attivita, Partecipazione, Area
 from base.files import Zip
 from .models import AssenzaCorsoBase, CorsoBase
 from .forms import ModuloModificaLezione
@@ -322,6 +323,54 @@ class GestioneLezioni:
                 for docente in form.cleaned_data['docente']:
                     api.aggiugi_ruolo(docente, self.corso, TrainingApi.DOCENTE)
 
+            nome_turno = 'Docenza - {} - {}'.format(lezione.corso.nome, lezione.nome)
+
+            turno = Turno.objects.filter(nome=nome_turno).first()
+            if turno: # Se turno esiste controlla che i docenti hanno le partecipazioni
+                partecipazioni = Partecipazione.objects.filter(turno=turno)
+                for docente in form.cleaned_data['docente']:
+                    if docente.volontario and not partecipazioni.filter(persona=docente).exists():
+                        partecipazione = Partecipazione(
+                            turno=turno,
+                            persona=docente
+                        )
+                        partecipazione.save()
+
+            else: # crea turno ed aggancia partecipazione
+                attivita = Attivita.objects.filter(nome='Docenza turni', sede__id=1).first()
+                if not attivita:
+                    area = Area(
+                        nome='Docenza turni',
+                        obiettivo=6,
+                        sede_id=1
+                    )
+                    area.save()
+                    attivita = Attivita(
+                        nome='Docenza turni',
+                        sede_id=1,
+                        estensione_id=1,
+                        stato=Attivita.VISIBILE,
+                        apertura=Attivita.APERTA,
+                        area=area
+                    )
+                    attivita.save()
+                turno = Turno(
+                    nome=nome_turno,
+                    attivita=attivita,
+                    inizio=lezione.inizio,
+                    fine=lezione.fine,
+                    prenotazione=lezione.fine,
+                    massimo=10
+                )
+                turno.save()
+                for docente in form.cleaned_data['docente']:
+                    if docente.volontario:
+                        partecipazione = Partecipazione(
+                            turno=turno,
+                            persona=docente
+                        )
+                        partecipazione.save()
+
             messages.success(self.request, "La lezione è stata salvata correttamente.")
             return redirect("%s#%d" % (self.corso.url_lezioni, lezione.pk))
         else:
@@ -345,11 +394,12 @@ class GestioneLezioni:
         return redirect(self.corso.url_lezioni)
 
     def avvisare_docente_e_presidente(self, lezione):
-        # Avvisa docente e il suo presidente della nomina
-        lezione.avvisa_docente_nominato_al_corso(self.me)
-
-        # Se non è del comitato che organizza il corso
-        lezione.avvisa_presidente_docente_nominato()
+        pass
+        # # Avvisa docente e il suo presidente della nomina
+        # lezione.avvisa_docente_nominato_al_corso(self.me)
+        #
+        # # Se non è del comitato che organizza il corso
+        # lezione.avvisa_presidente_docente_nominato()
 
     def get_context(self):
         return 'aspirante_corso_base_scheda_lezioni.html', {

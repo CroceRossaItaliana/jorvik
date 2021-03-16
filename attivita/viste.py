@@ -319,7 +319,7 @@ def attivita_storico(request, me):
         "statistiche_modulo": modulo,
     }
 
-    return 'attivita_storico.html', contesto\
+    return 'attivita_storico.html', contesto
 
 @pagina_privata
 def attivita_storico_excel(request, me):

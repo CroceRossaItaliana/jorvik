@@ -23,8 +23,18 @@
     {% for richiesta in storico %}
         <tr>
             <td style="width: 45%;">
-                <span class="piu-grande">{{ richiesta.turno.link|safe }}</span><br />
-                {{ richiesta.turno.attivita.link|safe }}
+                <span class="piu-grande">
+                    {% if richiesta.turno.attivita.is_docenza %}
+                        {{ richiesta.turno.nome }}
+                    {% else %}
+                        {{ richiesta.turno.link|safe }}
+                    {% endif %}
+                </span><br />
+                {% if richiesta.turno.attivita.is_docenza %}
+                    <b>{{ richiesta.turno.attivita }}</b>
+                {% else %}
+                     {{ richiesta.turno.attivita.link|safe }}
+                {% endif %}
             </td>
             <td>
                 Inizio: <strong>{{ richiesta.turno.inizio|date:"SHORT_DATETIME_FORMAT" }}</strong><br />

@@ -1532,6 +1532,13 @@ class CorsoBase(Corso, ConVecchioID, ConPDF):
                 return lezione
         return None
 
+    @property
+    def nominativa_ruoli(self):
+        for lezione in self.lezioni.all():
+            if lezione.is_nominativa_ruoli:
+                return lezione
+        return None
+
     class Meta:
         verbose_name = "Corso"
         verbose_name_plural = "Corsi"
@@ -2253,6 +2260,15 @@ class LezioneCorsoBase(ModelloSemplice, ConMarcaTemporale, ConGiudizio, ConStori
 
         if self.precaricata and self.corso.titolo_cri.sigla == 'CRI' and \
                 self.lezione_id_univoco.endswith("SESDV"):
+            return True
+        return False
+
+    @property
+    def is_nominativa_ruoli(self):
+        """ GAIA-130: Questa lezione è obbligatoria peri Volontari e senza di essa
+        non possono essere ammessi all' esame. """
+
+        if self.precaricata and self.corso.titolo_cri.sigla == 'CRIVT' and self.lezione_id_univoco.endswith("6NER"):
             return True
         return False
 
