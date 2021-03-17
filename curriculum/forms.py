@@ -249,10 +249,32 @@ class FormAddConoscenzeLinguistiche(autocomplete_light.ModelForm):
 
 
 class FormAddCompetenzeSkills(autocomplete_light.ModelForm):
-    # professione =
+    professione = autocomplete_light.ModelChoiceField('EsperienzeProfessionaliAutocompletamento', required=False)
+    specializzazione = autocomplete_light.ModelChoiceField('SpecializzazioniEsperienzeProfessionaliAutocompletamento', required=False)
+    skill = autocomplete_light.ModelMultipleChoiceField('SkillEsperienzeProfessionaliAutocompletamento', required=False)
 
     class Meta:
         model = TitoloPersonale
         fields = [
+            'settore_di_riferimento',
+            'professione',
+            'specializzazione',
+            'esperienza',
+            'data_ottenimento',
+            'data_scadenza',
+            'codice_albo',
+            'skill',
             'attestato_file',
         ]
+
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+
+        self.fields['settore_di_riferimento'].label = 'Area'
+        self.fields['data_ottenimento'].label = 'Data inizio'
+        self.fields['data_ottenimento'].help_text = ''
+        self.fields['data_scadenza'].label = 'Data fine'
+        self.fields['data_scadenza'].help_text = ''
+        self.fields['professione'].widget.attrs['placeholder'] = 'Inizia a digitare ...'
+        self.fields['specializzazione'].widget.attrs['placeholder'] = 'Inizia a digitare ...'
+        self.fields['skill'].widget.attrs['placeholder'] = 'Inizia a digitare ...'

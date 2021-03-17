@@ -51,6 +51,9 @@ class AdminTitolo(ReadonlyAdminMixin, admin.ModelAdmin):
             url(r'^titoli/studio/$',
                 self.admin_site.admin_view(self.import_titoli_studio),
                 name='anagrafica_titolo_import_titoli_studio'),
+            url(r'^titoli/professionali/$',
+                self.admin_site.admin_view(self.import_titoli_professionali),
+                name='anagrafica_titolo_import_titoli_professionali'),
         ]
 
         return custom_urls + urls
@@ -176,6 +179,68 @@ class AdminTitolo(ReadonlyAdminMixin, admin.ModelAdmin):
 
         return render(request, 'admin/curriculum/import_titoli_studio.html', contesto)
 
+    def _import_titoli_professionali(self, request, file):
+        titoli_non_caricati = []
+
+        count = {
+            'totale': 0,
+            'inserite': 0,
+            'non_inserite': 0
+        }
+
+        fieldnames = (
+            'professione', 'specializazioni', 'skills'
+        )
+
+        reader = csv.DictReader(io.StringIO(file.read().decode('utf-8')), delimiter=';', fieldnames=fieldnames)
+
+        next(reader)
+        for row in reader:
+            count['totale'] += 1
+            professione = row['professione']
+            specializazioni = row['specializazioni'].split(',')
+            skills = row['skills'].split(',')
+
+            titolo = Titolo.objects.filter(
+                tipo=Titolo.ESPERIENZE_PROFESSIONALI,
+                nome__exact=professione.capitalize(),
+            ).first()
+
+            # Se non esieste lo creo
+            if not titolo.exists():
+                titolo = Titolo(
+                    tipo=Titolo.ESPERIENZE_PROFESSIONALI,
+                    nome=professione.capitalize()
+                )
+
+
+
+
+            titolo.save()
+
+        return titoli_non_caricati, count
+
+    def import_titoli_professionali(self, request):
+
+        contesto = {
+            'opts': self.model._meta
+        }
+
+        if request.POST:
+            files = request.FILES.getlist('file')
+            for file in files:
+                if not file.name.split('.')[1].lower() in 'csv':
+                    messages.error(request, "Il file deve avere un fomato .csv separato da ;")
+
+            titoli_non_caricate, counts = self._import_titoli_professionali(request, files[0])
+
+            contesto['counts'] = counts
+
+            if titoli_non_caricate:
+                for warning in titoli_non_caricate:
+                    messages.warning(request, warning)
+
+        return render(request, 'admin/curriculum/import_titoli_professionali.html', contesto)
 
 
 @admin.register(TitleGoal)

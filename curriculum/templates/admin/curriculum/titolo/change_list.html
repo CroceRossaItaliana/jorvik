@@ -25,5 +25,11 @@
             {% blocktrans with cl.opts.verbose_name_plural as name %}Importa Titoli lingua{% endblocktrans %}
           </a>
         </li>
+        <li>
+          {% url "admin:anagrafica_titolo_import_titoli_professionali" as url_albi %}
+          <a href="{% add_preserved_filters url_albi is_popup to_field %}" class="addlink">
+            {% blocktrans with cl.opts.verbose_name_plural as name %}Importa Titoli Professionali{% endblocktrans %}
+          </a>
+        </li>
     </ul>
 {% endblock %}

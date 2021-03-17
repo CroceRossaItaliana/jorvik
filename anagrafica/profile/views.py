@@ -15,7 +15,8 @@ from curriculum.models import TitoloPersonale
 from curriculum.utils import carica_altri_titoli, carica_titolo_studio, carica_conoscenze_linguistiche
 from posta.models import Messaggio
 from sangue.models import Donatore
-from .menu import FORMS, QUALIFICA_CRI, ALTRE_QIALIFICHE, TITOLI_STUDIO, COMPETENZE_LINGUISTICHE
+from .menu import FORMS, QUALIFICA_CRI, ALTRE_QIALIFICHE, TITOLI_STUDIO, COMPETENZE_LINGUISTICHE, \
+    COMPETENZE_PROFESSIONALI
 from ..permessi.costanti import (ERRORE_PERMESSI, MODIFICA, LETTURA)
 from ..forms import (ModuloCreazioneDocumento, ModuloCreazioneTelefono, ModuloDonatore,
     ModuloDonazione, ModuloNuovaFototessera, ModuloProfiloModificaAnagrafica,
@@ -216,6 +217,8 @@ def _profilo_curriculum(request, me, persona):
             carica_titolo_studio(request, persona, redirect_url)
         elif modifica == COMPETENZE_LINGUISTICHE:
             carica_conoscenze_linguistiche(request, persona, redirect_url)
+        elif modifica == COMPETENZE_PROFESSIONALI:
+            pass
 
     else:
         # FORM VUOTO

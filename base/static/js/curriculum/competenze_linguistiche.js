@@ -21,6 +21,3 @@ no_lingua.on('change', function (e) {
     }
 });
 
-
-
-

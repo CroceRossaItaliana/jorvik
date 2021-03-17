@@ -3,6 +3,7 @@
 
 {% load bootstrap3 %}
 {% load base_tags %}
+{% include 'autocomplete_light/static.html' %}
 
 {% block pagina_titolo %}{{ tipo_display }} - Curriculum{% endblock %}
 {% block app_contenuto %}
@@ -264,4 +265,5 @@
     <script src="{% static 'js/curriculum/altre_qualifiche.js' %}"></script>
     <script src="{% static 'js/curriculum/titoli_studio.js' %}"></script>
     <script src="{% static 'js/curriculum/competenze_linguistiche.js' %}"></script>
+    <script src="{% static 'js/curriculum/competenza_professionali.js' %}"></script>
 {% endblock %}

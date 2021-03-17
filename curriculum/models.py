@@ -13,6 +13,7 @@ from .areas import OBBIETTIVI_STRATEGICI
 from .validators import cv_attestato_file_upload_path
 
 
+
 class Titolo(ModelloSemplice, ConVecchioID):
     QUALIFICHE_REGRESSO_DEADLINE = '01/06/2021'
     QUALIFICHE_REGRESSO_DEADLINE_DATE = date(year=2021, month=6, day=1)
@@ -25,7 +26,7 @@ class Titolo(ModelloSemplice, ConVecchioID):
     TITOLO_CRI          = "TC"
     ALTRI_TITOLI        = "AT"
     CONOSCENZA_LINGUISTICHE = "CL"
-    COMPETENZE_SKILL = "CS"
+    ESPERIENZE_PROFESSIONALI = "CS"
 
     TIPO = (
         (COMPETENZA_PERSONALE, "Competenza Personale"),
@@ -35,7 +36,7 @@ class Titolo(ModelloSemplice, ConVecchioID):
         (TITOLO_CRI, "Qualifica CRI"),
         (ALTRI_TITOLI, "Altra Qualifica"),
         (CONOSCENZA_LINGUISTICHE, "Conoscenze Linguistiche"),
-        (COMPETENZE_SKILL, "Competenze/Skills"),
+        (ESPERIENZE_PROFESSIONALI, "Esperienze Professionali"),
     )
 
     CDF_LIVELLO_I = '1'
@@ -183,6 +184,22 @@ class Titolo(ModelloSemplice, ConVecchioID):
 
         print('Titotli aggiornati:', titoli)
         return titoli
+
+    def __str__(self):
+        return str(self.nome)
+
+
+class TitoloSkill(ModelloSemplice):
+    nome = models.CharField(max_length=100)
+    titolo = models.ForeignKey(Titolo, on_delete=models.CASCADE)
+
+    def __str__(self):
+        return str(self.nome)
+
+
+class TitoloSpecializzazione(ModelloSemplice):
+    nome = models.CharField(max_length=100)
+    titolo = models.ForeignKey(Titolo, on_delete=models.CASCADE)
 
     def __str__(self):
         return str(self.nome)
@@ -345,6 +362,24 @@ class TitoloPersonale(ModelloSemplice, ConMarcaTemporale, ConAutorizzazioni):
     persona = models.ForeignKey("anagrafica.Persona",
                                 related_name="titoli_personali",
                                 on_delete=models.CASCADE)
+
+    NO = 'NO'
+    INFERIORE_A_3 = 'I3'
+    CUMULATIVO_3_6 = 'C6'
+    CUMULATIVO_1_ANNO = 'CA'
+    CUMULATIVO_OLTRE = 'CO'
+
+    ESPERIENZA = (
+        (INFERIORE_A_3, 'No'),
+        (CUMULATIVO_3_6, 'Si, periodo cumulativo da tre a sei mesi'),
+        (CUMULATIVO_1_ANNO, 'Si, periodo cumulativo da sei a un anno'),
+        (CUMULATIVO_OLTRE, 'Si, periodo cumulativo oltre un anno'),
+    )
+
+    esperienza = models.CharField(
+        max_length=2, blank=True, null=True, choices=ESPERIENZA
+    )
+    codice_albo = models.CharField(max_length=50, blank=True, null=True)
 
     data_ottenimento = models.DateField(null=True, blank=True,
         help_text="Data di ottenimento del Titolo o Patente. "

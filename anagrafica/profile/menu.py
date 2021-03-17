@@ -115,7 +115,8 @@ def profile_sections(puo_leggere, puo_modificare):
 
 
 from curriculum.forms import (
-    FormAddQualificaCRI, FormAddTitoloStudio, FormAddAltreQualifica, FormAddConoscenzeLinguistiche
+    FormAddQualificaCRI, FormAddTitoloStudio, FormAddAltreQualifica, FormAddConoscenzeLinguistiche,
+    FormAddCompetenzeSkills
 )
 
 
@@ -123,11 +124,13 @@ QUALIFICA_CRI = 'qualificacri'
 ALTRE_QIALIFICHE = 'altrequalifiche'
 TITOLI_STUDIO = 'titolistudio'
 COMPETENZE_LINGUISTICHE = 'competenzelinguistiche'
+COMPETENZE_PROFESSIONALI = 'competenzeprofessionali'
 
 FORMS = {
     '': None,
     QUALIFICA_CRI: (FormAddQualificaCRI, "Qualifica CRI"),
     ALTRE_QIALIFICHE: (FormAddAltreQualifica, "Altra Qualifica"),
     TITOLI_STUDIO: (FormAddTitoloStudio, "Titolo di studio"),
-    COMPETENZE_LINGUISTICHE: (FormAddConoscenzeLinguistiche, 'Competenze Linguistiche')
+    COMPETENZE_LINGUISTICHE: (FormAddConoscenzeLinguistiche, 'Competenze Linguistiche'),
+    COMPETENZE_PROFESSIONALI: (FormAddCompetenzeSkills, 'Competenze professionali')
 }
