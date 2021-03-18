@@ -123,7 +123,7 @@ def curriculum(request, me, tipo=None):
 
             return redirect("/utente/curriculum/%s/?inserimento=ok" % tipo)
 
-    titoli = me.titoli_personali.filter(titolo__tipo=tipo)
+    titoli = me.titoli_personali.filter(titolo__tipo=tipo).order_by('-creazione', '-data_ottenimento', '-data_scadenza')
 
     context = {
         "tipo": tipo,
@@ -135,7 +135,7 @@ def curriculum(request, me, tipo=None):
         "form_add_titolo_studio": form_add_titolo_studio,
         'form_add_conoscenza_linguistica': form_add_conoscenza_linguistica,
         "form_competenze_skill": form_competenze_skill,
-        "titoli": titoli.order_by('-creazione', '-data_ottenimento', '-data_scadenza'),
+        "titoli": titoli[:3] if tipo == 'CS' else titoli,
         "titolo": titolo_selezionato
     }
     return 'cv_index.html', context

@@ -11,6 +11,10 @@
     <div class="alert bg-info">
         <p>
             <i class="fa fa-info-circle fa-fw"></i> Da questa pagina potrai gestire le tue qualifiche del tipo: <strong>{{ tipo_display }}</strong>.
+            {% if tipo == 'CS' %}
+                <br>
+                <i class="fa fa-info-circle fa-fw"></i> Puoi inserire al massimo 3 Esperienze professionali, inserendone di nuove eliminerai quelle più vecchie.
+            {% endif %}
         </p>
     </div>
 

@@ -230,6 +230,15 @@ class SkillEsperienzeProfessionaliAutocompletamento(autocomplete_light.Autocompl
         return super().choices_for_request()
 
 
+class SkillAllAutocompletamento(autocomplete_light.AutocompleteModelBase):
+
+    model = TitoloSkill
+    split_words = True
+    search_fields = ['nome', ]
+    attrs = {
+        'data-autocomplete-minimum-characters': 1,
+    }
+
 autocomplete_light.register(TitoloAutocompletamento)
 autocomplete_light.register(TitoloCRIAutocompletamento)
 autocomplete_light.register(QualificaCRIRegressoAutocompletamento)
@@ -240,3 +249,4 @@ autocomplete_light.register(ConoscenzaLinguisticaAutocompletamento)
 autocomplete_light.register(EsperienzeProfessionaliAutocompletamento)
 autocomplete_light.register(SpecializzazioniEsperienzeProfessionaliAutocompletamento)
 autocomplete_light.register(SkillEsperienzeProfessionaliAutocompletamento)
+autocomplete_light.register(SkillAllAutocompletamento)
