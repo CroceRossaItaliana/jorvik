@@ -60,17 +60,23 @@
                                     {{ t.titolo.get_tipo_display }}
                                 </td>
                                 <td>
-                                    <p class="grassetto">
-                                        {{ t.titolo.nome }}
+                                    <p>
+                                        <p class="grassetto">{{ t.titolo.nome }}</p>
                                         {% if t.titolo.tipo == 'CL' %}
+                                            <span class="grassetto">Oralità:</span> {{ t.livello_linguistico_orale }}
                                             <br>
-                                            Oralità: {{ t.livello_linguistico_orale }}
+                                            <span class="grassetto">Lettura:</span> {{ t.livello_linguistico_lettura }}
                                             <br>
-                                            Lettura: {{ t.livello_linguistico_lettura }}
-                                            <br>
-                                            Scrittura: {{ t.livello_linguistico_scrittura }}
+                                            <span class="grassetto">Scrittura:</span> {{ t.livello_linguistico_scrittura }}
                                         {% endif %}
-
+                                        {% if t.titolo.tipo == 'CS' %}
+                                            <span class="grassetto">Specializzazione:</span> {{ t.specializzazione }}
+                                            <br>
+                                            <span class="grassetto">Skills:</span>
+                                            {% for skill in t.skills.all %}
+                                                <span style="background-color: #c1bbbb; border-radius: 10px 10px 10px 10px; padding: 3px">{{ skill }}</span>
+                                            {% endfor %}
+                                        {% endif %}
                                     </p>
 
                                     {% if t.certificato %}

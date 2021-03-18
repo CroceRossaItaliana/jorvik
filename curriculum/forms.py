@@ -250,20 +250,34 @@ class FormAddConoscenzeLinguistiche(autocomplete_light.ModelForm):
 
 class FormAddCompetenzeSkills(autocomplete_light.ModelForm):
     professione = autocomplete_light.ModelChoiceField('EsperienzeProfessionaliAutocompletamento', required=False)
+    no_professione = forms.BooleanField(required=False)
+    nuova_professione = forms.CharField(required=False)
+
     specializzazione = autocomplete_light.ModelChoiceField('SpecializzazioniEsperienzeProfessionaliAutocompletamento', required=False)
+    no_specializzazione = forms.BooleanField(required=False)
+    nuova_specializzazione = forms.CharField(required=False)
+
     skill = autocomplete_light.ModelMultipleChoiceField('SkillEsperienzeProfessionaliAutocompletamento', required=False)
+    no_skill = forms.BooleanField(required=False)
+    nuova_skill = forms.CharField(required=False)
 
     class Meta:
         model = TitoloPersonale
         fields = [
             'settore_di_riferimento',
             'professione',
+            'no_professione',
+            'nuova_professione',
             'specializzazione',
+            'no_specializzazione',
+            'nuova_specializzazione',
             'esperienza',
             'data_ottenimento',
             'data_scadenza',
             'codice_albo',
             'skill',
+            'no_skill',
+            'nuova_skill',
             'attestato_file',
         ]
 
@@ -278,3 +292,8 @@ class FormAddCompetenzeSkills(autocomplete_light.ModelForm):
         self.fields['professione'].widget.attrs['placeholder'] = 'Inizia a digitare ...'
         self.fields['specializzazione'].widget.attrs['placeholder'] = 'Inizia a digitare ...'
         self.fields['skill'].widget.attrs['placeholder'] = 'Inizia a digitare ...'
+
+        self.fields['no_professione'].label = 'Non trovo la mia professione'
+        self.fields['no_specializzazione'].label = 'Non trovo la mia specializzazione'
+        self.fields['no_skill'].label = 'Non trovo le mie skill'
+        self.fields['nuova_skill'].label = 'Aggiungi nuove skills separate da ","'

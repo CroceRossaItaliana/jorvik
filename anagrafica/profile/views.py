@@ -12,7 +12,8 @@ from base.errori import (errore_generico, messaggio_generico,
                          errore_nessuna_appartenenza)
 from base.models import Log
 from curriculum.models import TitoloPersonale
-from curriculum.utils import carica_altri_titoli, carica_titolo_studio, carica_conoscenze_linguistiche
+from curriculum.utils import carica_altri_titoli, carica_titolo_studio, carica_conoscenze_linguistiche, \
+    carica_esperienza_professionale
 from posta.models import Messaggio
 from sangue.models import Donatore
 from .menu import FORMS, QUALIFICA_CRI, ALTRE_QIALIFICHE, TITOLI_STUDIO, COMPETENZE_LINGUISTICHE, \
@@ -218,7 +219,7 @@ def _profilo_curriculum(request, me, persona):
         elif modifica == COMPETENZE_LINGUISTICHE:
             carica_conoscenze_linguistiche(request, persona, redirect_url)
         elif modifica == COMPETENZE_PROFESSIONALI:
-            pass
+            carica_esperienza_professionale(request, persona, redirect_url)
 
     else:
         # FORM VUOTO

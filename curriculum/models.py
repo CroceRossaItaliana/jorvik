@@ -422,6 +422,9 @@ class TitoloPersonale(ModelloSemplice, ConMarcaTemporale, ConAutorizzazioni):
                                              on_delete=models.SET_NULL,
                                              related_name='titolo_ottenuto')
 
+    specializzazione = models.ForeignKey(TitoloSpecializzazione, on_delete=models.CASCADE, null=True, blank=True,)
+    skills = models.ManyToManyField(TitoloSkill, blank=True)
+
     class Meta:
         verbose_name = "Titolo personale"
         verbose_name_plural = "Titoli personali"

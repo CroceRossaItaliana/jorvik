@@ -21,7 +21,8 @@ from posta.models import Messaggio
 from .forms import (FormAddQualificaCRI, ModuloNuovoTitoloPersonale, ModuloDettagliTitoloPersonale,
                     FormAddAltreQualifica, FormAddTitoloStudio, FormAddConoscenzeLinguistiche, FormAddCompetenzeSkills)
 from .models import Titolo, TitoloPersonale
-from .utils import carica_altri_titoli, carica_titolo_studio, carica_conoscenze_linguistiche
+from .utils import carica_altri_titoli, carica_titolo_studio, carica_conoscenze_linguistiche, \
+    carica_esperienza_professionale
 
 logger = logging.getLogger(__name__)
 
@@ -182,6 +183,17 @@ def cv_add_qualifica_altre_cri(request, me):
 
     if request.method == 'POST':
         return carica_altri_titoli(request, me, redirect_url)
+    return redirect_url
+
+
+@pagina_privata
+def cv_add_competenze_professionali(request, me):
+    cv_tc_url = '/utente/curriculum/CS/'
+    redirect_url = redirect(cv_tc_url)
+
+    if request.method == 'POST':
+        return carica_esperienza_professionale(request, me, redirect_url)
+
     return redirect_url
 
 

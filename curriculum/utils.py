@@ -2,8 +2,10 @@ import logging
 
 from django.contrib import messages
 
-from curriculum.forms import FormAddAltreQualifica, FormAddTitoloStudio, FormAddConoscenzeLinguistiche
-from curriculum.models import TitoloPersonale, Titolo
+from curriculum.autocomplete_light_registry import EsperienzeProfessionaliAutocompletamento
+from curriculum.forms import FormAddAltreQualifica, FormAddTitoloStudio, FormAddConoscenzeLinguistiche, \
+    FormAddCompetenzeSkills
+from curriculum.models import TitoloPersonale, Titolo, TitoloSpecializzazione, TitoloSkill
 
 logger = logging.getLogger(__name__)
 
@@ -191,6 +193,74 @@ def carica_conoscenze_linguistiche(request, me, redirect_url):
         logger.info('Nuovo titolo peronale {}'.format(titolo_personale))
     else:
         messages.error(request, "La competenza linguistica non è stata inserita campo form non validi")
+        logger.info('form non valido {}'.format(form.error))
+
+    return redirect_url
+
+
+def carica_esperienza_professionale(request, me, redirect_url):
+    logger.info('carica_conoscenze_linguistiche')
+    form = FormAddCompetenzeSkills(request.POST, request.FILES)
+    if form.is_valid():
+        cd = form.cleaned_data
+        if cd['no_professione']:
+            logger.info('Professione campo libero')
+            professione = Titolo(
+                nome=cd['nuova_professione'].capitalize(),
+                tipo=Titolo.ESPERIENZE_PROFESSIONALI,
+                area=EsperienzeProfessionaliAutocompletamento.SETTORE_DI_RIFERIMENTO[cd['settore_di_riferimento']]
+            )
+            professione.save()
+
+            logger.info('Creata professione {}'.format(professione))
+        else:
+            professione = cd['professione']
+
+        if cd['no_professione']:
+            logger.info('Specializzazione campo libero')
+            specializzazione = TitoloSpecializzazione(
+                nome=cd['nuova_specializzazione'].capitalize(),
+                titolo=professione
+            )
+            specializzazione.save()
+            logger.info('Creata specializzazione {}'.format(specializzazione))
+        else:
+            specializzazione = cd['specializzazione']
+
+        if cd['no_skill']:
+            skills = list(cd['skill'])
+
+            nuove_skills = cd['nuova_skill']
+
+            for skill in nuove_skills.split(','):
+                skill_n = TitoloSkill(
+                    nome=skill.capitalize(),
+                    titolo=professione
+                )
+                skill_n.save()
+                skills.append(skill_n)
+
+        else:
+            skills = cd['skill']
+
+        titolo_personale = TitoloPersonale(
+            persona=me,
+            titolo=professione,
+            specializzazione=specializzazione,
+            data_ottenimento=cd['data_ottenimento'],
+            data_scadenza=cd['data_scadenza'],
+            attestato_file=cd['attestato_file'],
+            codice_albo=cd['codice_albo'],
+            esperienza=cd['esperienza']
+        )
+        titolo_personale.save()
+        for skill in skills:
+            titolo_personale.skills.add(skill)
+
+        titolo_personale.save()
+        logger.info('Creato Titolo Personale {}'.format(titolo_personale))
+
+    else:
         logger.info('form non valido {}'.format(form.error))
 
     return redirect_url
