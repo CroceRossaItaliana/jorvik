@@ -40,7 +40,7 @@ class CalendarCorsi(CalendarTemplate):
         REGIONALE: ('#4C9900', '#ffffff'), # VERDE - BIANCO
         PROVINCIALE: ('#00CCCC', '#ffffff'), # AZZURRO - BIANCO
         LOCALE: ('#FF9323', '#ffffff'), # ARANCIONE - BIANCO
-        TERRITORIALE: ('#FF007F', '#ffffff'), # VIOLA - BIANCO
+        TERRITORIALE: ('#FF9323', '#ffffff'), # VIOLA - BIANCO
     }
 
     def __init__(self, date, corsi):
