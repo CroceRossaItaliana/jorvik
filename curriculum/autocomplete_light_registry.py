@@ -174,7 +174,10 @@ class EsperienzeProfessionaliAutocompletamento(autocomplete_light.AutocompleteMo
             tipo=Titolo.ESPERIENZE_PROFESSIONALI
         ).order_by('nome').distinct('nome')
 
+        print(self.choices)
+
         area = self.request.GET.get('area', None)
+
         if area:
             self.choices = self.choices.filter(
                 area=self.SETTORE_DI_RIFERIMENTO[area]

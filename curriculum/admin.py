@@ -12,7 +12,10 @@ from prettyjson import PrettyJSONWidget
 from anagrafica.models import Persona
 from base.admin import InlineAutorizzazione
 from gruppi.readonly_admin import ReadonlyAdminMixin
-from .models import (Titolo, TitleGoal, TitoloPersonale)
+from .areas import OBBIETTIVO_STRATEGICO_SALUTE, OBBIETTIVO_STRATEGICO_SOCIALE, OBBIETTIVO_STRATEGICO_EMERGENZA, \
+    OBBIETTIVO_STRATEGICO_ADVOCACY, OBBIETTIVO_STRATEGICO_SALUTE_SICUREZZA, OBBIETTIVO_STRATEGICO_GIOVANI, \
+    OBBIETTIVO_STRATEGICO_MIGRAZIONI, OBBIETTIVO_STRATEGICO_COOPERAZIONI_INT, OBBIETTIVO_STRATEGICO_SVILUPPO
+from .models import (Titolo, TitleGoal, TitoloPersonale, TitoloSpecializzazione, TitoloSkill)
 
 
 @admin.register(Titolo)
@@ -41,6 +44,19 @@ class AdminTitolo(ReadonlyAdminMixin, admin.ModelAdmin):
     goal_obbiettivo_stragetico.short_description = 'Obiettivo strategico di riferimento'
     goal_propedeuticita.short_description = 'Propedeuticità'
     goal_unit_reference.short_description = 'Unità  riferimento'
+
+    OBBIETTIVI_STRATEGICI = {
+        'salute': 1,
+        'salute e sicurezza': 2,
+        'inclusione sociale': 3,
+        'emergenza': 4,
+        'principi e valori': 5,
+        'giovani': 6,
+        'sviluppo organizzativo': 7,
+        'migrazioni': 8,
+        'cooperazione internazionale': 9,
+    }
+
 
     def get_urls(self):
         urls = super(AdminTitolo, self).get_urls()
@@ -189,7 +205,7 @@ class AdminTitolo(ReadonlyAdminMixin, admin.ModelAdmin):
         }
 
         fieldnames = (
-            'professione', 'specializazioni', 'skills'
+            'area', 'professione', 'specializazioni', 'skills'
         )
 
         reader = csv.DictReader(io.StringIO(file.read().decode('utf-8')), delimiter=';', fieldnames=fieldnames)
@@ -197,26 +213,62 @@ class AdminTitolo(ReadonlyAdminMixin, admin.ModelAdmin):
         next(reader)
         for row in reader:
             count['totale'] += 1
+            area = row['area'].lower()
+
+            if area in self.OBBIETTIVI_STRATEGICI.keys():
+                area = self.OBBIETTIVI_STRATEGICI[area]
+            else:
+                area = None
+
             professione = row['professione']
             specializazioni = row['specializazioni'].split(',')
             skills = row['skills'].split(',')
 
-            titolo = Titolo.objects.filter(
+            titoli = Titolo.objects.filter(
                 tipo=Titolo.ESPERIENZE_PROFESSIONALI,
                 nome__exact=professione.capitalize(),
-            ).first()
+                area=area
+            )
 
             # Se non esieste lo creo
-            if not titolo.exists():
+            if not titoli.exists():
                 titolo = Titolo(
                     tipo=Titolo.ESPERIENZE_PROFESSIONALI,
-                    nome=professione.capitalize()
+                    nome=professione.capitalize(),
+                    area=area
+                )
+                titolo.save()
+                count['inserite'] += 1
+            else:
+                count['non_inserite'] += 1
+                titolo = titoli.first()
+                titoli_non_caricati.append(
+                    'Titolo {} già esistente aggiorno skill e specializzazioni'.format(titolo)
                 )
 
+            for specializzazione in specializazioni:
+                specializzazioni = TitoloSpecializzazione.objects.filter(
+                    nome__exact=specializzazione.capitalize(),
+                    titolo=titolo
+                )
+                if not specializzazioni.exists():
+                    s = TitoloSpecializzazione(
+                        nome=specializzazione.capitalize(),
+                        titolo=titolo
+                    )
+                    s.save()
 
-
-
-            titolo.save()
+            for skill in skills:
+                skills = TitoloSkill.objects.filter(
+                    nome__exact=skill.capitalize(),
+                    titolo=titolo
+                )
+                if not skills.exists():
+                    s = TitoloSkill(
+                        nome=skill.capitalize(),
+                        titolo=titolo
+                    )
+                    s.save()
 
         return titoli_non_caricati, count
 
