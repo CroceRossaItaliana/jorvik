@@ -11,13 +11,8 @@ os.environ.setdefault('DJANGO_SETTINGS_MODULE', 'jorvik.settings')
 
 app = Celery('jorvik')
 app.conf.update(CELERY_CONF.items('celery'))
-app.conf.broker_transport_options = {'master_name': 'django'}
-app.conf.result_backend_transport_options = {'master_name': 'django'}
-# Decomenta per debug locale
-# app.conf.update({
-#     "broker_url": "redis://broker",
-#     "result_backend": "redis://broker",
-# })
+app.conf.broker_transport_options = { 'master_name': os.environ.get('REDIS_MASTER', "django") }
+app.conf.result_backend_transport_options = { 'master_name': os.environ.get('REDIS_MASTER', "django") }
 
 # Per favore, ricordati di aggiornare anche i seguenti file:
 # - /docker-compose.yml
