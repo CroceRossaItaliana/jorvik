@@ -2126,9 +2126,11 @@ class LezioneCorsoBase(ModelloSemplice, ConMarcaTemporale, ConGiudizio, ConStori
 
         for docente in docenti.all():
             esito = self.corso.sede.ha_membro(docente, membro=Appartenenza.VOLONTARIO)
+
             if not esito:
                 destinatari = list()
                 for sede in docente.sedi_attuali(membro__in=[Appartenenza.VOLONTARIO]):
+
                     destinatari.append(sede.presidente())
 
                 if destinatari:
