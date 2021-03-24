@@ -72,11 +72,13 @@ class ModuloElencoPerTitoli(forms.Form):
         (METODO_AND, "Tutti i soci aventi TUTTI i titoli selezionati"),
     )
     metodo = forms.ChoiceField(choices=METODI, initial=METODO_OR)
-    titoli = autocomplete_light.ModelMultipleChoiceField('TitoloCRIAutocompletamento')
+    titoli = autocomplete_light.ModelMultipleChoiceField('TitoloCRIAutocompletamento', required=False)
+    skill = autocomplete_light.ModelMultipleChoiceField('SkillAllAutocompletamento', required=False)
 
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
         self.fields['titoli'].widget.attrs['placeholder'] = 'Seleziona uno o più titoli per la tua ricerca'
+        self.fields['skill'].widget.attrs['placeholder'] = 'Seleziona uno o più skill per la tua ricerca'
 
 
 class ModuloElencoPerTitoliCorso(ModuloElencoPerTitoli):
