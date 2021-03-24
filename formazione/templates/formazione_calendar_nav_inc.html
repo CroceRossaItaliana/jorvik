@@ -1,0 +1,10 @@
+<tr>
+    <td colspan="7" class="so-calendar__nav">
+        <div>
+            <div class="so-calendar__nav-flex">
+                <a href="{% url 'formazione:formazione_calendar' %}?{{ prev_month }}">&laquo; precedente</a>
+                <a href="{% url 'formazione:formazione_calendar' %}?{{ next_month }}">prossimo &raquo;</a>
+            </div>
+        </div>
+    </td>
+</tr>

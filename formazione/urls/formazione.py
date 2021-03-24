@@ -13,4 +13,5 @@ urlpatterns = [
     url(r'^albo-informatizzato/$', views.formazione_albo_informatizzato, name='albo_info'),
     url(r'^albo-informatizzato/titoli-corso-di-persona/$', views.formazione_albo_titoli_corso_full_list, name='albo_titoli_corso_full_list'),
     url(r'^observe/$', views.formazione_osserva_corsi, name='osserva_corsi'),
+    url(r'^calendar/$', views.formazione_calendar, name='formazione_calendar'),
 ]
