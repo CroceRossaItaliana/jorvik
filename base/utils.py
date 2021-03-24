@@ -8,6 +8,7 @@ https://github.com/yourcelf/django-conceptq
 """
 import copy
 import operator
+from calendar import monthrange, HTMLCalendar
 from functools import reduce
 
 from datetime import timedelta, datetime
@@ -269,3 +270,83 @@ def calcola_scadenza(scadenza=None):
         giorni = timedelta(days=giorni)
     scadenza = oggi + giorni
     return scadenza
+
+
+class CalendarTemplate(HTMLCalendar):
+
+    def __init__(self, date, **kwargs):
+        self.year = date.year
+        self.month = date.month
+        super().__init__()
+
+    def formatday(self, day):
+        '''
+        Estendi questo metodo per visualizzare dati nel calendario
+        :param day:
+        :return:
+        '''
+        a = "<a href='%s'>%s</a>".format('link', 'nome')
+
+        if day == 0:
+            return '<td></td>'
+
+        return """<td>
+        <span class='date'>%s</span> 
+            <div class='so-calendar__day-items'>
+                %s
+            </div>
+        </td>""" % (day, a)
+
+    def formatweek(self, theweek):
+        week = ''
+        for d, weekday in theweek:
+            week += self.formatday(d)
+        return "<tr>%s</tr>" % week
+
+    def formatmonth(self, withyear=True):
+        html = ''
+        html += self._replace_month_name(self.month, self.year)
+        html += self._replace_day_name(self.formatweekheader())
+
+        for week in self.monthdays2calendar(self.year, self.month):
+            html += self.formatweek(week)
+
+        return html
+
+    def _replace_month_name(self, month, year):
+        months = ['', 'January', 'February', 'March', 'April', 'May', 'June',
+            'July', 'August', 'September', 'October', 'November', 'December']
+        months_it = ['', 'Gennaio', 'Febbraio', 'Marzo', 'Aprile', 'Maggio',
+            'Giugno', 'Luglio', 'Agosto', 'Settembre', 'Ottobre', 'Novembre', 'Dicembre']
+
+        en = months.pop(month)
+        it = months_it.pop(month)
+
+        html = '<tr><th colspan="7" class="month">%s</th></tr>' % en
+        return html.replace(en, "%s %s" % (it, year))
+
+    def _replace_day_name(self, html):
+        new_html = html
+        th = '">%s</th>'
+        days = ('Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun')
+        days_it = ('Lunedì', 'Martedì', 'Mercoledì', 'Giovedì', 'Venerdì', 'Sabato', 'Domenica')
+
+        for day in list(zip(days, days_it)):
+            en = th % day[0]
+            it = th % day[1]
+            if en in new_html:
+                new_html = new_html.replace(en, it)
+        return new_html
+
+    @staticmethod
+    def prev_month(date):
+        first = date.replace(day=1)
+        prev_month = first - timedelta(days=1)
+        return 'm=%s-%s' % (prev_month.year, prev_month.month)
+
+    @staticmethod
+    def next_month(date):
+        days_in_month = monthrange(date.year, date.month)[1]
+        last = date.replace(day=days_in_month)
+        next_month = last + timedelta(days=1)
+        return 'm=%s-%s' % (next_month.year, next_month.month)

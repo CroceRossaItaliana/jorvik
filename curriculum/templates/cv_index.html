@@ -1,7 +1,9 @@
 {% extends "anagrafica_utente_vuota.html" %}
+{% load static %}
 
 {% load bootstrap3 %}
 {% load base_tags %}
+{% include 'autocomplete_light/static.html' %}
 
 {% block pagina_titolo %}{{ tipo_display }} - Curriculum{% endblock %}
 {% block app_contenuto %}
@@ -12,6 +14,10 @@
             {% if tipo == 'TC' %}
                 <br>
                 <i class="fa fa-info-circle fa-fw"></i> Clicca <a href="https://drive.google.com/file/d/1nB1U9Crp_FoPsyvGBpxvBjVq_nEONKu5/view?usp=sharing" target="_blank">QUI</a> per consultare la guida illustrativa.
+            {% endif %}
+            {% if tipo == 'CS' %}
+                <br>
+                <i class="fa fa-info-circle fa-fw"></i> Nella tabella, visualizzerai solo le 3 Esperienze più recenti.
             {% endif %}
         </p>
     </div>
@@ -36,9 +42,23 @@
                             {% for t in titoli %}
                                 <tr>
                                     <td>
-                                        <p class="grassetto">
-                                            {{ t.titolo.nome }}
-
+                                        <p>
+                                            <p class="grassetto">{{ t.titolo.nome }}</p>
+                                            {% if tipo == 'CL' %}
+                                                <span class="grassetto">Oralità:</span> {{ t.livello_linguistico_orale }}
+                                                <br>
+                                                <span class="grassetto">Lettura:</span> {{ t.livello_linguistico_lettura }}
+                                                <br>
+                                                <span class="grassetto">Scrittura:</span> {{ t.livello_linguistico_scrittura }}
+                                            {% endif %}
+                                            {% if tipo == 'CS' %}
+                                                <span class="grassetto">Specializzazione:</span> {{ t.specializzazione }}
+                                                <br>
+                                                <span class="grassetto">Skills:</span>
+                                                {% for skill in t.skills.all %}
+                                                    <span style="background-color: #c1bbbb; border-radius: 10px 10px 10px 10px; padding: 3px">{{ skill }}</span>
+                                                {% endfor %}
+                                            {% endif %}
                                             {% if t.associated_to_a_course and t.is_course_title %} <!-- and not t.is_expired_course_title -->
                                                 <br><a href="{% url 'aspirante:report_schede' t.corso_partecipazione.corso.pk %}?download_single_attestato={{t.pk}}">Scarica attestato</a>
                                             {% endif %}
@@ -146,6 +166,7 @@
                 </div>
             </div>
             {% endif %}
+
             {% if tipo == 'AT' %}
                 <div class="panel panel-primary">
                     <div class="panel-heading">
@@ -163,8 +184,58 @@
                 </div>
             {% endif %}
 
+            {% if tipo == 'TS' %}
+                <div class="panel panel-primary">
+                    <div class="panel-heading">
+                        <h4 class="panel-title">
+                            <i class="fa fa-fw fa-plus-circle"></i> Aggiungi Titolo di Studio
+                        </h4>
+                    </div>
+                    <div class="panel-body">
+                        <form action="{% url 'cv:add_titoli_studio' %}" method="POST" enctype="multipart/form-data">
+                            {% csrf_token %}
+                            {% bootstrap_form form_add_titolo_studio %}
+                            <button type="submit" class="btn btn-sm btn-primary btn-block"><i class="fa fa-fw fa-check"></i> Aggiungi {{ tipo_display }}</button>
+                        </form>
+                    </div>
+                </div>
+            {% endif %}
 
-            {% if tipo != 'TC' and tipo != 'AT' %}
+            {% if tipo == 'CL' %}
+                <div class="panel panel-primary">
+                    <div class="panel-heading">
+                        <h4 class="panel-title">
+                            <i class="fa fa-fw fa-plus-circle"></i> Aggiungi Conoscenza Linguistica
+                        </h4>
+                    </div>
+                    <div class="panel-body">
+                        <form action="{% url 'cv:add_conoscenze_linguistiche' %}" method="POST" enctype="multipart/form-data">
+                            {% csrf_token %}
+                            {% bootstrap_form form_add_conoscenza_linguistica %}
+                            <button type="submit" class="btn btn-sm btn-primary btn-block"><i class="fa fa-fw fa-check"></i> Aggiungi {{ tipo_display }}</button>
+                        </form>
+                    </div>
+                </div>
+            {% endif %}
+
+            {% if tipo == 'CS' %}
+                <div class="panel panel-primary">
+                    <div class="panel-heading">
+                        <h4 class="panel-title">
+                            <i class="fa fa-fw fa-plus-circle"></i> Aggiungi Competenza Professionali
+                        </h4>
+                    </div>
+                    <div class="panel-body">
+                        <form action="{% url 'cv:add_competenze_professionali' %}" method="POST" enctype="multipart/form-data">
+                            {% csrf_token %}
+                            {% bootstrap_form form_competenze_skill %}
+                            <button type="submit" class="btn btn-sm btn-primary btn-block"><i class="fa fa-fw fa-check"></i> Aggiungi {{ tipo_display }}</button>
+                        </form>
+                    </div>
+                </div>
+            {% endif %}
+
+            {% if tipo != 'TC' and tipo != 'AT' and tipo != 'TS' and tipo != 'CL' and tipo != 'CS' %}
             <div class="panel panel-primary">
                 <div class="panel-heading">
                     <h4 class="panel-title">
@@ -206,126 +277,8 @@
         const url_cv_cdf_titolo_json = "{% url 'cv:argomenti_corsi_json' %}";
         const _csrf_token = "{{ csrf_token }}";
     </script>
-    <script>
-
-        // membri nascosti
-        let tipo_partnership = $('#id_titoli_in_partnership');
-        let tipo_titoli_altri = $('#id_altri_titolo');
-        let argomenti = $('#id_argomento');
-        let no_corso = $('#id_no_corso');
-        let no_argomento = $('#id_no_argomento');
-        let nome_corso = $('#id_nome_corso');
-        let argomento_nome = $('#id_argomento_nome');
-
-        let tipo_partnership_blocco = tipo_partnership.parent();
-        let tipo_titoli_altri_blocco = tipo_titoli_altri.parent().parent();
-        let argomenti_blocco = argomenti.parent();
-        let no_corso_blocco = no_corso.parent();
-        let no_argomento_blocco = no_argomento.parent();
-        let nome_corso_blocco = nome_corso.parent();
-        let argomento_nome_blocco = argomento_nome.parent();
-
-        tipo_partnership_blocco.hide();
-        tipo_titoli_altri_blocco.hide();
-        argomenti_blocco.hide();
-        no_corso_blocco.hide();
-        nome_corso_blocco.hide();
-        argomento_nome_blocco.hide();
-        no_argomento_blocco.hide();
-
-        let tipo_titolo = $('#id_tipo_altro_titolo');
-
-        tipo_titolo.change(function () {
-            let select_val = $(this).val();
-            if ( select_val=== 'PT'){
-                tipo_partnership_blocco.show();
-                tipo_titoli_altri_blocco.hide();
-                argomenti_blocco.hide();
-                no_corso_blocco.hide();
-                nome_corso_blocco.hide();
-                argomento_nome_blocco.hide();
-                no_argomento_blocco.hide();
-            }else if(select_val === 'AL'){
-                tipo_partnership_blocco.hide();
-                tipo_titoli_altri_blocco.show();
-                argomenti_blocco.hide();
-                no_corso_blocco.show();
-                nome_corso_blocco.hide();
-                argomento_nome_blocco.hide();
-                no_argomento_blocco.hide();
-            }else{
-                tipo_partnership_blocco.hide();
-                tipo_titoli_altri_blocco.hide();
-                argomenti_blocco.hide();
-                no_corso_blocco.hide();
-                nome_corso_blocco.hide();
-                argomento_nome_blocco.hide();
-                no_argomento_blocco.hide();
-            }
-        })
-
-        function popolaArgomenti(e){
-            let titolo_id = $(this).val();
-            if (titolo_id !== '') {
-                $.ajax({
-                        type: "POST",
-                        url: url_cv_cdf_titolo_json,
-                        data: {
-                            id: titolo_id,
-                            csrf_token: _csrf_token,
-                        },
-                        success: function(data) {
-                            argomenti.find('option').remove();
-                            $.each(data, function(id, text) {
-                                argomenti.append($('<option>', {
-                                    value: id,
-                                    text: text,
-                                }));
-                            });
-                            argomenti_blocco.show();
-                            no_argomento_blocco.show();
-                            return data;
-                        },
-                        error: function(jqXHR, textStatus) {
-                            <!--console.log(textStatus);-->
-                        },
-                    });
-
-                } else {
-                    argomenti_blocco.hide();
-                    argomenti.find('option').remove();
-                }
-            }
-
-        tipo_partnership.on('change', popolaArgomenti);
-        tipo_titoli_altri.on('change', popolaArgomenti);
-        no_corso.on('change', function (e){
-            if ($(this).is(':checked')){
-                tipo_titoli_altri_blocco.hide();
-                nome_corso_blocco.show();
-                argomento_nome_blocco.show();
-                argomenti_blocco.hide();
-                no_argomento_blocco.hide();
-            }else{
-                tipo_titoli_altri_blocco.show();
-                nome_corso_blocco.hide();
-                argomento_nome_blocco.hide();
-                argomenti_blocco.hide();
-                no_argomento_blocco.hide();
-            }
-        });
-        no_argomento.on('change', function (e){
-            if ($(this).is(':checked')){
-                argomenti_blocco.hide()
-                argomento_nome_blocco.show()
-            }else{
-                argomenti_blocco.show()
-                argomento_nome_blocco.hide()
-            }
-        });
-        nome_corso.keypress(function (e){
-            argomento_nome_blocco.show();
-        });
-
-    </script>
+    <script src="{% static 'js/curriculum/altre_qualifiche.js' %}"></script>
+    <script src="{% static 'js/curriculum/titoli_studio.js' %}"></script>
+    <script src="{% static 'js/curriculum/competenze_linguistiche.js' %}"></script>
+    <script src="{% static 'js/curriculum/competenza_professionali.js' %}"></script>
 {% endblock %}

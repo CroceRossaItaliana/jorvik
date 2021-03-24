@@ -140,7 +140,6 @@ class FormAddAltreQualifica(autocomplete_light.ModelForm):
     )
     altri_titolo = autocomplete_light.ModelChoiceField('QualificaAltrePartnershipAutocompletamento', required=False)
     argomento = forms.MultipleChoiceField(required=False, choices=())
-    # argomento = forms.MultipleChoiceField(choices=(), required=False)
     no_corso = forms.BooleanField(initial=False, required=False)
     no_argomento = forms.BooleanField(initial=False, required=False)
     nome_corso = forms.CharField(required=False)
@@ -186,3 +185,118 @@ class FormAddAltreQualifica(autocomplete_light.ModelForm):
         self.fields['altri_titolo'].label = 'Corsi esterni'
         self.fields['no_corso'].label = 'Non trovo la mia qualifica'
         self.fields['no_argomento'].label = "Non trovo l'argomento"
+
+
+class FormAddTitoloStudio(autocomplete_light.ModelForm):
+
+    diploma = autocomplete_light.ModelChoiceField('TitoliStudioDiplomaAutocompletamento', required=False)
+    no_diploma = forms.BooleanField(required=False)
+    nuovo_diploma = forms.CharField(required=False)
+    laurea = autocomplete_light.ModelChoiceField('TitoliStudioLaureaAutocompletamento', required=False)
+    no_laurea = forms.BooleanField(required=False)
+    nuova_laurea = forms.CharField(required=False)
+
+    class Meta:
+        model = TitoloPersonale
+        fields = [
+            'tipo_titolo_di_studio',
+            'diploma',
+            'no_diploma',
+            'nuovo_diploma',
+            'laurea',
+            'no_laurea',
+            'nuova_laurea',
+            'data_ottenimento',
+            'attestato_file'
+        ]
+
+    def __init__(self, *args, **kwargs):
+
+        super().__init__(*args, **kwargs)
+        self.fields['diploma'].widget.attrs['placeholder'] = 'Inizia a digitare ...'
+        self.fields['no_diploma'].label = 'Non trovo il mio titolo di studio'
+        self.fields['no_laurea'].label = 'Non trovo il mio titolo di studio'
+        self.fields['data_ottenimento'].help_text = ''
+        self.fields['laurea'].widget.attrs['placeholder'] = 'Inizia a digitare ...'
+
+
+class FormAddConoscenzeLinguistiche(autocomplete_light.ModelForm):
+    lingua = autocomplete_light.ModelChoiceField('ConoscenzaLinguisticaAutocompletamento', required=False)
+    no_lingua = forms.BooleanField(required=False)
+    nuova_lingua = forms.CharField(required=False)
+
+    class Meta:
+        model = TitoloPersonale
+        fields = [
+            'lingua',
+            'no_lingua',
+            'nuova_lingua',
+            'livello_linguistico_orale',
+            'livello_linguistico_lettura',
+            'livello_linguistico_scrittura',
+            'data_ottenimento',
+            'data_scadenza',
+            'attestato_file'
+        ]
+
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+
+        self.fields['data_ottenimento'].help_text = ''
+        self.fields['data_scadenza'].help_text = ''
+        self.fields['lingua'].widget.attrs['placeholder'] = 'Inizia a digitare ...'
+        self.fields['no_lingua'].label = 'Non trovo la lingua'
+        self.fields['livello_linguistico_orale'].label = 'Oralità'
+        self.fields['livello_linguistico_lettura'].label = 'Lettura'
+        self.fields['livello_linguistico_scrittura'].label = 'Scrittura'
+
+
+class FormAddCompetenzeSkills(autocomplete_light.ModelForm):
+    professione = autocomplete_light.ModelChoiceField('EsperienzeProfessionaliAutocompletamento', required=False)
+    no_professione = forms.BooleanField(required=False)
+    nuova_professione = forms.CharField(required=False)
+
+    specializzazione = autocomplete_light.ModelChoiceField('SpecializzazioniEsperienzeProfessionaliAutocompletamento', required=False)
+    no_specializzazione = forms.BooleanField(required=False)
+    nuova_specializzazione = forms.CharField(required=False)
+
+    skill = autocomplete_light.ModelMultipleChoiceField('SkillEsperienzeProfessionaliAutocompletamento', required=False)
+    no_skill = forms.BooleanField(required=False)
+    nuova_skill = forms.CharField(required=False)
+
+    class Meta:
+        model = TitoloPersonale
+        fields = [
+            'settore_di_riferimento',
+            'professione',
+            'no_professione',
+            'nuova_professione',
+            'specializzazione',
+            'no_specializzazione',
+            'nuova_specializzazione',
+            'esperienza',
+            'data_ottenimento',
+            'data_scadenza',
+            'codice_albo',
+            'skill',
+            'no_skill',
+            'nuova_skill',
+            'attestato_file',
+        ]
+
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+
+        self.fields['settore_di_riferimento'].label = 'Area'
+        self.fields['data_ottenimento'].label = 'Data inizio'
+        self.fields['data_ottenimento'].help_text = ''
+        self.fields['data_scadenza'].label = 'Data fine'
+        self.fields['data_scadenza'].help_text = ''
+        self.fields['professione'].widget.attrs['placeholder'] = 'Inizia a digitare ...'
+        self.fields['specializzazione'].widget.attrs['placeholder'] = 'Inizia a digitare ...'
+        self.fields['skill'].widget.attrs['placeholder'] = 'Inizia a digitare ...'
+
+        self.fields['no_professione'].label = 'Non trovo la mia professione'
+        self.fields['no_specializzazione'].label = 'Non trovo la mia specializzazione'
+        self.fields['no_skill'].label = 'Non trovo le mie skill'
+        self.fields['nuova_skill'].label = 'Aggiungi nuove skills separate da (,)'
