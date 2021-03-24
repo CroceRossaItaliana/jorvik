@@ -11,6 +11,10 @@
     <div class="alert bg-info">
         <p>
             <i class="fa fa-info-circle fa-fw"></i> Da questa pagina potrai gestire le tue qualifiche del tipo: <strong>{{ tipo_display }}</strong>.
+            {% if tipo == 'TC' %}
+                <br>
+                <i class="fa fa-info-circle fa-fw"></i> Clicca <a href="https://drive.google.com/file/d/1nB1U9Crp_FoPsyvGBpxvBjVq_nEONKu5/view?usp=sharing" target="_blank">QUI</a> per consultare la guida illustrativa.
+            {% endif %}
             {% if tipo == 'CS' %}
                 <br>
                 <i class="fa fa-info-circle fa-fw"></i> Nella tabella, visualizzerai solo le 3 Esperienze più recenti.
