@@ -124,7 +124,7 @@ dump_db:
     - release
   when: manual
   tags:
-    - gaia-app01,prod
+    - gaia-app02,prod
 
 .maintenance_template: &maintenance_definition
   stage: maintenance
@@ -135,11 +135,6 @@ dump_db:
     - release
   allow_failure: false
   when: manual
-
-stop_service_app01:
-    tags:
-      - gaia-app01,prod
-    <<: *maintenance_definition
 
 stop_service_app02:
     tags:
@@ -172,11 +167,11 @@ migrate_db:
     - release
   when: manual
   tags:
-    - gaia-app01,prod
+    - gaia-app02,prod
 
 .deploy_template: &deploy_definition
   stage: release
-  before_script:
+  before_script
     - cd /home/appserver/jorvik
     - git status
   script:
@@ -188,10 +183,6 @@ migrate_db:
     - release
   when: manual
 
-release_app01:
-  tags:
-    - gaia-app01,prod
-  <<: *deploy_definition
 
 release_app02:
   tags:
