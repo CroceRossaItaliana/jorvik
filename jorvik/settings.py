@@ -177,8 +177,12 @@ DATABASES = {
         'PASSWORD': PGSQL_CONF.get('client', 'password', fallback='jorvik'),
         'HOST': PGSQL_CONF.get('client', 'host', fallback='localhost'),
         'PORT': PGSQL_CONF.get('client', 'port', fallback='5432'),
+        'CONN_MAX_AGE': 300,
     }
 }
+
+SESSION_COOKIE_SECURE = True
+CSRF_COOKIE_SECURE = True
 
 # Internazionalizzazione
 # https://docs.djangoproject.com/en/1.7/topics/i18n/
