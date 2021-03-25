@@ -19,6 +19,7 @@ variables:
     GIT_CLONE_PATH: '$CI_BUILDS_DIR/$CI_PROJECT_NAME/$CI_COMMIT_BRANCH/$CI_MERGE_REQUEST_ID'
     GIT_SSL_NO_VERIFY: '1'
 
+
 build_containers:
   stage: build
   tags:
