@@ -91,15 +91,18 @@ def monitoraggio_trasparenza(request, me):
     if not hasattr(me, 'sede_riferimento'): return redirect('/')
 
     request_comitato = request.GET.get('comitato')
-    if me.is_comissario and not request_comitato:
+    if (me.is_comissario or me.is_delega_responsabile_area_trasparenza) and not request_comitato:
         # GAIA-58: Seleziona comitato
         if me.is_presidente:
             deleghe = me.deleghe_attuali(tipo__in=[COMMISSARIO, PRESIDENTE])
-        else:
+        elif me.is_comissario:
             deleghe = me.deleghe_attuali(tipo__in=[COMMISSARIO])
+        else:
+            deleghe = [Sede.objects.get(pk=area.oggetto.sede.pk) for area in me.delege_responsabile_area_trasparenza]
+            print(deleghe)
 
         return 'monitoraggio_choose_comitato.html', {
-            'deleghe': deleghe.distinct('oggetto_id'),
+            'deleghe': deleghe.distinct('oggetto_id') if me.is_comissario else deleghe,
             'url': 'monitoraggio-trasparenza',
             'titolo': 'Monitoraggio Trasparenza',
             'target': MONITORAGGIO_TRASPARENZA
@@ -215,9 +218,21 @@ def monitoraggio_nonsonounbersaglio(request, me):
 @pagina_privata
 def monitora_trasparenza(request, me):
     context = {}
+    ids_regionale = []
     id_regionale = request.GET.get('r', None)
     action = request.GET.get('action', None)
     comitato = request.GET.get('comitato', None)
+
+    if not id_regionale and not action and not comitato:
+        if me.delega_presidente_regionale:
+            ids_regionale.append(me.delega_presidente_regionale)
+        ids_regionale.extend(me.delgato_regionale_monitoraggio_trasparenza)
+
+    if ids_regionale:
+        regionali = Sede.objects.filter(pk__in=ids_regionale)
+        return 'monitoraggio_choose_monitoraggio.html', {
+            'comitati': regionali,
+        }
 
     if action and comitato:
         sede = Sede.objects.get(pk=comitato)
