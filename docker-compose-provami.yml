@@ -25,6 +25,11 @@ services:
       - "traefik.http.routers.provami.rule=Host(`provami.gaia.cri.it`)"
       - "traefik.http.routers.provami.entrypoints=websecure"
       - "traefik.http.routers.provami.tls.certresolver=myresolver"
+      - "traefik.http.middlewares.servicests.headers.stsincludesubdomains=false"
+      - "traefik.http.middlewares.servicests.headers.stspreload=true"
+      - "traefik.http.middlewares.servicests.headers.stsseconds=31536000"
+      - "traefik.http.middlewares.servicests.headers.isdevelopment=false"
+      - "traefik.http.routers.provami.middlewares=servicests"
     container_name: provami_proxy
     networks:
       - "traefik-public"
