@@ -2554,6 +2554,7 @@ class Evento(ModelloSemplice, ConDelegati, ConMarcaTemporale, ConGeolocalizzazio
     data_fine = models.DateTimeField(blank=False, null=False)
     comitato_organizzativo = models.ForeignKey(Sede, help_text="La Sede organizzatrice dell'Evento.")
     stato = models.CharField('Stato', choices=STATO, max_length=1, default=PREPARAZIONE)
+    descrizione = models.TextField(blank=True, null=True)
 
     def __str__(self):
         return '%s' % self.nome
@@ -2568,9 +2569,21 @@ class Evento(ModelloSemplice, ConDelegati, ConMarcaTemporale, ConGeolocalizzazio
         return reverse('evento:position_change', args=[self.pk])
 
     @property
+    def url_modifica(self):
+        return reverse('evento:modifica', args=[self.pk])
+
+    @property
     def url(self):
         return reverse('evento:info', args=[self.pk])
 
     @property
     def link(self):
         return '<a href="%s">%s</a>' % (self.url, self.nome)
+
+    @property
+    def url_attiva(self):
+        return reverse('evento:attiva', args=[self.pk])
+
+    @property
+    def attivabile(self):
+        return True

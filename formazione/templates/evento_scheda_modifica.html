@@ -1,10 +1,13 @@
-{% extends 'formazione_vuota.html' %}
+{% extends 'evento_base_scheda.html' %}
 
+{% load utils %}
+{% load social %}
+{% load humanize %}
 {% load bootstrap3 %}
-{% load mptt_tags %}
-{% load staticfiles %}
+{% load formazione_templatetags %}
 
-{% block app_contenuto %}
+{% block scheda_contenuto %}
+
     <div class="row">
         <div class="panel panel-primary">
             <div class="panel-body">
@@ -12,11 +15,12 @@
                 <form method="POST" enctype="multipart/form-data">
                     {% csrf_token %}
                     {% bootstrap_form modulo %}
-                    <button type="submit" class="btn btn-block btn-primary" data-conferma="Confermi di voler pianificare l'evento?">
-                        <i class="fa fa-fw fa-asterisk"></i> Crea evento
+                    <button type="submit" class="btn btn-block btn-primary">
+                        <i class="fa fa-fw fa-asterisk"></i> Modifica evento
                     </button>
                 </form>
             </div>
         </div>
     </div>
+
 {% endblock %}

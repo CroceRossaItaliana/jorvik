@@ -1736,40 +1736,21 @@ def evento_elenco(request, me=None):
     }
 
 
-# TODO: prima la pagina di visualizzazione
 @pagina_privata
 def formazione_evento_position_change(request, me=None, pk=None):
 
     evento = get_object_or_404(Evento, pk=pk)
 
-    if request.POST and request.POST.get('modifica_sede_dopo_attivazione'):
+    if request.POST:
         evento.locazione = evento.comitato_organizzativo.locazione
         evento.save()
         messages.success(request, 'La sede del\'evento è stata modificata.')
-        # return redirect(reverse('aspirante:modify', args=[pk]))
-
-    # if not course.can_modify(me):
-    #     return redirect(ERRORE_PERMESSI)
-
-    # template = 'formazione_vuota.html'
-    # puo_modificare = False  # non mostrare i tab se la locazione non è impostata
-
-    # # Locazione impostata...
-    # if course.locazione:
-    #     template = 'aspirante_corso_base_scheda.html'
-    #     puo_modificare = course.can_modify(me)
-    #     # Se il corso non ha ancora un direttore...
-    #     if not course.direttori_corso:
-    #         # Rindirizza sulla pagina selezione direttori del corso.
-    #         return redirect(course.url_direttori)
 
     context = {
         'evento': evento,
-        # 'template': template,
-        # 'puo_modificare': puo_modificare,
-   }
+    }
 
-    return 'formazione_evento_position_change.html', context
+    return 'evento_scheda_posizione.html', context
 
 
 @pagina_privata
@@ -1779,3 +1760,28 @@ def evento_scheda_info(request, me=None, pk=None):
     return 'evento_scheda_informazioni.html', {
         'evento': evento
     }
+
+
+@pagina_privata
+def evento_scheda_modifica(request, me=None, pk=None):
+    evento = get_object_or_404(Evento, pk=pk)
+
+    form = ModuloCreazioneEvento(request.POST or None, instance=evento)
+
+    # TODO:
+    form.fields['comitato_organizzativo'].queryset = me.oggetti_permesso(GESTIONE_CORSI_SEDE)
+
+    if form.is_valid():
+        form.save()
+
+    return 'evento_scheda_modifica.html', {
+        'evento': evento,
+        'modulo': form
+    }
+
+
+@pagina_privata
+def evento_attiva(request, me=None, pk=None):
+    evento = get_object_or_404(Evento, pk=pk)
+
+    return reverse('evento:info', args=[evento.pk])
