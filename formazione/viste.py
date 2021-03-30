@@ -1784,4 +1784,4 @@ def evento_scheda_modifica(request, me=None, pk=None):
 def evento_attiva(request, me=None, pk=None):
     evento = get_object_or_404(Evento, pk=pk)
 
-    return reverse('evento:info', args=[evento.pk])
+    return redirect(evento.attiva(), request=request)

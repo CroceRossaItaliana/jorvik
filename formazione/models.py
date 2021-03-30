@@ -3,6 +3,7 @@ import datetime
 from dateutil.relativedelta import relativedelta
 
 from django.conf import settings
+from django.contrib import messages
 from django.core.urlresolvers import reverse
 from django.db import models, transaction
 from django.db.models import Q
@@ -2585,5 +2586,21 @@ class Evento(ModelloSemplice, ConDelegati, ConMarcaTemporale, ConGeolocalizzazio
         return reverse('evento:attiva', args=[self.pk])
 
     @property
+    def ha_posizione(self):
+        return True if self.locazione else False
+
+    # TODO: controllare se i corsi sono attivi
+    @property
     def attivabile(self):
-        return True
+        return self.stato == self.PREPARAZIONE
+
+    # TODO: controllo
+    def attiva(self):
+
+        if self.ha_posizione:
+            self.stato = self.ATTIVO
+            self.save()
+            return self.url
+        else:
+            return self.url_position
+
