@@ -2534,3 +2534,43 @@ class RelazioneCorso(ModelloSemplice, ConMarcaTemporale):
     class Meta:
         verbose_name = 'Relazione del Direttore'
         verbose_name_plural = 'Relazioni dei Direttori'
+
+
+class Evento(ModelloSemplice, ConDelegati, ConMarcaTemporale, ConGeolocalizzazione, ConCommenti):
+    PREPARAZIONE = 'P'
+    ATTIVO = 'A'
+    ANNULLATO = 'X'
+    TERMINATO = 'T'
+
+    STATO = (
+        (PREPARAZIONE, 'In preparazione'),
+        (ATTIVO, 'Attivo'),
+        (TERMINATO, 'Terminato'),
+        (ANNULLATO, 'Annullato'),
+    )
+
+    nome = models.CharField(max_length=200)
+    data_inizio = models.DateTimeField(blank=False, null=False)
+    data_fine = models.DateTimeField(blank=False, null=False)
+    comitato_organizzativo = models.ForeignKey(Sede, help_text="La Sede organizzatrice dell'Evento.")
+    stato = models.CharField('Stato', choices=STATO, max_length=1, default=PREPARAZIONE)
+
+    def __str__(self):
+        return '%s' % self.nome
+
+    @property
+    def url_direttori(self):
+        # TODO:
+        return "/formazione/corsi-base/%d/direttori/" % (self.pk,)
+
+    @property
+    def url_position(self):
+        return reverse('evento:position_change', args=[self.pk])
+
+    @property
+    def url(self):
+        return reverse('evento:info', args=[self.pk])
+
+    @property
+    def link(self):
+        return '<a href="%s">%s</a>' % (self.url, self.nome)

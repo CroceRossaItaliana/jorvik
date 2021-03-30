@@ -1,0 +1,56 @@
+{% extends 'formazione_vuota.html' %}
+
+{% load bootstrap3 %}
+{#{% load formazione_templatetags %}#}
+
+{% block pagina_titolo %}Eventi{% endblock %}
+
+{% block app_contenuto %}
+    <table class="formazione-courses__table table table-striped table-bordered">
+        <thead>
+            <th width="15%" class="formazione-courses__th">Stato <div class="filter-tag"></div></th>
+            <th class="formazione-courses__th">Evento e Sede</th>
+            <th class="formazione-courses__th">Luogo e data</th>
+            <th class="formazione-courses__th">???</th>
+        </thead>
+
+        {% for evento in eventi %}
+            <tr>
+                <td>
+                    {{ evento.get_stato_display }}
+                </td>
+                <td>
+                    <i class="fas fa-pencil-alt"></i> <strong>{{ evento.link|safe }}</strong><br />
+                    <i class="fa fa-fw fa-home"></i> {{ evento.comitato_organizzativo.link|safe }}
+                    {% if puo_pianificare %}
+                        <br /><i class="fas fa-users"></i> <a href="{{ evento.url_direttori }}">{{ evento.deleghe.count }} direttori</a>
+                    {% endif %}
+                </td>
+                <td class="piu-piccolo">
+                     <i class="fa fa-fw fa-map-marker"></i>
+                        {% if evento.locazione %}
+                            {{ evento.locazione }}
+                        {% else %}
+                            <a href="{{ evento.url_position }}">(Nessun indirizzo specificato aggiungilo ora)</a>
+                        {% endif %}
+                        <br />
+                    <i class="fa fa-fw fa-calendar"></i>
+                        Inizia: {{ evento.data_inizio }}
+                        <br />
+                    <i class="fa fa-fw fa-calendar"></i>
+                        Esami: {{ evento.data_fine }}
+                </td>
+                <td>
+                </td>
+            </tr>
+
+        {% empty %}
+            <tr class="info">
+                <td colspan="4">
+                    <h4><i class="fa fa-fw fa-info-circle"></i> Ancora nessun evento pianificato.</h4>
+                </td>
+            </tr>
+        {% endfor %}
+    </table>
+
+{% endblock %}

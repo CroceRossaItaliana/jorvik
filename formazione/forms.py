@@ -13,7 +13,18 @@ from anagrafica.models import Delega, Appartenenza
 from curriculum.models import Titolo
 from curriculum.areas import OBBIETTIVI_STRATEGICI
 from .models import (Corso, CorsoBase, CorsoFile, CorsoEstensione,
-                     LezioneCorsoBase, PartecipazioneCorsoBase, RelazioneCorso)
+                     LezioneCorsoBase, PartecipazioneCorsoBase, RelazioneCorso, Evento)
+
+
+class ModuloCreazioneEvento(ModelForm):
+    class Meta:
+        model = Evento
+        fields = [
+            'nome',
+            'data_inizio',
+            'data_fine',
+            'comitato_organizzativo'
+        ]
 
 
 class ModuloCreazioneCorsoBase(ModelForm):

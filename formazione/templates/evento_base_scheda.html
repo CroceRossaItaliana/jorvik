@@ -1,0 +1,48 @@
+{% extends "aspirante_vuota.html" %}
+
+{% load bootstrap3 %}
+{% load static %}
+{% load utils %}
+{% load formazione_templatetags %}
+
+{% block pagina_titolo %}
+    {% block scheda_titolo %}{% endblock %}
+    {{ corso.nome }} ({{ corso.sede.nome_completo }}) &mdash; Corso
+{% endblock %}
+
+
+{% block app_contenuto %}
+    <style>
+        .course__name-without-title-cri {font-weight: bold; font-size:22px; color: #3c763d;}
+        .verbale__table {width:100%; text-align:center; margin: 20px auto 0;}
+        .verbale__seconda-data-esame {text-align:center;}
+    </style>
+
+{#    {% if corso.titolo_cri %}<h2 class="course__title-cri">{{ corso.titolo_cri|default:"" }}</h2>{% endif %}#}
+
+    <h4 class="course__name {% if not corso.titolo_cri %}course__name-without-title-cri{%endif%}">{{ evento.nome }} ({{ evento.comitato_organizzativo.nome_completo }})</h4>
+
+    <h4 class="allinea-centro">
+        <i class="fa fa-fw fa-map-marker"></i>
+        {% if evento.locazione %}
+            <a href="{{ corso.url_mappa }}">{{ corso.locazione }}</a>
+        {% else %}
+            Posizione non impostata
+        {% endif %} &mdash;
+        <i class="fa fa-fw fa-info-circle"></i> {{ corso.get_stato_display }}
+    </h4>
+
+    <ul class="nav nav-tabs dynamic-tabs-links">
+        <li role="presentation"><a data-tab-id="#tabDettagliCorso" href="{{ evento.url }}" class="dettagli tabSelectorLink">
+            <i class="fa fa-fw fa-info"></i> Informazioni evento</a>
+        </li>
+        <li role="presentation"><a data-tab-id="#tabDettagliCorso" href="{{ evento.url }}" class="dettagli tabSelectorLink">
+            <i class="fa fa-fw fa-info"></i> Modifica evento</a>
+        </li>
+    </ul>
+
+    <p>&nbsp;</p>
+    {% block scheda_contenuto %}{% endblock %}
+
+
+{% endblock %}

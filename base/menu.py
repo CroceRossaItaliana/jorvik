@@ -172,7 +172,7 @@ class Menu:
                 'name_for_template': 'co',
             }),
             ({
-                'urls': ['/formazione/', '/courses/', '/survey/course/'],
+                'urls': ['/formazione/', '/courses/', '/survey/course/', '/evento/'],
                 'method': 'formazione',
                 'name_for_template': 'formazione',
             }),

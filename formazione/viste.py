@@ -30,10 +30,10 @@ from survey.models import Survey
 from .elenchi import ElencoPartecipantiCorsiBase
 from .decorators import can_access_to_course
 from .models import (Aspirante, Corso, CorsoBase, CorsoEstensione, LezioneCorsoBase,
-                     PartecipazioneCorsoBase, InvitoCorsoBase, RelazioneCorso)
+                     PartecipazioneCorsoBase, InvitoCorsoBase, RelazioneCorso, Evento)
 from .forms import (ModuloCreazioneCorsoBase, ModuloModificaLezione,
-    ModuloModificaCorsoBase, ModuloIscrittiCorsoBaseAggiungi, FormCommissioneEsame,
-    FormVerbaleCorso, FormRelazioneDelDirettoreCorso)
+                    ModuloModificaCorsoBase, ModuloIscrittiCorsoBaseAggiungi, FormCommissioneEsame,
+                    FormVerbaleCorso, FormRelazioneDelDirettoreCorso, ModuloCreazioneEvento)
 from .classes import GeneraReport, GestioneLezioni
 from .utils import costruisci_titoli, CalendarCorsi
 from .training_api import TrainingApi
@@ -182,8 +182,7 @@ def formazione_corsi_base_nuovo(request, me):
         me=me
     )
     form.fields['sede'].queryset = me.oggetti_permesso(GESTIONE_CORSI_SEDE)
-    print('POST', request.POST)
-    print('FILES', request.FILES)
+
     if form.is_valid():
         kwargs = {}
         cd = form.cleaned_data
@@ -1703,3 +1702,80 @@ def formazione_calendar(request, me=None):
         'prev_month': CalendarTurniSO.prev_month(inizio_mese),
     }
     return 'formazione_calendar.html', context
+
+
+@pagina_privata
+def evento_nuovo(request, me=None):
+    form = ModuloCreazioneEvento(request.POST or None)
+
+    # TODO:
+    form.fields['comitato_organizzativo'].queryset = me.oggetti_permesso(GESTIONE_CORSI_SEDE)
+
+    if form.is_valid():
+        cd = form.cleaned_data
+        evento = Evento(
+            nome=cd['nome'],
+            data_inizio=cd['data_inizio'],
+            data_fine=cd['data_fine'],
+            comitato_organizzativo=cd['comitato_organizzativo']
+        )
+        evento.save()
+        # return
+
+    return 'formazione_evento_nuovo.html', {
+        'modulo':  form
+    }
+
+
+@pagina_privata
+def evento_elenco(request, me=None):
+
+    return 'elenco_eventi.html', {
+        'eventi': Evento.objects.all(),
+        'puo_pianificare': True
+    }
+
+
+# TODO: prima la pagina di visualizzazione
+@pagina_privata
+def formazione_evento_position_change(request, me=None, pk=None):
+
+    evento = get_object_or_404(Evento, pk=pk)
+
+    if request.POST and request.POST.get('modifica_sede_dopo_attivazione'):
+        evento.locazione = evento.comitato_organizzativo.locazione
+        evento.save()
+        messages.success(request, 'La sede del\'evento è stata modificata.')
+        # return redirect(reverse('aspirante:modify', args=[pk]))
+
+    # if not course.can_modify(me):
+    #     return redirect(ERRORE_PERMESSI)
+
+    # template = 'formazione_vuota.html'
+    # puo_modificare = False  # non mostrare i tab se la locazione non è impostata
+
+    # # Locazione impostata...
+    # if course.locazione:
+    #     template = 'aspirante_corso_base_scheda.html'
+    #     puo_modificare = course.can_modify(me)
+    #     # Se il corso non ha ancora un direttore...
+    #     if not course.direttori_corso:
+    #         # Rindirizza sulla pagina selezione direttori del corso.
+    #         return redirect(course.url_direttori)
+
+    context = {
+        'evento': evento,
+        # 'template': template,
+        # 'puo_modificare': puo_modificare,
+   }
+
+    return 'formazione_evento_position_change.html', context
+
+
+@pagina_privata
+def evento_scheda_info(request, me=None, pk=None):
+    evento = get_object_or_404(Evento, pk=pk)
+
+    return 'evento_scheda_informazioni.html', {
+        'evento': evento
+    }

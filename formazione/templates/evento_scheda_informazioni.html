@@ -1,0 +1,84 @@
+{% extends 'evento_base_scheda.html' %}
+
+{% load utils %}
+{% load social %}
+{% load humanize %}
+{% load bootstrap3 %}
+{% load formazione_templatetags %}
+
+{% block scheda_contenuto %}
+
+    <div class="row">
+        <div class="col-md-3">
+            <div class="panel panel-info">
+                <div class="panel-heading">
+                    <h3 class="panel-title"><i class="fa fa-fw fa-user"></i> Direttore <span
+                            class="pull-right">{{ evento.delegati_attuali.count }}</span></h3>
+                </div>
+
+                <div class="panel-body">
+                    <div class="btn-group btn-group-vertical">
+                        {% for direttore in evento.delegati_attuali %}
+                            {% card direttore extra_class='' mute_contact=True %}
+                        {% empty %}
+                            <i class="fa fa-fw fa-warning"></i> Nessun direttore.
+                        {% endfor %}
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="col-md-3">
+            <div class="panel panel-info">
+                <div class="panel-heading">
+                    <h3 class="panel-title"><i class="fa fa-fw fa-home"></i> Organizzatore</h3>
+                </div>
+                <div class="panel-body">
+                    <strong><a href="{{ evento.sede.url }}"
+                               target="_new">{{ evento.comitato_organizzativo.nome }}</a></strong><br/>
+                    {{ evento.comitato_organizzativo.get_tipo_display }} &mdash;
+                    {{ evento.comitato_organizzativo.get_estensione_display }}
+                </div>
+            </div>
+        </div>
+
+        <div class="col-md-3">
+            <div class="panel panel-info">
+                <div class="panel-heading">
+                    <h3 class="panel-title"><i class="fa fa-fw fa-calendar"></i> Data di inizio</h3>
+                </div>
+                <div class="panel-body">{{ evento.data_inizio }}</div>
+            </div>
+        </div>
+
+        <div class="col-md-3">
+            <div class="panel panel-info">
+                <div class="panel-heading">
+                    <h3 class="panel-title"><i class="fa fa-fw fa-calendar"></i> Data di fine</h3>
+                </div>
+                <div class="panel-body">{{ evento.data_fine }}</div>
+            </div>
+        </div>
+    </div>
+
+    <div class="row">
+        <div class="col-md-6">
+            <h3><i class="fa fa-fw fa-info-circle"></i> Informazioni</h3>
+        </div>
+        <div class="col-md-6">
+            <h3><i class="fa fa-fw fa-info-circle"></i> Corsi</h3>
+        </div>
+    </div>
+
+    <div class="row">
+        <div class="col-md-6 col-md-offset-3">
+            <h3>
+                <i class="fa fa-fw fa-comments-o"></i>
+                Commenti
+                <span class="text-muted">{{ corso.commenti.count }}</span>
+            </h3>
+            {% commenti evento 10 %}
+        </div>
+    </div>
+
+{% endblock %}
