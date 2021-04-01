@@ -184,6 +184,7 @@ def formazione_corsi_base_nuovo(request, me):
         me=me
     )
     form.fields['sede'].queryset = me.oggetti_permesso(GESTIONE_CORSI_SEDE)
+    form.fields['evento'].queryset = me.oggetti_permesso(GESTIONE_EVENTO)
 
     if form.is_valid():
         kwargs = {}
@@ -210,6 +211,7 @@ def formazione_corsi_base_nuovo(request, me):
             tipo=tipo,
             delibera_file=cd['delibera_file'],
             survey=Survey.survey_for_corso(),
+            evento=cd['evento'],
             **kwargs
         )
         course.get_or_create_lezioni_precompilate()
@@ -637,12 +639,26 @@ def aspirante_corso_base_attiva(request, me, pk):
             asp_or_vol = "volontari"
             if corso.titolo_cri and corso.titolo_cri.is_titolo_corso_base:
                 asp_or_vol = "aspiranti"
-            messages.success(request, "Saranno avvisati %s %s del %s" % (volontari_o_aspiranti_da_informare,
-                                                                         asp_or_vol,
-                                                                         corso.sede))
+
+            if not corso.prevede_evento:
+                messages.success(request, "Saranno avvisati %s %s del %s" % (volontari_o_aspiranti_da_informare,
+                                                                             asp_or_vol,
+                                                                             corso.sede))
+            else:
+                messages.success(
+                    request, "Saranno avvisati %s %s del %s quando l'evento %s sarà attivato" % (
+                        volontari_o_aspiranti_da_informare,
+                        asp_or_vol,
+                        corso.sede, corso.evento)
+                )
         else:
-            messages.success(request, "Saranno avvisati %s volontari dei comitati secondo le impostazioni delle estensioni." % volontari_o_aspiranti_da_informare)
-        
+            if not corso.prevede_evento:
+                messages.success(request, "Saranno avvisati %s volontari dei comitati secondo le impostazioni delle estensioni." % volontari_o_aspiranti_da_informare)
+            else:
+                messages.success(
+                    request, "Saranno avvisati %s volontari dei comitati secondo le impostazioni delle estensioni quando l'evento %s sarà attivato" % volontari_o_aspiranti_da_informare
+                )
+
         return activation
 
     context = {

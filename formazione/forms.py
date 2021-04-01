@@ -105,7 +105,7 @@ class ModuloCreazioneCorsoBase(ModelForm):
     class Meta:
         model = CorsoBase
         fields = ['tipo', 'level', 'titolo_cri', 'data_inizio', 'data_esame',
-                  'delibera_file', 'sede',]
+                  'delibera_file', 'sede', 'evento']
         help_texts = {
             'sede': 'Inserire il Comitato CRI che organizza il Corso',
         }

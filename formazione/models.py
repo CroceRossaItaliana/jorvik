@@ -18,7 +18,7 @@ from django.utils.translation import ugettext_lazy as _
 from anagrafica.models import Sede, Persona, Appartenenza, Delega
 from anagrafica.costanti import PROVINCIALE, TERRITORIALE, LOCALE, REGIONALE, NAZIONALE
 from anagrafica.validators import (valida_dimensione_file_8mb, ValidateFileSize)
-from anagrafica.permessi.applicazioni import (DIRETTORE_CORSO, OBIETTIVI, PRESIDENTE, COMMISSARIO)
+from anagrafica.permessi.applicazioni import (DIRETTORE_CORSO, OBIETTIVI, PRESIDENTE, COMMISSARIO, RESPONSABILE_EVENTO)
 from anagrafica.permessi.incarichi import (INCARICO_ASPIRANTE, INCARICO_GESTIONE_CORSOBASE_PARTECIPANTI)
 from anagrafica.permessi.costanti import MODIFICA
 from base.files import PDF, Zip
@@ -584,6 +584,10 @@ class CorsoBase(Corso, ConVecchioID, ConPDF):
         return self.data_inizio < timezone.now()
 
     @property
+    def prevede_evento(self):
+        return self.evento
+
+    @property
     def troppo_tardi_per_iscriverti(self):
         return  timezone.now() > (self.data_inizio + datetime.timedelta(days=settings.FORMAZIONE_FINESTRA_CORSI_INIZIATI))
 
@@ -892,9 +896,12 @@ class CorsoBase(Corso, ConVecchioID, ConPDF):
 
         self.data_attivazione = now()
         self.stato = self.ATTIVO
-        self.save()
+        # self.save()
+        if not self.evento:
+            task_invia_email_agli_aspiranti.apply_async(args=(self.pk, rispondi_a.pk),)
+        else:
+            self.mail_attivazione_corso_per_responsabili_evento()
 
-        task_invia_email_agli_aspiranti.apply_async(args=(self.pk, rispondi_a.pk),)
         self.mail_attivazione_con_delibera()
 
         return messaggio_generico(request, rispondi_a,
@@ -1391,6 +1398,16 @@ class CorsoBase(Corso, ConVecchioID, ConPDF):
                 lista_email_destinatari=email_destinatari,
                 allegati=self.delibera_file
             )
+
+    def mail_attivazione_corso_per_responsabili_evento(self):
+        Messaggio.costruisci_e_accoda(
+            oggetto="Attivazione Corso: %s" % self,
+            modello='email_attivazione_corso_responsabile_evento.html',
+            corpo={
+                'corso': self
+            },
+            destinatari=[delega.persona for delega in self.evento.deleghe_attuali(tipo=RESPONSABILE_EVENTO)],
+        )
 
     # GAIA 306
     def mail_attivazione_con_delibera(self):
