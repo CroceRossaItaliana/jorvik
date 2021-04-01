@@ -37,6 +37,91 @@ from .validators import (course_file_directory_path, validate_file_extension,
                          delibera_file_upload_path)
 
 
+class Evento(ModelloSemplice, ConDelegati, ConMarcaTemporale, ConGeolocalizzazione, ConCommenti):
+    PREPARAZIONE = 'P'
+    ATTIVO = 'A'
+    ANNULLATO = 'X'
+    TERMINATO = 'T'
+
+    STATO = (
+        (PREPARAZIONE, 'In preparazione'),
+        (ATTIVO, 'Attivo'),
+        (TERMINATO, 'Terminato'),
+        (ANNULLATO, 'Annullato'),
+    )
+
+    nome = models.CharField(max_length=200)
+    data_inizio = models.DateTimeField(blank=False, null=False)
+    data_fine = models.DateTimeField(blank=False, null=False)
+    sede = models.ForeignKey(Sede, help_text="La Sede organizzatrice dell'Evento.")
+    stato = models.CharField('Stato', choices=STATO, max_length=1, default=PREPARAZIONE)
+    descrizione = models.TextField(blank=True, null=True)
+
+    def __str__(self):
+        return '%s' % self.nome
+
+    @property
+    def url_responsabile(self):
+        return reverse('formazione:responsabile_evento', args=[self.pk])
+
+    @property
+    def url_position(self):
+        return reverse('evento:position_change', args=[self.pk])
+
+    @property
+    def url_modifica(self):
+        return reverse('evento:modifica', args=[self.pk])
+
+    @property
+    def url(self):
+        return reverse('evento:info', args=[self.pk])
+
+    @property
+    def link(self):
+        return '<a href="%s">%s</a>' % (self.url, self.nome)
+
+    @property
+    def url_attiva(self):
+        return reverse('evento:attiva', args=[self.pk])
+
+    @property
+    def ha_posizione(self):
+        return True if self.locazione else False
+
+    @property
+    def attivabile(self):
+        if self.stato == self.PREPARAZIONE and self.locazione:
+            corsi = self.corsi_associati
+            if corsi:
+                return any([True for corso in corsi if corso.stato == Corso.ATTIVO])
+            else:
+                return False
+
+        return False
+
+    # TODO: controllo
+    def attiva(self):
+
+        if self.ha_posizione:
+            self.stato = self.ATTIVO
+            self.save()
+            return self.url
+        else:
+            return self.url_position
+
+    @property
+    def corsi_associati(self):
+        return CorsoBase.objects.filter(evento=self)
+
+    @property
+    def totale_corsi(self):
+        return CorsoBase.objects.filter(evento=self).count()
+
+    @property
+    def corsi_attivi(self):
+        return CorsoBase.objects.filter(evento=self, stato=Corso.ATTIVO).count()
+
+
 class Corso(ModelloSemplice, ConDelegati, ConMarcaTemporale,
             ConGeolocalizzazione, ConCommenti, ConGiudizio):
     # Tipologia di corso
@@ -166,6 +251,8 @@ class CorsoBase(Corso, ConVecchioID, ConPDF):
                                  null=True, blank=True)
     survey = models.ForeignKey(Survey, blank=True, null=True,
                                verbose_name='Questionario di gradimento')
+
+    evento = models.ForeignKey(Evento, blank=True, null=True)
 
     PUOI_ISCRIVERTI_OK = "IS"
     PUOI_ISCRIVERTI = (PUOI_ISCRIVERTI_OK,)
@@ -2537,69 +2624,5 @@ class RelazioneCorso(ModelloSemplice, ConMarcaTemporale):
         verbose_name_plural = 'Relazioni dei Direttori'
 
 
-class Evento(ModelloSemplice, ConDelegati, ConMarcaTemporale, ConGeolocalizzazione, ConCommenti):
-    PREPARAZIONE = 'P'
-    ATTIVO = 'A'
-    ANNULLATO = 'X'
-    TERMINATO = 'T'
 
-    STATO = (
-        (PREPARAZIONE, 'In preparazione'),
-        (ATTIVO, 'Attivo'),
-        (TERMINATO, 'Terminato'),
-        (ANNULLATO, 'Annullato'),
-    )
-
-    nome = models.CharField(max_length=200)
-    data_inizio = models.DateTimeField(blank=False, null=False)
-    data_fine = models.DateTimeField(blank=False, null=False)
-    sede = models.ForeignKey(Sede, help_text="La Sede organizzatrice dell'Evento.")
-    stato = models.CharField('Stato', choices=STATO, max_length=1, default=PREPARAZIONE)
-    descrizione = models.TextField(blank=True, null=True)
-
-    def __str__(self):
-        return '%s' % self.nome
-
-    @property
-    def url_responsabile(self):
-        return reverse('formazione:responsabile_evento', args=[self.pk])
-
-    @property
-    def url_position(self):
-        return reverse('evento:position_change', args=[self.pk])
-
-    @property
-    def url_modifica(self):
-        return reverse('evento:modifica', args=[self.pk])
-
-    @property
-    def url(self):
-        return reverse('evento:info', args=[self.pk])
-
-    @property
-    def link(self):
-        return '<a href="%s">%s</a>' % (self.url, self.nome)
-
-    @property
-    def url_attiva(self):
-        return reverse('evento:attiva', args=[self.pk])
-
-    @property
-    def ha_posizione(self):
-        return True if self.locazione else False
-
-    # TODO: controllare se i corsi sono attivi
-    @property
-    def attivabile(self):
-        return self.stato == self.PREPARAZIONE
-
-    # TODO: controllo
-    def attiva(self):
-
-        if self.ha_posizione:
-            self.stato = self.ATTIVO
-            self.save()
-            return self.url
-        else:
-            return self.url_position
 

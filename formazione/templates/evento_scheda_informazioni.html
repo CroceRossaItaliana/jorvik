@@ -19,7 +19,8 @@
                 <div class="panel-body">
                     <div class="btn-group btn-group-vertical">
                         {% for responsabile in evento.delegati_attuali %}
-                            {% card responsabile extra_class='' mute_contact=True %}
+                            <i class="fa fa-fw fa-info-circle"></i>
+                            <a href="{{ responsabile.url }}">{{ responsabile.nome_completo }}</a><br>
                         {% empty %}
                             <i class="fa fa-fw fa-warning"></i> Nessun Responsabili.
                         {% endfor %}
@@ -64,10 +65,32 @@
     <div class="row">
         <div class="col-md-6">
             <h3><i class="fa fa-fw fa-info-circle"></i> Informazioni</h3>
-            {{ evento.descrizione }}
+            {% if evento.descrizione %}
+                {{ evento.descrizione }}
+            {% endif %}
         </div>
         <div class="col-md-6">
             <h3><i class="fa fa-fw fa-info-circle"></i> Corsi</h3>
+
+                <table class="table table-striped">
+                    <thead>
+                        <tr>
+                            <th>Nome</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for corso in evento.corsi_associati %}
+                            <tr>
+                                <td>
+                                    <i class="fa fa-fw fa-list"></i> <a href="{{ corso.url }}">{{ corso.nome }}</a><br>
+                                    <span class="piu-piccolo">
+                                        {{ corso.data_inizio }}
+                                    </span>
+                                </td>
+                            </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
         </div>
     </div>
 

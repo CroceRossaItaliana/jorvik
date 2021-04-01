@@ -2,6 +2,7 @@ import calendar
 from datetime import datetime, timedelta, date
 from collections import OrderedDict
 
+from django.core.paginator import Paginator
 from django.db.models import Q, F
 from django.utils import timezone
 from django.shortcuts import redirect, get_object_or_404, Http404, HttpResponse
@@ -1720,7 +1721,7 @@ def evento_nuovo(request, me=None):
             sede=cd['sede']
         )
         evento.save()
-        # return
+        return redirect(reverse('formazione:responsabile_evento', args=[evento.pk]))
 
     return 'formazione_evento_nuovo.html', {
         'modulo':  form
@@ -1729,9 +1730,17 @@ def evento_nuovo(request, me=None):
 
 @pagina_privata
 def evento_elenco(request, me=None):
+    num_page = int(request.GET.get('page', "1"))
+
+    eventi = Paginator(me.oggetti_permesso(GESTIONE_EVENTO), 5)
+
+    page = eventi.page(num_page)
 
     return 'elenco_eventi.html', {
-        'eventi': me.oggetti_permesso(GESTIONE_EVENTO),
+        'eventi': page,
+        'next': num_page + 1 if page.has_next() else None,
+        'prev': num_page - 1 if page.has_previous() else None,
+        'url': reverse('formazione:evento_elenco'),
         'puo_pianificare': True
     }
 
@@ -1745,6 +1754,7 @@ def formazione_evento_position_change(request, me=None, pk=None):
         evento.locazione = evento.sede.locazione
         evento.save()
         messages.success(request, 'La sede del\'evento è stata modificata.')
+        return redirect(reverse('evento:info', args=[evento.pk]))
 
     context = {
         'evento': evento,
@@ -1756,6 +1766,9 @@ def formazione_evento_position_change(request, me=None, pk=None):
 @pagina_privata
 def evento_scheda_info(request, me=None, pk=None):
     evento = get_object_or_404(Evento, pk=pk)
+
+    if not evento.locazione:
+        return redirect(reverse('evento:position_change', args=[evento.pk]))
 
     return 'evento_scheda_informazioni.html', {
         'evento': evento
@@ -1796,14 +1809,10 @@ def formazione_evento_resoponsabile(request, me, pk):
         """
 
     evento = get_object_or_404(Evento, pk=pk)
-    # if not me.permessi_almeno(evento, COMPLETO):
-    #     return redirect(ERRORE_PERMESSI)
+    if not me.permessi_almeno(evento, MODIFICA):
+        return redirect(ERRORE_PERMESSI)
 
     continua_url = evento.url
-
-    # if 'corso_base_creato' in request.session and int(request.session['corso_base_creato']) == int(pk):
-    #     continua_url = reverse('formazione:end', args=[pk])
-    #     del request.session['corso_base_creato']
 
     context = {
         "delega": RESPONSABILE_EVENTO,
