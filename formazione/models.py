@@ -2561,9 +2561,8 @@ class Evento(ModelloSemplice, ConDelegati, ConMarcaTemporale, ConGeolocalizzazio
         return '%s' % self.nome
 
     @property
-    def url_direttori(self):
-        # TODO:
-        return "/formazione/corsi-base/%d/direttori/" % (self.pk,)
+    def url_responsabile(self):
+        return reverse('formazione:responsabile_evento', args=[self.pk])
 
     @property
     def url_position(self):

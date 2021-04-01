@@ -25,6 +25,7 @@ from base.models import Log
 from base.stringhe import genera_uuid_casuale
 from base.utils import poco_fa, oggi
 from curriculum.models import TitoloPersonale
+from formazione.forms import FormCreateResponsabileEventoDelega
 from posta.models import Messaggio
 from posta.utils import imposta_destinatari_e_scrivi_messaggio
 from sangue.models import Donazione
@@ -1111,6 +1112,8 @@ def strumenti_delegati(request, me):
     form = ModuloCreazioneDelega(request.POST or None, **form_data)
     if model == 'corsobase':
         form = FormCreateDirettoreDelega(request.POST or None, **form_data)
+    if model == 'evento':
+        form = FormCreateResponsabileEventoDelega(request.POST or None, **form_data)
 
     # Check form is valid
     if form.is_valid():

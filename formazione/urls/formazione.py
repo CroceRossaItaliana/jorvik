@@ -16,4 +16,5 @@ urlpatterns = [
     url(r'^calendar/$', views.formazione_calendar, name='formazione_calendar'),
     url(r'^evento/nuovo$', views.evento_nuovo, name='evento_nuovo'),
     url(r'^evento/elenco$', views.evento_elenco, name='evento_elenco'),
+    url(r'^evento/(?P<pk>[0-9]+)/direttori/$', views.formazione_evento_resoponsabile, name='responsabile_evento'),
 ]

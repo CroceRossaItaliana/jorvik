@@ -12,16 +12,16 @@
         <div class="col-md-3">
             <div class="panel panel-info">
                 <div class="panel-heading">
-                    <h3 class="panel-title"><i class="fa fa-fw fa-user"></i> Direttore <span
+                    <h3 class="panel-title"><i class="fa fa-fw fa-user"></i> Responsabili <span
                             class="pull-right">{{ evento.delegati_attuali.count }}</span></h3>
                 </div>
 
                 <div class="panel-body">
                     <div class="btn-group btn-group-vertical">
-                        {% for direttore in evento.delegati_attuali %}
-                            {% card direttore extra_class='' mute_contact=True %}
+                        {% for responsabile in evento.delegati_attuali %}
+                            {% card responsabile extra_class='' mute_contact=True %}
                         {% empty %}
-                            <i class="fa fa-fw fa-warning"></i> Nessun direttore.
+                            <i class="fa fa-fw fa-warning"></i> Nessun Responsabili.
                         {% endfor %}
                     </div>
                 </div>

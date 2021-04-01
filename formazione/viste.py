@@ -14,7 +14,7 @@ from django.utils.timezone import now
 from anagrafica.models import Persona, Documento, Sede
 from anagrafica.forms import ModuloCreazioneDocumento
 from anagrafica.permessi.applicazioni import (DIRETTORE_CORSO, RESPONSABILE_FORMAZIONE,
-    COMMISSARIO, PRESIDENTE)
+                                              COMMISSARIO, PRESIDENTE, RESPONSABILE_EVENTO)
 from anagrafica.costanti import NAZIONALE, REGIONALE, LOCALE
 from anagrafica.permessi.costanti import (GESTIONE_CORSI_SEDE,
                                           GESTIONE_CORSO, ERRORE_PERMESSI, COMPLETO, MODIFICA,
@@ -1709,7 +1709,6 @@ def formazione_calendar(request, me=None):
 def evento_nuovo(request, me=None):
     form = ModuloCreazioneEvento(request.POST or None)
 
-    # TODO:
     form.fields['sede'].queryset = me.oggetti_permesso(GESTIONE_EVENTI_SEDE)
 
     if form.is_valid():
@@ -1769,7 +1768,6 @@ def evento_scheda_modifica(request, me=None, pk=None):
 
     form = ModuloCreazioneEvento(request.POST or None, instance=evento)
 
-    # TODO:
     form.fields['sede'].queryset = me.oggetti_permesso(GESTIONE_EVENTI_SEDE)
 
     if form.is_valid():
@@ -1786,3 +1784,32 @@ def evento_attiva(request, me=None, pk=None):
     evento = get_object_or_404(Evento, pk=pk)
 
     return redirect(evento.attiva(), request=request)
+
+
+@pagina_privata
+def formazione_evento_resoponsabile(request, me, pk):
+    """
+        La form con l'input di persone da nominare si trova carica con iframe da:
+        url: /strumenti/delegati/
+        view: anagrafica.viste.strumenti_delegati
+        form: formazione.forms.FormCreateDirettoreDelega
+        """
+
+    evento = get_object_or_404(Evento, pk=pk)
+    # if not me.permessi_almeno(evento, COMPLETO):
+    #     return redirect(ERRORE_PERMESSI)
+
+    continua_url = evento.url
+
+    # if 'corso_base_creato' in request.session and int(request.session['corso_base_creato']) == int(pk):
+    #     continua_url = reverse('formazione:end', args=[pk])
+    #     del request.session['corso_base_creato']
+
+    context = {
+        "delega": RESPONSABILE_EVENTO,
+        "evento": evento,
+        "continua_url": continua_url,
+        # 'puo_modificare': me and me.permessi_almeno(evento, MODIFICA)
+        'puo_modificare': True
+    }
+    return 'formazione_evento_responsabile.html', context
