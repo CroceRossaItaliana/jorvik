@@ -9,9 +9,15 @@
 {#    <p>Per quale comitato vuoi compilare il monitoraggio?</p>#}
 
     {% for delega in deleghe %}
-      <div>
-          <a href="{% url 'pages:'|add:url %}?comitato={{ delega.oggetto.id }}{% if idtypeform %}{{ idtypeform }}{% endif %}">{{ delega.oggetto }} ({{ delega.get_tipo_display }})</a>
-      </div>
+        {% if delega.oggetto.id %}
+          <div>
+              <a href="{% url 'pages:'|add:url %}?comitato={{ delega.oggetto.id }}{% if idtypeform %}{{ idtypeform }}{% endif %}">{{ delega.oggetto }} ({{ delega.get_tipo_display }})</a>
+          </div>
+        {% else %}
+            <div>
+              <a href="{% url 'pages:'|add:url %}?comitato={{ delega.id }}{% if idtypeform %}{{ idtypeform }}{% endif %}">{{ delega }}</a>
+          </div>
+        {% endif %}
     {% empty %}
       <p>L'utenza non ha deleghe attive.</p>
     {% endfor %}
