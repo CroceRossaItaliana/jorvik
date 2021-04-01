@@ -21,7 +21,7 @@
                 </td>
                 <td>
                     <i class="fas fa-pencil-alt"></i> <strong>{{ evento.link|safe }}</strong><br />
-                    <i class="fa fa-fw fa-home"></i> {{ evento.comitato_organizzativo.link|safe }}
+                    <i class="fa fa-fw fa-home"></i> {{ evento.sede.link|safe }}
                     {% if puo_pianificare %}
                         <br /><i class="fas fa-users"></i> <a href="{{ evento.url_direttori }}">{{ evento.deleghe.count }} direttori</a>
                     {% endif %}

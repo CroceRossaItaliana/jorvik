@@ -1,6 +1,7 @@
 from datetime import timedelta
 from django.db.models import QuerySet, Q
 
+
 from ..permessi.applicazioni import (PRESIDENTE, DIRETTORE_CORSO,
                                      RESPONSABILE_AUTOPARCO,
                                      REFERENTE_GRUPPO, COMMISSARIO,
@@ -47,7 +48,8 @@ from ..permessi.costanti import (GESTIONE_SOCI, ELENCHI_SOCI, \
                                  RUBRICA_COMMISSARI, GESTIONE_SERVIZI,
                                  GESTIONE_REFERENTI_SO,
                                  GESTIONE_SOCI_CM, GESTIONE_SOCI_IIVV, GESTIONE_OPERAZIONI,
-                                 GESTIONE_REFERENTI_OPERAZIONI_SO, GESTIONE_FUNZIONI, GESTIONE_REFERENTI_FUNZIONI_SO, )
+                                 GESTIONE_REFERENTI_OPERAZIONI_SO, GESTIONE_FUNZIONI, GESTIONE_REFERENTI_FUNZIONI_SO,
+                                 GESTIONE_EVENTI_SEDE, GESTIONE_EVENTO, )
 
 """
 Questo modulo contiene tutte le funzioni per testare i permessi
@@ -308,12 +310,14 @@ def permessi_responsabile_formazione(sede):
     :return: Lista di permessi.
     """
     from formazione.models import CorsoBase
+    from formazione.models import Evento
     sede_espansa = sede.espandi(includi_me=True)
     return [
         (RUBRICA_RESPONSABILI_FORMAZIONE, sede.espandi(includi_me=True, pubblici=True)),
         (GESTIONE_CORSI_SEDE,       sede_espansa),
-        (GESTIONE_CORSO,            CorsoBase.objects.filter(sede__in=sede_espansa))
-
+        (GESTIONE_CORSO,            CorsoBase.objects.filter(sede__in=sede_espansa)),
+        (GESTIONE_EVENTI_SEDE,      sede_espansa),
+        (GESTIONE_EVENTO,           Evento.objects.filter(sede__in=sede_espansa)),
     ]
 
 

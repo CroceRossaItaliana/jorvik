@@ -7,7 +7,7 @@
 
 {% block pagina_titolo %}
     {% block scheda_titolo %}{% endblock %}
-    {{ evento.nome }} ({{ evento.comitato_organizzativo.nome_completo }})
+    {{ evento.nome }} ({{ evento.sede.nome_completo }})
 {% endblock %}
 
 
@@ -31,7 +31,7 @@
     </style>
 
     <h4 class="course__name {% if not corso.titolo_cri %}course__name-without-title-cri{% endif %}">{{ evento.nome }}
-        ({{ evento.comitato_organizzativo.nome_completo }})</h4>
+        ({{ evento.sede.nome_completo }})</h4>
 
     <h4 class="allinea-centro">
         <i class="fa fa-fw fa-map-marker"></i>

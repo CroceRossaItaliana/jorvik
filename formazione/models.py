@@ -2553,7 +2553,7 @@ class Evento(ModelloSemplice, ConDelegati, ConMarcaTemporale, ConGeolocalizzazio
     nome = models.CharField(max_length=200)
     data_inizio = models.DateTimeField(blank=False, null=False)
     data_fine = models.DateTimeField(blank=False, null=False)
-    comitato_organizzativo = models.ForeignKey(Sede, help_text="La Sede organizzatrice dell'Evento.")
+    sede = models.ForeignKey(Sede, help_text="La Sede organizzatrice dell'Evento.")
     stato = models.CharField('Stato', choices=STATO, max_length=1, default=PREPARAZIONE)
     descrizione = models.TextField(blank=True, null=True)
 

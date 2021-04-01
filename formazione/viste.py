@@ -17,7 +17,8 @@ from anagrafica.permessi.applicazioni import (DIRETTORE_CORSO, RESPONSABILE_FORM
     COMMISSARIO, PRESIDENTE)
 from anagrafica.costanti import NAZIONALE, REGIONALE, LOCALE
 from anagrafica.permessi.costanti import (GESTIONE_CORSI_SEDE,
-    GESTIONE_CORSO, ERRORE_PERMESSI, COMPLETO, MODIFICA, RUBRICA_DELEGATI_OBIETTIVO_ALL)
+                                          GESTIONE_CORSO, ERRORE_PERMESSI, COMPLETO, MODIFICA,
+                                          RUBRICA_DELEGATI_OBIETTIVO_ALL, GESTIONE_EVENTI_SEDE, GESTIONE_EVENTO)
 from curriculum.models import Titolo, TitoloPersonale
 from sala_operativa.utils import CalendarTurniSO
 from ufficio_soci.elenchi import ElencoPerTitoliCorso
@@ -1709,7 +1710,7 @@ def evento_nuovo(request, me=None):
     form = ModuloCreazioneEvento(request.POST or None)
 
     # TODO:
-    form.fields['comitato_organizzativo'].queryset = me.oggetti_permesso(GESTIONE_CORSI_SEDE)
+    form.fields['sede'].queryset = me.oggetti_permesso(GESTIONE_EVENTI_SEDE)
 
     if form.is_valid():
         cd = form.cleaned_data
@@ -1717,7 +1718,7 @@ def evento_nuovo(request, me=None):
             nome=cd['nome'],
             data_inizio=cd['data_inizio'],
             data_fine=cd['data_fine'],
-            comitato_organizzativo=cd['comitato_organizzativo']
+            sede=cd['sede']
         )
         evento.save()
         # return
@@ -1731,7 +1732,7 @@ def evento_nuovo(request, me=None):
 def evento_elenco(request, me=None):
 
     return 'elenco_eventi.html', {
-        'eventi': Evento.objects.all(),
+        'eventi': me.oggetti_permesso(GESTIONE_EVENTO),
         'puo_pianificare': True
     }
 
@@ -1742,7 +1743,7 @@ def formazione_evento_position_change(request, me=None, pk=None):
     evento = get_object_or_404(Evento, pk=pk)
 
     if request.POST:
-        evento.locazione = evento.comitato_organizzativo.locazione
+        evento.locazione = evento.sede.locazione
         evento.save()
         messages.success(request, 'La sede del\'evento è stata modificata.')
 
@@ -1769,7 +1770,7 @@ def evento_scheda_modifica(request, me=None, pk=None):
     form = ModuloCreazioneEvento(request.POST or None, instance=evento)
 
     # TODO:
-    form.fields['comitato_organizzativo'].queryset = me.oggetti_permesso(GESTIONE_CORSI_SEDE)
+    form.fields['sede'].queryset = me.oggetti_permesso(GESTIONE_EVENTI_SEDE)
 
     if form.is_valid():
         form.save()

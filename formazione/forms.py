@@ -23,7 +23,7 @@ class ModuloCreazioneEvento(ModelForm):
             'nome',
             'data_inizio',
             'data_fine',
-            'comitato_organizzativo',
+            'sede',
             'descrizione'
         ]
 
