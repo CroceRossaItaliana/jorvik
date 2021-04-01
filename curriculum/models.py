@@ -330,6 +330,7 @@ class TitoloPersonale(ModelloSemplice, ConMarcaTemporale, ConAutorizzazioni):
     INTERMEDIO = 'B2'
     POST_INTERMEDIO = 'C1'
     AVANZATO = 'C2'
+    MADRE_LINGUA = 'ML'
 
     LIVELLO_LINGUISTICO = (
         (BASE, 'Base A1'),
@@ -338,6 +339,7 @@ class TitoloPersonale(ModelloSemplice, ConMarcaTemporale, ConAutorizzazioni):
         (INTERMEDIO, 'Intermedio B2'),
         (POST_INTERMEDIO, 'Post-intermedio C1'),
         (AVANZATO, 'Avanzato C2'),
+        (MADRE_LINGUA, 'Madrelingua'),
     )
 
     livello_linguistico_orale = models.CharField(max_length=2, blank=True,
