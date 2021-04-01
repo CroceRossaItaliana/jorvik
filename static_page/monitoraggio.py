@@ -353,10 +353,13 @@ class TypeFormResponsesTrasparenza(TypeForm):
     def comitato_id(self):
         persona = self.persona
 
-        delegato = persona.delega_responsabile_area_trasparenza
+        delegato = persona.delege_responsabile_area_trasparenza
 
-        if delegato:
-            return delegato.oggetto.sede.pk
+        if len(delegato) == 1:
+            return delegato[1].oggetto.sede.pk
+        elif len(delegato) > 1:
+            print(self.request.GET.get('comitato'))
+            return self.request.GET.get('comitato') if self.request else None
 
         deleghe = persona.deleghe_attuali(tipo__in=[COMMISSARIO, PRESIDENTE])
 
