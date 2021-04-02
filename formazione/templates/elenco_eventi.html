@@ -1,15 +1,16 @@
 {% extends 'formazione_vuota.html' %}
+{% load formazione_templatetags %}
 
 {% load bootstrap3 %}
-{#{% load formazione_templatetags %}#}
 
 {% block pagina_titolo %}Eventi{% endblock %}
 
 {% block app_contenuto %}
-    {% include 'paginate.html' with url=url prev=prev next=next%}
+
+    {% include 'paginate.html' with url=url prev=prev next=next stato=stato %}
     <table class="formazione-courses__table table table-striped table-bordered">
         <thead>
-            <th width="15%" class="formazione-courses__th">Stato <div class="filter-tag"></div></th>
+            <th width="15%" class="formazione-courses__th">Stato <div class="filter-tag">{% corsi_filter %}</div></th>
             <th class="formazione-courses__th">Evento e Sede</th>
             <th class="formazione-courses__th">Luogo e data</th>
             <th class="formazione-courses__th">Azioni</th>
@@ -57,5 +58,5 @@
             </tr>
         {% endfor %}
     </table>
-    {% include 'paginate.html' with url=url prev=prev next=next%}
+    {% include 'paginate.html' with url=url prev=prev next=next stato=stato%}
 {% endblock %}

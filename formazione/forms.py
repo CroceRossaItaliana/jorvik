@@ -27,6 +27,12 @@ class ModuloCreazioneEvento(ModelForm):
             'descrizione'
         ]
 
+class FiltraEvento(ModelForm):
+    class Meta:
+        model = Evento
+        fields = [
+            'stato',
+        ]
 
 class ModuloCreazioneCorsoBase(ModelForm):
     PRESSO_SEDE = "PS"

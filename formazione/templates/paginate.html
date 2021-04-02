@@ -4,12 +4,12 @@
             <tr>
                 <td style="text-align: left">
                     {% if prev %}
-                        <a href="{{ url }}?page={{ prev }}">&laquo; precedente</a>
+                        <a href="{{ url }}?page={{ prev }}{% if stato %}&stato={{ stato }}{% endif %}">&laquo; precedente</a>
                     {% endif %}
                 </td>
                 <td style="text-align: right">
                     {% if next %}
-                        <a href="{{ url }}?page={{ next }}">prossimo &raquo;</a>
+                        <a href="{{ url }}?page={{ next }}{% if stato %}&stato={{ stato }}{% endif %}">prossimo &raquo;</a>
                     {% endif %}
                 </td>
             </tr>

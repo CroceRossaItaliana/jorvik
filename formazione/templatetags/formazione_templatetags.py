@@ -75,7 +75,7 @@ def lezione_partecipante_pk_shortcut(lezione, partecipante):
 def corsi_filter():
     from ..models import Corso
 
-    href = """<a href="?stato=%s">%s</a>"""
+    href = """<i class="fas fa-search"></i> <a href="?stato=%s">%s</a><br>"""
     return mark_safe(' '.join([href % (i[0], i[1]) for i in Corso.STATO]))
 
 

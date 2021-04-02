@@ -35,7 +35,7 @@ from .models import (Aspirante, Corso, CorsoBase, CorsoEstensione, LezioneCorsoB
                      PartecipazioneCorsoBase, InvitoCorsoBase, RelazioneCorso, Evento)
 from .forms import (ModuloCreazioneCorsoBase, ModuloModificaLezione,
                     ModuloModificaCorsoBase, ModuloIscrittiCorsoBaseAggiungi, FormCommissioneEsame,
-                    FormVerbaleCorso, FormRelazioneDelDirettoreCorso, ModuloCreazioneEvento)
+                    FormVerbaleCorso, FormRelazioneDelDirettoreCorso, ModuloCreazioneEvento, FiltraEvento)
 from .classes import GeneraReport, GestioneLezioni
 from .utils import costruisci_titoli, CalendarCorsi
 from .training_api import TrainingApi
@@ -1746,9 +1746,14 @@ def evento_nuovo(request, me=None):
 
 @pagina_privata
 def evento_elenco(request, me=None):
-    num_page = int(request.GET.get('page', "1"))
 
-    eventi = Paginator(me.oggetti_permesso(GESTIONE_EVENTO), 5)
+    num_page = int(request.GET.get('page', "1"))
+    stato = request.GET.get('stato', None)
+    e = me.oggetti_permesso(GESTIONE_EVENTO)
+    if stato:
+        e = e.filter(stato=stato)
+
+    eventi = Paginator(e, 5)
 
     page = eventi.page(num_page)
 
@@ -1756,8 +1761,9 @@ def evento_elenco(request, me=None):
         'eventi': page,
         'next': num_page + 1 if page.has_next() else None,
         'prev': num_page - 1 if page.has_previous() else None,
+        'stato': stato,
         'url': reverse('formazione:evento_elenco'),
-        'puo_pianificare': True
+        'puo_pianificare': True,
     }
 
 
