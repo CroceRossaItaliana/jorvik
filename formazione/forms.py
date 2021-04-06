@@ -27,6 +27,17 @@ class ModuloCreazioneEvento(ModelForm):
             'descrizione'
         ]
 
+
+class ModuloModificaEvento(ModelForm):
+    class Meta:
+        model = Evento
+        fields = [
+            'nome',
+            'data_inizio',
+            'data_fine',
+            'descrizione'
+        ]
+
 class FiltraEvento(ModelForm):
     class Meta:
         model = Evento

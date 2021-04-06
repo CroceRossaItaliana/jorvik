@@ -14,7 +14,8 @@ from ..permessi.applicazioni import (PRESIDENTE, DIRETTORE_CORSO,
                                      CONSIGLIERE_GIOVANE, VICE_PRESIDENTE,
                                      UFFICIO_SOCI, DELEGATO_AREA,
                                      RESPONSABILE_AREA, REFERENTE, REFERENTE_SERVIZI_SO,
-                                     UFFICIO_SOCI_CM, UFFICIO_SOCI_IIVV, REFERENTE_OPERAZIONE_SO, REFERENTE_FUNZIONE_SO)
+                                     UFFICIO_SOCI_CM, UFFICIO_SOCI_IIVV, REFERENTE_OPERAZIONE_SO, REFERENTE_FUNZIONE_SO,
+                                     RESPONSABILE_EVENTO)
 from ..permessi.costanti import (GESTIONE_SOCI, ELENCHI_SOCI, \
                                  GESTIONE_ATTIVITA_SEDE, GESTIONE_CORSI_SEDE, \
                                  GESTIONE_SEDE, GESTIONE_ATTIVITA_AREA,
@@ -441,6 +442,13 @@ def permessi_referente_funzione_so(funzione):
     ]
 
 
+def permessi_responsabile_evento(evento):
+    from formazione.models import Evento
+    return [
+        (GESTIONE_EVENTO, Evento.objects.filter(pk=evento.pk))
+    ]
+
+
 
 def permessi_direttore_corso(corso):
     """
@@ -493,6 +501,7 @@ PERMESSI_FUNZIONI = (
     (REFERENTE_OPERAZIONE_SO,   permessi_referente_operazione_so),
     (REFERENTE_FUNZIONE_SO,     permessi_referente_funzione_so),
     (DIRETTORE_CORSO,           permessi_direttore_corso),
+    (RESPONSABILE_EVENTO,       permessi_responsabile_evento),
     (RESPONSABILE_AUTOPARCO,    permessi_responsabile_autoparco),
     (REFERENTE_GRUPPO,          permessi_referente_gruppo),
     (DELEGATO_OBIETTIVO_1,      permessi_delegato_obiettivo_1),

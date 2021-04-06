@@ -35,7 +35,8 @@ from .models import (Aspirante, Corso, CorsoBase, CorsoEstensione, LezioneCorsoB
                      PartecipazioneCorsoBase, InvitoCorsoBase, RelazioneCorso, Evento)
 from .forms import (ModuloCreazioneCorsoBase, ModuloModificaLezione,
                     ModuloModificaCorsoBase, ModuloIscrittiCorsoBaseAggiungi, FormCommissioneEsame,
-                    FormVerbaleCorso, FormRelazioneDelDirettoreCorso, ModuloCreazioneEvento, FiltraEvento)
+                    FormVerbaleCorso, FormRelazioneDelDirettoreCorso, ModuloCreazioneEvento, FiltraEvento,
+                    ModuloModificaEvento)
 from .classes import GeneraReport, GestioneLezioni
 from .utils import costruisci_titoli, CalendarCorsi
 from .training_api import TrainingApi
@@ -1163,13 +1164,26 @@ def aspirante_corsi(request, me):
             stato=CorsoBase.ATTIVO,
             extension_type=CorsoBase.EXT_MIA_SEDE,
             sede__in=mie_sedi,
-            titolo_cri__isnull=False,)
+            titolo_cri__isnull=False,
+            evento__isnull=True
+        )
 
         # Trova corsi da partecipare
-        corsi_da_partecipare = CorsoBase.find_courses_for_volunteer(volunteer=me, sede=mie_sedi)
+        corsi_da_partecipare = CorsoBase.find_courses_for_volunteer(volunteer=me, sede=mie_sedi, evento=True)
+
+        # Cirsi associati ad un avento
+        corsi_eventi = CorsoBase.objects.filter(
+            tipo__isnull=False,
+            stato=CorsoBase.ATTIVO,
+            extension_type=CorsoBase.EXT_MIA_SEDE,
+            sede__in=mie_sedi,
+            titolo_cri__isnull=False,
+            evento__isnull=False,
+            evento__stato=Evento.ATTIVO
+        )
 
         # Unisci 2 categorie di corsi
-        corsi = corsi_confermati | corsi_da_partecipare | corsi_estensione_mia_appartenenze
+        corsi = corsi_confermati | corsi_da_partecipare | corsi_estensione_mia_appartenenze | corsi_eventi
         corsi = corsi.filter(tipo__in=[Corso.CORSO_NUOVO, Corso.CORSO_ONLINE, Corso.CORSO_EQUIPOLLENZA])
 
     corsi_frequentati = me.corsi_frequentati
@@ -1801,12 +1815,11 @@ def evento_scheda_info(request, me=None, pk=None):
 def evento_scheda_modifica(request, me=None, pk=None):
     evento = get_object_or_404(Evento, pk=pk)
 
-    form = ModuloCreazioneEvento(request.POST or None, instance=evento)
-
-    form.fields['sede'].queryset = me.oggetti_permesso(GESTIONE_EVENTI_SEDE)
+    form = ModuloModificaEvento(request.POST or None, instance=evento)
 
     if form.is_valid():
         form.save()
+        return redirect(reverse('evento:info', args=[evento.pk]))
 
     return 'evento_scheda_modifica.html', {
         'evento': evento,

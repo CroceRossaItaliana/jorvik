@@ -439,7 +439,7 @@ class CorsoBase(Corso, ConVecchioID, ConPDF):
             ))
 
     @classmethod
-    def find_courses_for_volunteer(cls, volunteer, sede):
+    def find_courses_for_volunteer(cls, volunteer, sede, evento=True):
         today = now().today()
 
         if not sede:
@@ -455,7 +455,7 @@ class CorsoBase(Corso, ConVecchioID, ConPDF):
                                                              Corso.BASE,
                                                              Corso.CORSO_EQUIPOLLENZA
                                                          ],
-                                                         corso__stato=Corso.ATTIVO,)
+                                                         corso__stato=Corso.ATTIVO)
         courses_1 = cls.objects.filter(id__in=qs_estensioni_1.values_list('corso__id'))
 
         ###
@@ -896,7 +896,7 @@ class CorsoBase(Corso, ConVecchioID, ConPDF):
 
         self.data_attivazione = now()
         self.stato = self.ATTIVO
-        # self.save()
+        self.save()
         if not self.evento:
             task_invia_email_agli_aspiranti.apply_async(args=(self.pk, rispondi_a.pk),)
         else:
