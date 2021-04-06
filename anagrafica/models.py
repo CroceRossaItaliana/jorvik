@@ -535,9 +535,6 @@ class Persona(ModelloSemplice, ConMarcaTemporale, ConAllegati, ConVecchioID):
                 num_corsi_base = self.aspirante.corsi().exclude(tipo=CorsoBase.CORSO_NUOVO).count()
                 utente_url, utente_label, utente_count = ('/aspirante/', 'Aspirante', num_corsi_base)
 
-        print(self.ha_permesso(GESTIONE_CORSO), self.ha_permesso(GESTIONE_CORSI_SEDE))
-        print(self.ha_permesso(GESTIONE_EVENTO), self.ha_permesso(GESTIONE_EVENTI_SEDE))
-
         all_menus = [
             [(utente_url, utente_label, 'fa-user', utente_count), True],
             [('/attivita/', 'Attività', 'fa-calendar'), self.volontario],

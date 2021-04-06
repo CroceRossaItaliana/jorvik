@@ -46,7 +46,12 @@
                         <b>Corsi Totali:</b> {{ evento.totale_corsi }} <b>Corsi Attivi:</b> {{ evento.corsi_attivi }}
                 </td>
                 <td>
-
+                    {% if evento.attivabile %}
+                    <i class="fa fa-fw fa-check"></i><a href="{{ evento.url_attiva }}">Attiva</a><br>
+                    {% endif %}
+                    {% if evento.annullabbile %}
+                        <i class="fa fa-fw fa-trash"></i><a href="{{ evento.url_annulla }}">Annulla</a>
+                    {% endif %}
                 </td>
             </tr>
 

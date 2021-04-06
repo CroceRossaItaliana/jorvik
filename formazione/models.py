@@ -32,6 +32,7 @@ from curriculum.areas import OBBIETTIVI_STRATEGICI
 from posta.models import Messaggio
 from social.models import ConCommenti, ConGiudizio
 from survey.models import Survey
+from .tasks import task_invia_email_apertura_evento
 from .training_api import TrainingApi
 from .validators import (course_file_directory_path, validate_file_extension,
                          delibera_file_upload_path)
@@ -85,6 +86,10 @@ class Evento(ModelloSemplice, ConDelegati, ConMarcaTemporale, ConGeolocalizzazio
         return reverse('evento:attiva', args=[self.pk])
 
     @property
+    def url_annulla(self):
+        return reverse('evento:annulla', args=[self.pk])
+
+    @property
     def ha_posizione(self):
         return True if self.locazione else False
 
@@ -99,15 +104,60 @@ class Evento(ModelloSemplice, ConDelegati, ConMarcaTemporale, ConGeolocalizzazio
 
         return False
 
-    # TODO: controllo
-    def attiva(self):
+    def attiva(self, rispondi_a=None):
+        if self.attivabile:
+            if self.ha_posizione:
+                self.stato = self.ATTIVO
 
-        if self.ha_posizione:
-            self.stato = self.ATTIVO
-            self.save()
-            return self.url
-        else:
-            return self.url_position
+                task_invia_email_apertura_evento.apply_async(args=(self.pk, rispondi_a.pk),)
+
+                self.save()
+                return self.url
+            else:
+                return self.url_position
+
+    def referenti_evento(self):
+        oggetto_tipo = ContentType.objects.get_for_model(self)
+        deleghe = Delega.objects.filter(tipo=RESPONSABILE_EVENTO,
+                                        oggetto_tipo=oggetto_tipo.pk,
+                                        oggetto_id=self.pk)
+        return deleghe
+
+    def _invia_email_volotari(self, rispondi_a=None):
+        # Tutti i corsi sono aperti per la stessa lista di volontari/dipendenti
+        corso = self.corsi_associati.first()
+
+        for queryset in corso._corso_activation_recipients_for_email_generator():
+            oggetto = "{} evento Formazione".format(self)
+
+            for recipient in queryset:
+                email_data = dict(
+                    oggetto=oggetto,
+                    modello="email_attivazione_evento_volontari.html",
+                    corpo={
+                        'persona': recipient,
+                        'evento': self,
+                    },
+                    destinatari=[recipient],
+                    rispondi_a=rispondi_a
+                )
+
+                Messaggio.costruisci_e_accoda(**email_data)
+
+    @property
+    def annullabbile(self):
+        if self.stato == self.PREPARAZIONE:
+            corsi = self.corsi_associati
+            if corsi:
+                return any([True for corso in corsi if corso.stato == Corso.PREPARAZIONE])
+            else:
+                return False
+        return False
+
+    def annulla(self):
+        self.stato = self.ANNULLATO
+        self.save()
+        return reverse('formazione:evento_elenco')
 
     @property
     def corsi_associati(self):

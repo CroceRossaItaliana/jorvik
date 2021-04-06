@@ -1831,17 +1831,11 @@ def evento_scheda_modifica(request, me=None, pk=None):
 def evento_attiva(request, me=None, pk=None):
     evento = get_object_or_404(Evento, pk=pk)
 
-    return redirect(evento.attiva(), request=request)
+    return redirect(evento.attiva(rispondi_a=me), request=request)
 
 
 @pagina_privata
 def formazione_evento_resoponsabile(request, me, pk):
-    """
-        La form con l'input di persone da nominare si trova carica con iframe da:
-        url: /strumenti/delegati/
-        view: anagrafica.viste.strumenti_delegati
-        form: formazione.forms.FormCreateDirettoreDelega
-        """
 
     evento = get_object_or_404(Evento, pk=pk)
     if not me.permessi_almeno(evento, MODIFICA):
@@ -1853,7 +1847,13 @@ def formazione_evento_resoponsabile(request, me, pk):
         "delega": RESPONSABILE_EVENTO,
         "evento": evento,
         "continua_url": continua_url,
-        # 'puo_modificare': me and me.permessi_almeno(evento, MODIFICA)
         'puo_modificare': True
     }
     return 'formazione_evento_responsabile.html', context
+
+
+@pagina_privata
+def evento_annulla(request, me, pk):
+    evento = get_object_or_404(Evento, pk=pk)
+
+    return redirect(evento.annulla(), request=request)
