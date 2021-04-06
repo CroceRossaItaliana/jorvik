@@ -6,8 +6,11 @@
 
     <p>è stato attivato un Evento di formazione per Volontari CRI!</p>
 
-    <p>L'evento è stato organizzato dal {{ evento.sede.link|safe }} e si svolgerà dal {{ evento.data_inizio|date:"SHORT_DATETIME_FORMAT" }} al {{ evento.data_fine|date:"SHORT_DATETIME_FORMAT" }}, al seguente indirizzo: <a href="">{{ evento.locazione }}</a> (vedi in mappa).</p>
-
+    <p>
+        L'evento è stato organizzato dal {{ evento.sede.link|safe }} e si svolgerà dal {{ evento.data_inizio|date:"SHORT_DATETIME_FORMAT" }}
+        al {{ evento.data_fine|date:"SHORT_DATETIME_FORMAT" }}, al seguente indirizzo:
+        <a href="/login/?next={{ evento.url_mappa }}">{{ evento.locazione }} (vedi in mappa)</a>.
+    </p>
     <div>
         Durante l'evento saranno organizzati i seguenti Corsi di formazione:
         <ul>
@@ -21,7 +24,7 @@
         Per maggiori informazioni sull'organizzazione dell'Evento formativo puoi contattare il/i referente/i organizzativo
         <ul>
             {% for delega in evento.referenti_evento %}
-                    <li>a {{ delega.persona.nome_completo }}  {{ delega.persona.email }}</li>
+                    <li> {{ delega.persona.nome_completo }}  {{ delega.persona.email }}</li>
             {% endfor %}
         </ul>
     </div>

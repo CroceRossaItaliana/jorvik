@@ -1857,3 +1857,14 @@ def evento_annulla(request, me, pk):
     evento = get_object_or_404(Evento, pk=pk)
 
     return redirect(evento.annulla(), request=request)
+
+
+@pagina_privata
+def evento_scheda_mappa(request, me, pk):
+    evento = get_object_or_404(Evento, pk=pk)
+
+    context = {
+        "evento": evento,
+        "puo_modificare": True
+    }
+    return 'evento_scheda_mappa.html', context

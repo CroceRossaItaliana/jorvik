@@ -94,6 +94,10 @@ class Evento(ModelloSemplice, ConDelegati, ConMarcaTemporale, ConGeolocalizzazio
         return True if self.locazione else False
 
     @property
+    def url_mappa(self):
+        return reverse('evento:mappa', args=[self.pk])
+
+    @property
     def attivabile(self):
         if self.stato == self.PREPARAZIONE and self.locazione:
             corsi = self.corsi_associati

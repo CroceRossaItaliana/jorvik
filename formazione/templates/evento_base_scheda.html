@@ -48,6 +48,10 @@
             <a data-tab-id="#tabDettagliEvento" href="{{ evento.url }}">
             <i class="fa fa-fw fa-info"></i> Informazioni evento</a>
         </li>
+        <li role="presentation" {% if request.path == evento.url_mappa %}class="active"{% endif %}>
+            <a data-tab-id="#tabDettagliEvento" href="{{ evento.url_mappa }}">
+            <i class="fa fa-fw fa-map"></i> Mappa</a>
+        </li>
         <li role="presentation" {% if request.path == evento.url_modifica %}class="active"{% endif %}>
             <a data-tab-id="#tabModificaEvento" href="{{ evento.url_modifica }}">
             <i class="fa fa-fw fa-pen"></i> Modifica evento</a>
