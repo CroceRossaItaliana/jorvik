@@ -169,8 +169,9 @@
             <p style="text-align: center;margin-top: 20px;">
                 <a class="btn btn-warning {% if not corso.attivabile %}disabled{% endif %}" {% if corso.attivabile %}href="{{ corso.url_attiva }}"{% endif %}>
                     <i class="fa fa-fw fa-check-circle"></i>
-
-                    {% if corso.is_nuovo_corso or corso.online %}
+                    {% if corso.evento %}
+                        Informa il Responsabile dell’evento che il Corso è attivo
+                    {% elif corso.is_nuovo_corso or corso.online %}
                         {% if corso.extension_type == corso.EXT_MIA_SEDE %}
                             Avvia il corso e informa i volontari della mia sede
                         {% elif corso.extension_type == corso.EXT_LVL_REGIONALE %}

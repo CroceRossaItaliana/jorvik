@@ -52,15 +52,19 @@
             <a data-tab-id="#tabDettagliEvento" href="{{ evento.url_mappa }}">
             <i class="fa fa-fw fa-map"></i> Mappa</a>
         </li>
-        <li role="presentation" {% if request.path == evento.url_modifica %}class="active"{% endif %}>
-            <a data-tab-id="#tabModificaEvento" href="{{ evento.url_modifica }}">
-            <i class="fa fa-fw fa-pen"></i> Modifica evento</a>
-        </li>
-        <li role="presentation" {% if request.path == evento.url_position %}class="active"{% endif %}>
-            <a data-tab-id="#tabModificaEvento" href="{{ evento.url_position }}">
-            <i class="fa fa-fw fa-globe"></i> Posizione evento</a>
-        </li>
-        {% if evento.attivabile %}
+        {% if puo_modificare%}
+            <li role="presentation" {% if request.path == evento.url_modifica %}class="active"{% endif %}>
+                <a data-tab-id="#tabModificaEvento" href="{{ evento.url_modifica }}">
+                <i class="fa fa-fw fa-pen"></i> Modifica evento</a>
+            </li>
+        {% endif %}
+        {% if puo_modificare%}
+            <li role="presentation" {% if request.path == evento.url_position %}class="active"{% endif %}>
+                <a data-tab-id="#tabModificaEvento" href="{{ evento.url_position }}">
+                <i class="fa fa-fw fa-globe"></i> Posizione evento</a>
+            </li>
+        {% endif %}
+        {% if evento.attivabile and puo_modificare%}
             <li role="presentation" style="background: #c00;">
                 <a data-tab-id="#tabModificaEvento" href="{{ evento.url_attiva }}" style="color: #f5f5f5;">
                 <i class="fa fa-fw fa-check"></i> Attiva Evento</a>

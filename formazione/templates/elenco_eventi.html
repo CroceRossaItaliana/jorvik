@@ -43,14 +43,17 @@
                         Fine: {{ evento.data_fine }}
                         <br />
                     <i class="fa fa-fw fa-info-circle"></i>
-                        <b>Corsi Totali:</b> {{ evento.totale_corsi }} <b>Corsi Attivi:</b> {{ evento.corsi_attivi }}
+                        <b>Corsi Totali:</b> {{ evento.corsi_associati.count }} <b>Corsi Attivi:</b> {{ evento.corsi_attivi.count }} <b>Corsi Terminati:</b> {{ evento.corsi_terminati.count }}
                 </td>
                 <td>
                     {% if evento.attivabile %}
-                    <i class="fa fa-fw fa-check"></i><a href="{{ evento.url_attiva }}">Attiva</a><br>
+                        <i class="fa fa-fw fa-check"></i><a href="{{ evento.url_attiva }}">Attiva</a><br>
                     {% endif %}
                     {% if evento.annullabile %}
-                        <i class="fa fa-fw fa-trash"></i><a href="{{ evento.url_annulla }}">Annulla</a>
+                        <i class="fa fa-fw fa-trash"></i><a href="{{ evento.url_annulla }}">Annulla</a><br>
+                    {% endif %}
+                    {% if evento.terminabile %}
+                        <i class="glyphicon glyphicon-eye-close"></i> <a href="{{ evento.url_termina }}">Termina</a>
                     {% endif %}
                 </td>
             </tr>
@@ -63,5 +66,5 @@
             </tr>
         {% endfor %}
     </table>
-    {% include 'paginate.html' with url=url prev=prev next=next stato=stato%}
+    {% include 'paginate.html' with url=url prev=prev next=next stato=stato %}
 {% endblock %}

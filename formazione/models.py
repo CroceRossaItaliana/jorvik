@@ -90,6 +90,10 @@ class Evento(ModelloSemplice, ConDelegati, ConMarcaTemporale, ConGeolocalizzazio
         return reverse('evento:annulla', args=[self.pk])
 
     @property
+    def url_termina(self):
+        return reverse('evento:termina', args=[self.pk])
+
+    @property
     def ha_posizione(self):
         return True if self.locazione else False
 
@@ -116,6 +120,28 @@ class Evento(ModelloSemplice, ConDelegati, ConMarcaTemporale, ConGeolocalizzazio
                 task_invia_email_apertura_evento.apply_async(args=(self.pk, rispondi_a.pk),)
 
                 self.save()
+
+                if self.sede.estensione == TERRITORIALE:
+                    destinatari = [self.sede.sede_regionale.presidente()]
+                    destinatari.extend(self.sede.sede_regionale.delegati_formazione())
+                    Messaggio.costruisci_e_accoda(
+                        oggetto="Attivazione Evento {}".format(self),
+                        modello="email_attivazione_evento_presidente_delegati_fomazioni.html",
+                        corpo={
+                            "evento": self
+                        },
+                        destinatari=destinatari,
+                    )
+                elif self.sede.estensione == REGIONALE:
+                    Messaggio.invia_raw(
+                        oggetto="Attivazione Evento {}".format(self),
+                        corpo_html=get_template(
+                            'email_attivazione_evento_presidente_delegati_fomazioni.html'
+                        ).render({"evento": self}),
+                        email_mittente=Messaggio.NOREPLY_EMAIL,
+                        lista_email_destinatari=['formazione@cri.it', ],
+                    )
+
                 return self.url
             else:
                 return self.url_position
@@ -161,8 +187,28 @@ class Evento(ModelloSemplice, ConDelegati, ConMarcaTemporale, ConGeolocalizzazio
                     ]
                 )
             else:
+                return True
+        return False
+
+    @property
+    def terminabile(self):
+        if self.stato == self.ATTIVO:
+            corsi = self.corsi_associati
+            if corsi:
+                return any(
+                    [
+                        True for corso in corsi
+                        if corso.stato == Corso.TERMINATO or corso.stato == Corso.ANNULLATO
+                    ]
+                )
+            else:
                 return False
         return False
+
+    def termina(self):
+        self.stato = self.TERMINATO
+        self.save()
+        return reverse('formazione:evento_elenco')
 
     def annulla(self, persona):
         self.stato = self.ANNULLATO
@@ -178,11 +224,15 @@ class Evento(ModelloSemplice, ConDelegati, ConMarcaTemporale, ConGeolocalizzazio
 
     @property
     def totale_corsi(self):
-        return CorsoBase.objects.filter(evento=self).count()
+        return CorsoBase.objects.filter(evento=self)#.count()
 
     @property
     def corsi_attivi(self):
-        return CorsoBase.objects.filter(evento=self, stato=Corso.ATTIVO).count()
+        return CorsoBase.objects.filter(evento=self, stato=Corso.ATTIVO)#.count()
+
+    @property
+    def corsi_terminati(self):
+        return CorsoBase.objects.filter(evento=self, stato=Corso.TERMINATO)#.count()
 
 
 class Corso(ModelloSemplice, ConDelegati, ConMarcaTemporale,

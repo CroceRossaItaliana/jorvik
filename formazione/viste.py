@@ -1748,7 +1748,8 @@ def evento_nuovo(request, me=None):
             nome=cd['nome'],
             data_inizio=cd['data_inizio'],
             data_fine=cd['data_fine'],
-            sede=cd['sede']
+            sede=cd['sede'],
+            descrizione=cd['descrizione']
         )
         evento.save()
         return redirect(reverse('formazione:responsabile_evento', args=[evento.pk]))
@@ -1763,7 +1764,7 @@ def evento_elenco(request, me=None):
 
     num_page = int(request.GET.get('page', "1"))
     stato = request.GET.get('stato', None)
-    e = me.oggetti_permesso(GESTIONE_EVENTO)
+    e = me.oggetti_permesso(GESTIONE_EVENTO).order_by('-creazione')
     if stato:
         e = e.filter(stato=stato)
 
@@ -1794,6 +1795,7 @@ def formazione_evento_position_change(request, me=None, pk=None):
 
     context = {
         'evento': evento,
+        'puo_modificare': me.permessi_almeno(evento, MODIFICA)
     }
 
     return 'evento_scheda_posizione.html', context
@@ -1807,7 +1809,8 @@ def evento_scheda_info(request, me=None, pk=None):
         return redirect(reverse('evento:position_change', args=[evento.pk]))
 
     return 'evento_scheda_informazioni.html', {
-        'evento': evento
+        'evento': evento,
+        'puo_modificare': me.permessi_almeno(evento, MODIFICA)
     }
 
 
@@ -1823,7 +1826,8 @@ def evento_scheda_modifica(request, me=None, pk=None):
 
     return 'evento_scheda_modifica.html', {
         'evento': evento,
-        'modulo': form
+        'modulo': form,
+        'puo_modificare': me.permessi_almeno(evento, MODIFICA)
     }
 
 
@@ -1847,7 +1851,7 @@ def formazione_evento_resoponsabile(request, me, pk):
         "delega": RESPONSABILE_EVENTO,
         "evento": evento,
         "continua_url": continua_url,
-        'puo_modificare': True
+        'puo_modificare': me.permessi_almeno(evento, MODIFICA)
     }
     return 'formazione_evento_responsabile.html', context
 
@@ -1862,9 +1866,15 @@ def evento_annulla(request, me, pk):
 @pagina_privata
 def evento_scheda_mappa(request, me, pk):
     evento = get_object_or_404(Evento, pk=pk)
-
     context = {
         "evento": evento,
-        "puo_modificare": True
+        "puo_modificare": me.permessi_almeno(evento, MODIFICA)
     }
     return 'evento_scheda_mappa.html', context
+
+
+@pagina_privata
+def evento_termina(request, me, pk):
+    evento = get_object_or_404(Evento, pk=pk)
+
+    return redirect(evento.termina(), request=request)
