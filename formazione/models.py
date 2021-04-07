@@ -149,17 +149,26 @@ class Evento(ModelloSemplice, ConDelegati, ConMarcaTemporale, ConGeolocalizzazio
                 Messaggio.costruisci_e_accoda(**email_data)
 
     @property
-    def annullabbile(self):
-        if self.stato == self.PREPARAZIONE:
+    def annullabile(self):
+        if self.stato == self.PREPARAZIONE or self.stato == self.ATTIVO:
             corsi = self.corsi_associati
             if corsi:
-                return any([True for corso in corsi if corso.stato == Corso.PREPARAZIONE])
+                return any(
+                    [
+                        not corso.lezioni.filter(inizio__lte=datetime.datetime.now()).exists()
+                        for corso in corsi
+                        if corso.stato == Corso.PREPARAZIONE or corso.stato == Corso.ATTIVO
+                    ]
+                )
             else:
                 return False
         return False
 
-    def annulla(self):
+    def annulla(self, persona):
         self.stato = self.ANNULLATO
+        corsi = self.corsi_associati
+        for corso in corsi:
+            corso.annulla(persona)
         self.save()
         return reverse('formazione:evento_elenco')
 

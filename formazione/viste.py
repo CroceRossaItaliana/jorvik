@@ -1856,7 +1856,7 @@ def formazione_evento_resoponsabile(request, me, pk):
 def evento_annulla(request, me, pk):
     evento = get_object_or_404(Evento, pk=pk)
 
-    return redirect(evento.annulla(), request=request)
+    return redirect(evento.annulla(me), request=request)
 
 
 @pagina_privata
