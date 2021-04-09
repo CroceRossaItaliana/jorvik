@@ -185,7 +185,7 @@ def formazione_corsi_base_nuovo(request, me):
         me=me
     )
     form.fields['sede'].queryset = me.oggetti_permesso(GESTIONE_CORSI_SEDE)
-    form.fields['evento'].queryset = me.oggetti_permesso(GESTIONE_EVENTO)
+    form.fields['evento'].queryset = me.oggetti_permesso(GESTIONE_EVENTO).filter(stato=Evento.PREPARAZIONE)
 
     if form.is_valid():
         kwargs = {}
@@ -627,9 +627,14 @@ def aspirante_corso_base_attiva(request, me, pk):
             torna_url=corso.url
         )
 
-    email_body = {"corso": corso, "persona": me}
-    text = get_template("email_aspirante_corso_inc_testo.html").render(
-        email_body)
+    if not corso.evento:
+        email_body = {"corso": corso, "persona": me}
+        text = get_template("email_aspirante_corso_inc_testo.html").render(
+            email_body)
+    else:
+        email_body = {"corso": corso, 'direttore': me}
+        text = get_template("email_attivazione_corso_responsabile_evento.html").render(
+            email_body)
 
     if request.POST:
         activation = corso.attiva(request=request, rispondi_a=me)

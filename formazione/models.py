@@ -105,8 +105,9 @@ class Evento(ModelloSemplice, ConDelegati, ConMarcaTemporale, ConGeolocalizzazio
     def attivabile(self):
         if self.stato == self.PREPARAZIONE and self.locazione:
             corsi = self.corsi_associati
+
             if corsi:
-                return any([True for corso in corsi if corso.stato == Corso.ATTIVO])
+                return False not in [corso.stato == Corso.ATTIVO for corso in corsi]
             else:
                 return False
 
@@ -179,13 +180,11 @@ class Evento(ModelloSemplice, ConDelegati, ConMarcaTemporale, ConGeolocalizzazio
         if self.stato == self.PREPARAZIONE or self.stato == self.ATTIVO:
             corsi = self.corsi_associati
             if corsi:
-                return any(
-                    [
-                        not corso.lezioni.filter(inizio__lte=datetime.datetime.now()).exists()
-                        for corso in corsi
-                        if corso.stato == Corso.PREPARAZIONE or corso.stato == Corso.ATTIVO
-                    ]
-                )
+                # se tutti i corsi sono in attivo/preparazione e non ci sono lezioni iniziate
+                return False not in [
+                    (corso.stato == Corso.PREPARAZIONE or corso.stato == Corso.ATTIVO) and
+                    not corso.lezioni.filter(inizio__lte=datetime.datetime.now()).exists() for corso in corsi
+                ]
             else:
                 return True
         return False
@@ -224,15 +223,15 @@ class Evento(ModelloSemplice, ConDelegati, ConMarcaTemporale, ConGeolocalizzazio
 
     @property
     def totale_corsi(self):
-        return CorsoBase.objects.filter(evento=self)#.count()
+        return CorsoBase.objects.filter(evento=self)
 
     @property
     def corsi_attivi(self):
-        return CorsoBase.objects.filter(evento=self, stato=Corso.ATTIVO)#.count()
+        return CorsoBase.objects.filter(evento=self, stato=Corso.ATTIVO)
 
     @property
     def corsi_terminati(self):
-        return CorsoBase.objects.filter(evento=self, stato=Corso.TERMINATO)#.count()
+        return CorsoBase.objects.filter(evento=self, stato=Corso.TERMINATO)
 
 
 class Corso(ModelloSemplice, ConDelegati, ConMarcaTemporale,
