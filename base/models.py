@@ -210,7 +210,7 @@ class Autorizzazione(ModelloSemplice, ConMarcaTemporale):
                                 "persona": self.oggetto.persona,
                                 "corso": self.oggetto.corso
                             },
-                            destinatari=self.oggetto.corso.direttori_corso(),
+                            destinatari=corso.direttori_corso(),
                         )
 
         # Se è un partecipazione ad un corso online aggiunge il ruolo in moodle

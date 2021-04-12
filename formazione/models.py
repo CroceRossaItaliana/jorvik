@@ -234,6 +234,11 @@ class Evento(ModelloSemplice, ConDelegati, ConMarcaTemporale, ConGeolocalizzazio
         return CorsoBase.objects.filter(evento=self, stato=Corso.TERMINATO)
 
 
+    class Meta:
+        verbose_name = 'Evento'
+        verbose_name_plural = 'Eventi'
+
+
 class Corso(ModelloSemplice, ConDelegati, ConMarcaTemporale,
             ConGeolocalizzazione, ConCommenti, ConGiudizio):
     # Tipologia di corso
@@ -1516,6 +1521,7 @@ class CorsoBase(Corso, ConVecchioID, ConPDF):
             oggetto="Attivazione Corso: %s" % self,
             modello='email_attivazione_corso_responsabile_evento.html',
             corpo={
+                'direttore': self.direttori_corso().first(),
                 'corso': self
             },
             destinatari=[delega.persona for delega in self.evento.deleghe_attuali(tipo=RESPONSABILE_EVENTO)],

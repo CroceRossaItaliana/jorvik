@@ -6,8 +6,8 @@ from anagrafica.models import Delega
 from base.admin import InlineAutorizzazione
 from gruppi.readonly_admin import ReadonlyAdminMixin
 from .models import (CorsoBase, CorsoFile, CorsoEstensione, CorsoLink,
-    Aspirante, PartecipazioneCorsoBase, AssenzaCorsoBase, LezioneCorsoBase,
-    InvitoCorsoBase, RelazioneCorso)
+                     Aspirante, PartecipazioneCorsoBase, AssenzaCorsoBase, LezioneCorsoBase,
+                     InvitoCorsoBase, RelazioneCorso, Evento)
 
 
 RAW_ID_FIELDS_CORSOBASE = ['sede', 'locazione', 'titolo_cri',]
@@ -157,3 +157,11 @@ class AdminAspirante(ReadonlyAdminMixin, admin.ModelAdmin):
 class AdminRelazioneCorso(ReadonlyAdminMixin, admin.ModelAdmin):
     list_display = ['corso', 'is_completed',]
     raw_id_fields = ['corso',]
+
+
+@admin.register(Evento)
+class AdminEvento(ReadonlyAdminMixin, admin.ModelAdmin):
+    search_fields = ['sede_estensione', 'nome', 'data_inizio']
+    list_display = ['nome', 'sede', 'data_inizio', 'data_fine', 'stato']
+    list_filter = ['stato', 'sede__estensione']
+    ordering = ['-creazione',]
