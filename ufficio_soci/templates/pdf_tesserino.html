@@ -120,6 +120,14 @@
 			text-align: right;
 		}
 
+        .testo-intestazione_tedesco {
+			right: 2.40cm;
+			top : 0.60cm;
+			font-weight: bold;
+			font-size: 7.056pt;
+			text-align: right;
+		}
+
 		.testo-ingresso {
 			top: 3.25cm;
 			right: 3.10cm;
@@ -174,16 +182,31 @@
 
 	<!-- Fronte -->
     <div class="fronte">
-        <img id="fronte_img" src="{% static 'img/tesserino/FronteAttivo.jpg' %}" alt="FRONTE" />
+        {% if lingua == 'ING' %}
+            <img id="fronte_img" src="{% static 'img/tesserino/FronteAttivo.jpg' %}" alt="FRONTE" />
+        {% else %}
+            <img id="fronte_img" src="{% static 'img/tesserino/FronteAttivo-tedesco.jpg' %}" alt="FRONTE" />
+        {% endif %}
         <span class="testo-volontario">VOLONTARI{{ persona.genere_o_a|upper }}</span>
         <span class="testo-nome"		>{{ persona.nome }}</span>
         <span class="testo-cognome"		>{{ persona.cognome }}</span>
         <span class="testo-cf"		>{{ persona.codice_fiscale }}</span>
         <img class="avatar" src="{{ persona.fototessera_attuale.file.url }}" />
-        <span class="testo-intestazione">
-            Croce Rossa Italiana<br />
-            {{ sede.nome_completo }}
+{#        Questa parte e per il tedesco (italiano/tedesco)#}
+        {% if tesserino.comitato_altra_lingua %}
+            <span class="testo-intestazione_tedesco">
+                <span style="color: red">Croce Rossa Italiana<br />
+                Italienisches Rotes Kreuz</span>
+                {{ sede.nome_completo }}<br />
+                {{ tesserino.comitato_altra_lingua }}
         </span>
+        {% else %}
+{#            Questa parte e per il default (italiano/inglese)#}
+            <span class="testo-intestazione">
+                Croce Rossa Italiana<br />
+                {{ sede.nome_completo }}
+            </span>
+        {% endif %}
         <span class="testo-ingresso">
             {{ persona.ingresso|date:"d/m/Y" }}
         </span>
@@ -194,10 +217,14 @@
 
     <!-- Retro  -->
     <div class="retro">
+        {% if lingua == 'ING' %}
         <img id="retro_img" src="{% static 'img/tesserino/RetroAttivo.jpg' %}" alt="RETRO" />
+        {% else %}
+            <img id="fronte_img" src="{% static 'img/tesserino/RetroAttivo-tedesco.jpg' %}" alt="FRONTE" />
+        {% endif %}
         <span class="testo-comitato">
             {{ sede.locazione }}
-        </span>.
+        </span>
         <span class="testo-scadenza"> <i>Data di scadenza:</i> {{ tesserino.data_scadenza|date:"m/Y" }}</span>
         <div id="barcode" alt="barcode">
         	<img src="{{ codice.file.url }}" />
