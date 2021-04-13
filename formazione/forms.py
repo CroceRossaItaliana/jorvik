@@ -5,6 +5,8 @@ from django.core.exceptions import ValidationError
 from django.forms import ModelForm, modelformset_factory
 
 from autocomplete_light import shortcuts as autocomplete_light
+
+from anagrafica.permessi.costanti import GESTIONE_SEDE
 from base.wysiwyg import WYSIWYGSemplice
 
 from anagrafica.permessi import applicazioni as permessi
@@ -714,3 +716,18 @@ class FormCommissioneEsame(ModelForm):
 
 class CatalogoCorsiSearchForm(forms.Form):
     q = forms.CharField(label='')
+
+
+class ModuloCreaOperatoreSala(forms.Form):
+    persona = forms.CharField()
+    sede = forms.ChoiceField(choices=())
+
+    @staticmethod
+    def popola_scelta(persona):
+        choices = [
+            (None, "--------------------------"),
+        ]
+        for sede in persona.oggetti_permesso(GESTIONE_SEDE):
+            choices.append((sede.pk, sede))
+
+        return choices

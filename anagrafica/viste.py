@@ -25,6 +25,7 @@ from base.models import Log
 from base.stringhe import genera_uuid_casuale
 from base.utils import poco_fa, oggi
 from curriculum.models import TitoloPersonale
+from formazione.forms import ModuloCreaOperatoreSala
 from posta.models import Messaggio
 from posta.utils import imposta_destinatari_e_scrivi_messaggio
 from sangue.models import Donazione
@@ -2007,3 +2008,18 @@ def inscrizione_evento_consiglieri(request, me):
         res = trippus_booking_consiglieri(me, access_token)
         return JsonResponse({'link': res['url']})
     return JsonResponse({})
+
+
+@pagina_privata
+def operatori_sale(request, me):
+
+    form = ModuloCreaOperatoreSala(request.POST or None)
+    form.fields['sede'].choices = ModuloCreaOperatoreSala.popola_scelta(me)
+
+    if request.POST and form.is_valid():
+        pass
+
+    contesto = {
+        'form': form
+    }
+    return 'anagrafica_presidente_operatori.html', contesto
