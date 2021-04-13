@@ -182,7 +182,7 @@
 
 	<!-- Fronte -->
     <div class="fronte">
-        {% if lingua == 'ING' %}
+        {% if sede.seconda_lingua == 'ING' %}
             <img id="fronte_img" src="{% static 'img/tesserino/FronteAttivo.jpg' %}" alt="FRONTE" />
         {% else %}
             <img id="fronte_img" src="{% static 'img/tesserino/FronteAttivo-tedesco.jpg' %}" alt="FRONTE" />
@@ -193,12 +193,12 @@
         <span class="testo-cf"		>{{ persona.codice_fiscale }}</span>
         <img class="avatar" src="{{ persona.fototessera_attuale.file.url }}" />
 {#        Questa parte e per il tedesco (italiano/tedesco)#}
-        {% if tesserino.comitato_altra_lingua %}
+        {% if sede.comitato_seconda_lingua %}
             <span class="testo-intestazione_tedesco">
                 <span style="color: red">Croce Rossa Italiana<br />
                 Italienisches Rotes Kreuz</span>
                 {{ sede.nome_completo }}<br />
-                {{ tesserino.comitato_altra_lingua }}
+                {{ sede.comitato_seconda_lingua }}
         </span>
         {% else %}
 {#            Questa parte e per il default (italiano/inglese)#}
@@ -217,7 +217,7 @@
 
     <!-- Retro  -->
     <div class="retro">
-        {% if lingua == 'ING' %}
+        {% if sede.seconda_lingua == 'ING' %}
         <img id="retro_img" src="{% static 'img/tesserino/RetroAttivo.jpg' %}" alt="RETRO" />
         {% else %}
             <img id="fronte_img" src="{% static 'img/tesserino/RetroAttivo-tedesco.jpg' %}" alt="FRONTE" />

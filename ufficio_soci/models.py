@@ -80,12 +80,6 @@ class Tesserino(ModelloSemplice, ConMarcaTemporale, ConPDF):
         (INGLESE, "Inglese"),
         (TEDESCO, "Tedesco"),
     )
-    seconda_lingua = models.CharField(max_length=3, choices=LINGUA, default=INGLESE, db_index=True)
-    comitato_altra_lingua = models.CharField(
-        max_length=254,
-        blank=True,
-        null=True,
-        help_text="Inserisci il nome del comitato nell'altra lingua. Es: Komitee Bozen")
 
     @classmethod
     @concept
@@ -153,7 +147,6 @@ class Tesserino(ModelloSemplice, ConMarcaTemporale, ConPDF):
                 "persona": self.persona,
                 "sede": sede,
                 "codice": codice,
-                "lingua": self.seconda_lingua
             },
             formato=PDF.FORMATO_CR80,
             orientamento=PDF.ORIENTAMENTO_ORIZZONTALE,
