@@ -66,11 +66,7 @@ services:
       - "traefik.http.routers.pr${CI_MERGE_REQUEST_ID}.rule=Host(`pr${CI_MERGE_REQUEST_ID}.staging.gaia.cri.it`)"
       - "traefik.http.routers.pr${CI_MERGE_REQUEST_ID}.entrypoints=websecure"
       - "traefik.http.routers.pr${CI_MERGE_REQUEST_ID}.tls.certresolver=myresolver"
-      - "traefik.http.middlewares.servicests.headers.stsincludesubdomains=true"
-      - "traefik.http.middlewares.servicests.headers.stspreload=true"
-      - "traefik.http.middlewares.servicests.headers.stsseconds=31536000"
-      - "traefik.http.middlewares.servicests.headers.isdevelopment=false"
-      - "traefik.http.routers.pr${CI_MERGE_REQUEST_ID}.middlewares=servicests"
+
     networks:
       - "traefik-public"
       - "default"
