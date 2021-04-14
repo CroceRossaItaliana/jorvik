@@ -315,6 +315,11 @@ LOGGING = {
             'level': 'INFO',
             'propagate': True,
         },
+        'formazione': {
+            'handlers': ['file'],
+            'level': 'INFO',
+            'propagate': True,
+        },
         'two_factor': {
             'handlers': ['console'],
             'level': 'INFO',

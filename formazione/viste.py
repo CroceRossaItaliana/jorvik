@@ -288,11 +288,12 @@ def formazione_corsi_base_fine(request, me, pk):
 @pagina_pubblica
 @can_access_to_course
 def aspirante_corso_base_informazioni(request, me=None, pk=None):
+
     context = dict()
     corso = get_object_or_404(CorsoBase, pk=pk)
     puoi_partecipare = corso.persona(me) if me else None
 
-    if corso.locazione is None and corso.tipo != Corso.CORSO_ONLINE: #and corso.tipo != Corso.BASE_ONLINE:
+    if corso.locazione is None and corso.tipo != Corso.CORSO_ONLINE and corso.tipo != Corso.BASE_ONLINE:
         # Il corso non ha una locazione (è stata selezionata la voce °Sede presso Altrove"
         messages.error(request, "Imposta una locazione per procedere la navigazione del Corso.")
 
@@ -324,7 +325,6 @@ def aspirante_corso_base_informazioni(request, me=None, pk=None):
         api = TrainingApi()
         r = api.core_course_get_courses_by_field_shortname(corso.titolo_cri.sigla)
         context['link'] = 'https://training.cri.it/course/view.php?id={}'.format(r['id'])
-
 
     return 'aspirante_corso_base_scheda_informazioni.html', context
 
@@ -743,7 +743,7 @@ def aspirante_corso_base_termina(request, me, pk):
                 generazione_verbale=generazione_verbale
             )
 
-        if corso.tipo == Corso.BASE:
+        if corso.tipo == Corso.BASE or corso.tipo == Corso.BASE_ONLINE:
             if corso.titolo_cri and corso.titolo_cri.scheda_prevede_esame:
                 # GAIA-175 Campo destinazione prevede solo nel caso di esame
                 # (come da scheda di valutazione personale

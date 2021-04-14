@@ -693,7 +693,10 @@ class CorsoBase(Corso, ConVecchioID, ConPDF):
 
     def aspiranti_nelle_vicinanze(self):
         from formazione.models import Aspirante
-        return self.circonferenze_contenenti(Aspirante.query_contattabili())
+        if self.locazione:
+            return self.circonferenze_contenenti(Aspirante.query_contattabili())
+        else:
+            return self.sede.circonferenze_contenenti(Aspirante.query_contattabili())
 
     def partecipazioni_confermate_o_in_attesa(self):
         return self.partecipazioni_confermate() | self.partecipazioni_in_attesa()

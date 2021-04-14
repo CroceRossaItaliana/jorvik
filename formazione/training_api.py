@@ -1,9 +1,11 @@
 import requests
-from django.conf import settings
+import logging
 from requests import PreparedRequest
 
 from autenticazione.models import Utenza
 from jorvik.settings import MOODLE_KEY, MOODLE_DOMAIN
+
+logger = logging.getLogger(__name__)
 
 
 class TrainingApi:
@@ -196,5 +198,5 @@ class TrainingApi:
         self.pr.prepare_url(url, parameters)
 
         r = requests.get(self.pr.url, headers=headers, data=data)
-
+        logger.info('{} {}'.format(self.pr.url, r.status_code))
         return r.json()
