@@ -907,7 +907,7 @@ class CorsoBase(Corso, ConVecchioID, ConPDF):
                     rispondi_a=rispondi_a
                 )
 
-                if self.tipo == Corso.BASE and not recipient.volontario:
+                if (self.tipo == Corso.BASE or self.tipo == Corso.BASE_ONLINE) and not recipient.volontario:
                     # Informa solo aspiranti di zona
                     Messaggio.costruisci_e_accoda(**email_data)
 
