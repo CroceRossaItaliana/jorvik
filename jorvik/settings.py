@@ -181,7 +181,7 @@ DATABASES = {
     }
 }
 
-SESSION_COOKIE_SECURE = not DEBUG
+SESSION_COOKIE_SECURE = True
 CSRF_COOKIE_SECURE = True
 
 # Internazionalizzazione
