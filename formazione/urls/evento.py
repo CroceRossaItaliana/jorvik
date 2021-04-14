@@ -10,4 +10,5 @@ urlpatterns = [
         url(r'^(?P<pk>[0-9]+)/annulla$', v.evento_annulla, name='annulla'),
         url(r'^(?P<pk>[0-9]+)/termina$', v.evento_termina, name='termina'),
         url(r'^(?P<pk>[0-9]+)/position/change', v.formazione_evento_position_change, name='position_change'),
+
 ]
