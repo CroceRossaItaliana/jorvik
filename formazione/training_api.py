@@ -198,5 +198,5 @@ class TrainingApi:
         self.pr.prepare_url(url, parameters)
 
         r = requests.get(self.pr.url, headers=headers, data=data)
-        logger.info('{} {}'.format(self.pr.url, r.status_code))
+        logger.info('{} {} {}'.format(self.pr.url, r.status_code, r.json() if r.status_code != 200 else ''))
         return r.json()

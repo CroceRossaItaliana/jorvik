@@ -293,7 +293,7 @@ def aspirante_corso_base_informazioni(request, me=None, pk=None):
     corso = get_object_or_404(CorsoBase, pk=pk)
     puoi_partecipare = corso.persona(me) if me else None
 
-    if corso.locazione is None and corso.tipo != Corso.CORSO_ONLINE and corso.tipo != Corso.BASE_ONLINE:
+    if corso.locazione is None and corso.tipo not in [Corso.CORSO_ONLINE, Corso.BASE_ONLINE]:
         # Il corso non ha una locazione (è stata selezionata la voce °Sede presso Altrove"
         messages.error(request, "Imposta una locazione per procedere la navigazione del Corso.")
 

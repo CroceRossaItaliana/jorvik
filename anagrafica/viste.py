@@ -25,6 +25,7 @@ from base.models import Log
 from base.stringhe import genera_uuid_casuale
 from base.utils import poco_fa, oggi
 from curriculum.models import TitoloPersonale
+from formazione.models import Corso
 from posta.models import Messaggio
 from posta.utils import imposta_destinatari_e_scrivi_messaggio
 from sangue.models import Donazione
@@ -1126,7 +1127,7 @@ def strumenti_delegati(request, me):
                 torna_url=reverse('strumenti_delegati'),
             )
 
-        if model == 'corsobase' and oggetto.online and oggetto.moodle:
+        if model == 'corsobase' and (oggetto.online and oggetto.moodle) or oggetto.tipo == Corso.BASE_ONLINE:
             from formazione.training_api import TrainingApi
             api = TrainingApi()
             api.aggiugi_ruolo(persona=d.persona, corso=oggetto, ruolo=TrainingApi.DIRETTORE)
