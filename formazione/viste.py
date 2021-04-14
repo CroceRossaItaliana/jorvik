@@ -182,8 +182,7 @@ def formazione_corsi_base_nuovo(request, me):
         me=me
     )
     form.fields['sede'].queryset = me.oggetti_permesso(GESTIONE_CORSI_SEDE)
-    print('POST', request.POST)
-    print('FILES', request.FILES)
+
     if form.is_valid():
         kwargs = {}
         cd = form.cleaned_data
@@ -193,6 +192,11 @@ def formazione_corsi_base_nuovo(request, me):
         if tipo == Corso.BASE:
             # Impostare titolo per "Corso Base"
             kwargs['titolo_cri'] = Titolo.objects.get(sigla='CRI',
+                                                      tipo=Titolo.TITOLO_CRI,
+                                                      is_active=True)
+
+        if tipo == Corso.BASE_ONLINE:
+            kwargs['titolo_cri'] = Titolo.objects.get(sigla='CRIOL',
                                                       tipo=Titolo.TITOLO_CRI,
                                                       is_active=True)
 
@@ -214,6 +218,8 @@ def formazione_corsi_base_nuovo(request, me):
         course.get_or_create_lezioni_precompilate()
 
         same_sede = cd['locazione'] == form.PRESSO_SEDE
+        # Il corso base ha bosogno della locazione per avvisare gli aspiranti
+        # In caso di corso base online imposto la locazione della sede
         if same_sede:
             course.locazione = course.sede.locazione
             course.save()
@@ -286,7 +292,7 @@ def aspirante_corso_base_informazioni(request, me=None, pk=None):
     corso = get_object_or_404(CorsoBase, pk=pk)
     puoi_partecipare = corso.persona(me) if me else None
 
-    if corso.locazione is None and corso.tipo != Corso.CORSO_ONLINE:
+    if corso.locazione is None and corso.tipo != Corso.CORSO_ONLINE: #and corso.tipo != Corso.BASE_ONLINE:
         # Il corso non ha una locazione (è stata selezionata la voce °Sede presso Altrove"
         messages.error(request, "Imposta una locazione per procedere la navigazione del Corso.")
 
@@ -314,7 +320,7 @@ def aspirante_corso_base_informazioni(request, me=None, pk=None):
     context['can_activate'] = corso.can_activate(me)
     context['puoi_partecipare'] = puoi_partecipare
 
-    if corso.online and corso.moodle:
+    if (corso.online and corso.moodle) or corso.tipo == CorsoBase.BASE_ONLINE:
         api = TrainingApi()
         r = api.core_course_get_courses_by_field_shortname(corso.titolo_cri.sigla)
         context['link'] = 'https://training.cri.it/course/view.php?id={}'.format(r['id'])
@@ -396,7 +402,7 @@ def aspirante_corso_base_ritirati(request, me=None, pk=None):
         if partecipazione.confermata:
             partecipazione.confermata = False
             partecipazione.save()  # second save() call
-            if corso.online and corso.moodle:
+            if (corso.online and corso.moodle) or corso.tipo == CorsoBase.BASE_ONLINE:
                 api = TrainingApi()
                 api.cancellazione_iscritto(persona=me, corso=corso)
 
@@ -718,7 +724,7 @@ def aspirante_corso_base_termina(request, me, pk):
 
     # Validazione delle form
     for partecipante in partecipanti_qs:
-        if corso.online and corso.moodle and request.method == 'GET':
+        if ((corso.online and corso.moodle) or corso.tipo == CorsoBase.BASE_ONLINE) and request.method == 'GET':
             api = TrainingApi()
             form = FormVerbaleCorso(request.POST or None,
                 prefix="part_%d" % partecipante.pk,
@@ -832,7 +838,7 @@ def aspirante_corso_base_termina(request, me, pk):
                       partecipanti_qs=partecipanti_qs,
                       data_ottenimento=data_ottenimento)
 
-        if corso.online and corso.moodle:
+        if (corso.online and corso.moodle) or corso.tipo == CorsoBase.BASE_ONLINE:
             api = TrainingApi()
             for partecipante in partecipanti_qs:
                 api.cancellazione_iscritto(persona=partecipante.persona, corso=corso)
@@ -937,12 +943,12 @@ def aspirante_corso_base_iscritti_cancella(request, me, pk, iscritto):
     if request.method == 'POST':
         for partecipazione in corso.partecipazioni_confermate_o_in_attesa().filter(persona=persona):
             partecipazione.disiscrivi(mittente=me)
-            if corso.online and corso.moodle:
+            if (corso.online and corso.moodle) or corso.tipo == CorsoBase.BASE_ONLINE:
                 api = TrainingApi()
                 api.cancellazione_iscritto(persona=persona, corso=corso)
         for partecipazione in corso.inviti_confermati_o_in_attesa().filter(persona=persona):
             partecipazione.disiscrivi(mittente=me)
-            if corso.online and corso.moodle:
+            if (corso.online and corso.moodle) or corso.tipo == CorsoBase.BASE_ONLINE:
                 api = TrainingApi()
                 api.cancellazione_iscritto(persona=persona, corso=corso)
         return messaggio_generico(request, me, titolo="Iscritto cancellato",
@@ -1027,7 +1033,7 @@ def aspirante_corso_base_iscritti_aggiungi(request, me, pk):
                         destinatari=[persona]
                     )
 
-                if corso.online and corso.moodle:
+                if (corso.online and corso.moodle) or corso.tipo == CorsoBase.BASE_ONLINE:
                     from formazione.training_api import TrainingApi
                     api = TrainingApi()
                     api.aggiugi_ruolo(persona=persona, corso=corso, ruolo=TrainingApi.DISCENTE)

@@ -67,7 +67,7 @@ class ModuloCreazioneCorsoBase(ModelForm):
         if data_esame < data_inizio:
             self.add_error('data_esame', "La data deve essere successiva alla data di inizio.")
 
-        if tipo == Corso.BASE:
+        if tipo == Corso.BASE or tipo == Corso.BASE_ONLINE:
             # cd non può/deve avere valori per questi campi se corso è BASE
             for field in ['area', 'level', 'titolo_cri']:
                 if field in cd:

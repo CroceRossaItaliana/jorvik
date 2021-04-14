@@ -41,10 +41,12 @@ class Corso(ModelloSemplice, ConDelegati, ConMarcaTemporale,
     # Tipologia di corso
     CORSO_NUOVO = 'C1'
     BASE = 'BA'
+    BASE_ONLINE = 'BO'
     CORSO_ONLINE = 'CO'
     CORSO_EQUIPOLLENZA = 'CE'
     TIPO_CHOICES = (
         (BASE, 'Corso di Formazione per Volontari CRI'),
+        (BASE_ONLINE, 'Corso di Formazione per Volontari CRI Online'),
         (CORSO_NUOVO, 'Altri Corsi'),
         (CORSO_ONLINE, 'Corsi online'),
         (CORSO_EQUIPOLLENZA, 'Corsi equipollenza'),
@@ -671,7 +673,7 @@ class CorsoBase(Corso, ConVecchioID, ConPDF):
     def attivabile(self):
         """Controlla se il corso base e' attivabile."""
 
-        if not self.locazione and self.tipo != Corso.CORSO_ONLINE:
+        if not self.locazione and self.tipo not in [Corso.CORSO_ONLINE, Corso.BASE_ONLINE]:
             return False
 
         if not self.descrizione:
