@@ -2,6 +2,7 @@ import os
 from datetime import datetime, timedelta
 from dateutil.relativedelta import relativedelta
 
+from formazione.models import Corso
 from jorvik import settings
 from django.contrib.contenttypes.fields import GenericRelation, GenericForeignKey
 from django.contrib.contenttypes.models import ContentType
@@ -195,7 +196,9 @@ class Autorizzazione(ModelloSemplice, ConMarcaTemporale):
             return
 
         from formazione.models import PartecipazioneCorsoBase
-        if isinstance(self.oggetto, PartecipazioneCorsoBase) and self.oggetto.corso.online and self.oggetto.corso.moodle:
+        if isinstance(self.oggetto, PartecipazioneCorsoBase) and (
+                (self.oggetto.corso.online and self.oggetto.corso.moodle) or self.oggetto.corso.tipo == Corso.BASE_ONLINE
+        ):
             from formazione.training_api import TrainingApi
             api = TrainingApi()
             api.aggiugi_ruolo(persona=self.oggetto.persona, corso=self.oggetto.corso, ruolo=TrainingApi.DISCENTE)

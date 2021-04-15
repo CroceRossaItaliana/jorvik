@@ -830,7 +830,7 @@ class CorsoBase(Corso, ConVecchioID, ConPDF):
 
         for partecipazione in self.partecipazioni_confermate_o_in_attesa():
             partecipazione.annulla(persona)
-            if self.online and self.moodle:
+            if (self.online and self.moodle) or self.tipo == Corso.BASE_ONLINE:
                 api = TrainingApi()
                 api.cancellazione_iscritto(persona=partecipazione.persona, corso=self)
 
