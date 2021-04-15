@@ -47,7 +47,7 @@
                 </td>
                 <td>
                     {% if evento.attivabile %}
-                        <i class="fa fa-fw fa-check"></i><a href="{{ evento.url_attiva }}">Attiva</a><br>
+                        <i class="fa fa-fw fa-check"></i><a href="{{ evento.url_attiva }}" data-conferma="Vuoi attivare questo corso?">Attiva</a><br>
                     {% endif %}
                     {% if evento.annullabile %}
                         <i class="fa fa-fw fa-trash"></i><a href="{{ evento.url_annulla }}" data-conferma="Vuoi annullare questo corso?">Annulla</a><br>
