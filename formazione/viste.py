@@ -1136,7 +1136,7 @@ def aspirante_corsi(request, me):
     corsi = CorsoBase.objects.none()
 
     if me.ha_aspirante:
-        corsi = me.aspirante.corsi().exclude(tipo=Corso.CORSO_NUOVO)
+        corsi = me.aspirante.corsi().exclude(tipo__in=[Corso.CORSO_NUOVO, Corso.CORSO_EQUIPOLLENZA, Corso.CORSO_ONLINE])
     elif me.volontario or me.dipendente:
         mie_sedi = me.sedi_appartenenze_corsi
 
