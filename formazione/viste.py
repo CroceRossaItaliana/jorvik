@@ -220,7 +220,7 @@ def formazione_corsi_base_nuovo(request, me):
         same_sede = cd['locazione'] == form.PRESSO_SEDE
         # Il corso base ha bosogno della locazione per avvisare gli aspiranti
         # In caso di corso base online imposto la locazione della sede
-        if same_sede:
+        if same_sede or Corso.CORSO_ONLINE:
             course.locazione = course.sede.locazione
             course.save()
 
