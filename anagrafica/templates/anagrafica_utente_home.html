@@ -250,6 +250,7 @@
     <script>
         const url_riunione = "{% url 'presidente:inscrizione_evento' %}";
         const url_riunione_consiglieri = "{% url 'utente:inscrizione_evento_consiglieri' %}";
+        const url_riunione_volontari = "{% url 'utente:inscrizione_evento_volontari' %}";
         const _csrf_token = "{{ csrf_token }}";
     </script>
 
@@ -312,5 +313,36 @@
             }
         });
     </script>
+
+    <script>
+        var load = false;
+        $('#riunione_volontari').on('click', function(e) {
+            var ancor = $(this);
+            if (load === false) {
+                load = true;
+                ancor.toggleClass('wait');
+                ancor.toggleClass('hand');
+                $.ajax({
+                    type: "POST",
+                    url: url_riunione_volontari,
+                    data: {
+                        csrf_token: _csrf_token,
+                    },
+                    success: function (data) {
+                        load = false;
+                        ancor.toggleClass('wait');
+                        ancor.toggleClass('hand');
+                        window.open(data['link'], '_blank');
+                    },
+                    error: function (jqXHR, textStatus) {
+                        load = false;
+                        ancor.toggleClass('wait');
+                        ancor.toggleClass('hand');
+                    },
+                });
+            }
+        });
+    </script>
+
 
 {% endblock %}
