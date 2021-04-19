@@ -2000,13 +2000,13 @@ def inscrizione_evento(request, me):
     return JsonResponse({})
 
 
-@pagina_privata
-def inscrizione_evento_consiglieri(request, me):
-    if request.is_ajax:
-        access_token = trippus_oauth()['access_token']
-        res = trippus_booking_consiglieri(me, access_token)
-        return JsonResponse({'link': res['url']})
-    return JsonResponse({})
+# @pagina_privata
+# def inscrizione_evento_consiglieri(request, me):
+#     if request.is_ajax:
+#         access_token = trippus_oauth()['access_token']
+#         res = trippus_booking_consiglieri(me, access_token)
+#         return JsonResponse({'link': res['url']})
+#     return JsonResponse({})
 
 
 @pagina_privata
