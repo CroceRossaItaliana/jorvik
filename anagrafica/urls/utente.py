@@ -63,5 +63,5 @@ urlpatterns = [
         "template_name": "anagrafica_utente_cambia_password_fatto.html",
     }),
     url(r'inscrizione_evento', views.inscrizione_evento_consiglieri, name='inscrizione_evento_consiglieri'),
-
+    url(r'inscrizione_evento_volontari', views.inscrizione_evento_volontari, name='inscrizione_evento_volontari'),
 ]
