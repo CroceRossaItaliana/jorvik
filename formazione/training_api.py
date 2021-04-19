@@ -148,6 +148,7 @@ class TrainingApi:
         )
         return r
 
+
     def core_competency_list_course_competencies(self, courseid):
         r = self._get(
             url=self.domain,
