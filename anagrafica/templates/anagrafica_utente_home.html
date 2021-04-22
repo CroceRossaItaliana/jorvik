@@ -156,6 +156,15 @@
         </div>
         {% endif %}
 
+        {% if me.is_presidente or me.is_comissario %}
+        <div class="col col-md-3" style="padding-left: 5px; padding-right: 5px;">
+            <div class="alert alert-success" role="alert" style="text-align: center; margin:0; display: grid;">
+              <span aria-hidden="true" style="font-size:48px; margin-bottom: 0.1em;"><i class="fa fa-fw fa-car"></i></span>
+              <a target="_blank" href="https://auth2pro.cri.it/motorizzazione/auth/?sso" class="alert-link testi-lunghi" data-toggle="tooltip" data-placement="top" title="Il tempo della gentilezza">Motorizzazione</a>
+            </div>
+        </div>
+        {% endif %}
+
     </div>
     <!--<div
             id="benvenuto"
