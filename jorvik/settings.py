@@ -183,8 +183,12 @@ DATABASES = {
         'PASSWORD': PGSQL_CONF.get('client', 'password', fallback='jorvik'),
         'HOST': PGSQL_CONF.get('client', 'host', fallback='localhost'),
         'PORT': PGSQL_CONF.get('client', 'port', fallback='5432'),
+        'CONN_MAX_AGE': 300,
     }
 }
+
+SESSION_COOKIE_SECURE = True
+CSRF_COOKIE_SECURE = True
 
 # Internazionalizzazione
 # https://docs.djangoproject.com/en/1.7/topics/i18n/
@@ -324,6 +328,11 @@ LOGGING = {
             'level': 'INFO',
             'propagate': True,
         },
+        'curriculum': {
+            'handlers': ['file'],
+            'level': 'INFO',
+            'propagate': True,
+        },
         'two_factor': {
             'handlers': ['console'],
             'level': 'INFO',
@@ -448,7 +457,12 @@ FINE_ASSEMBLEA_NAZIONALE = '12/30/2020 15:00:00'
 INIZIO_ASSEMBLEA_NAZIONALE_COMMISSARI = '12/20/2020 09:00:00'
 FINE_ASSEMBLEA_NAZIONALE_COMMISSARI = '12/20/2020 14:00:00'
 
-CELERY_BROKER_URL = "sentinel://criredis01.cri.it:26379/0;sentinel://criredis02.cri.it:26379/0;sentinel://criredis03.cri.it:26379/0"
-CELERY_RESULT_BACKEND = "sentinel://criredis01.cri.it:26379/0;sentinel://criredis02.cri.it:26379/0;sentinel://criredis03.cri.it:26379/0"
+INIZIO_ASSEMBLEA_MATERA_VOLONTARI = '04/20/2021 11:00:00'
+FINE_ASSEMBLEA_MATERA_VOLONTARI = '04/20/2021 19:00:00'
+
+
+_redis_host = os.environ.get('REDIS_HOST', "criredis")
+CELERY_BROKER_URL = "sentinel://{}01.cri.it:26379/0;sentinel://{}02.cri.it:26379/0;sentinel://{}03.cri.it:26379/0".format(_redis_host, _redis_host, _redis_host)
+CELERY_RESULT_BACKEND = "sentinel://{}01.cri.it:26379/0;sentinel://{}02.cri.it:26379/0;sentinel://{}03.cri.it:26379/0".format(_redis_host, _redis_host, _redis_host)
 CELERY_BROKER_TRANSPORT_OPTIONS = {"visibility_timeout": 3600, "master_name": os.environ.get('REDIS_MASTER', "django")}
 CELERY_RESULT_BACKEND_TRANSPORT_OPTIONS = {"visibility_timeout": 3600, "master_name": os.environ.get('REDIS_MASTER', "django")}

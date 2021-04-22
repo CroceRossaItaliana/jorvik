@@ -1,3 +1,4 @@
+import calendar
 from datetime import datetime, timedelta, date
 from collections import OrderedDict
 
@@ -7,6 +8,7 @@ from django.shortcuts import redirect, get_object_or_404, Http404, HttpResponse
 from django.core.urlresolvers import reverse
 from django.template.loader import get_template
 from django.contrib import messages
+from django.utils.safestring import mark_safe
 from django.utils.timezone import now
 
 from anagrafica.models import Persona, Documento, Sede
@@ -17,6 +19,7 @@ from anagrafica.costanti import NAZIONALE, REGIONALE, LOCALE
 from anagrafica.permessi.costanti import (GESTIONE_CORSI_SEDE,
     GESTIONE_CORSO, ERRORE_PERMESSI, COMPLETO, MODIFICA, RUBRICA_DELEGATI_OBIETTIVO_ALL)
 from curriculum.models import Titolo, TitoloPersonale
+from sala_operativa.utils import CalendarTurniSO
 from ufficio_soci.elenchi import ElencoPerTitoliCorso
 from autenticazione.funzioni import pagina_privata, pagina_pubblica
 from base.errori import errore_generico, messaggio_generico
@@ -32,7 +35,7 @@ from .forms import (ModuloCreazioneCorsoBase, ModuloModificaLezione,
     ModuloModificaCorsoBase, ModuloIscrittiCorsoBaseAggiungi, FormCommissioneEsame,
     FormVerbaleCorso, FormRelazioneDelDirettoreCorso)
 from .classes import GeneraReport, GestioneLezioni
-from .utils import costruisci_titoli
+from .utils import costruisci_titoli, CalendarCorsi
 from .training_api import TrainingApi
 
 
@@ -1657,3 +1660,46 @@ def aspirante_corso_base_annulla(request, me, pk):
     corso.annulla(me)
 
     return redirect(reverse('formazione:index'))
+
+
+@pagina_privata
+def formazione_calendar(request, me=None):
+
+    current_month = timezone.now().today()
+    year = now().year
+    month = now().month
+
+    # Navigazione mesi
+    current_month_get = request.GET.get('m')
+    if current_month_get:
+        try:
+            year, month = [int(i) for i in current_month_get.split('-')]
+            current_month = datetime(year=year, month=month, day=1)
+        except:
+            pass
+
+    # Lavorazione date
+    _, num_days = calendar.monthrange(year, month)
+    inizio_mese = current_month.replace(day=1, hour=0, minute=0, second=0)
+    fine_mese = inizio_mese.replace(day=num_days) + timedelta(days=1)
+
+    # Estraggo i corsi
+    sedi = me.oggetti_permesso(GESTIONE_CORSI_SEDE)
+    sedi_pk = []
+    for sede in sedi:
+        sedi_pk.extend(sede.ottieni_discendenti(includimi=True).values_list('pk', flat=True))
+
+    # Lavorazione calendario
+    calendario = CalendarCorsi(
+        current_month, CorsoBase.objects.filter(sede_id__in=sedi_pk, stato=CorsoBase.ATTIVO)#.exclude(stato=CorsoBase.ANNULLATO)
+    )
+    malendario_mensile_html = calendario.formatmonth(withyear=True)
+
+    context = {
+        "inizio": inizio_mese,
+        "fine": fine_mese,
+        'calendario': mark_safe(malendario_mensile_html),
+        'next_month': CalendarTurniSO.next_month(inizio_mese),
+        'prev_month': CalendarTurniSO.prev_month(inizio_mese),
+    }
+    return 'formazione_calendar.html', context

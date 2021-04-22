@@ -13,6 +13,7 @@ from .areas import OBBIETTIVI_STRATEGICI
 from .validators import cv_attestato_file_upload_path
 
 
+
 class Titolo(ModelloSemplice, ConVecchioID):
     QUALIFICHE_REGRESSO_DEADLINE = '01/06/2021'
     QUALIFICHE_REGRESSO_DEADLINE_DATE = date(year=2021, month=6, day=1)
@@ -24,6 +25,9 @@ class Titolo(ModelloSemplice, ConVecchioID):
     TITOLO_STUDIO       = "TS"
     TITOLO_CRI          = "TC"
     ALTRI_TITOLI        = "AT"
+    CONOSCENZA_LINGUISTICHE = "CL"
+    ESPERIENZE_PROFESSIONALI = "CS"
+
     TIPO = (
         (COMPETENZA_PERSONALE, "Competenza Personale"),
         (PATENTE_CIVILE, "Patente Civile"),
@@ -31,6 +35,8 @@ class Titolo(ModelloSemplice, ConVecchioID):
         (TITOLO_STUDIO, "Titolo di Studio"),
         (TITOLO_CRI, "Qualifica CRI"),
         (ALTRI_TITOLI, "Altra Qualifica"),
+        (CONOSCENZA_LINGUISTICHE, "Conoscenze Linguistiche"),
+        (ESPERIENZE_PROFESSIONALI, "Esperienze Professionali"),
     )
 
     CDF_LIVELLO_I = '1'
@@ -53,12 +59,22 @@ class Titolo(ModelloSemplice, ConVecchioID):
         (CORSO_EQUIPOLLENZA, 'Corso equipollenza'),
     )
 
+    DIPLOMA = 'DI'
+    LAUREA = 'LA'
+
+    TIPO_TOTOLO_STUDIO = (
+        (DIPLOMA, 'DIPLOMA'),
+        (LAUREA, 'LAUREA')
+    )
     goal = models.ForeignKey('TitleGoal', null=True, blank=True,
         verbose_name="Obbiettivo", on_delete=models.PROTECT)
     nome = models.CharField(max_length=255, db_index=True)
     area = models.CharField(max_length=5, null=True, blank=True, db_index=True,
         choices=OBBIETTIVI_STRATEGICI)
+
     tipo = models.CharField(max_length=2, choices=TIPO, db_index=True)
+    tipo_titolo_studio = models.CharField(max_length=2, choices=TIPO_TOTOLO_STUDIO, db_index=True, null=True,
+                                          blank=True)
     modalita_titoli_cri = models.CharField(max_length=2, choices=MODALITA, db_index=True, null=True, blank=True)
     moodle = models.BooleanField(default=False, blank=True)
     sigla = models.CharField(max_length=50, null=True, blank=True)
@@ -173,6 +189,22 @@ class Titolo(ModelloSemplice, ConVecchioID):
         return str(self.nome)
 
 
+class TitoloSkill(ModelloSemplice):
+    nome = models.CharField(max_length=100)
+    titolo = models.ForeignKey(Titolo, on_delete=models.CASCADE)
+
+    def __str__(self):
+        return str(self.nome)
+
+
+class TitoloSpecializzazione(ModelloSemplice):
+    nome = models.CharField(max_length=100)
+    titolo = models.ForeignKey(Titolo, on_delete=models.CASCADE)
+
+    def __str__(self):
+        return str(self.nome)
+
+
 class TitleGoal(models.Model):
     unit_reference = models.CharField("Unità riferimento", max_length=3,
         null=True, blank=True, choices=OBBIETTIVI_STRATEGICI)
@@ -263,17 +295,93 @@ class TitoloPersonale(ModelloSemplice, ConMarcaTemporale, ConAutorizzazioni):
         (ALTRO, 'Altro'),
     )
 
+    SCUOLA_OBBLIGO = 'SO'
+    DIPLOMA = 'DI'
+    LAUREANDO_3_ANNI = 'L3'
+    LAUREANDO_SPECIALIZZAZIONE = 'LS'
+    LAUREA = 'LS'
+    LAUREA_VECCHIO_ORDINAMENTO = 'LV'
+    LAUREA_SPECIALISTICA = 'LS'
+    SPEZIALIZZAZIONE_POST_LAURA = 'SP'
+    MASTER = 'MA'
+    DOTTORATO = 'DT'
+
+    TITOLO_DI_STUDIO = (
+        (SCUOLA_OBBLIGO, "Scuola dell'obbligo"),
+        (DIPLOMA, "Diploma"),
+        (LAUREANDO_3_ANNI, "Laureando/a 3 anni"),
+        (LAUREANDO_SPECIALIZZAZIONE, "Laureando/a specialistica o vecchio ordinamento"),
+        (LAUREA, "Laurea 3 anni"),
+        (LAUREA_VECCHIO_ORDINAMENTO, "Laurea vecchio ordinamento"),
+        (LAUREA_SPECIALISTICA, "Laurea specialistica"),
+        (SPEZIALIZZAZIONE_POST_LAURA, "Specializzazione post-laurea"),
+        (MASTER, "Master"),
+        (DOTTORATO, "Dottorato"),
+    )
+
+    TITOLO_DI_STUDIO_LAUREE = [
+        LAUREANDO_3_ANNI, LAUREANDO_SPECIALIZZAZIONE, LAUREA, LAUREA_VECCHIO_ORDINAMENTO,
+        LAUREA_SPECIALISTICA, SPEZIALIZZAZIONE_POST_LAURA, MASTER, DOTTORATO
+    ]
+
+    BASE = 'A1'
+    ELEMENTARE = 'A2'
+    PRE_INTERMEDIO = 'B1'
+    INTERMEDIO = 'B2'
+    POST_INTERMEDIO = 'C1'
+    AVANZATO = 'C2'
+    MADRE_LINGUA = 'ML'
+
+    LIVELLO_LINGUISTICO = (
+        (BASE, 'Base A1'),
+        (ELEMENTARE, 'Elementare A2'),
+        (PRE_INTERMEDIO, 'Pre-intermedio B1'),
+        (INTERMEDIO, 'Intermedio B2'),
+        (POST_INTERMEDIO, 'Post-intermedio C1'),
+        (AVANZATO, 'Avanzato C2'),
+        (MADRE_LINGUA, 'Madrelingua'),
+    )
+
+    livello_linguistico_orale = models.CharField(max_length=2, blank=True,
+                                           null=True, choices=LIVELLO_LINGUISTICO)
+    livello_linguistico_lettura = models.CharField(max_length=2, blank=True,
+                                           null=True, choices=LIVELLO_LINGUISTICO)
+    livello_linguistico_scrittura = models.CharField(max_length=2, blank=True,
+                                           null=True, choices=LIVELLO_LINGUISTICO)
+
     settore_di_riferimento = models.CharField(max_length=2, blank=True,
                                            null=True, choices=SETTORE_DI_RIFERIMENTO)
 
     tipo_altro_titolo = models.CharField(max_length=2, blank=True,
                                            null=True, choices=TIPO_ALTRO_TITOLO)
 
+    tipo_titolo_di_studio = models.CharField(
+        max_length=2, blank=True, null=True, choices=TITOLO_DI_STUDIO
+    )
+
     titolo = models.ForeignKey(Titolo, on_delete=models.CASCADE)
     argomento = models.CharField(max_length=100, blank=True, null=True)
     persona = models.ForeignKey("anagrafica.Persona",
                                 related_name="titoli_personali",
                                 on_delete=models.CASCADE)
+
+    NO = 'NO'
+    INFERIORE_A_3 = 'I3'
+    CUMULATIVO_3_6 = 'C6'
+    CUMULATIVO_1_ANNO = 'CA'
+    CUMULATIVO_OLTRE = 'CO'
+
+    ESPERIENZA = (
+        (INFERIORE_A_3, 'No'),
+        (CUMULATIVO_3_6, 'Si, periodo cumulativo da tre a sei mesi'),
+        (CUMULATIVO_1_ANNO, 'Si, periodo cumulativo da sei a un anno'),
+        (CUMULATIVO_OLTRE, 'Si, periodo cumulativo oltre un anno'),
+    )
+
+    esperienza = models.CharField(
+        max_length=2, blank=True, null=True, choices=ESPERIENZA
+    )
+    codice_albo = models.CharField(max_length=50, blank=True, null=True)
 
     data_ottenimento = models.DateField(null=True, blank=True,
         help_text="Data di ottenimento del Titolo o Patente. "
@@ -315,6 +423,9 @@ class TitoloPersonale(ModelloSemplice, ConMarcaTemporale, ConAutorizzazioni):
                                              blank=True,
                                              on_delete=models.SET_NULL,
                                              related_name='titolo_ottenuto')
+
+    specializzazione = models.ForeignKey(TitoloSpecializzazione, on_delete=models.CASCADE, null=True, blank=True,)
+    skills = models.ManyToManyField(TitoloSkill, blank=True)
 
     class Meta:
         verbose_name = "Titolo personale"

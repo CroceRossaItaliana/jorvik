@@ -1338,9 +1338,19 @@ class Persona(ModelloSemplice, ConMarcaTemporale, ConAllegati, ConVecchioID):
 
     @property
     def delgato_regionale_monitoraggio_trasparenza(self):
+        deleghe = []
         for delega in self.deleghe_attuali(tipo=DELEGATO_AREA):
             if 'Monitoraggio Regionale Trasparenza'.lower() in delega.oggetto.__str__().lower():
-                return delega.oggetto.sede.id
+                deleghe.append(delega.oggetto.sede.id)
+        return deleghe
+
+    @property
+    def is_delgato_regionale_monitoraggio_trasparenza(self):
+        delegato_area = False
+        for delega in self.deleghe_attuali(tipo=DELEGATO_AREA):
+            if 'Monitoraggio Regionale Trasparenza'.lower() in delega.oggetto.__str__().lower():
+                delegato_area = True
+        return delegato_area
 
     @property
     def is_responsabile_area_monitoraggio_trasparenza(self):
@@ -1361,6 +1371,15 @@ class Persona(ModelloSemplice, ConMarcaTemporale, ConAllegati, ConVecchioID):
         for delega in self.deleghe_attuali(tipo=DELEGATO_AREA):
             if 'Trasparenza'.lower() in delega.oggetto.__str__().lower():
                 return delega
+
+    @property
+    def delege_responsabile_area_trasparenza(self):
+        deleghe = []
+        for delega in self.deleghe_attuali(tipo=DELEGATO_AREA):
+            if 'Trasparenza'.lower() in delega.oggetto.__str__().lower() and 'Monitoraggio'.lower() not in delega.oggetto.__str__().lower():
+                deleghe.append(delega)
+
+        return deleghe
 
     @property
     def is_delega_responsabile_area_trasparenza(self):

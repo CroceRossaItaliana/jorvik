@@ -20,20 +20,29 @@
             </div>
         </div>-->
 
-        {% if me|partecipazione_riunione %}
-            <div class="col col-md-3" style="padding-left: 5px; padding-right: 5px;" id="div_riunione">
-                <div class="alert alert-success" role="alert" style="text-align: center; margin:0; display: grid;">
-                    <span class="glyphicon glyphicon-facetime-video" aria-hidden="true" style="font-size:48px; margin-bottom: 0.5em;"></span>
-                    <a id="riunione" class="alert-link testi-lunghi hand" data-toggle="tooltip" data-placement="top" title="Assemblea Nazionale">Assemblea Nazionale</a>
-                </div>
-            </div>
-        {% endif %}
+{#        {% if me|partecipazione_riunione %}#}
+{#            <div class="col col-md-3" style="padding-left: 5px; padding-right: 5px;" id="div_riunione">#}
+{#                <div class="alert alert-success" role="alert" style="text-align: center; margin:0; display: grid;">#}
+{#                    <span class="glyphicon glyphicon-facetime-video" aria-hidden="true" style="font-size:48px; margin-bottom: 0.5em;"></span>#}
+{#                    <a id="riunione" class="alert-link testi-lunghi hand" data-toggle="tooltip" data-placement="top" title="Assemblea Nazionale">Assemblea Nazionale</a>#}
+{#                </div>#}
+{#            </div>#}
+{#        {% endif %}#}
+{##}
+{#        {% if me|partecipazione_riunione_consiglieri %}#}
+{#            <div class="col col-md-3" style="padding-left: 5px; padding-right: 5px;" id="div_riunione_consiglieri">#}
+{#                <div class="alert alert-success" role="alert" style="text-align: center; margin:0; display: grid;">#}
+{#                    <span class="glyphicon glyphicon-facetime-video" aria-hidden="true" style="font-size:48px; margin-bottom: 0.5em;"></span>#}
+{#                    <a id="riunione_consiglieri" class="alert-link testi-lunghi hand" data-toggle="tooltip" data-placement="top" title="Assemblea Giovani">Assemblea Giovani</a>#}
+{#                </div>#}
+{#            </div>#}
+{#        {% endif %}#}
 
-        {% if me|partecipazione_riunione_consiglieri %}
-            <div class="col col-md-3" style="padding-left: 5px; padding-right: 5px;" id="div_riunione_consiglieri">
+        {% if me|partecipazione_riunione_volontari %}
+            <div class="col col-md-3" style="padding-left: 5px; padding-right: 5px;" id="div_riunione_volontari">
                 <div class="alert alert-success" role="alert" style="text-align: center; margin:0; display: grid;">
                     <span class="glyphicon glyphicon-facetime-video" aria-hidden="true" style="font-size:48px; margin-bottom: 0.5em;"></span>
-                    <a id="riunione_consiglieri" class="alert-link testi-lunghi hand" data-toggle="tooltip" data-placement="top" title="Assemblea Giovani">Assemblea Giovani</a>
+                    <a id="riunione_volontari" class="alert-link testi-lunghi hand" data-toggle="tooltip" data-placement="top" title="Assemblea soci">Assemblea soci</a>
                 </div>
             </div>
         {% endif %}
@@ -134,7 +143,7 @@
         <div class="col col-md-3" style="padding-left: 5px; padding-right: 5px;">
             <div class="alert alert-success" role="alert" style="text-align: center; margin:0; display: grid;">
               <span class="glyphicon glyphicon glyphicon-book" aria-hidden="true" style="font-size:48px; margin-bottom: 0.5em;"></span>
-              <a target="_blank" href="https://datafiles.gaia.cri.it/media/filer_public/50/0b/500b1177-f7ae-4bea-9adc-9fac12684d45/strategia_cri_verso_la_gioventu.pdf" class="alert-link testi-lunghi" data-toggle="tooltip" data-placement="top" title="Strategia CRI verso la Gioventù">Strategia CRI verso la Gioventù</a>
+              <a target="_blank" href="https://datafiles.gaia.cri.it/media/filer_public/44/68/44687855-bf7d-441b-b262-643dc2d00a84/giovani_cri.zip" class="alert-link testi-lunghi" data-toggle="tooltip" data-placement="top" title="Giovani CRI">Giovani CRI</a>
             </div>
         </div>
 
@@ -239,14 +248,75 @@
 
     {% include "base_privacy_policy_popup.html" %}
     <script>
-        const url_riunione = "{% url 'presidente:inscrizione_evento' %}";
-        const url_riunione_consiglieri = "{% url 'utente:inscrizione_evento_consiglieri' %}";
+        {#const url_riunione = "{% url 'presidente:inscrizione_evento' %}";#}
+        {#const url_riunione_consiglieri = "{% url 'utente:inscrizione_evento_consiglieri' %}";#}
+        const url_riunione_volontari = "{% url 'utente:inscrizione_evento_volontari' %}";
         const _csrf_token = "{{ csrf_token }}";
     </script>
 
+{#    <script>#}
+{#        var load = false;#}
+{#        $('#riunione').on('click', function(e) {#}
+{#            var ancor = $(this);#}
+{#            if (load === false) {#}
+{#                load = true;#}
+{#                ancor.toggleClass('wait');#}
+{#                ancor.toggleClass('hand');#}
+{#                $.ajax({#}
+{#                    type: "POST",#}
+{#                    url: url_riunione,#}
+{#                    data: {#}
+{#                        csrf_token: _csrf_token,#}
+{#                    },#}
+{#                    success: function (data) {#}
+{#                        load = false;#}
+{#                        ancor.toggleClass('wait');#}
+{#                        ancor.toggleClass('hand');#}
+{#                        window.open(data['link'], '_blank');#}
+{#                    },#}
+{#                    error: function (jqXHR, textStatus) {#}
+{#                        load = false;#}
+{#                        ancor.toggleClass('wait');#}
+{#                        ancor.toggleClass('hand');#}
+{#                    },#}
+{#                });#}
+{#            }#}
+{#        });#}
+{#    </script>#}
+{##}
+{#    <script>#}
+{#        var load = false;#}
+{#        $('#riunione_consiglieri').on('click', function(e) {#}
+{#            var ancor = $(this);#}
+{#            if (load === false) {#}
+{#                load = true;#}
+{#                ancor.toggleClass('wait');#}
+{#                ancor.toggleClass('hand');#}
+{#                $.ajax({#}
+{#                    type: "POST",#}
+{#                    url: url_riunione_consiglieri,#}
+{#                    data: {#}
+{#                        csrf_token: _csrf_token,#}
+{#                    },#}
+{#                    success: function (data) {#}
+{#                        load = false;#}
+{#                        ancor.toggleClass('wait');#}
+{#                        ancor.toggleClass('hand');#}
+{#                        window.open(data['link'], '_blank');#}
+{#                    },#}
+{#                    error: function (jqXHR, textStatus) {#}
+{#                        load = false;#}
+{#                        ancor.toggleClass('wait');#}
+{#                        ancor.toggleClass('hand');#}
+{#                    },#}
+{#                });#}
+{#            }#}
+{#        });#}
+{#    </script>#}
+
     <script>
         var load = false;
-        $('#riunione').on('click', function(e) {
+        $('#riunione_volontari').on('click', function(e) {
             var ancor = $(this);
             if (load === false) {
                 load = true;
@@ -254,7 +324,7 @@
                 ancor.toggleClass('hand');
                 $.ajax({
                     type: "POST",
-                    url: url_riunione,
+                    url: url_riunione_volontari,
                     data: {
                         csrf_token: _csrf_token,
                     },
@@ -274,34 +344,5 @@
         });
     </script>
 
-    <script>
-        var load = false;
-        $('#riunione_consiglieri').on('click', function(e) {
-            var ancor = $(this);
-            if (load === false) {
-                load = true;
-                ancor.toggleClass('wait');
-                ancor.toggleClass('hand');
-                $.ajax({
-                    type: "POST",
-                    url: url_riunione_consiglieri,
-                    data: {
-                        csrf_token: _csrf_token,
-                    },
-                    success: function (data) {
-                        load = false;
-                        ancor.toggleClass('wait');
-                        ancor.toggleClass('hand');
-                        window.open(data['link'], '_blank');
-                    },
-                    error: function (jqXHR, textStatus) {
-                        load = false;
-                        ancor.toggleClass('wait');
-                        ancor.toggleClass('hand');
-                    },
-                });
-            }
-        });
-    </script>
 
 {% endblock %}

@@ -394,12 +394,11 @@ class GestioneLezioni:
         return redirect(self.corso.url_lezioni)
 
     def avvisare_docente_e_presidente(self, lezione):
-        pass
-        # # Avvisa docente e il suo presidente della nomina
-        # lezione.avvisa_docente_nominato_al_corso(self.me)
-        #
-        # # Se non è del comitato che organizza il corso
-        # lezione.avvisa_presidente_docente_nominato()
+        # Avvisa docente e il suo presidente della nomina
+        lezione.avvisa_docente_nominato_al_corso(self.me)
+
+        # Se non è del comitato che organizza il corso
+        lezione.avvisa_presidente_docente_nominato()
 
     def get_context(self):
         return 'aspirante_corso_base_scheda_lezioni.html', {

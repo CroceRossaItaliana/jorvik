@@ -12,7 +12,10 @@ from prettyjson import PrettyJSONWidget
 from anagrafica.models import Persona
 from base.admin import InlineAutorizzazione
 from gruppi.readonly_admin import ReadonlyAdminMixin
-from .models import (Titolo, TitleGoal, TitoloPersonale)
+from .areas import OBBIETTIVO_STRATEGICO_SALUTE, OBBIETTIVO_STRATEGICO_SOCIALE, OBBIETTIVO_STRATEGICO_EMERGENZA, \
+    OBBIETTIVO_STRATEGICO_ADVOCACY, OBBIETTIVO_STRATEGICO_SALUTE_SICUREZZA, OBBIETTIVO_STRATEGICO_GIOVANI, \
+    OBBIETTIVO_STRATEGICO_MIGRAZIONI, OBBIETTIVO_STRATEGICO_COOPERAZIONI_INT, OBBIETTIVO_STRATEGICO_SVILUPPO
+from .models import (Titolo, TitleGoal, TitoloPersonale, TitoloSpecializzazione, TitoloSkill)
 
 
 @admin.register(Titolo)
@@ -41,6 +44,255 @@ class AdminTitolo(ReadonlyAdminMixin, admin.ModelAdmin):
     goal_obbiettivo_stragetico.short_description = 'Obiettivo strategico di riferimento'
     goal_propedeuticita.short_description = 'Propedeuticità'
     goal_unit_reference.short_description = 'Unità  riferimento'
+
+    OBBIETTIVI_STRATEGICI = {
+        'salute': 1,
+        'salute e sicurezza': 2,
+        'inclusione sociale': 3,
+        'emergenza': 4,
+        'principi e valori': 5,
+        'giovani': 6,
+        'sviluppo organizzativo': 7,
+        'migrazioni': 8,
+        'cooperazione internazionale': 9,
+    }
+
+
+    def get_urls(self):
+        urls = super(AdminTitolo, self).get_urls()
+        custom_urls = [
+            url(r'^titoli/lingua/$',
+                self.admin_site.admin_view(self.import_titoli_lingua),
+                name='anagrafica_titolo_import_titoli_lingua'),
+            url(r'^titoli/studio/$',
+                self.admin_site.admin_view(self.import_titoli_studio),
+                name='anagrafica_titolo_import_titoli_studio'),
+            url(r'^titoli/professionali/$',
+                self.admin_site.admin_view(self.import_titoli_professionali),
+                name='anagrafica_titolo_import_titoli_professionali'),
+        ]
+
+        return custom_urls + urls
+
+    def _import_titoli_lingua(self, request, file):
+        titoli_non_caricati = []
+
+        count = {
+            'totale': 0,
+            'inserite': 0,
+            'non_inserite': 0
+        }
+
+        fieldnames = (
+            'nome',
+        )
+
+        reader = csv.DictReader(io.StringIO(file.read().decode('utf-8')), delimiter=';', fieldnames=fieldnames)
+
+        next(reader)
+        for row in reader:
+            count['totale'] += 1
+
+            nome = row['nome']
+
+            if not Titolo.objects.filter(tipo=Titolo.CONOSCENZA_LINGUISTICHE, nome__exact=nome.capitalize()).exists():
+                titolo = Titolo(tipo=Titolo.CONOSCENZA_LINGUISTICHE, nome=nome.capitalize())
+                titolo.save()
+                count['inserite'] += 1
+            else:
+                count['non_inserite'] += 1
+                titoli_non_caricati.append('Non è possibilte aggiungere "{}" già esiste un titolo con questo nome'.format(nome))
+
+        return titoli_non_caricati, count
+
+    def import_titoli_lingua(self, request):
+
+        contesto = {
+            'opts': self.model._meta
+        }
+
+        if request.POST:
+            files = request.FILES.getlist('file')
+            for file in files:
+                if not file.name.split('.')[1].lower() in 'csv':
+                    messages.error(request, "Il file deve avere un fomato .csv separato da ;")
+
+            titoli_non_caricate, counts = self._import_titoli_lingua(request, files[0])
+
+            contesto['counts'] = counts
+
+            if titoli_non_caricate:
+                for warning in titoli_non_caricate:
+                    messages.warning(request, warning)
+
+        return render(request, 'admin/curriculum/import_titoli_lingua.html', contesto)
+
+    def _import_titoli_studio(self, request, file):
+        titoli_non_caricati = []
+
+        count = {
+            'totale': 0,
+            'inserite': 0,
+            'non_inserite': 0
+        }
+
+        fieldnames = (
+            'nome', 'tipo',
+        )
+
+        reader = csv.DictReader(io.StringIO(file.read().decode('utf-8')), delimiter=';', fieldnames=fieldnames)
+
+        next(reader)
+        for row in reader:
+            count['totale'] += 1
+            nome = row['nome']
+            tipo = row['tipo']
+
+            if tipo not in [Titolo.DIPLOMA, Titolo.LAUREA]:
+                count['non_inserite'] += 1
+                titoli_non_caricati.append(
+                    'Non è possibilte aggiungere "{}" il tipo non è {} '.format(nome, Titolo.TIPO_TOTOLO_STUDIO)
+                )
+            elif not Titolo.objects.filter(
+                    tipo=Titolo.TITOLO_STUDIO,
+                    nome__exact=nome.capitalize(),
+                    tipo_titolo_studio=tipo
+            ).exists():
+                titolo = Titolo(
+                    tipo=Titolo.TITOLO_STUDIO,
+                    nome=nome.capitalize(),
+                    tipo_titolo_studio=tipo
+                )
+                titolo.save()
+                count['inserite'] += 1
+            else:
+                count['non_inserite'] += 1
+                titoli_non_caricati.append(
+                    'Non è possibilte aggiungere "{}" già esiste un titolo con questo nome'.format(nome)
+                )
+
+        return titoli_non_caricati, count
+
+    def import_titoli_studio(self, request):
+
+        contesto = {
+            'opts': self.model._meta
+        }
+
+        if request.POST:
+            files = request.FILES.getlist('file')
+            for file in files:
+                if not file.name.split('.')[1].lower() in 'csv':
+                    messages.error(request, "Il file deve avere un fomato .csv separato da ;")
+
+            titoli_non_caricate, counts = self._import_titoli_studio(request, files[0])
+
+            contesto['counts'] = counts
+
+            if titoli_non_caricate:
+                for warning in titoli_non_caricate:
+                    messages.warning(request, warning)
+
+        return render(request, 'admin/curriculum/import_titoli_studio.html', contesto)
+
+    def _import_titoli_professionali(self, request, file):
+        titoli_non_caricati = []
+
+        count = {
+            'totale': 0,
+            'inserite': 0,
+            'non_inserite': 0
+        }
+
+        fieldnames = (
+            'area', 'professione', 'specializazioni', 'skills'
+        )
+
+        reader = csv.DictReader(io.StringIO(file.read().decode('utf-8')), delimiter=';', fieldnames=fieldnames)
+
+        next(reader)
+        for row in reader:
+            count['totale'] += 1
+            area = row['area'].lower()
+
+            if area in self.OBBIETTIVI_STRATEGICI.keys():
+                area = self.OBBIETTIVI_STRATEGICI[area]
+            else:
+                area = None
+
+            professione = row['professione']
+            specializazioni = row['specializazioni'].split(',')
+            skills = row['skills'].split(',')
+
+            titoli = Titolo.objects.filter(
+                tipo=Titolo.ESPERIENZE_PROFESSIONALI,
+                nome__exact=professione.capitalize(),
+                area=area
+            )
+
+            # Se non esieste lo creo
+            if not titoli.exists():
+                titolo = Titolo(
+                    tipo=Titolo.ESPERIENZE_PROFESSIONALI,
+                    nome=professione.capitalize(),
+                    area=area
+                )
+                titolo.save()
+                count['inserite'] += 1
+            else:
+                count['non_inserite'] += 1
+                titolo = titoli.first()
+                titoli_non_caricati.append(
+                    'Titolo {} già esistente aggiorno skill e specializzazioni'.format(titolo)
+                )
+
+            for specializzazione in specializazioni:
+                specializzazioni = TitoloSpecializzazione.objects.filter(
+                    nome__exact=specializzazione.capitalize(),
+                    titolo=titolo
+                )
+                if not specializzazioni.exists():
+                    s = TitoloSpecializzazione(
+                        nome=specializzazione.capitalize(),
+                        titolo=titolo
+                    )
+                    s.save()
+
+            for skill in skills:
+                skills = TitoloSkill.objects.filter(
+                    nome__exact=skill.capitalize(),
+                    titolo=titolo
+                )
+                if not skills.exists():
+                    s = TitoloSkill(
+                        nome=skill.capitalize(),
+                        titolo=titolo
+                    )
+                    s.save()
+
+        return titoli_non_caricati, count
+
+    def import_titoli_professionali(self, request):
+
+        contesto = {
+            'opts': self.model._meta
+        }
+
+        if request.POST:
+            files = request.FILES.getlist('file')
+            for file in files:
+                if not file.name.split('.')[1].lower() in 'csv':
+                    messages.error(request, "Il file deve avere un fomato .csv separato da ;")
+
+            titoli_non_caricate, counts = self._import_titoli_professionali(request, files[0])
+
+            contesto['counts'] = counts
+
+            if titoli_non_caricate:
+                for warning in titoli_non_caricate:
+                    messages.warning(request, warning)
+
+        return render(request, 'admin/curriculum/import_titoli_professionali.html', contesto)
 
 
 @admin.register(TitleGoal)

@@ -1,4 +1,5 @@
 from datetime import timedelta
+import logging
 
 from django.contrib import messages
 from django.core.urlresolvers import reverse
@@ -18,8 +19,12 @@ from formazione.models import CorsoBase
 from posta.models import Messaggio
 
 from .forms import (FormAddQualificaCRI, ModuloNuovoTitoloPersonale, ModuloDettagliTitoloPersonale,
-                    FormAddAltreQualifica)
+                    FormAddAltreQualifica, FormAddTitoloStudio, FormAddConoscenzeLinguistiche, FormAddCompetenzeSkills)
 from .models import Titolo, TitoloPersonale
+from .utils import carica_altri_titoli, carica_titolo_studio, carica_conoscenze_linguistiche, \
+    carica_esperienza_professionale
+
+logger = logging.getLogger(__name__)
 
 
 @pagina_privata
@@ -73,6 +78,9 @@ def curriculum(request, me, tipo=None):
     form = ModuloNuovoTitoloPersonale(tipo, tipo_display, request.POST or None, me=me)
     form_add_qualifica = FormAddQualificaCRI()
     form_add_altra_qualifica = FormAddAltreQualifica()
+    form_add_titolo_studio = FormAddTitoloStudio()
+    form_add_conoscenza_linguistica = FormAddConoscenzeLinguistiche()
+    form_competenze_skill = FormAddCompetenzeSkills()
 
     if form.is_valid():
         cd = form.cleaned_data
@@ -115,7 +123,7 @@ def curriculum(request, me, tipo=None):
 
             return redirect("/utente/curriculum/%s/?inserimento=ok" % tipo)
 
-    titoli = me.titoli_personali.filter(titolo__tipo=tipo)
+    titoli = me.titoli_personali.filter(titolo__tipo=tipo).order_by('-creazione', '-data_ottenimento', '-data_scadenza')
 
     context = {
         "tipo": tipo,
@@ -124,7 +132,10 @@ def curriculum(request, me, tipo=None):
         "modulo": form,
         "form_add_qualifica": form_add_qualifica,
         "form_add_altra_qualifica": form_add_altra_qualifica,
-        "titoli": titoli.order_by('-creazione', '-data_ottenimento', '-data_scadenza'),
+        "form_add_titolo_studio": form_add_titolo_studio,
+        'form_add_conoscenza_linguistica': form_add_conoscenza_linguistica,
+        "form_competenze_skill": form_competenze_skill,
+        "titoli": titoli[:3] if tipo == 'CS' else titoli,
         "titolo": titolo_selezionato
     }
     return 'cv_index.html', context
@@ -154,82 +165,48 @@ def cv_add_qualifica_cri(request, me):
 
 
 @pagina_privata
+def cv_add_titoli_studio(request, me):
+    logger.info('cv_add_titoli_studio')
+
+    cv_tc_url = '/utente/curriculum/TS/'
+    redirect_url = redirect(cv_tc_url)
+    if request.method == 'POST':
+        return carica_titolo_studio(request, me, redirect_url)
+
+    return redirect_url
+
+
+@pagina_privata
 def cv_add_qualifica_altre_cri(request, me):
     cv_tc_url = '/utente/curriculum/AT/'
     redirect_url = redirect(cv_tc_url)
 
     if request.method == 'POST':
-        form = FormAddAltreQualifica(request.POST, request.FILES)
-
-        if form.is_valid():
-            cd = form.cleaned_data
-            tipo_altro = cd['tipo_altro_titolo']
-            if tipo_altro == TitoloPersonale.PARTNERSHIP:
-                titolo = Titolo.objects.get(pk=cd['titoli_in_partnership'])
-                if cd['no_argomento']:
-                    argomento = cd['argomento_nome']
-                    argomenti = titolo.argomenti.split(',')
-                    argomenti.append(argomento)
-                    titolo.argomenti = ','.join(argomenti)
-                    titolo.save()
-                else:
-                    argomento = ','.join(cd['argomento'])
-
-                titolo_personale = TitoloPersonale(
-                    persona=me,
-                    confermata=True,
-                    data_ottenimento=cd['data_ottenimento'],
-                    titolo=Titolo.objects.get(pk=cd['titoli_in_partnership']),
-                    attestato_file=cd['attestato_file'],
-                    argomento=argomento,
-                    tipo_altro_titolo=cd['tipo_altro_titolo']
-                )
-                titolo_personale.save()
-            elif tipo_altro == TitoloPersonale.ALTRO:
-                no_corso = cd['no_corso']
-                if not no_corso:
-                    titolo = cd['altri_titolo']
-                    if cd['no_argomento']:
-                        argomento = cd['argomento_nome']
-                        argomenti = titolo.argomenti.split(',')
-                        argomenti.append(argomento)
-                        titolo.argomenti = ','.join(argomenti)
-                        titolo.save()
-                    else:
-                        argomento = ','.join(cd['argomento'])
-                    titolo_personale = TitoloPersonale(
-                        persona=me,
-                        confermata=True,
-                        data_ottenimento=cd['data_ottenimento'],
-                        titolo=titolo,
-                        attestato_file=cd['attestato_file'],
-                        argomento=argomento,
-                        tipo_altro_titolo=cd['tipo_altro_titolo']
-                    )
-                    titolo_personale.save()
-                else: # DEVO CREARE IL TITOLO
-                    titolo = Titolo(
-                        tipo=Titolo.ALTRI_TITOLI,
-                        nome=cd['nome_corso'],
-                        argomenti=cd['argomento_nome']
-                    )
-                    titolo.save()
-                    titolo_personale = TitoloPersonale(
-                        persona=me,
-                        confermata=True,
-                        data_ottenimento=cd['data_ottenimento'],
-                        titolo=titolo,
-                        attestato_file=cd['attestato_file'],
-                        argomento=cd['argomento_nome'],
-                        tipo_altro_titolo=cd['tipo_altro_titolo']
-                    )
-                    titolo_personale.save()
-            else:
-                messages.error(request, "La qualifica non è stata inserita correttamente")
-                return redirect_url
-        else:
-            messages.error(request, "La qualifica non è stata inserita correttamente correggere i dati nel form")
+        return carica_altri_titoli(request, me, redirect_url)
     return redirect_url
+
+
+@pagina_privata
+def cv_add_competenze_professionali(request, me):
+    cv_tc_url = '/utente/curriculum/CS/'
+    redirect_url = redirect(cv_tc_url)
+
+    if request.method == 'POST':
+        return carica_esperienza_professionale(request, me, redirect_url)
+
+    return redirect_url
+
+
+@pagina_privata
+def cv_add_conoscenze_linguistiche(request, me):
+    cv_tc_url = '/utente/curriculum/CL/'
+    redirect_url = redirect(cv_tc_url)
+
+    if request.method == 'POST':
+        return carica_conoscenze_linguistiche(request, me, redirect_url)
+
+    return redirect_url
+
 
 @pagina_privata
 def cv_cancel(request, me, pk=None):
@@ -322,3 +299,6 @@ def argomenti_corsi_json(request):
             return JsonResponse(options_for_select)
 
         return JsonResponse({})
+
+
+

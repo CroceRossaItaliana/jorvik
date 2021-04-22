@@ -2128,10 +2128,11 @@ class LezioneCorsoBase(ModelloSemplice, ConMarcaTemporale, ConGiudizio, ConStori
 
         for docente in docenti.all():
             esito = self.corso.sede.ha_membro(docente, membro=Appartenenza.VOLONTARIO)
+
             if not esito:
                 destinatari = list()
-                for sede in docente.sedi_attuali(membro__in=[Appartenenza.VOLONTARIO,
-                                                             Appartenenza.DIPENDENTE]):
+                for sede in docente.sedi_attuali(membro__in=[Appartenenza.VOLONTARIO]):
+
                     destinatari.append(sede.presidente())
 
                 if destinatari:
@@ -2145,7 +2146,6 @@ class LezioneCorsoBase(ModelloSemplice, ConMarcaTemporale, ConGiudizio, ConStori
                     **query_kwargs).count()
 
                     if not msg_already_sent:
-                        print('GAIA- 306')
                         # GAIA 306
                         # notifica/mail presidente se nominato docente su un altro comitato
                         oggetto = "%s è nominato come docente di lezione %s" % (docente, self.nome)
