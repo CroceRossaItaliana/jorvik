@@ -444,6 +444,10 @@ FINE_ASSEMBLEA_NAZIONALE = '12/30/2020 15:00:00'
 INIZIO_ASSEMBLEA_NAZIONALE_COMMISSARI = '12/20/2020 09:00:00'
 FINE_ASSEMBLEA_NAZIONALE_COMMISSARI = '12/20/2020 14:00:00'
 
+INIZIO_ASSEMBLEA_MATERA_VOLONTARI = '04/20/2021 11:00:00'
+FINE_ASSEMBLEA_MATERA_VOLONTARI = '04/20/2021 19:00:00'
+
+
 _redis_host = os.environ.get('REDIS_HOST', "criredis")
 CELERY_BROKER_URL = "sentinel://{}01.cri.it:26379/0;sentinel://{}02.cri.it:26379/0;sentinel://{}03.cri.it:26379/0".format(_redis_host, _redis_host, _redis_host)
 CELERY_RESULT_BACKEND = "sentinel://{}01.cri.it:26379/0;sentinel://{}02.cri.it:26379/0;sentinel://{}03.cri.it:26379/0".format(_redis_host, _redis_host, _redis_host)
