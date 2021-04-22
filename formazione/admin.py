@@ -1,9 +1,11 @@
 from django.contrib import admin
+from django.contrib.admin import SimpleListFilter
 from django.contrib.contenttypes.admin import GenericTabularInline
 
 from anagrafica.admin import RAW_ID_FIELDS_DELEGA
 from anagrafica.models import Delega
 from base.admin import InlineAutorizzazione
+from curriculum.models import Titolo
 from gruppi.readonly_admin import ReadonlyAdminMixin
 from .models import (CorsoBase, CorsoFile, CorsoEstensione, CorsoLink,
     Aspirante, PartecipazioneCorsoBase, AssenzaCorsoBase, LezioneCorsoBase,
@@ -65,12 +67,27 @@ admin_corsi_base_attivi_invia_messaggi.short_description = "(Solo corsi attivi) 
                                                            "aspiranti nelle vicinanze"
 
 
+class TitoloFilter(SimpleListFilter):
+    title = 'Titoli'
+    parameter_name = 'titolo'
+
+    def lookups(self,  request, model_admin):
+        return [
+            (titolo.pk, titolo.sigla) for titolo in Titolo.objects.filter(
+                tipo=Titolo.TITOLO_CRI, sigla__isnull=False
+            ).order_by('sigla')
+        ]
+
+    def queryset(self, request, queryset):
+        return queryset.filter(titolo_cri__pk=self.value())
+
+
 @admin.register(CorsoBase)
 class AdminCorsoBase(ReadonlyAdminMixin, admin.ModelAdmin):
     search_fields = ['sede__nome', 'sede__genitore__nome', 'progressivo', 'anno', ]
     list_display = ['progressivo', 'tipo', 'stato', 'anno', 'sede',
                     'data_inizio', 'data_esame', 'delibera_file_col',]
-    list_filter = ['tipo', 'stato', 'titolo_cri__cdf_livello', 'anno', 'creazione', 'data_inizio',]
+    list_filter = ['tipo', 'stato', 'titolo_cri__cdf_livello', 'anno', 'creazione', 'data_inizio', TitoloFilter]
     raw_id_fields = RAW_ID_FIELDS_CORSOBASE
     inlines = [InlineDelegaCorsoBase, InlinePartecipazioneCorsoBase,
                InlineInvitoCorsoBase, InlineLezioneCorsoBase, InlineEstensioneCorso]
