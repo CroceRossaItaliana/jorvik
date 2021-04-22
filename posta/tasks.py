@@ -1,10 +1,12 @@
 from celery import shared_task
 from celery.utils.log import get_task_logger
 
+from base.classes.tasks import TransactionAwareTask
+
 logger = get_task_logger(__name__)
 
 
-@shared_task(bind=True)
+@shared_task(bind=True, base=TransactionAwareTask)
 def invia_mail(self, pk):
     from .models import Messaggio
 
@@ -33,7 +35,7 @@ def invia_mail(self, pk):
     messaggio.save()
 
 
-@shared_task(bind=True)
+@shared_task(bind=True, base=TransactionAwareTask)
 def invia_mail_forzato(self, pk_tuple):
     """
     Questo task invia forzatamente la mail.
