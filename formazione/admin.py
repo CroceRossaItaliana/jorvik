@@ -79,6 +79,8 @@ class TitoloFilter(SimpleListFilter):
         ]
 
     def queryset(self, request, queryset):
+        if not self.value():
+            return queryset.all()
         return queryset.filter(titolo_cri__pk=self.value())
 
 
