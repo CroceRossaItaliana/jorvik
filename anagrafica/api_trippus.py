@@ -72,6 +72,11 @@ def trippus_booking(persona=None, access_token=''):
                   "type": "Standard"
                 },
                 {
+                  "key": "Codice Fiscale",
+                  "value": persona.codice_fiscale,
+                  "type": "Web"
+                } if persona.codice_fiscale else None,
+                {
                   "key": "Comitato",
                   "value": sede.nome,
                   "type": "Web"
