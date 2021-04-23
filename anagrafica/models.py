@@ -1993,6 +1993,19 @@ class Sede(ModelloAlbero, ConMarcaTemporale, ConGeolocalizzazione, ConVecchioID,
 
     __attiva_default = None
 
+    INGLESE = "ING"
+    TEDESCO = "TED"
+    LINGUA = (
+        (INGLESE, "Inglese"),
+        (TEDESCO, "Tedesco"),
+    )
+    seconda_lingua = models.CharField(max_length=3, choices=LINGUA, default=INGLESE, db_index=True)
+    comitato_seconda_lingua = models.CharField(
+        max_length=254,
+        blank=True,
+        null=True,
+        help_text="Inserisci il nome del comitato nell'altra lingua. Es: Komitee Bozen")
+
     def sorgente_slug(self):
         if self.estensione == PROVINCIALE:
             suffisso = '-p'
