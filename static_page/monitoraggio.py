@@ -397,7 +397,7 @@ MONITORAGGIOTYPE = {
 }
 
 
-class TypeFormResponsesTrasparenzaCheck:
+class TypeFormResponsesCheck:
 
     CELERY_TASK_PREFIX = 'CELERY_TASK_MSG_'
     TYPEFORM_DOMAIN = "https://api.typeform.com"
@@ -408,9 +408,7 @@ class TypeFormResponsesTrasparenzaCheck:
         'Content-Type': 'application/json'
     }
 
-    form_ids = OrderedDict([
-        ('Jo7AmkVU', 'Questionario Trasparenza L. 124/2017')
-    ])
+    form_ids = OrderedDict([])
 
     def __init__(self, persona=None, user_pk=None, comitato_id=None):
         # self.request = request
@@ -605,3 +603,19 @@ class TypeFormResponsesTrasparenzaCheck:
         #     return redirect(reverse('pages:monitoraggio'))
 
         return HttpResponse(html)
+
+
+class TypeFormResponsesTrasparenzaCheck(TypeFormResponsesCheck):
+    form_ids = OrderedDict([
+        ('Jo7AmkVU', 'Questionario Trasparenza L. 124/2017')
+    ])
+
+
+class TypeFormResponsesAutocontrolloCheck(TypeFormResponsesCheck):
+    form_ids = OrderedDict([
+        ('ttOyXCJR', 'A-GOVERNANCE'),
+        ('PZvVJIZq', 'B-Personale Dipendente e Volontario'),
+        ('p5DlUCLt', 'C-Contabilità'),
+        ('o7JfxbE5', 'D-Convenzioni e progetti'),
+        ('ZwMX5rsG', 'E-Relazioni esterne, comunicazione, trasparenza'),
+    ])
