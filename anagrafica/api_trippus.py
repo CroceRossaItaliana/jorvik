@@ -4,8 +4,8 @@ from jorvik import settings
 import requests
 
 
-PRESIDENTE = '213724'
-COMMISSARIO = '213724'
+PRESIDENTE = '221170'
+COMMISSARIO = '221182'
 
 CONSIGLIERE = '213305'
 
