@@ -1,3 +1,5 @@
+import hashlib
+import random
 from collections import OrderedDict
 from datetime import datetime
 
@@ -31,6 +33,17 @@ def costruisci_titoli(context={}, qs=None, search_query='', key=''):
                 context[key][area_nome] = cleaned
 
     return context
+
+
+def unique_signature(pk=None, creazione=None):
+    # import sys
+    signature = hashlib.md5(
+        '{}{}'.format(
+            pk,
+            creazione.strftime("%m/%d/%Y, %H:%M:%S:%f")
+        ).encode()
+    )
+    return signature.hexdigest()
 
 
 class CalendarCorsi(CalendarTemplate):
