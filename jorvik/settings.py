@@ -283,6 +283,8 @@ MOODLE_KEY = APIS_CONF.get('moodle', 'token', fallback=os.environ.get("MOODLE_KE
 MOODLE_DOMAIN = APIS_CONF.get('moodle', 'domain', fallback=os.environ.get("MOODLE_DOMAIN"))
 
 ELASTIC_HOST = ELASTIC_CONF.get('elastic', 'host', fallback=os.environ.get("ELASTIC_HOST"))
+ELASTIC_USER = ELASTIC_CONF.get('elastic', 'user')
+ELASTIC_PASSWORD = ELASTIC_CONF.get('elastic', 'password')
 ELASTIC_ACTIVE = int(ELASTIC_CONF.get('elastic', 'active', fallback=os.environ.get("ELASTIC_ACTIVE")))
 ELASTIC_CURRICULUM_INDEX = ELASTIC_CONF.get('index', 'curriculum_index', fallback=os.environ.get("ELASTIC_CURRICULUM_INDEX"))
 ELASTIC_CORSO_INDEX = ELASTIC_CONF.get('index', 'corso_index', fallback=os.environ.get("ELASTIC_CORSO_INDEX"))

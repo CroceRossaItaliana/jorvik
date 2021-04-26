@@ -7,9 +7,11 @@ import requests
 
 from django.core.management import BaseCommand
 from django.core.paginator import Paginator
+from requests.auth import HTTPBasicAuth
 
 from anagrafica.models import Persona
 from anagrafica.serializers import CurriculumPersonaSerializer, PersonaSerializer
+from jorvik import settings
 from jorvik.settings import ELASTIC_HOST, ELASTIC_CURRICULUM_INDEX, ELASTIC_PERSONA_INDEX
 
 logger = logging.getLogger(__name__)
@@ -41,7 +43,7 @@ class Command(BaseCommand):
                 'Content-Type': 'application/json'
             }
 
-            response = requests.put(url, headers=headers, data=json.dumps(data))
+            response = requests.put(url, headers=headers, data=json.dumps(data), auth=HTTPBasicAuth(settings.ELASTIC_USER, settings.ELASTIC_PASSWORD))
 
             count_curriculum += self._check_insert(url=url, response=response)
 
@@ -49,7 +51,7 @@ class Command(BaseCommand):
             data = s_persona.data
             url = "{}/{}/_doc/{}?op_type=create".format(ELASTIC_HOST, ELASTIC_PERSONA_INDEX, data['id_persona'])
 
-            response = requests.put(url, headers=headers, data=json.dumps(data))
+            response = requests.put(url, headers=headers, data=json.dumps(data), auth=HTTPBasicAuth(settings.ELASTIC_USER, settings.ELASTIC_PASSWORD))
 
             count_persone += self._check_insert(url=url, response=response)
 

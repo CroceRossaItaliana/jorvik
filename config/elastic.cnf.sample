@@ -1,8 +1,8 @@
 [elastic]
 active=0
 host=https://es.staging.gaia.cri.it
-user=admin
-password=admin
+user=
+password=
 
 [index]
 curriculum_index=curriculum_index_dev
