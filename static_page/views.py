@@ -27,24 +27,6 @@ def view_page(request, me, slug):
 
 @pagina_privata
 def monitoraggio(request, me):
-    # if True not in [me.is_comissario, me.is_presidente]: return redirect('/')
-    # if not hasattr(me, 'sede_riferimento'): return redirect('/')
-    #
-    # request_comitato = request.GET.get('comitato')
-    # if me.is_comissario and not request_comitato:
-    #     # GAIA-58: Seleziona comitato
-    #     if me.is_presidente:
-    #         deleghe = me.deleghe_attuali(tipo__in=[COMMISSARIO, PRESIDENTE])
-    #     else:
-    #         deleghe = me.deleghe_attuali(tipo__in=[COMMISSARIO])
-    #
-    #     return 'monitoraggio_choose_comitato.html', {
-    #         'deleghe': deleghe.distinct('oggetto_id'),
-    #         'url': 'monitoraggio',
-    #         'titolo': 'Questionario autocontrollo',
-    #         'target': MONITORAGGIO
-    #     }
-
     if True not in [me.is_comissario, me.is_presidente, me.is_delega_responsabile_area_trasparenza]: return redirect('/')
     if not hasattr(me, 'sede_riferimento'): return redirect('/')
 

@@ -19,7 +19,7 @@ def menu_monitoraggio(me):
 
     VOCE_MONITORAGGIO = ("Check-list Comitati", (
         ("Questionario di autocontrollo", 'fa-user', reverse('pages:monitoraggio')) if (
-                me.is_presidente or me.is_comissario or me.is_responsabile_area_monitoraggio_trasparenza or me.is_delgato_regionale_monitoraggio_trasparenza
+                me.is_presidente or me.is_comissario or me.delega_responsabile_area_trasparenza
         ) else None,
         ("Questionario L. 124/2017", 'fa-user', reverse('pages:monitoraggio-trasparenza')) if (
                 me.is_presidente or me.is_comissario or me.delega_responsabile_area_trasparenza
