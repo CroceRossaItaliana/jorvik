@@ -74,6 +74,13 @@ class Tesserino(ModelloSemplice, ConMarcaTemporale, ConPDF):
     riconsegnato_a = models.ForeignKey('anagrafica.Persona', related_name='tesserini_riconsegnati', null=True, on_delete=models.SET_NULL)
     data_riconsegna = models.DateTimeField(null=True, db_index=True)
 
+    INGLESE = "ING"
+    TEDESCO = "TED"
+    LINGUA = (
+        (INGLESE, "Inglese"),
+        (TEDESCO, "Tedesco"),
+    )
+
     @classmethod
     @concept
     def query_senza_codice(cls):
@@ -131,6 +138,7 @@ class Tesserino(ModelloSemplice, ConMarcaTemporale, ConPDF):
         codice = self.genera_codice_a_barre_png()
         sede = self.persona.sede_riferimento(al_giorno=self.creazione).comitato
         pdf = PDF(oggetto=self)
+        # if self.seconda_lingua == self.INGLESE:
         pdf.genera_e_salva(
             "Tesserino_%s.pdf" % self.codice,
             modello='pdf_tesserino.html',

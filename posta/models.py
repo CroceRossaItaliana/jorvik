@@ -391,6 +391,7 @@ class Messaggio(ModelloSemplice, ConMarcaTemporale, ConGiudizio, ConAllegati):
         })
 
         oggetto = Truncator(oggetto).chars(Messaggio.LUNGHEZZA_MASSIMA_OGGETTO)
+        oggetto = oggetto.replace('\n', '').replace('\r', '')
 
         with transaction.atomic():
             m = Messaggio(oggetto=oggetto,
