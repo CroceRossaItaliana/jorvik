@@ -19,6 +19,7 @@ from anagrafica.costanti import NAZIONALE, REGIONALE, LOCALE
 from anagrafica.permessi.costanti import (GESTIONE_CORSI_SEDE,
     GESTIONE_CORSO, ERRORE_PERMESSI, COMPLETO, MODIFICA, RUBRICA_DELEGATI_OBIETTIVO_ALL)
 from curriculum.models import Titolo, TitoloPersonale
+from jorvik.settings import MOODLE_DOMAIN
 from sala_operativa.utils import CalendarTurniSO
 from ufficio_soci.elenchi import ElencoPerTitoliCorso
 from autenticazione.funzioni import pagina_privata, pagina_pubblica
@@ -324,7 +325,7 @@ def aspirante_corso_base_informazioni(request, me=None, pk=None):
     if (corso.online and corso.moodle) or corso.tipo == CorsoBase.BASE_ONLINE:
         api = TrainingApi()
         r = api.core_course_get_courses_by_field_shortname(corso.titolo_cri.sigla)
-        context['link'] = 'https://training.cri.it/course/view.php?id={}'.format(r['id'])
+        context['link'] = 'https://{}/course/view.php?id={}'.format(MOODLE_DOMAIN.split('/')[2], r['id'])
 
     return 'aspirante_corso_base_scheda_informazioni.html', context
 
