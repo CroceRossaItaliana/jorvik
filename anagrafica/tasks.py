@@ -22,10 +22,10 @@ def load_elastic(self, data, host, index):
     headers = {
         'Content-Type': 'application/json'
     }
-    response = requests.put(url, headers=headers, data=json.dumps(data))
+    response = requests.put(url, headers=headers, data=json.dumps(data), auth=HTTPBasicAuth(settings.ELASTIC_USER, settings.ELASTIC_PASSWORD))
     if response.status_code == HTTPStatus.CONFLICT:
         if 'id_persona' in data:
-            url = "{}/{}/_update/{}".format(host, index, data['id_persona'] )
+            url = "{}/{}/_update/{}".format(host, index, data['id_persona'])
         elif 'id_comitato' in data:
             url = "{}/{}/_update/{}".format(host, index, data['id_comitato'])
         else:
