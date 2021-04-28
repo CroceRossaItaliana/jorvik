@@ -35,6 +35,10 @@ def trippus_booking(persona=None, access_token=''):
         delega = persona.delega_presidente
         sede = delega.oggetto
         codice = PRESIDENTE
+    elif persona.is_comissario:
+        delega = persona.delega_commissario
+        sede = delega.oggetto
+        codice = COMMISSARIO
     elif persona.is_delegato_assemblea_nazionale:
         delega = persona.delega_delegato_assemblea_nazionale
         sede = delega.oggetto
@@ -43,10 +47,6 @@ def trippus_booking(persona=None, access_token=''):
         delega = None
         sede = Sede.objects.get(pk=1)
         codice = PRESIDENTE
-    elif persona.is_comissario:
-        delega = persona.delega_commissario
-        sede = delega.oggetto
-        codice = COMMISSARIO
     else:
         delega = None
         sede = None
