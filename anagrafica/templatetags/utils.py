@@ -44,6 +44,14 @@ def partecipazione_riunione_consiglieri(persona):
 
 
 @register.filter
+def partecipazione_riunione_volontari(persona):
+    start_date = datetime.strptime(settings.INIZIO_ASSEMBLEA_MATERA_VOLONTARI, '%m/%d/%Y %H:%M:%S')
+    finish_date = datetime.strptime(settings.FINE_ASSEMBLEA_MATERA_VOLONTARI, '%m/%d/%Y %H:%M:%S')
+
+    return persona.utenza.groups.filter(name='Assemblea di Matera').exists() and start_date < datetime.now() < finish_date
+
+
+@register.filter
 def stato_riserva(riserva):
     ATTUALE = 'Attuale'
     PASSATA = 'Passata'

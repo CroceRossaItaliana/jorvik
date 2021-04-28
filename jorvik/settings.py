@@ -137,6 +137,7 @@ DEBUG_CONF_FILE = 'config/debug.cnf' if os.path.isfile('config/debug.cnf') else 
 APIS_CONF_FILE = 'config/apis.cnf' if os.path.isfile('config/apis.cnf') else 'config/apis.cnf.sample'
 GENERAL_CONF_FILE = 'config/general.cnf' if os.path.isfile('config/general.cnf') else 'config/general.cnf.sample'
 CELERY_CONF_FILE = 'config/celery.cnf' if os.path.isfile('config/celery.cnf') else 'config/celery.cnf.sample'
+ELASTIC_CONF_FILE = 'config/elastic.cnf' if os.path.isfile('config/elastic.cnf') else 'config/elastic.cnf.sample'
 
 # MySQL
 MYSQL_CONF = configparser.ConfigParser()
@@ -145,6 +146,11 @@ MYSQL_CONF.read(MYSQL_CONF_FILE)
 # PGSQL
 PGSQL_CONF = configparser.ConfigParser()
 PGSQL_CONF.read(PGSQL_CONF_FILE)
+
+# ELASTIC
+ELASTIC_CONF = configparser.ConfigParser()
+ELASTIC_CONF.read(ELASTIC_CONF_FILE)
+
 
 # Configurazione debug e produzione
 DEBUG_CONF = configparser.ConfigParser()
@@ -181,7 +187,7 @@ DATABASES = {
     }
 }
 
-SESSION_COOKIE_SECURE = not DEBUG
+SESSION_COOKIE_SECURE = True
 CSRF_COOKIE_SECURE = True
 
 # Internazionalizzazione
@@ -276,6 +282,15 @@ TRIPPUS_PASSWORD = APIS_CONF.get('trippus', 'password', fallback=os.environ.get(
 MOODLE_KEY = APIS_CONF.get('moodle', 'token', fallback=os.environ.get("MOODLE_KEY"))
 MOODLE_DOMAIN = APIS_CONF.get('moodle', 'domain', fallback=os.environ.get("MOODLE_DOMAIN"))
 
+ELASTIC_HOST = ELASTIC_CONF.get('elastic', 'host', fallback=os.environ.get("ELASTIC_HOST"))
+ELASTIC_USER = ELASTIC_CONF.get('elastic', 'user')
+ELASTIC_PASSWORD = ELASTIC_CONF.get('elastic', 'password')
+ELASTIC_ACTIVE = int(ELASTIC_CONF.get('elastic', 'active', fallback=os.environ.get("ELASTIC_ACTIVE")))
+ELASTIC_CURRICULUM_INDEX = ELASTIC_CONF.get('index', 'curriculum_index', fallback=os.environ.get("ELASTIC_CURRICULUM_INDEX"))
+ELASTIC_CORSO_INDEX = ELASTIC_CONF.get('index', 'corso_index', fallback=os.environ.get("ELASTIC_CORSO_INDEX"))
+ELASTIC_PERSONA_INDEX = ELASTIC_CONF.get('index', 'persona_index', fallback=os.environ.get("ELASTIC_PERSONA_INDEX"))
+ELASTIC_COMITATO_INDEX = ELASTIC_CONF.get('index', 'comitato_index', fallback=os.environ.get("ELASTIC_COMITATO_INDEX"))
+
 
 DESTINATARI_REPORT = ['sviluppo@cri.it', 'info@gaia.cri.it']
 
@@ -295,7 +310,7 @@ LOGGING = {
         'console': {
             'level': 'DEBUG',
             'class': 'logging.StreamHandler',
-            'formatter': 'simple'
+            'formatter': 'verbose'
         },
         'file': {
             'level': 'DEBUG',
@@ -308,6 +323,11 @@ LOGGING = {
         'posta': {
             'handlers': ['file'],
             'level': 'DEBUG',
+            'propagate': True,
+        },
+        'anagrafica': {
+            'handlers': ['file'],
+            'level': 'INFO',
             'propagate': True,
         },
         'curriculum': {
@@ -438,6 +458,10 @@ FINE_ASSEMBLEA_NAZIONALE = '12/30/2020 15:00:00'
 
 INIZIO_ASSEMBLEA_NAZIONALE_COMMISSARI = '12/20/2020 09:00:00'
 FINE_ASSEMBLEA_NAZIONALE_COMMISSARI = '12/20/2020 14:00:00'
+
+INIZIO_ASSEMBLEA_MATERA_VOLONTARI = '04/20/2021 11:00:00'
+FINE_ASSEMBLEA_MATERA_VOLONTARI = '04/20/2021 19:00:00'
+
 
 _redis_host = os.environ.get('REDIS_HOST', "criredis")
 CELERY_BROKER_URL = "sentinel://{}01.cri.it:26379/0;sentinel://{}02.cri.it:26379/0;sentinel://{}03.cri.it:26379/0".format(_redis_host, _redis_host, _redis_host)
