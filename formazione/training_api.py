@@ -50,7 +50,7 @@ class TrainingApi:
                 "moodlewsrestformat": "json",
                 "wstoken": self.token,
                 "wsfunction": "core_user_get_users_by_field",
-                "field": "email",
+                "field": "username",
                 "values[0]": email
             }
         )
