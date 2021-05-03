@@ -327,6 +327,8 @@ class Messaggio(ModelloSemplice, ConMarcaTemporale, ConGiudizio, ConAllegati):
         lista_email_destinatari = lista_email_destinatari or []
         attachments = allegati or []
 
+        oggetto = oggetto.replace('\n', '').replace('\r', '')
+
         msg = EmailMultiAlternatives(
             subject=oggetto,
             body=plain_text,

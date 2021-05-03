@@ -18,7 +18,7 @@ from django.utils.translation import ugettext_lazy as _
 
 from anagrafica.models import Sede, Persona, Appartenenza, Delega
 from anagrafica.costanti import PROVINCIALE, TERRITORIALE, LOCALE, REGIONALE, NAZIONALE
-from anagrafica.validators import (valida_dimensione_file_8mb, ValidateFileSize)
+from anagrafica.validators import valida_dimensione_file_8mb
 from anagrafica.permessi.applicazioni import (DIRETTORE_CORSO, OBIETTIVI, PRESIDENTE, COMMISSARIO)
 from anagrafica.permessi.incarichi import (INCARICO_ASPIRANTE, INCARICO_GESTIONE_CORSOBASE_PARTECIPANTI)
 from anagrafica.permessi.costanti import MODIFICA
@@ -155,7 +155,7 @@ class CorsoBase(Corso, ConVecchioID, ConPDF):
                                                 default=MAX_PARTECIPANTI)
     delibera_file = models.FileField('Delibera', null=True,
         upload_to=delibera_file_upload_path,
-        validators=[ValidateFileSize(3), validate_file_extension]
+        validators=[valida_dimensione_file_8mb, validate_file_extension]
     )
     commissione_esame_file = models.FileField('Commissione esame delibera',
         null=True, blank=True, upload_to='courses/commissione_esame')
