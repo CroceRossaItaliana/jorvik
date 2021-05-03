@@ -317,7 +317,8 @@ def aspirante_corso_base_informazioni(request, me=None, pk=None):
         context['load_personal_document'] = load_personal_document_form
 
     context['corso'] = corso
-    context['lezioni'] = corso.lezioni.all().order_by('inizio', 'fine', 'scheda_lezione_num',)
+    context['lezioni'] = corso.lezioni.all().order_by('inizio', 'fine', 'scheda_lezione_num',) if corso.tipo != Corso.BASE_ONLINE \
+        else corso.lezioni.all().order_by('scheda_lezione_num',)
     context['puo_modificare'] = corso.can_modify(me)
     context['can_activate'] = corso.can_activate(me)
     context['puoi_partecipare'] = puoi_partecipare
