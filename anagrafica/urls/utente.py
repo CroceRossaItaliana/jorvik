@@ -64,5 +64,5 @@ urlpatterns = [
     }),
     # questo url (consiglier) fa un errore con l'ultima (volontari)
     # url(r'inscrizione_evento', views.inscrizione_evento_consiglieri, name='inscrizione_evento_consiglieri'),
-    url(r'inscrizione_evento_volontari', views.inscrizione_evento_volontari, name='inscrizione_evento_volontari'),
+    # url(r'inscrizione_evento_volontari', views.inscrizione_evento_volontari, name='inscrizione_evento_volontari'),
 ]
