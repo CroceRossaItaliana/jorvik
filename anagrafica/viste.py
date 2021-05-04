@@ -2032,3 +2032,8 @@ def operatori_sale(request, me):
         'form': form
     }
     return 'anagrafica_presidente_operatori.html', contesto
+
+@pagina_privata
+def operatori_sale_termina(request, me, pk=None):
+
+    return redirect(reverse('presidente:operatori_sale'))

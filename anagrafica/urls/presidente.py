@@ -32,6 +32,6 @@ urlpatterns = [
 
     # Operatori di sala
     url(r'^operatori/', viste.operatori_sale, name="operatori_sale"),
-
+    url(r'^operatori/(?P<pk>[0-9]+)/termina', viste.operatori_sale_termina, name="operatori_sale_termina"),
 
 ]

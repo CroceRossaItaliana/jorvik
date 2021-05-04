@@ -6,6 +6,7 @@ from django.forms import ModelForm, modelformset_factory
 
 from autocomplete_light import shortcuts as autocomplete_light
 
+from anagrafica.permessi.applicazioni import DELEGATO_AREA, RESPONSABILE_AREA
 from anagrafica.permessi.costanti import GESTIONE_SEDE
 from base.wysiwyg import WYSIWYGSemplice
 
@@ -719,7 +720,14 @@ class CatalogoCorsiSearchForm(forms.Form):
 
 
 class ModuloCreaOperatoreSala(forms.Form):
-    persona = forms.CharField()
+
+    NOMINA = (
+        (DELEGATO_AREA, 'Delegato area'),
+        (RESPONSABILE_AREA, 'Responsabile area'),
+    )
+
+    persona = autocomplete_light.ModelChoiceField('PersonaAutocompletamento')
+    nomina = forms.ChoiceField(choices=NOMINA, required=True)
     sede = forms.ChoiceField(choices=())
 
     @staticmethod
