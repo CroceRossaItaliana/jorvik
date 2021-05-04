@@ -291,6 +291,7 @@ ELASTIC_CORSO_INDEX = ELASTIC_CONF.get('index', 'corso_index', fallback=os.envir
 ELASTIC_PERSONA_INDEX = ELASTIC_CONF.get('index', 'persona_index', fallback=os.environ.get("ELASTIC_PERSONA_INDEX"))
 ELASTIC_COMITATO_INDEX = ELASTIC_CONF.get('index', 'comitato_index', fallback=os.environ.get("ELASTIC_COMITATO_INDEX"))
 
+BETA_80_HOST = APIS_CONF.get('beta_80', 'host')
 
 DESTINATARI_REPORT = ['sviluppo@cri.it', 'info@gaia.cri.it']
 

@@ -19,3 +19,6 @@ domain=http://training.cri.it/webservice/rest/server.php
 domain=https://api.trippus.se
 username=abb151387cd147aa9507ef4ff9de28cd
 password=083a7da7aead4b35a487
+
+[beta_80]
+host=https://devcrn.cri.it
