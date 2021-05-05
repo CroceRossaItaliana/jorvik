@@ -568,7 +568,7 @@ class ModuloDonatore(autocomplete_light.ModelForm):
 
 
 class ModuloDonazione(autocomplete_light.ModelForm):
-    # comitato_regionale = autocomplete_light.ModelChoiceField("SedeRegistraDonazioneAutocompletamento")
+    # sede = autocomplete_light.ModelChoiceField("SedeRegistraDonazioneAutocompletamento")
 
     class Meta:
         model = Donazione

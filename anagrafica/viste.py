@@ -779,12 +779,6 @@ def utente_donazioni_sangue(request, me):
 
 def scegliere_sedi(request):
     comitato = request.GET.get('comitato', '')
-    comitato_list = []
-    regioni = SedeSangue.objects.all().distinct('regione')
-    comitato_list.append(regioni)
-    for regione in regioni:
-        print(regione.regione)
-    # trova l'ultima parola nel string (Friuli Venezia Giulia -> Giulia)
     ultima_parola = re.findall(r'\s(\w+)$', comitato, re.MULTILINE)
     if comitato == 'Trentino-Alto Adige':
         sedi_di_sangue = [sede for sede in SedeSangue.objects.filter(Q(regione__icontains='bolzano') | Q(regione__icontains='trento')).values()]
