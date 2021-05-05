@@ -14,44 +14,75 @@
         <div class="col-md-9">
             <table class="table table-striped table-bordered">
                 <thead>
-                    <th>Sede</th>
-                    <th>Persona</th>
+                <th>
+                    <i class="fa fa-fw fa-search"></i><a href="?" {% if stato == '' %}style="color: black" {% endif %}>Tutti</a></b>
+                    <i class="fa fa-fw fa-search"></i><a href="?stato=Attive" {% if stato == 'Attive' %}style="color: black" {% endif %}>Attive</a></b>
+                    <i class="fa fa-fw fa-search"></i><a href="?stato=Terminate" {% if stato == 'Terminate' %}style="color: black" {% endif %}>Terminate</a>
+                </th>
+                <th>Delega</th>
+                <th>Azioni</th>
                 </thead>
                 <tbody>
-                    {% for delega in deleghe %}
-                        <tr>
-                            <td>{{ delega.oggetto.sede }}</td>
-                            <td>{{ delega.persona }}</td>
-                        </tr>
-                    {% endfor %}
+                {% for delega in deleghe %}
+                    <tr>
+                        <td>
+                            <i class="fa fa-fw fa-user"></i><b> <a href="{{ delega.persona.url }}"
+                                                                   target="_blank">{{ delega.persona }}</a> </b><br>
+                            <i class="fa fa-fw fa-home"></i> <a
+                                href="{{ delega.oggetto.sede.url }}">{{ delega.oggetto.sede }}</a><br>
+
+                        </td>
+                        <td>
+                            <b>Tipo:</b> {{ delega.tipo|tipo_delega }}<br>
+                            <b>Inizio:</b> {{ delega.inizio }}<br>
+                            <b>Fine:</b> {% if delega.fine %}{{ delega.fine }}{% else %}Indeterminata{% endif %}
+                        </td>
+                        <td>
+                            {% if delega.fine == None %}
+                                <b><a href="/presidente/operatori/{{ delega.pk }}/termina"
+                                   data-conferma="Terminare ora la delega di {{ delega.persona.nome_completo }} come {{ delega.tipo|tipo_delega }}?">Termina</a>
+
+                            {% endif %}
+                            </b><br>
+                        </td>
+                    </tr>
+                {% empty %}
+                    <tr class="alert alert-warning">
+                        <td colspan="3">
+                            <i class="fa fa-fw fa-warning"></i>
+                            Non ci sono deleghe {{ stato }}
+                        </td>
+                    </tr>
+                {% endfor %}
                 </tbody>
             </table>
         </div>
-        <div class="col-md-3">
+        {% if form %}
+            <div class="col-md-3">
             <div class="panel panel-primary">
-                <div class="panel-heading">
-                    <h2 class="panel-title">
-                        <i class="fa fa-fw fa-plus-circle"></i>
-                        Nuovo Operatore
-                    </h2>
-                </div>
-                <div class="panel-body">
+            <div class="panel-heading">
+                <h2 class="panel-title">
+                    <i class="fa fa-fw fa-plus-circle"></i>
+                    Nuovo Operatore
+                </h2>
+            </div>
+            <div class="panel-body">
 
-                    <form method="POST">
-                        {% csrf_token %}
-                        {% bootstrap_form form %}
-                        <button type="submit" class="btn btn-block btn-primary">
-                            <i class="fa fa-fw fa-check"></i>
-                            Nomina Operatore
-                        </button>
+                <form method="POST">
+                    {% csrf_token %}
+                    {% bootstrap_form form %}
+                    <button type="submit" class="btn btn-block btn-primary">
+                        <i class="fa fa-fw fa-check"></i>
+                        Nomina Operatore
+                    </button>
 
 
-                    </form>
-
-                </div>
-
+                </form>
 
             </div>
+        {% endif %}
+
+        </div>
         </div>
     </div>
 

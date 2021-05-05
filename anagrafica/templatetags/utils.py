@@ -21,7 +21,7 @@ from base.stringhe import genera_uuid_casuale
 from base.tratti import ConDelegati
 from base.utils import testo_euro
 from ufficio_soci.elenchi import Elenco
-
+from anagrafica.permessi.applicazioni import PERMESSI_NOMI_DICT
 
 register = Library()
 
@@ -50,6 +50,9 @@ def partecipazione_riunione_volontari(persona):
 
     return persona.utenza.groups.filter(name='Assemblea di Matera').exists() and start_date < datetime.now() < finish_date
 
+@register.filter
+def tipo_delega(tipo):
+    return PERMESSI_NOMI_DICT[tipo]
 
 @register.filter
 def stato_riserva(riserva):
@@ -202,7 +205,6 @@ def delegati(context, delega=UFFICIO_SOCI, oggetto=None, continua_url=None, alme
         'iframe_url': reverse('strumenti_delegati'),
     })
     return render_to_string('base_iframe_4_3.html', context)
-
 
 @register.assignment_tag(takes_context=True)
 def giorni_ore_minuti(context, tdelta):

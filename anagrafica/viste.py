@@ -68,6 +68,7 @@ from .forms import (ModuloStepComitato, ModuloStepCredenziali, ModuloStepFine,
 
 from .models import (Persona, Documento, Telefono, Estensione, Delega, Trasferimento,
                      Appartenenza, Sede, Riserva, Dimissione, Nominativo, )
+from django.contrib import messages
 
 TIPO_VOLONTARIO = 'volontario'
 TIPO_ASPIRANTE = 'aspirante'
@@ -2023,6 +2024,8 @@ def inscrizione_evento_volontari(request, me):
 @pagina_privata
 def operatori_sale(request, me):
 
+    stato = request.GET.get('stato', '')
+
     form = ModuloCreaOperatoreSala(request.POST or None)
     form.fields['sede'].choices = ModuloCreaOperatoreSala.popola_scelta(me)
 
@@ -2034,18 +2037,57 @@ def operatori_sale(request, me):
         else:
             area = Area(nome='Operatore di sala', sede=Sede.objects.get(pk=cd['sede']))
             area.save()
-
         area.aggiungi_delegato(cd['nomina'], cd['persona'], firmatario=me, inizio=poco_fa())
 
-    area = Area.objects.filter(nome='Operatore di sala', sede__in=me.oggetti_permesso(GESTIONE_SEDE))
+        form = ModuloCreaOperatoreSala()
+        form.fields['sede'].choices = ModuloCreaOperatoreSala.popola_scelta(me)
+
+    aree = Area.objects.filter(nome='Operatore di sala', sede__in=me.oggetti_permesso(GESTIONE_SEDE))
+
+    def attive():
+        return Delega.objects.filter(
+            Q(
+                inizio__lte=timezone.now() - datetime.timedelta(seconds=1),
+                fine__gt=timezone.now() - datetime.timedelta(seconds=1)
+            ) | Q(fine__isnull=True),
+            tipo__in=[RESPONSABILE_AREA, DELEGATO_AREA],
+            oggetto_id__in=aree.values_list('id', flat=True),
+        )
+
+    def terminate():
+        return Delega.objects.filter(
+            fine__lt=timezone.now() - datetime.timedelta(seconds=1),
+            tipo__in=[RESPONSABILE_AREA, DELEGATO_AREA],
+            oggetto_id__in=aree.values_list('id', flat=True)
+        )
+
+    def tutte():
+        return Delega.objects.filter(
+            tipo__in=[RESPONSABILE_AREA, DELEGATO_AREA],
+            oggetto_id__in=aree.values_list('id', flat=True)
+        )
+
+    filtro = {
+        'Attive': attive,
+        'Terminate': terminate,
+    }
 
     contesto = {
         'form': form,
-        "deleghe": [delegato for area in area for delegato in area.deleghe_attuali()]
+        "deleghe": filtro.get(stato, tutte)(),
+        "stato": stato
     }
+
     return 'anagrafica_presidente_operatori.html', contesto
+
 
 @pagina_privata
 def operatori_sale_termina(request, me, pk=None):
+    delega = get_object_or_404(Delega, pk=pk)
+
+    delega.termina(termina_at=poco_fa())
+
+    messages.success(request, "{} è stata terminata correttamente".format(delega))
 
     return redirect(reverse('presidente:operatori_sale'))
+
