@@ -26,7 +26,7 @@ from .models import (Sede, Persona, Appartenenza, Documento, Estensione,
                      Nominativo)
 from .validators import valida_almeno_14_anni, valida_data_nel_passato
 from .permessi.applicazioni import (PRESIDENTE, COMMISSARIO,
-    CONSIGLIERE, CONSIGLIERE_GIOVANE, VICE_PRESIDENTE)
+                                    CONSIGLIERE, CONSIGLIERE_GIOVANE, VICE_PRESIDENTE)
 
 
 class ModuloSpostaPersone(object):
@@ -60,7 +60,8 @@ class ModuloSpostaPersone(object):
 
 class ModuloSpostaPersoneManuale(ModuloSpostaPersone, forms.Form):
     sede = autocomplete_light.ModelChoiceField("SedeAutocompletamento")
-    inizio_appartenenza = forms.DateField(label='Data di inizio appartenenza', widget=AdminDateWidget(format='%Y-%m-%d'))
+    inizio_appartenenza = forms.DateField(label='Data di inizio appartenenza',
+                                          widget=AdminDateWidget(format='%Y-%m-%d'))
     motivazione = forms.CharField()
 
     @property
@@ -134,7 +135,6 @@ class ModuloStepComitato(autocomplete_light.ModelForm):
 
 
 class ModuloStepCodiceFiscale(ModelForm):
-
     class Meta:
         model = Persona
         fields = ['codice_fiscale', ]
@@ -153,7 +153,8 @@ class ModuloStepCodiceFiscale(ModelForm):
 
 class ModuloStepCredenziali(forms.Form):
     email = forms.EmailField(help_text="Deve essere un indirizzo e-mail personale sotto il tuo solo controllo.")
-    password = forms.CharField(help_text="Scegli una password complessa per proteggere la tua privacy.", widget=forms.PasswordInput)
+    password = forms.CharField(help_text="Scegli una password complessa per proteggere la tua privacy.",
+                               widget=forms.PasswordInput)
     ripeti_password = forms.CharField(widget=forms.PasswordInput)
 
     # Effettua dei controlli personalizzati sui sui campi
@@ -173,7 +174,8 @@ class ModuloStepCredenziali(forms.Form):
             self._errors['ripeti_password'] = self.error_class(['La password digitata non corrisponde.'])
 
         if len(password) < Utenza.MIN_PASSWORD_LENGTH:
-            self._errors['password'] = self.error_class(["La password deve avere almeno %d caratteri." % (Utenza.MIN_PASSWORD_LENGTH,)])
+            self._errors['password'] = self.error_class(
+                ["La password deve avere almeno %d caratteri." % (Utenza.MIN_PASSWORD_LENGTH,)])
 
         # TODO Controllo robustezza password
 
@@ -195,7 +197,7 @@ class ModuloStepAnagrafica(ModelForm):
                   'indirizzo_residenza', 'comune_residenza', 'provincia_residenza',
                   'stato_residenza', 'cap_residenza', 'domicilio_uguale_a_residenza',
                   'domicilio_indirizzo', 'domicilio_comune', 'domicilio_provincia',
-                  'domicilio_stato', 'domicilio_cap', 'conoscenza',]
+                  'domicilio_stato', 'domicilio_cap', 'conoscenza', ]
 
     def clean_codice_fiscale(self):
         codice_fiscale = self.cleaned_data.get('codice_fiscale')
@@ -223,7 +225,7 @@ class ModuloModificaAnagrafica(ModelForm):
         model = Persona
         fields = ['comune_nascita', 'provincia_nascita', 'stato_nascita',
                   'indirizzo_residenza', 'comune_residenza', 'provincia_residenza', 'stato_residenza',
-                  'cap_residenza',]
+                  'cap_residenza', ]
 
 
 class ModuloProfiloModificaAnagrafica(ModelForm):
@@ -233,7 +235,7 @@ class ModuloProfiloModificaAnagrafica(ModelForm):
                   'comune_nascita', 'provincia_nascita', 'stato_nascita',
                   'indirizzo_residenza', 'comune_residenza', 'provincia_residenza', 'stato_residenza',
                   'cap_residenza', 'email_contatto', 'iv', 'cm',
-                  'note',]
+                  'note', ]
 
     def __init__(self, *args, **kwargs):
         user = kwargs.pop('me')
@@ -251,7 +253,6 @@ class ModuloProfiloModificaAnagrafica(ModelForm):
                     self.fields[f].disabled = True
 
 
-
 class ModuloProfiloModificaAnagraficaDomicilio(ModelForm):
     class Meta:
         model = Persona
@@ -265,13 +266,12 @@ class ModuloProfiloModificaAnagraficaDomicilio(ModelForm):
 
 
 class ModuloProfiloTitoloPersonale(autocomplete_light.ModelForm):
-
     OBBLIGATORIO = "Questo campo è obbligatorio per questo titolo."
 
     class Meta:
         model = TitoloPersonale
         fields = ['titolo', 'data_ottenimento', 'luogo_ottenimento',
-                  'data_scadenza', 'codice',]
+                  'data_scadenza', 'codice', ]
 
     def clean_data_ottenimento(self):
         titolo = self.cleaned_data['titolo']
@@ -389,7 +389,8 @@ class ModuloCreazioneEstensione(autocomplete_light.ModelForm):
 
 
 class ModuloConsentiEstensione(forms.Form):
-    protocollo_numero = forms.CharField(max_length=32, label="Numero di protocollo", help_text="Numero di protocollo con cui è stata registrata la richiesta.")
+    protocollo_numero = forms.CharField(max_length=32, label="Numero di protocollo",
+                                        help_text="Numero di protocollo con cui è stata registrata la richiesta.")
     protocollo_data = forms.DateField(label="Data del protocollo", help_text="Data di registrazione del protocollo.")
 
 
@@ -409,23 +410,26 @@ class ModuloCreazioneTrasferimento(autocomplete_light.ModelForm):
 
 
 class ModuloConsentiTrasferimento(forms.Form):
-    protocollo_numero = forms.CharField(max_length=32, label="Numero di protocollo", help_text="Numero di protocollo con cui è stata registrata la richiesta.")
+    protocollo_numero = forms.CharField(max_length=32, label="Numero di protocollo",
+                                        help_text="Numero di protocollo con cui è stata registrata la richiesta.")
     conferma = forms.BooleanField(
-        label=mark_safe("<strong>Confermo il contatto e l'assenso del Presidente del comitato di destinazione</strong>"),
+        label=mark_safe(
+            "<strong>Confermo il contatto e l'assenso del Presidente del comitato di destinazione</strong>"),
         required=True
     )
     protocollo_data = forms.DateField(label="Data del protocollo", help_text="Data di registrazione del protocollo.")
 
 
 class ModuloConsentiRiserva(forms.Form):
-    protocollo_numero = forms.CharField(max_length=32, label="Numero di protocollo", help_text="Numero di protocollo con cui è stata registrata la richiesta.")
+    protocollo_numero = forms.CharField(max_length=32, label="Numero di protocollo",
+                                        help_text="Numero di protocollo con cui è stata registrata la richiesta.")
     protocollo_data = forms.DateField(label="Data del protocollo", help_text="Data di registrazione del protocollo.")
 
 
 class ModuloNuovoProvvedimento(autocomplete_light.ModelForm):
     class Meta:
         model = ProvvedimentoDisciplinare
-        fields = ['persona','sede', 'motivazione', 'tipo', 'inizio', 'fine', 'protocollo_data', 'protocollo_numero']
+        fields = ['persona', 'sede', 'motivazione', 'tipo', 'inizio', 'fine', 'protocollo_data', 'protocollo_numero']
 
     def clean_fine(self):
         fine = self.cleaned_data['fine']
@@ -438,7 +442,7 @@ class ModuloNuovoProvvedimento(autocomplete_light.ModelForm):
 class ModuloCreazioneRiserva(ModelForm):
     class Meta:
         model = Riserva
-        fields = ['inizio','fine', 'motivo']
+        fields = ['inizio', 'fine', 'motivo']
 
     def clean_fine(self):
         fine = self.cleaned_data['fine']
@@ -457,7 +461,7 @@ class ModuloCreazioneRiserva(ModelForm):
 class ModuloCreazioneDelega(autocomplete_light.ModelForm):
     class Meta:
         model = Delega
-        fields = ['persona',]
+        fields = ['persona', ]
 
     def __init__(self, *args, **kwargs):
         # These attrs are passed in anagrafica.viste.strumenti_delegati
@@ -547,7 +551,7 @@ class ModuloCreazioneDelega(autocomplete_light.ModelForm):
 
         # Per tutti gli altri moduli che usano questa form
         return self._validate_delega(persona)
-    
+
     def clean_inizio(self):
         """ Impedisce inizio passato """
         inizio = self.cleaned_data['inizio']
@@ -560,30 +564,32 @@ class ModuloDonatore(autocomplete_light.ModelForm):
     class Meta:
         model = Donatore
         fields = ['gruppo_sanguigno', 'fattore_rh', 'fenotipo_rh',
-                  'kell', 'codice_sit', 'sede_sit',]
+                  'kell', 'codice_sit', 'sede_sit', ]
 
 
 class ModuloDonazione(autocomplete_light.ModelForm):
+    # comitato_regionale = autocomplete_light.ModelChoiceField("SedeRegistraDonazioneAutocompletamento")
+
     class Meta:
         model = Donazione
-        fields = ['sede', 'data', 'tipo',]
+        fields = ['sede', 'data', 'tipo', ]
 
 
 class ModuloUtenza(ModelForm):
     class Meta:
         model = Utenza
-        fields = ['email',]
+        fields = ['email', ]
 
 
 class ModuloPresidenteSede(ModelForm):
     class Meta:
         model = Sede
         fields = ['codice_fiscale', 'partita_iva',
-            'rea', 'cciaa', 'runts',
-            'email', 'pec',
-            'telefono', 'fax',
-            'sito_web', 'iban',
-        ]
+                  'rea', 'cciaa', 'runts',
+                  'email', 'pec',
+                  'telefono', 'fax',
+                  'sito_web', 'iban',
+                  ]
 
     def clean_partita_iva(self):
         partita_iva = self.cleaned_data['partita_iva']
@@ -603,7 +609,7 @@ class ModuloPresidenteSede(ModelForm):
 class ModuloPresidenteSedePersonaDiRiferimento(ModelForm):
     class Meta:
         model = Sede
-        fields = ['persona_di_riferimento', 'persona_di_riferimento_telefono',]
+        fields = ['persona_di_riferimento', 'persona_di_riferimento_telefono', ]
 
 
 class ModuloPresidenteSedeNominativo(ModelForm):
@@ -617,7 +623,7 @@ class ModuloPresidenteSedeNominativo(ModelForm):
         super().__init__(*args, **kwargs)
         if tipo is not None:
             self.fields['tipo'] = forms.CharField(max_length=3, initial=tipo,
-                                                  widget=forms.HiddenInput(),)
+                                                  widget=forms.HiddenInput(), )
 
 
 class ModuloImportVolontari(forms.Form):
@@ -643,7 +649,7 @@ class ModuloImportVolontari(forms.Form):
 class ModuloModificaDataInizioAppartenenza(ModelForm):
     class Meta:
         model = Appartenenza
-        fields = ['inizio', 'fine',]
+        fields = ['inizio', 'fine', ]
 
     def clean_inizio(self):
         from django.utils import timezone
@@ -660,23 +666,23 @@ class ModuloModificaDataInizioAppartenenza(ModelForm):
 
 class ModuloReportFederazione(forms.Form):
     data = forms.DateTimeField(help_text="Data e ora per i quali computare il report.",
-                               validators=[valida_data_nel_passato,],)
+                               validators=[valida_data_nel_passato, ], )
 
 
 class ModuloImportPresidenti(forms.Form):
     nomina = forms.ChoiceField(widget=forms.Select(),
-                      choices=(
-                          [
-                              ('Seleziona', ''),
-                              (PRESIDENTE, 'Presidente'),
-                              (COMMISSARIO, 'Commissario'),
-                              (CONSIGLIERE, 'Consigliere'),
-                              (CONSIGLIERE_GIOVANE, 'Consigliere giovane'),
-                              (VICE_PRESIDENTE, 'Vice presidente'),
-                          ]
-                      ),
-                      initial='Nomina',
-                      required=True,)
+                               choices=(
+                                   [
+                                       ('Seleziona', ''),
+                                       (PRESIDENTE, 'Presidente'),
+                                       (COMMISSARIO, 'Commissario'),
+                                       (CONSIGLIERE, 'Consigliere'),
+                                       (CONSIGLIERE_GIOVANE, 'Consigliere giovane'),
+                                       (VICE_PRESIDENTE, 'Vice presidente'),
+                                   ]
+                               ),
+                               initial='Nomina',
+                               required=True, )
     persona = autocomplete_light.ModelChoiceField("PresidenteAutocompletamento")
     sede = autocomplete_light.ModelChoiceField("ComitatoAutocompletamento")
 
@@ -686,7 +692,6 @@ class ModuloPulisciEmail(forms.Form):
 
 
 class ModuloUSModificaUtenza(ModuloUtenza):
-
     ok_1 = forms.BooleanField(label="La richiesta di modifica è pervenuta dall'utente stesso.",
                               required=False)
     ok_2 = forms.BooleanField(label="Ho già avvisato l'utente di questa modifica.",
@@ -699,7 +704,7 @@ class ModuloUSModificaUtenza(ModuloUtenza):
     def clean(self):
         ok_1 = self.cleaned_data.get('ok_1')
         ok_2 = self.cleaned_data.get('ok_2')
-        if not(ok_1 or ok_2):
+        if not (ok_1 or ok_2):
             raise ValidationError("Puoi solo cambiare l'e-mail di accesso se questa è stata "
                                   "richiesta dall'utente, oppure hai già avvisato l'utente della "
                                   "modifica e della nuova e-mail per accedere.")

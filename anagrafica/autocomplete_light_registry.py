@@ -28,15 +28,15 @@ class AutocompletamentoBase(autocomplete_light.AutocompleteModelBase):
 
 
 class PersonaAutocompletamento(AutocompletamentoBase):
-    search_fields = ['nome', 'cognome', 'codice_fiscale',]
+    search_fields = ['nome', 'cognome', 'codice_fiscale', ]
     model = Persona
     choice_html_format = u'''
         <span class="block" data-value="%s"><strong>%s</strong> %s</span>
     '''
-    
+
     def choices_for_request(self, filtra_per_sede=True):
         persona = self.request.user.persona
-        
+
         # Le mie sedi di competenza:
         #  1. La mia Sede attuale
         #  2. Il mio Comitato
@@ -49,7 +49,7 @@ class PersonaAutocompletamento(AutocompletamentoBase):
         # 1. Appartenente a una delle sedi
         q_appartenenza_sede = Q(Appartenenza.query_attuale(
             sede__in=sedi
-        ).via("appartenenze"),)
+        ).via("appartenenze"), )
 
         # 2. Iscritto confermato a un corso base presso una mia sede
         q_iscritto_corso_base_mia_sede = Q(PartecipazioneCorsoBase.con_esito(
@@ -67,9 +67,9 @@ class PersonaAutocompletamento(AutocompletamentoBase):
             q_appartenenza_sede |
             q_iscritto_corso_base_mia_sede |
             q_iscritto_in_attesa_corso_base_mia_sede
-        ).order_by('nome', 'cognome', 'codice_fiscale')\
-        .distinct('nome', 'cognome', 'codice_fiscale')
-        
+        ).order_by('nome', 'cognome', 'codice_fiscale') \
+            .distinct('nome', 'cognome', 'codice_fiscale')
+
         return super(PersonaAutocompletamento, self).choices_for_request()
 
     def choice_html(self, choice):
@@ -116,19 +116,21 @@ class PresidenteAutocompletamento(PersonaAutocompletamento):
 
 class SostenitoreAutocompletamento(PersonaAutocompletamento):
     def choices_for_request(self):
-        self.choices = self.choices.filter(Appartenenza.query_attuale(membro=Appartenenza.SOSTENITORE).via("appartenenze"))
+        self.choices = self.choices.filter(
+            Appartenenza.query_attuale(membro=Appartenenza.SOSTENITORE).via("appartenenze"))
         return super(SostenitoreAutocompletamento, self).choices_for_request()
 
 
 class VolontarioSedeAutocompletamento(PersonaAutocompletamento):
     def choices_for_request(self):
         sedi = self.request.user.persona.sedi_deleghe_attuali(tipo__in=(UFFICIO_SOCI, UFFICIO_SOCI_UNITA), espandi=True)
-        self.choices = self.choices.filter(Appartenenza.query_attuale(membro=Appartenenza.VOLONTARIO, sede__in=sedi).via("appartenenze"))
+        self.choices = self.choices.filter(
+            Appartenenza.query_attuale(membro=Appartenenza.VOLONTARIO, sede__in=sedi).via("appartenenze"))
         return super(VolontarioSedeAutocompletamento, self).choices_for_request()
 
 
 class IscrivibiliCorsiAutocompletamento(PersonaAutocompletamento):
-    search_fields = ['codice_fiscale', 'email_contatto',]
+    search_fields = ['codice_fiscale', 'email_contatto', ]
 
     attrs = {
         'required': False,
@@ -190,6 +192,37 @@ class SedeNuovoCorsoAutocompletamento(SedeAutocompletamento):
         return self.persona.oggetti_permesso(GESTIONE_CORSI_SEDE)
 
 
+def sedi_di_sangue_regionali():
+    my_list = []
+    from sangue.models import Sede as SedeSangue
+    sedi = SedeSangue.objects.all().distinct('regione')
+    nr = 1
+    for sede in sedi:
+        # print(nr, ' - ', sede.regione)
+        # nr += 1
+        if 'bolzano' in sede.regione or 'trento' in sede.regione:
+            sede.regione = 'Trentino-Alto Adige'
+        my_list.append(sede.regione.capitalize())
+        # print(nr, ' - ', sede.regione)
+        nr += 1
+    my_list = list(set(my_list))
+    # print(my_list)
+    len(my_list)
+    return my_list
+
+
+class SedeRegistraDonazioneAutocompletamento(SedeAutocompletamento):
+    search_fields = ['nome', 'genitore__nome', ]
+    model = Sede
+
+    def choices_for_request(self):
+        self.choices = self.choices.filter(
+            tipo=Sede.COMITATO,
+            estensione__in=[REGIONALE],
+        )
+        return super(SedeRegistraDonazioneAutocompletamento, self).choices_for_request()
+
+
 autocomplete_light.register(PersonaAutocompletamento)
 autocomplete_light.register(PresidenteAutocompletamento)
 autocomplete_light.register(SostenitoreAutocompletamento)
@@ -199,3 +232,4 @@ autocomplete_light.register(SedeAutocompletamento)
 autocomplete_light.register(ComitatoAutocompletamento)
 autocomplete_light.register(SedeTrasferimentoAutocompletamento)
 autocomplete_light.register(SedeNuovoCorsoAutocompletamento)
+autocomplete_light.register(SedeRegistraDonazioneAutocompletamento)

@@ -6,7 +6,24 @@
 
 {% block app_contenuto %}
 
+<style>
 
+    ul.ui-autocomplete {
+        list-style-type: none;
+        width: 300px !important;
+        cursor:pointer;
+    }
+    .ui-helper-hidden-accessible {
+        display: none;
+    }
+
+
+        .ui-autocomplete-input {
+            cursor:pointer;
+            overflow-y:scroll;
+        }
+
+    </style>
 
     <div class="col-md-4">
         <div class="panel panel-primary">
@@ -22,6 +39,8 @@
                     <i class="fa fa-fw fa-info-circle"></i>
                     Hai donato? Registra la tua donazione compilando questo modulo.
                 </p>
+                <label for="automplete-3">Regione: </label>
+                <input id="automplete-3" class="form-control autocomplete vTextField" placeholder="Inizia a scrivere...">
 
                 {% csrf_token %}
                 {% bootstrap_form modulo %}
@@ -48,7 +67,6 @@
             </div>
 
             <div class="panel-body">
-
                 <table class="table table-striped">
 
                     <thead>
@@ -96,6 +114,102 @@
         </div>
 
     </div>
+    <script src = "https://code.jquery.com/ui/1.10.4/jquery-ui.js"></script>
+
+    <script type="text/javascript">
+    sede_ajax_data = {};
+
+       $(function() {
+            var regione = [
+               "Abruzzo",
+                "Basilicata",
+                "Calabria",
+                "Campania",
+                "Emilia Romagna",
+                "Friuli Venezia Giulia",
+                "Lazio",
+                "Liguria",
+                "Lombardia",
+                "Marche",
+                "Molise",
+                "Piemonte",
+                "Puglia",
+                "Sardegna",
+                "Sicilia",
+                "Toscana",
+                "Trentino-Alto Adige",
+                "Umbria",
+                "Valle D'Aosta",
+                "Veneto",
+            ];
+            $( "#automplete-3" ).autocomplete({
+               minLength:2,
+               delay:500,
+               source: regione
+            });
+         });
+
+
+       $('#automplete-3').change(function () {
+          let comitato = $(this).val();
+
+          if (comitato !== '') {
+              $.ajax({
+                  type: "GET",
+                  url: '{% url 'utente:scegliere_sedi' %}',
+                  data: {
+                      'comitato': comitato,
+                  },
+                  dataType: 'json',
+                  success: function (data) {
+                      let select_titolo_cri = $('#id_sede');
+                      select_titolo_cri.find('option').not(':first').remove();
+
+                      sede_ajax_data = data.sedi_di_sangue;
+                      $.each(sede_ajax_data, function(id, text) {
+                          select_titolo_cri.append($('<option>', {
+                              value: id,
+                              text: text['regione'] +
+                                  ' - ' + text['provincia'] +
+                                  ' - ' + text['citta'] +
+                                  ': ' + text['nome'],
+                          }));
+                      });
+                  },
+              });
+          }
+          else {
+               $.ajax({
+                  type: "GET",
+                  url: '{% url 'utente:scegliere_sedi' %}',
+                  data: {
+                      'comitato': comitato,
+                  },
+                  dataType: 'json',
+                  success: function (data) {
+                      let select_titolo_cri = $('#id_sede');
+                      select_titolo_cri.find('option').not(':first').remove();
+
+                      sede_ajax_data = data.sedi;
+                      $.each(sede_ajax_data, function(id, text) {
+                          select_titolo_cri.append($('<option>', {
+                              value: id,
+                              text: text['regione'] +
+                                  ' - ' + text['provincia'] +
+                                  ' - ' + text['citta'] +
+                                  ': ' + text['nome'],
+                          }));
+                      });
+                  },
+              });
+          }
+      });
+
+       $(function() {
+          $('.ui-autocomplete').addClass('dropdown-menu');
+        });
+
+    </script>
 
 
 {% endblock %}
