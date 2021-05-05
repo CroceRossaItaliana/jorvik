@@ -16,6 +16,7 @@ from django.utils import timezone
 from django.utils.crypto import get_random_string
 
 from articoli.viste import get_articoli
+from attivita.models import Area
 from autenticazione.funzioni import pagina_anonima, pagina_privata
 from autenticazione.models import Utenza
 from base.errori import (errore_generico, errore_nessuna_appartenenza,
@@ -2026,10 +2027,21 @@ def operatori_sale(request, me):
     form.fields['sede'].choices = ModuloCreaOperatoreSala.popola_scelta(me)
 
     if request.POST and form.is_valid():
-        pass
+        cd = form.cleaned_data
+        area = Area.objects.filter(nome='Operatore di sala', sede__pk=cd['sede'])
+        if area:
+            area = area.first()
+        else:
+            area = Area(nome='Operatore di sala', sede=Sede.objects.get(pk=cd['sede']))
+            area.save()
+
+        area.aggiungi_delegato(cd['nomina'], cd['persona'], firmatario=me, inizio=poco_fa())
+
+    area = Area.objects.filter(nome='Operatore di sala', sede__in=me.oggetti_permesso(GESTIONE_SEDE))
 
     contesto = {
-        'form': form
+        'form': form,
+        "deleghe": [delegato for area in area for delegato in area.deleghe_attuali()]
     }
     return 'anagrafica_presidente_operatori.html', contesto
 

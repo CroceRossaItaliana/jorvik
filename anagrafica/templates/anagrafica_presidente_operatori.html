@@ -18,10 +18,12 @@
                     <th>Persona</th>
                 </thead>
                 <tbody>
-                    <tr>
-                        <td></td>
-                        <td></td>
-                    </tr>
+                    {% for delega in deleghe %}
+                        <tr>
+                            <td>{{ delega.oggetto.sede }}</td>
+                            <td>{{ delega.persona }}</td>
+                        </tr>
+                    {% endfor %}
                 </tbody>
             </table>
         </div>
