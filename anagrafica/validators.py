@@ -71,6 +71,13 @@ def valida_dimensione_file_5mb(fieldfile_obj):
         raise ValidationError("Seleziona un file più piccolo di %sMB" % str(megabyte_limit))
 
 
+def valida_dimensione_file_6mb(fieldfile_obj):
+    filesize = fieldfile_obj.file.size
+    megabyte_limit = 6
+    if filesize > megabyte_limit*1024*1024:
+        raise ValidationError("Seleziona un file più piccolo di %sMB" % str(megabyte_limit))
+
+
 def valida_dimensione_file_10mb(fieldfile_obj):
     filesize = fieldfile_obj.file.size
     megabyte_limit = 10
