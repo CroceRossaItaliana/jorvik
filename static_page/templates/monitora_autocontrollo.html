@@ -14,7 +14,7 @@
                         {% for regionale in regionali %}
                           <tr>
                             <td>
-                                <a href="{% url 'pages:monitora-trasparenza' %}?r={{regionale.pk}}">{{ regionale }}</a>
+                                <a href="{% url 'pages:monitora-autocontrollo' %}?r={{regionale.pk}}">{{ regionale }}</a>
                             </td>
                           </tr>
                         {% endfor %}

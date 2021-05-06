@@ -643,6 +643,16 @@ class TypeFormResponsesTrasparenzaCheck(TypeFormResponsesCheck):
             'to_print': to_print,
         })
 
+    def print(self):
+        html = self._render_to_string(to_print=True)
+
+        # if hasattr(self, '_no_data_retrieved'):
+        #     messages.add_message(self.request, messages.ERROR,
+        #                          'Non ci sono i dati per generare il report.')
+        #     return redirect(reverse('pages:monitoraggio'))
+
+        return HttpResponse(html)
+
 
 class TypeFormResponsesAutocontrolloCheck(TypeFormResponsesCheck):
     form_ids = OrderedDict([
@@ -661,6 +671,7 @@ class TypeFormResponsesAutocontrolloCheck(TypeFormResponsesCheck):
             # questa ritorna l'id dell comitato
             # comitato = self.get_json_from_responses('ZwMX5rsG')['items'][0]['hidden']['c']
             comitato = Sede.objects.get(pk=self.get_json_from_responses('ZwMX5rsG')['items'][0]['hidden']['c'])
+        print('_render_to_string TypeFormResponsesAutocontrolloCheck')
         return render_to_string('monitoraggio_print.html', {
             'comitato': comitato,
             'user_details': self.me,
@@ -668,3 +679,13 @@ class TypeFormResponsesAutocontrolloCheck(TypeFormResponsesCheck):
             'results': self._retrieve_data(),
             'to_print': to_print,
         })
+
+    def print(self):
+        html = self._render_to_string(to_print=True)
+
+        # if hasattr(self, '_no_data_retrieved'):
+        #     messages.add_message(self.request, messages.ERROR,
+        #                          'Non ci sono i dati per generare il report.')
+        #     return redirect(reverse('pages:monitoraggio'))
+
+        return HttpResponse(html)
