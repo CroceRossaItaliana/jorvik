@@ -661,7 +661,6 @@ class TypeFormResponsesAutocontrolloCheck(TypeFormResponsesCheck):
         ('p5DlUCLt', 'C-Contabilità'),
         ('o7JfxbE5', 'D-Convenzioni e progetti'),
         ('ZwMX5rsG', 'E-Relazioni esterne, comunicazione, trasparenza'),
-        ('Jo7AmkVU', 'Questionario Trasparenza L. 124/2017'),
     ])
 
     def _render_to_string(self, to_print=False):
