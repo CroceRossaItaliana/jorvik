@@ -320,6 +320,40 @@ class TypeFormResponses(TypeForm):
 
     email_object = 'Risposte Questionario di autocontrollo di %s'
 
+    @property
+    def comitato_id(self):
+        persona = self.persona
+
+        delegato = persona.delege_responsabile_area_trasparenza
+
+        if len(delegato) == 1:
+            return delegato[0].oggetto.sede.pk
+        elif len(delegato) > 1:
+            return self.request.GET.get('comitato') if self.request else None
+
+        deleghe = persona.deleghe_attuali(tipo__in=[COMMISSARIO, PRESIDENTE])
+
+        request_comitato = self.request.GET.get('comitato') if self.request else None
+        if request_comitato:
+            # Check comitato_id validity
+            if int(request_comitato) not in deleghe.values_list('oggetto_id', flat=True):
+                raise ValueError("L'utenza non ha una delega con l'ID del comitato indicato.")
+            return request_comitato
+        else:
+            if persona.is_presidente:
+                # Il ruolo presidente può avere soltanto una delega attiva,
+                # quindi vado sicuro a prendere <oggetto_id> dell'unico record
+                return deleghe.filter(tipo=PRESIDENTE).last().oggetto_id
+
+    def _render_to_string(self, to_print=False):
+        return render_to_string('monitoraggio_print.html', {
+            'comitato': self.get_json_from_responses('ttOyXCJR')['items'][0]['hidden']['nc'],
+            'user_details': self.user_details,
+            'request': self.request,
+            'results': self._retrieve_data(),
+            'to_print': to_print,
+        })
+
 
 class TypeFormNonSonoUnBersaglio(TypeForm):
     form_ids = OrderedDict([
@@ -356,9 +390,8 @@ class TypeFormResponsesTrasparenza(TypeForm):
         delegato = persona.delege_responsabile_area_trasparenza
 
         if len(delegato) == 1:
-            return delegato[1].oggetto.sede.pk
+            return delegato[0].oggetto.sede.pk
         elif len(delegato) > 1:
-            print(self.request.GET.get('comitato'))
             return self.request.GET.get('comitato') if self.request else None
 
         deleghe = persona.deleghe_attuali(tipo__in=[COMMISSARIO, PRESIDENTE])
@@ -397,7 +430,7 @@ MONITORAGGIOTYPE = {
 }
 
 
-class TypeFormResponsesTrasparenzaCheck:
+class TypeFormResponsesCheck:
 
     CELERY_TASK_PREFIX = 'CELERY_TASK_MSG_'
     TYPEFORM_DOMAIN = "https://api.typeform.com"
@@ -408,9 +441,7 @@ class TypeFormResponsesTrasparenzaCheck:
         'Content-Type': 'application/json'
     }
 
-    form_ids = OrderedDict([
-        ('Jo7AmkVU', 'Questionario Trasparenza L. 124/2017')
-    ])
+    form_ids = OrderedDict([])
 
     def __init__(self, persona=None, user_pk=None, comitato_id=None):
         # self.request = request
@@ -468,15 +499,6 @@ class TypeFormResponsesTrasparenzaCheck:
     @property
     def all_forms_are_completed(self):
         return 0 if False in [v[0] for k, v in self.context_typeform.items()] else 1
-
-    def _render_to_string(self, to_print=False):
-        return render_to_string('monitoraggio_print.html', {
-            'comitato': self.get_json_from_responses('Jo7AmkVU')['items'][0]['hidden']['nc'],
-            'user_details': self.me,
-            # 'request': self.request,
-            'results': self._retrieve_data(),
-            'to_print': to_print,
-        })
 
     def has_answers(self, json):
         try:
@@ -605,3 +627,44 @@ class TypeFormResponsesTrasparenzaCheck:
         #     return redirect(reverse('pages:monitoraggio'))
 
         return HttpResponse(html)
+
+
+class TypeFormResponsesTrasparenzaCheck(TypeFormResponsesCheck):
+    form_ids = OrderedDict([
+        ('Jo7AmkVU', 'Questionario Trasparenza L. 124/2017')
+    ])
+
+    def _render_to_string(self, to_print=False):
+        return render_to_string('monitoraggio_print.html', {
+            'comitato': self.get_json_from_responses('Jo7AmkVU')['items'][0]['hidden']['nc'],
+            'user_details': self.me,
+            # 'request': self.request,
+            'results': self._retrieve_data(),
+            'to_print': to_print,
+        })
+
+
+class TypeFormResponsesAutocontrolloCheck(TypeFormResponsesCheck):
+    form_ids = OrderedDict([
+        ('ttOyXCJR', 'A-GOVERNANCE'),
+        ('PZvVJIZq', 'B-Personale Dipendente e Volontario'),
+        ('p5DlUCLt', 'C-Contabilità'),
+        ('o7JfxbE5', 'D-Convenzioni e progetti'),
+        ('ZwMX5rsG', 'E-Relazioni esterne, comunicazione, trasparenza'),
+        ('Jo7AmkVU', 'Questionario Trasparenza L. 124/2017'),
+    ])
+
+    def _render_to_string(self, to_print=False):
+        try:
+            comitato = self.get_json_from_responses('Jo7AmkVU')['items'][0]['hidden']['nc']
+        except BaseException:
+            # questa ritorna l'id dell comitato
+            # comitato = self.get_json_from_responses('ZwMX5rsG')['items'][0]['hidden']['c']
+            comitato = Sede.objects.get(pk=self.get_json_from_responses('ZwMX5rsG')['items'][0]['hidden']['c'])
+        return render_to_string('monitoraggio_print.html', {
+            'comitato': comitato,
+            'user_details': self.me,
+            # 'request': self.request,
+            'results': self._retrieve_data(),
+            'to_print': to_print,
+        })
