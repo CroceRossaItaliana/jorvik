@@ -10,7 +10,8 @@ from autenticazione.funzioni import pagina_privata
 from anagrafica.permessi.applicazioni import COMMISSARIO, PRESIDENTE
 from .models import Page
 from .monitoraggio import TypeFormResponses, TypeFormNonSonoUnBersaglio, NONSONOUNBERSAGLIO, MONITORAGGIO, \
-    MONITORAGGIOTYPE, MONITORAGGIO_TRASPARENZA, TypeFormResponsesTrasparenza, TypeFormResponsesTrasparenzaCheck
+    MONITORAGGIOTYPE, MONITORAGGIO_TRASPARENZA, TypeFormResponsesTrasparenza, TypeFormResponsesTrasparenzaCheck, \
+    TypeFormResponsesAutocontrolloCheck
 
 
 @pagina_privata
@@ -26,19 +27,21 @@ def view_page(request, me, slug):
 
 @pagina_privata
 def monitoraggio(request, me):
-    if True not in [me.is_comissario, me.is_presidente]: return redirect('/')
+    if True not in [me.is_comissario, me.is_presidente, me.is_delega_responsabile_area_trasparenza]: return redirect('/')
     if not hasattr(me, 'sede_riferimento'): return redirect('/')
 
     request_comitato = request.GET.get('comitato')
-    if me.is_comissario and not request_comitato:
+    if (me.is_comissario or me.is_delega_responsabile_area_trasparenza) and not request_comitato:
         # GAIA-58: Seleziona comitato
         if me.is_presidente:
             deleghe = me.deleghe_attuali(tipo__in=[COMMISSARIO, PRESIDENTE])
-        else:
+        elif me.is_comissario:
             deleghe = me.deleghe_attuali(tipo__in=[COMMISSARIO])
+        else:
+            deleghe = [Sede.objects.get(pk=area.oggetto.sede.pk) for area in me.delege_responsabile_area_trasparenza]
 
         return 'monitoraggio_choose_comitato.html', {
-            'deleghe': deleghe.distinct('oggetto_id'),
+            'deleghe': deleghe.distinct('oggetto_id') if me.is_comissario else deleghe,
             'url': 'monitoraggio',
             'titolo': 'Questionario autocontrollo',
             'target': MONITORAGGIO
@@ -84,6 +87,7 @@ def monitoraggio(request, me):
     #             del message_storage._loaded_messages[line]
 
     return 'monitoraggio.html', context
+
 
 @pagina_privata
 def monitoraggio_trasparenza(request, me):
@@ -224,13 +228,14 @@ def monitora_trasparenza(request, me):
     comitato = request.GET.get('comitato', None)
 
     if not id_regionale and not action and not comitato:
-        if me.delega_presidente_regionale:
-            ids_regionale.append(me.delega_presidente_regionale)
+        if me.delega_presidente_e_commissario_regionale:
+            for obj in me.delega_presidente_e_commissario_regionale:
+                ids_regionale.append(obj)
         ids_regionale.extend(me.delgato_regionale_monitoraggio_trasparenza)
 
     if ids_regionale:
         regionali = Sede.objects.filter(pk__in=ids_regionale)
-        return 'monitoraggio_choose_monitoraggio.html', {
+        return 'monitoraggio_choose_monitoraggio_transparenza.html', {
             'comitati': regionali,
         }
 
@@ -260,3 +265,51 @@ def monitora_trasparenza(request, me):
         context['regionali'] = Sede.objects.filter(estensione=REGIONALE, attiva=True)
 
     return 'monitora_trasparenza.html', context
+
+
+@pagina_privata
+def monitora_autocontrollo(request, me):
+    context = {}
+    ids_regionale = []
+    id_regionale = request.GET.get('r', None)
+    action = request.GET.get('action', None)
+    comitato = request.GET.get('comitato', None)
+
+    if not id_regionale and not action and not comitato:
+        if me.delega_presidente_e_commissario_regionale:
+            for obj in me.delega_presidente_e_commissario_regionale:
+                ids_regionale.append(obj)
+        ids_regionale.extend(me.delgato_regionale_monitoraggio_trasparenza)
+
+    if ids_regionale:
+        regionali = Sede.objects.filter(pk__in=ids_regionale)
+        return 'monitoraggio_choose_monitoraggio_autocontrollo.html', {
+            'comitati': regionali,
+        }
+
+    if action and comitato:
+        sede = Sede.objects.get(pk=comitato)
+        delegato = sede.delegato_monitoraggio_trasparenza()
+        typeform = TypeFormResponsesAutocontrolloCheck(
+            persona=delegato, user_pk=delegato.id, comitato_id=comitato
+        )
+        typeform.get_responses_for_all_forms()
+        return typeform.print()
+
+    if id_regionale:
+        struttura = OrderedDict()
+        regionale = Sede.objects.get(pk=id_regionale)
+        locali = regionale.ottieni_discendenti(includimi=True).filter(estensione__in=[LOCALE, REGIONALE]).order_by('-estensione')
+        for locale in locali:
+            delegato = locale.delegato_monitoraggio_trasparenza()
+            typeform = TypeFormResponsesAutocontrolloCheck(
+                persona=delegato, user_pk=delegato.id, comitato_id=locale.id
+            )
+            typeform.get_responses_for_all_forms()
+            struttura[locale] = typeform.all_forms_are_completed
+
+        context['struttura'] = struttura
+    else:
+        context['regionali'] = Sede.objects.filter(estensione=REGIONALE, attiva=True)
+
+    return 'monitora_autocontrollo.html', context

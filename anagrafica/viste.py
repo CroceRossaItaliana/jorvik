@@ -2018,3 +2018,4 @@ def inscrizione_evento_volontari(request, me):
         res = trippus_booking_volontari(me, access_token)
         return JsonResponse({'link': res['url']})
     return JsonResponse({})
+
