@@ -172,17 +172,21 @@
 
 </div>
 
-    {% if corso.online and corso.moodle%}
-<div class="row">
-    <div class="col-md-3">
-        <div class="panel panel-primary">
-            <div class="panel-heading">
-                <h3 class="panel-title"><i class="fa fa-fw fa-language"></i>Training</h3>
+    {% if corso.online and corso.moodle or corso.tipo == 'BO' %}
+        <div class="row">
+            <div class="col-md-12">
+                <div class="panel panel-primary">
+                    <div class="panel-heading">
+                        <h3 class="panel-title"><i class="fa fa-fw fa-language"></i> <b>Training CRI</b></h3>
+                    </div>
+                    <div class="panel-body">
+                        <a target="_blank" href="{{ link }}" class="btn btn-block btn-success" style="font-size: 16px">
+                             <i class="fa fa-fw fa-link"></i> <b>Clicca qui ed inizia la tua formazione</b>
+                        </a>
+                    </div>
+                </div>
             </div>
-            <div class="panel-body"><a href="{{ link }}" target="_blank">Link al corso</a></div>
         </div>
-    </div>
-</div>
     {% endif %}
 
 <div class="row">

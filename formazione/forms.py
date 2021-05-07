@@ -5,6 +5,8 @@ from django.core.exceptions import ValidationError
 from django.forms import ModelForm, modelformset_factory
 
 from autocomplete_light import shortcuts as autocomplete_light
+from django.utils.timezone import now
+
 from base.wysiwyg import WYSIWYGSemplice
 
 from anagrafica.permessi import applicazioni as permessi
@@ -12,6 +14,7 @@ from anagrafica.costanti import LOCALE, REGIONALE, NAZIONALE
 from anagrafica.models import Delega, Appartenenza
 from curriculum.models import Titolo
 from curriculum.areas import OBBIETTIVI_STRATEGICI
+from jorvik import settings
 from .models import (Corso, CorsoBase, CorsoFile, CorsoEstensione,
                      LezioneCorsoBase, PartecipazioneCorsoBase, RelazioneCorso)
 
@@ -36,6 +39,8 @@ class ModuloCreazioneCorsoBase(ModelForm):
 
     def clean_tipo(self):
         tipo = self.cleaned_data['tipo']
+
+
         if not tipo:
             raise ValidationError('Seleziona un valore.')
         return tipo
@@ -56,6 +61,17 @@ class ModuloCreazioneCorsoBase(ModelForm):
     def clean(self):
         cd = self.cleaned_data
         tipo = cd['tipo']
+        from datetime import datetime
+        start_date = datetime.strptime(settings.INIZIO_CRIOL_ATTIVABILE, '%m/%d/%Y %H:%M:%S')
+
+        if tipo == 'BO' and start_date > datetime.now():
+            self.add_error(
+                'tipo',
+                'Puoi creare questo corso dal {} '.format(
+                    start_date.strftime("%m/%d/%Y alle %H:%M:%S")
+                )
+            )
+
         data_esame, data_inizio = cd.get('data_esame'), cd.get('data_inizio')
 
         if not data_esame:
@@ -67,7 +83,7 @@ class ModuloCreazioneCorsoBase(ModelForm):
         if data_esame < data_inizio:
             self.add_error('data_esame', "La data deve essere successiva alla data di inizio.")
 
-        if tipo == Corso.BASE:
+        if tipo == Corso.BASE or tipo == Corso.BASE_ONLINE:
             # cd non può/deve avere valori per questi campi se corso è BASE
             for field in ['area', 'level', 'titolo_cri']:
                 if field in cd:
@@ -179,7 +195,7 @@ class ModuloModificaLezione(ModelForm):
                 # hours = days * 24 + seconds // 3600
                 # hours = datetime.timedelta(hours=hours)
 
-                if duration > lezione_ore.seconds and not self.corso.online:
+                if duration > lezione_ore.seconds and not self.corso.online and not self.corso.tipo == Corso.BASE_ONLINE:
                     self.add_error('fine', 'La durata della lezione non può essere '
                         'maggiore della durata impostata nella scheda per questa lezione (%s). '
                         'Hai indicato %s' % (lezione_ore, datetime.timedelta(seconds=duration)))
