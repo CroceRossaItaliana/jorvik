@@ -5,6 +5,7 @@ from django.conf.urls import url
 from django.contrib import admin, messages
 from django.shortcuts import render
 
+from base.admin import InlineAutorizzazione
 from gruppi.readonly_admin import ReadonlyAdminMixin
 from sangue.models import Sede, Donazione, Donatore, Merito
 
@@ -111,3 +112,4 @@ class AdminDonazione(ReadonlyAdminMixin, admin.ModelAdmin):
     list_display = ('persona', 'tipo', 'data', 'esito')
     list_filter = ('tipo',)
     raw_id_fields = ('persona', 'sede')
+    inlines = [InlineAutorizzazione]
