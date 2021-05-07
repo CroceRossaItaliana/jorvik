@@ -6,14 +6,14 @@ from django.contrib import admin, messages
 from django.shortcuts import render
 
 from gruppi.readonly_admin import ReadonlyAdminMixin
-from sangue.models import Sede
+from sangue.models import Sede, Donazione, Donatore, Merito
 
 
 @admin.register(Sede)
 class AdminSede(ReadonlyAdminMixin, admin.ModelAdmin):
-    search_fields = ['nome', 'regione',]
+    search_fields = ['nome', 'regione', 'citta']
     list_display = ('regione', 'provincia', 'citta')
-    list_filter = ('regione', 'provincia', 'citta')
+    list_filter = ('regione', 'provincia')
 
     def get_urls(self):
         urls = super(AdminSede, self).get_urls()
@@ -95,3 +95,19 @@ class AdminSede(ReadonlyAdminMixin, admin.ModelAdmin):
                     messages.warning(request, warning)
 
         return render(request, 'admin/sangue/importa_sede.html', contesto)
+
+
+@admin.register(Donatore)
+class AdminDonatore(ReadonlyAdminMixin, admin.ModelAdmin):
+    search_fields = ['persona', 'gruppo_sanguigno', 'fattore_rh']
+    list_display = ('persona', 'gruppo_sanguigno', 'fattore_rh')
+    list_filter = ('gruppo_sanguigno', 'fattore_rh')
+    raw_id_fields = ('persona', 'sede_sit')
+
+
+@admin.register(Donazione)
+class AdminDonazione(ReadonlyAdminMixin, admin.ModelAdmin):
+    search_fields = ['persona', 'tipo', 'data']
+    list_display = ('persona', 'tipo', 'data')
+    list_filter = ('tipo',)
+    raw_id_fields = ('persona', 'sede')
