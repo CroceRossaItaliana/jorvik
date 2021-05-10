@@ -12,7 +12,7 @@
 endpoint = http://pdf/www/render.php
 
 [moodle]
-domain=http://training.cri.it/webservice/rest/server.php
+domain=https://devtraining.cri.it/webservice/rest/server.php
 
 
 [trippus]

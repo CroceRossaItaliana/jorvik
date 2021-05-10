@@ -1,9 +1,11 @@
 import requests
-from django.conf import settings
+import logging
 from requests import PreparedRequest
 
 from autenticazione.models import Utenza
 from jorvik.settings import MOODLE_KEY, MOODLE_DOMAIN
+
+logger = logging.getLogger(__name__)
 
 
 class TrainingApi:
@@ -48,7 +50,7 @@ class TrainingApi:
                 "moodlewsrestformat": "json",
                 "wstoken": self.token,
                 "wsfunction": "core_user_get_users_by_field",
-                "field": "email",
+                "field": "username",
                 "values[0]": email
             }
         )
@@ -146,6 +148,7 @@ class TrainingApi:
         )
         return r
 
+
     def core_competency_list_course_competencies(self, courseid):
         r = self._get(
             url=self.domain,
@@ -196,5 +199,5 @@ class TrainingApi:
         self.pr.prepare_url(url, parameters)
 
         r = requests.get(self.pr.url, headers=headers, data=data)
-
+        logger.info('{} {} {}'.format(self.pr.url, r.status_code, r.json() if r.status_code != 200 else ''))
         return r.json()

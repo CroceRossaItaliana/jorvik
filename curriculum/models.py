@@ -122,7 +122,7 @@ class Titolo(ModelloSemplice, ConVecchioID):
 
     @property
     def is_titolo_corso_base(self):
-        return self.sigla == 'CRI'
+        return self.sigla == 'CRI' or self.sigla == 'CRIOL'
 
     @property
     def expires_after_timedelta(self):

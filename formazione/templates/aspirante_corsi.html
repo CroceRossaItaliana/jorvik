@@ -53,7 +53,7 @@
                         {% for d in corso.deleghe.all %}
                             {{ d.persona.link|safe }}
                         {% endfor %}
-                    {% if corso.online %}
+                    {% if corso.online or corso.tipo == 'BO'%}
                         <br>
                         <b style="color: #00ff1d;">
                             <i class="fa fa-exclamation"></i>

@@ -27,6 +27,7 @@ from base.stringhe import genera_uuid_casuale
 from base.utils import poco_fa, oggi
 from curriculum.models import TitoloPersonale
 from formazione.forms import ModuloCreaOperatoreSala
+from formazione.models import Corso, CorsoBase
 from posta.models import Messaggio
 from posta.utils import imposta_destinatari_e_scrivi_messaggio
 from sangue.models import Donazione
@@ -68,7 +69,6 @@ from .forms import (ModuloStepComitato, ModuloStepCredenziali, ModuloStepFine,
 
 from .models import (Persona, Documento, Telefono, Estensione, Delega, Trasferimento,
                      Appartenenza, Sede, Riserva, Dimissione, Nominativo, )
-from django.contrib import messages
 
 TIPO_VOLONTARIO = 'volontario'
 TIPO_ASPIRANTE = 'aspirante'
@@ -1129,10 +1129,11 @@ def strumenti_delegati(request, me):
                 torna_url=reverse('strumenti_delegati'),
             )
 
-        if model == 'corsobase' and oggetto.online and oggetto.moodle:
-            from formazione.training_api import TrainingApi
-            api = TrainingApi()
-            api.aggiugi_ruolo(persona=d.persona, corso=oggetto, ruolo=TrainingApi.DIRETTORE)
+        if isinstance(oggetto, CorsoBase):
+            if model == 'corsobase' and ((oggetto.online and oggetto.moodle) or oggetto.tipo == Corso.BASE_ONLINE):
+                from formazione.training_api import TrainingApi
+                api = TrainingApi()
+                api.aggiugi_ruolo(persona=d.persona, corso=oggetto, ruolo=TrainingApi.DIRETTORE)
 
         d.inizio = poco_fa()
         d.firmatario = me
@@ -2090,4 +2091,5 @@ def operatori_sale_termina(request, me, pk=None):
     messages.success(request, "{} è stata terminata correttamente".format(delega))
 
     return redirect(reverse('presidente:operatori_sale'))
+
 

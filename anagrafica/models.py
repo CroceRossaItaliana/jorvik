@@ -1337,6 +1337,20 @@ class Persona(ModelloSemplice, ConMarcaTemporale, ConAllegati, ConVecchioID):
             return None
 
     @property
+    def delega_presidente_e_commissario_regionale(self):
+        deleghe = []
+        if self.delega_presidente:
+            deleghe.append(self.delega_presidente)
+        if self.delega_commissario:
+            deleghe.append(self.delega_commissario)
+        deleghe_id = []
+        if deleghe:
+            for delega in deleghe:
+                if delega.oggetto.estensione == REGIONALE:
+                    deleghe_id.append(delega.oggetto.id)
+        return deleghe_id
+
+    @property
     def delgato_regionale_monitoraggio_trasparenza(self):
         deleghe = []
         for delega in self.deleghe_attuali(tipo=DELEGATO_AREA):
@@ -1378,7 +1392,6 @@ class Persona(ModelloSemplice, ConMarcaTemporale, ConAllegati, ConVecchioID):
         for delega in self.deleghe_attuali(tipo=DELEGATO_AREA):
             if 'Trasparenza'.lower() in delega.oggetto.__str__().lower() and 'Monitoraggio'.lower() not in delega.oggetto.__str__().lower():
                 deleghe.append(delega)
-
         return deleghe
 
     @property
