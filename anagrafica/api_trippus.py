@@ -4,10 +4,12 @@ from jorvik import settings
 import requests
 
 
-PRESIDENTE = '213724'
-COMMISSARIO = '213724'
+PRESIDENTE = '221170'
+COMMISSARIO = '221182'
 
 CONSIGLIERE = '213305'
+
+VOLONTARE = "220735"
 
 
 def trippus_oauth():
@@ -33,6 +35,10 @@ def trippus_booking(persona=None, access_token=''):
         delega = persona.delega_presidente
         sede = delega.oggetto
         codice = PRESIDENTE
+    elif persona.is_comissario:
+        delega = persona.delega_commissario
+        sede = delega.oggetto
+        codice = COMMISSARIO
     elif persona.is_delegato_assemblea_nazionale:
         delega = persona.delega_delegato_assemblea_nazionale
         sede = delega.oggetto
@@ -41,10 +47,6 @@ def trippus_booking(persona=None, access_token=''):
         delega = None
         sede = Sede.objects.get(pk=1)
         codice = PRESIDENTE
-    elif persona.is_comissario:
-        delega = persona.delega_commissario
-        sede = delega.oggetto
-        codice = COMMISSARIO
     else:
         delega = None
         sede = None
@@ -69,6 +71,11 @@ def trippus_booking(persona=None, access_token=''):
                   "value": persona.email if persona.email else persona.utenza.email,
                   "type": "Standard"
                 },
+                {
+                  "key": "Codice Fiscale",
+                  "value": persona.codice_fiscale,
+                  "type": "Web"
+                } if persona.codice_fiscale else None,
                 {
                   "key": "Comitato",
                   "value": sede.nome,
@@ -152,6 +159,73 @@ def trippus_booking_consiglieri(persona=None, access_token=''):
                 {
                   "key": "Ruolo",
                   "value": "Consigliere Giovane",
+                  "type": "Web"
+                },
+                {
+                  "key": "CountryCode",
+                  "value": "+39",
+                  "type": "Standard"
+                }
+            ]
+        }
+      ]
+    }
+
+    headers = {
+        'Authorization': 'Bearer {}'.format(access_token),
+        'Content-Type': 'application/json'
+    }
+
+    res = requests.post(
+        "{}/v1/categories/{}/booking-sources".format(
+            settings.TRIPPUS_DOMAIN,
+            codice
+        ),
+        headers=headers,
+        json=payload
+    )
+
+    return res.json()
+
+
+def trippus_booking_volontari(persona=None, access_token=''):
+    if persona.volontario:
+        appartenenza = Appartenenza.objects.filter(
+            persona=persona, fine=None, membro=Appartenenza.VOLONTARIO, terminazione=None
+        ).first()
+        # Questa puo essere piu di un sede
+        sede = appartenenza.sede
+        codice = VOLONTARE
+    else:
+        sede = None
+        codice = None
+    payload = {
+      "participants": [
+        {
+          "properties": [
+                {
+                  "key": "Firstname",
+                  "value": persona.nome,
+                  "type": "Standard"
+                } if persona.nome else None,
+                {
+                  "key": "Lastname",
+                  "value": persona.cognome,
+                  "type": "Standard"
+                } if persona.cognome else None,
+                {
+                  "key": "Email",
+                  "value": persona.email if persona.email else persona.utenza.email,
+                  "type": "Standard"
+                },
+                {
+                  "key": "Comitato",
+                  "value": sede.nome,
+                  "type": "Web"
+                },
+                {
+                  "key": "Ruolo",
+                  "value": 'Volontari',
                   "type": "Web"
                 },
                 {

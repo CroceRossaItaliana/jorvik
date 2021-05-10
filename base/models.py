@@ -23,6 +23,7 @@ from .stringhe import GeneratoreNomeFile, genera_uuid_casuale
 from .tratti import ConMarcaTemporale
 
 
+
 class ModelloSemplice(models.Model):
     """ Questa classe astratta rappresenta un Modello generico. """
 
@@ -193,9 +194,6 @@ class Autorizzazione(ModelloSemplice, ConMarcaTemporale):
                 self.notifica_negata(auto=auto)
             return
 
-        from formazione.models import PartecipazioneCorsoBase
-
-        # Se è un partecipazione ad un corso con evento informa della inscrizione
         if isinstance(self.oggetto, PartecipazioneCorsoBase):
             evento = self.oggetto.corso.evento
             if evento:
@@ -213,8 +211,11 @@ class Autorizzazione(ModelloSemplice, ConMarcaTemporale):
                             destinatari=corso.direttori_corso(),
                         )
 
-        # Se è un partecipazione ad un corso online aggiunge il ruolo in moodle
-        if isinstance(self.oggetto, PartecipazioneCorsoBase) and self.oggetto.corso.online and self.oggetto.corso.moodle:
+        from formazione.models import PartecipazioneCorsoBase
+        from formazione.models import Corso
+        if isinstance(self.oggetto, PartecipazioneCorsoBase) and (
+                (self.oggetto.corso.online and self.oggetto.corso.moodle) or self.oggetto.corso.tipo == Corso.BASE_ONLINE
+        ):
             from formazione.training_api import TrainingApi
             api = TrainingApi()
             api.aggiugi_ruolo(persona=self.oggetto.persona, corso=self.oggetto.corso, ruolo=TrainingApi.DISCENTE)

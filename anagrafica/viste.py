@@ -26,10 +26,11 @@ from base.stringhe import genera_uuid_casuale
 from base.utils import poco_fa, oggi
 from curriculum.models import TitoloPersonale
 from formazione.forms import FormCreateResponsabileEventoDelega
+from formazione.models import Corso, CorsoBase
 from posta.models import Messaggio
 from posta.utils import imposta_destinatari_e_scrivi_messaggio
 from sangue.models import Donazione
-from .api_trippus import trippus_oauth, trippus_booking, trippus_booking_consiglieri
+from .api_trippus import trippus_oauth, trippus_booking, trippus_booking_consiglieri, trippus_booking_volontari
 
 from .costanti import TERRITORIALE, REGIONALE
 from .elenchi import ElencoDelegati
@@ -1129,10 +1130,11 @@ def strumenti_delegati(request, me):
                 torna_url=reverse('strumenti_delegati'),
             )
 
-        if model == 'corsobase' and oggetto.online and oggetto.moodle:
-            from formazione.training_api import TrainingApi
-            api = TrainingApi()
-            api.aggiugi_ruolo(persona=d.persona, corso=oggetto, ruolo=TrainingApi.DIRETTORE)
+        if isinstance(oggetto, CorsoBase):
+            if model == 'corsobase' and ((oggetto.online and oggetto.moodle) or oggetto.tipo == Corso.BASE_ONLINE):
+                from formazione.training_api import TrainingApi
+                api = TrainingApi()
+                api.aggiugi_ruolo(persona=d.persona, corso=oggetto, ruolo=TrainingApi.DIRETTORE)
 
         d.inizio = poco_fa()
         d.firmatario = me
@@ -2003,10 +2005,20 @@ def inscrizione_evento(request, me):
     return JsonResponse({})
 
 
+# @pagina_privata
+# def inscrizione_evento_consiglieri(request, me):
+#     if request.is_ajax:
+#         access_token = trippus_oauth()['access_token']
+#         res = trippus_booking_consiglieri(me, access_token)
+#         return JsonResponse({'link': res['url']})
+#     return JsonResponse({})
+
+
 @pagina_privata
-def inscrizione_evento_consiglieri(request, me):
+def inscrizione_evento_volontari(request, me):
     if request.is_ajax:
         access_token = trippus_oauth()['access_token']
-        res = trippus_booking_consiglieri(me, access_token)
+        res = trippus_booking_volontari(me, access_token)
         return JsonResponse({'link': res['url']})
     return JsonResponse({})
+

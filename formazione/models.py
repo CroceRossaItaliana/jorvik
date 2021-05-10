@@ -1,5 +1,7 @@
 import re
 import datetime
+import uuid
+
 from dateutil.relativedelta import relativedelta
 
 from django.conf import settings
@@ -17,6 +19,8 @@ from django.utils.translation import ugettext_lazy as _
 
 from anagrafica.models import Sede, Persona, Appartenenza, Delega
 from anagrafica.costanti import PROVINCIALE, TERRITORIALE, LOCALE, REGIONALE, NAZIONALE
+from anagrafica.validators import valida_dimensione_file_8mb, valida_dimensione_file_6mb
+from anagrafica.permessi.applicazioni import (DIRETTORE_CORSO, OBIETTIVI, PRESIDENTE, COMMISSARIO)
 from anagrafica.validators import (valida_dimensione_file_8mb, ValidateFileSize)
 from anagrafica.permessi.applicazioni import (DIRETTORE_CORSO, OBIETTIVI, PRESIDENTE, COMMISSARIO, RESPONSABILE_EVENTO)
 from anagrafica.permessi.incarichi import (INCARICO_ASPIRANTE, INCARICO_GESTIONE_CORSOBASE_PARTECIPANTI)
@@ -244,10 +248,12 @@ class Corso(ModelloSemplice, ConDelegati, ConMarcaTemporale,
     # Tipologia di corso
     CORSO_NUOVO = 'C1'
     BASE = 'BA'
+    BASE_ONLINE = 'BO'
     CORSO_ONLINE = 'CO'
     CORSO_EQUIPOLLENZA = 'CE'
     TIPO_CHOICES = (
         (BASE, 'Corso di Formazione per Volontari CRI'),
+        (BASE_ONLINE, 'Corso di Formazione per Volontari CRI Online'),
         (CORSO_NUOVO, 'Altri Corsi'),
         (CORSO_ONLINE, 'Corsi online'),
         (CORSO_EQUIPOLLENZA, 'Corsi equipollenza'),
@@ -354,7 +360,7 @@ class CorsoBase(Corso, ConVecchioID, ConPDF):
                                                 default=MAX_PARTECIPANTI)
     delibera_file = models.FileField('Delibera', null=True,
         upload_to=delibera_file_upload_path,
-        validators=[ValidateFileSize(3), validate_file_extension]
+        validators=[valida_dimensione_file_6mb, validate_file_extension]
     )
     commissione_esame_file = models.FileField('Commissione esame delibera',
         null=True, blank=True, upload_to='courses/commissione_esame')
@@ -880,7 +886,7 @@ class CorsoBase(Corso, ConVecchioID, ConPDF):
     def attivabile(self):
         """Controlla se il corso base e' attivabile."""
 
-        if not self.locazione and self.tipo != Corso.CORSO_ONLINE:
+        if not self.locazione and self.tipo not in [Corso.CORSO_ONLINE, Corso.BASE_ONLINE]:
             return False
 
         if not self.descrizione:
@@ -900,7 +906,10 @@ class CorsoBase(Corso, ConVecchioID, ConPDF):
 
     def aspiranti_nelle_vicinanze(self):
         from formazione.models import Aspirante
-        return self.circonferenze_contenenti(Aspirante.query_contattabili())
+        if self.locazione:
+            return self.circonferenze_contenenti(Aspirante.query_contattabili())
+        else:
+            return self.sede.circonferenze_contenenti(Aspirante.query_contattabili())
 
     def partecipazioni_confermate_o_in_attesa(self):
         return self.partecipazioni_confermate() | self.partecipazioni_in_attesa()
@@ -1037,7 +1046,7 @@ class CorsoBase(Corso, ConVecchioID, ConPDF):
 
         for partecipazione in self.partecipazioni_confermate_o_in_attesa():
             partecipazione.annulla(persona)
-            if self.online and self.moodle:
+            if (self.online and self.moodle) or self.tipo == Corso.BASE_ONLINE:
                 api = TrainingApi()
                 api.cancellazione_iscritto(persona=partecipazione.persona, corso=self)
 
@@ -1114,7 +1123,7 @@ class CorsoBase(Corso, ConVecchioID, ConPDF):
                     rispondi_a=rispondi_a
                 )
 
-                if self.tipo == Corso.BASE and not recipient.volontario:
+                if (self.tipo == Corso.BASE or self.tipo == Corso.BASE_ONLINE) and not recipient.volontario:
                     # Informa solo aspiranti di zona
                     Messaggio.costruisci_e_accoda(**email_data)
 
@@ -2757,7 +2766,3 @@ class RelazioneCorso(ModelloSemplice, ConMarcaTemporale):
     class Meta:
         verbose_name = 'Relazione del Direttore'
         verbose_name_plural = 'Relazioni dei Direttori'
-
-
-
-

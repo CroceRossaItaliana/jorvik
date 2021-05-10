@@ -13,48 +13,38 @@
     .results-form-name:first-child {border-top:none;}
     .results-item-tr {border-bottom:1px solid #666;}
     .results-item-td {padding: 15px 0;}
-    .results-item-td div {max-width: 85%;}
+    {#.results-item-td div {max-width: 85%;}#}
     .results-item-td .question-parent {margin-top:15px; text-align: center; padding-bottom: 10px; font-weight:bold;}
   </style>
 </head>
 <body {% if to_print %}onload="window.print()"{% endif %}>
-    <div align="center">
-        <strong>{{ user_details.cognome }} {{ user_details.nome }}</strong> - {{ comitato }}<br>
+  <table class="results-table">
+    <tr>
+      <td colspan="2" align="center">
+        <strong>{{ user_details.cognome }} {{ user_details.nome }}</strong> - {{ user_details.sede_riferimento }}<br>
         <a href="mailto:{{ user_details.utenza.email }}">{{ user_details.utenza.email }}</a> - {{ user_details.codice_fiscale }}
-    </div>
+      </td>
+    </tr>
     {% for result in results.items %}
-        <table class="results-table">
-            <thead>
-                <tr>
-                    <th colspan="2" class="results-form-name">{{ result.1.0.form_name|default:result.0 }}
-                </tr>
-            </thead>
-            <tbody>
-                <tr>
-                    <table class="results-table">
-                        <thead>
-                          <tr class="results-item-tr">
-                            <th><strong>Domanda</strong></th>
-                            <th><strong>Risposta</strong></th>
-                          </tr>
-                        </thead>
-                        <tbody>
-                            {% for result in result.1 %}
-                                <tr class="results-item-tr">
-                                    <td class="results-item-td" style="font-size: 12px">
-                                        {{ result.question_title }}
-                                    </td>
-                                    <td class="results-item-td" style="font-size: 8px;" align="center">
-                                        {{ result.answer }}
-                                    </td>
-                                </tr>
-                            {% endfor %}
-                        </tbody>
-                    </table>
-                </tr>
-            </tbody>
-        </table>
+      <tr>
+        <td colspan="2" class="results-form-name">{{ result.1.0.form_name|default:result.0 }}</td>
+      </tr>
+      <tr>
+        <td width="70%"><strong>Domanda</strong></td>
+        <td width="30%"><strong>Risposta</strong></td>
+      </tr>
+      {% for result in result.1 %}
+        <tr class="results-item-tr">
+          <td class="results-item-td">
+            {% if result.question_parent %}
+              <div class="question-parent">{{ result.question_parent.title }}</div>
+            {% endif %}
+            <div>{{ result.question_title }}</div>
+          </td>
+          <td class="results-item-td" style="font-size: 10px; text-align: center">{{ result.answer }}</td>
+        </tr>
+      {% endfor %}
     {% endfor %}
-
+  </table>
 </body>
 </html>

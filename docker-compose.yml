@@ -34,7 +34,7 @@ services:
     environment:
       - "SKIP_DJANGO_COLLECSTATIC=1"
       - "SKIP_DJANGO_MIGRATE=1"
-    command: "celery worker -b redis://broker -A jorvik -l info -Q queue_monitoraggio,queue_formazione,coda_email_rischedula,coda_email_invio,queue_monitoraggio,periodic_ufficio_soci,shared_ufficio_soci -B"
+    command: "celery worker -b redis://broker -A jorvik -l info -Q queue_elastic,queue_monitoraggio,queue_formazione,coda_email_rischedula,coda_email_invio,queue_monitoraggio,periodic_ufficio_soci,shared_ufficio_soci -B"
 
   pdf:
     build: https://github.com/CroceRossaItaliana/gaia-dompdf.git#master

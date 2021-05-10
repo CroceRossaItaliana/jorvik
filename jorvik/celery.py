@@ -14,7 +14,6 @@ app.conf.update(CELERY_CONF.items('celery'))
 app.conf.broker_transport_options = { 'master_name': os.environ.get('REDIS_MASTER', "django") }
 app.conf.result_backend_transport_options = { 'master_name': os.environ.get('REDIS_MASTER', "django") }
 
-
 # Per favore, ricordati di aggiornare anche i seguenti file:
 # - /docker-compose.yml
 app.conf.task_routes = {
@@ -30,6 +29,9 @@ app.conf.task_routes = {
 
     'formazione.tasks.task_invia_email_agli_aspiranti': {'queue': 'queue_formazione'},
     'formazione.tasks.task_invia_email_apertura_evento': {'queue': 'queue_formazione'},
+
+    'anagrafica.tasks.load_elastic': {'queue': 'queue_elastic'},
+    'anagrafica.tasks.delete_elastic': {'queue': 'queue_elastic'},
 }
 
 # Load task modules from all registered Django app configs.

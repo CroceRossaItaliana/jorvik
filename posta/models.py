@@ -327,6 +327,8 @@ class Messaggio(ModelloSemplice, ConMarcaTemporale, ConGiudizio, ConAllegati):
         lista_email_destinatari = lista_email_destinatari or []
         attachments = allegati or []
 
+        oggetto = oggetto.replace('\n', '').replace('\r', '')
+
         msg = EmailMultiAlternatives(
             subject=oggetto,
             body=plain_text,
@@ -391,6 +393,7 @@ class Messaggio(ModelloSemplice, ConMarcaTemporale, ConGiudizio, ConAllegati):
         })
 
         oggetto = Truncator(oggetto).chars(Messaggio.LUNGHEZZA_MASSIMA_OGGETTO)
+        oggetto = oggetto.replace('\n', '').replace('\r', '')
 
         with transaction.atomic():
             m = Messaggio(oggetto=oggetto,

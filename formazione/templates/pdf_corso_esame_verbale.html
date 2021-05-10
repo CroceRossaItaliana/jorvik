@@ -87,7 +87,7 @@
                 </p>
             {% endif %}
 
-            {% if corso.tipo == corso.BASE %}
+            {% if corso.tipo == corso.BASE or corso.tipo == 'BO' %}
 
 
                 {% if not secondo_verbale %}
@@ -125,7 +125,7 @@
                 {% endif %}
 
 
-            {% elif corso.tipo == corso.CORSO_NUOVO %}
+            {% else %}
 
 
                 {% if not secondo_verbale %}

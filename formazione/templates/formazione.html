@@ -81,7 +81,7 @@
 
                     <br>
                     <br>
-                    {% if corso.online %}
+                    {% if corso.online or corso.tipo == 'BO'%}
                         <b style="color: #00ff1d;">
                             <i class="fa fa-exclamation"></i>
                             Corso online

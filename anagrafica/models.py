@@ -19,6 +19,7 @@ from django.utils import timezone
 from django.utils.functional import cached_property
 from django_countries.fields import CountryField
 
+from formazione.utils import unique_signature
 from .costanti import (ESTENSIONE, TERRITORIALE, LOCALE, PROVINCIALE, REGIONALE, NAZIONALE)
 from .permessi.applicazioni import DELEGATO_AREA, DELEGATO_SO
 from .validators import (valida_codice_fiscale, ottieni_genere_da_codice_fiscale,
@@ -67,6 +68,8 @@ class Persona(ModelloSemplice, ConMarcaTemporale, ConAllegati, ConVecchioID):
     data_nascita = models.DateField("Data di nascita", db_index=True, null=True)
     genere = models.CharField("Sesso", max_length=1, choices=GENERE, db_index=True)
     stato = models.CharField("Stato", max_length=1, choices=STATO, default=PERSONA, db_index=True)
+    # signature = models.UUIDField(default=uuid.uuid4, editable=False)
+    signature = models.CharField(max_length=50, null=True, blank=True, default=None)
 
     # Informazioni anagrafiche aggiuntive
     # Residenza
@@ -226,6 +229,18 @@ class Persona(ModelloSemplice, ConMarcaTemporale, ConAllegati, ConVecchioID):
     @property
     def ultimo_tesserino(self):
         return self.tesserini.all().order_by("creazione").last()
+
+    @property
+    def titoli(self):
+        return TitoloPersonale.objects.filter(persona=self)
+
+    # @property
+    # def titoli_cri(self):
+    #     return TitoloPersonale.objects.filter(persona=self, titolo__tipo=Titolo.TITOLO_CRI)\
+    #
+    # @property
+    # def titoli_studio(self):
+    #     return TitoloPersonale.objects.filter(persona=self, titolo__tipo=Titolo.TITOLO_STUDIO)
 
     # Q: Qual e' il numero di telefono di questa persona?
     # A: Una persona puo' avere da zero ad illimitati numeri di telefono.
@@ -1324,6 +1339,20 @@ class Persona(ModelloSemplice, ConMarcaTemporale, ConAllegati, ConVecchioID):
             return None
 
     @property
+    def delega_presidente_e_commissario_regionale(self):
+        deleghe = []
+        if self.delega_presidente:
+            deleghe.append(self.delega_presidente)
+        if self.delega_commissario:
+            deleghe.append(self.delega_commissario)
+        deleghe_id = []
+        if deleghe:
+            for delega in deleghe:
+                if delega.oggetto.estensione == REGIONALE:
+                    deleghe_id.append(delega.oggetto.id)
+        return deleghe_id
+
+    @property
     def delgato_regionale_monitoraggio_trasparenza(self):
         deleghe = []
         for delega in self.deleghe_attuali(tipo=DELEGATO_AREA):
@@ -1365,7 +1394,6 @@ class Persona(ModelloSemplice, ConMarcaTemporale, ConAllegati, ConVecchioID):
         for delega in self.deleghe_attuali(tipo=DELEGATO_AREA):
             if 'Trasparenza'.lower() in delega.oggetto.__str__().lower() and 'Monitoraggio'.lower() not in delega.oggetto.__str__().lower():
                 deleghe.append(delega)
-
         return deleghe
 
     @property
@@ -1522,7 +1550,8 @@ class Persona(ModelloSemplice, ConMarcaTemporale, ConAllegati, ConVecchioID):
         # FIxed JO-733
         if self.genere_codice_fiscale and not self.genere:
             self.genere = self.genere_codice_fiscale
-            
+        if not self.signature:
+            self.signature = unique_signature(self.id, self.creazione)
         super().save(*args, **kwargs)
 
     class Meta:
@@ -1973,7 +2002,24 @@ class Sede(ModelloAlbero, ConMarcaTemporale, ConGeolocalizzazione, ConVecchioID,
                                    validators=[valida_partita_iva])
 
     attiva = models.BooleanField("Attiva", default=True, db_index=True)
+
+    # signature = models.UUIDField(default=uuid.uuid4, editable=False)
+    signature = models.CharField(max_length=50, null=True, blank=True, default=None)
+
     __attiva_default = None
+
+    INGLESE = "ING"
+    TEDESCO = "TED"
+    LINGUA = (
+        (INGLESE, "Inglese"),
+        (TEDESCO, "Tedesco"),
+    )
+    seconda_lingua = models.CharField(max_length=3, choices=LINGUA, default=INGLESE, db_index=True)
+    comitato_seconda_lingua = models.CharField(
+        max_length=254,
+        blank=True,
+        null=True,
+        help_text="Inserisci il nome del comitato nell'altra lingua. Es: Komitee Bozen")
 
     def sorgente_slug(self):
         if self.estensione == PROVINCIALE:
@@ -2189,6 +2235,14 @@ class Sede(ModelloAlbero, ConMarcaTemporale, ConGeolocalizzazione, ConVecchioID,
         return self.ottieni_discendenti(includimi=includi_me)
 
     @property
+    def comitati(self):
+        return self.ottieni_figli()
+
+    @property
+    def comitati_ids(self):
+        return self.ottieni_discendenti().values_list('signature', flat=True)
+
+    @property
     def comitato(self):
         """
         Ottiene il comitato a cui afferisce la Sede attuale.
@@ -2360,6 +2414,8 @@ class Sede(ModelloAlbero, ConMarcaTemporale, ConGeolocalizzazione, ConVecchioID,
         )
 
     def save(self, *args, **kwargs):
+        if not self.signature:
+            self.signature = unique_signature(self.id, self.creazione)
         super().save(*args, **kwargs)
         if self.__attiva_default is not None and not self.attiva and self.__attiva_default != self.attiva:
             for sottosede in self.ottieni_figli(solo_attivi=False):
