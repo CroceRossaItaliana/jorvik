@@ -32,6 +32,7 @@ from posta.models import Messaggio
 from posta.utils import imposta_destinatari_e_scrivi_messaggio
 from sangue.models import Donazione
 from .api_trippus import trippus_oauth, trippus_booking, trippus_booking_consiglieri, trippus_booking_volontari
+from .beta_80 import Beta80Api
 
 from .costanti import TERRITORIALE, REGIONALE
 from .elenchi import ElencoDelegati
@@ -2038,7 +2039,15 @@ def operatori_sale(request, me):
         else:
             area = Area(nome='Operatore di sala', sede=Sede.objects.get(pk=cd['sede']))
             area.save()
-        area.aggiungi_delegato(cd['nomina'], cd['persona'], firmatario=me, inizio=poco_fa())
+
+        beta80Api = Beta80Api(bearer=settings.BETA_80_BEARER)
+
+        result = beta80Api.insert_or_update_user(persona=cd['persona'], tipo_delega=cd['nomina'], sede_id=area.sede.pk)
+
+        if result:
+            area.aggiungi_delegato(cd['nomina'], cd['persona'], firmatario=me, inizio=poco_fa())
+        else:
+            messages.success(request, "Errore nomina Operatore di sala")
 
         form = ModuloCreaOperatoreSala()
         form.fields['sede'].choices = ModuloCreaOperatoreSala.popola_scelta(me)
@@ -2086,9 +2095,17 @@ def operatori_sale(request, me):
 def operatori_sale_termina(request, me, pk=None):
     delega = get_object_or_404(Delega, pk=pk)
 
-    delega.termina(termina_at=poco_fa())
+    beta80Api = Beta80Api(bearer=settings.BETA_80_BEARER)
 
-    messages.success(request, "{} è stata terminata correttamente".format(delega))
+    result = beta80Api.user_delete(
+        persona=delega.persona, tipo_delega=delega.tipo, sede_id=delega.oggetto.sede.pk
+    )
+
+    if result:
+        delega.termina(termina_at=poco_fa())
+        messages.success(request, "{} è stata terminata correttamente".format(delega))
+    else:
+        messages.success(request, " Errore terminazone {}".format(delega))
 
     return redirect(reverse('presidente:operatori_sale'))
 

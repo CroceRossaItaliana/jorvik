@@ -1,10 +1,14 @@
+import json
 from enum import Enum
 import requests
 from http import client
 from django.conf import settings
 
-from anagrafica.models import Persona, Delega
+from anagrafica.models import Persona, Delega, Sede
 from anagrafica.permessi.costanti import DELEGATO_AREA, RESPONSABILE_AREA
+
+import logging
+logger = logging.getLogger(__name__)
 
 
 class Beta80Api:
@@ -14,14 +18,13 @@ class Beta80Api:
         RESPONSABILE_AREA: 'MANAGER'
     }
 
-    bearer = None
-
-    def __init__(self):
+    def __init__(self, bearer=None):
+        self.bearer = bearer
         super().__init__()
 
-    def _scope(self, delega: Delega):
-        delega = self.SCOPE.get(delega.tipo, None)
-        return "CRI.CT.CT_{}.{}".format(str(delega.oggetto.sede.id), delega)
+    def _scope(self, tipo_delega='', sede_id=None):
+        delega = self.SCOPE.get(tipo_delega, '')
+        return "CRI.CT.CT_{}.{}".format(sede_id, delega)
 
     def _headers(self, **kwargs):
         headers = {
@@ -35,37 +38,66 @@ class Beta80Api:
 
         return headers
 
-    def insert_or_update_user(self, persona: Persona):
+    def insert_or_update_user(self, persona: Persona, tipo_delega='', sede_id=None):
+        scope = self._scope(tipo_delega=tipo_delega, sede_id=sede_id)
         payload = {
             "SubjectId": persona.pk,
             "UserName": persona.utenza.email,
             "FirstName": persona.nome,
             "LastName": persona.cognome,
-            "Email": persona.email
+            "Email": persona.email,
+            "Code": scope
         }
 
         request = requests.post(
             '{}{}'.format(settings.BETA_80_HOST, '/BO/api/v1/identitymanager/bo/User/Save'),
             headers=self._headers(),
-            payload=payload
+            data=json.dumps(payload)
         )
 
-        return request.json() if request.status_code in [client.OK, client.CREATED] else None
+        if request.status_code in [client.OK, client.CREATED]:
+            logger.info(
+                "{} SubjectId: {} Code:{} url: {} status_code: {}".format(
+                    persona, persona.pk, scope, '/BO/api/v1/identitymanager/bo/User/Save', request.status_code
+                )
+            )
+            return request.json()
+        else:
+            logger.warning(
+                "{} SubjectId: {} Code:{} url: {} status_code: {}".format(
+                    persona, persona.pk, scope, '/BO/api/v1/identitymanager/bo/User/Save', request.status_code
+                )
+            )
+            logger.warning("payload: {}".format(json.dumps(payload)))
+            logger.warning("response: {}".format(request.text))
+            return None
 
-    def set_scope_user(self, persona: Persona, delega: Delega):
-        pass
-
-    def list_user_by_committee(self):
-        pass
-
-    def user_delete(self):
+    def user_delete(self, persona: Persona, tipo_delega='', sede_id=None):
+        scope = self._scope(tipo_delega=tipo_delega, sede_id=sede_id)
+        payload = {
+            "SubjectId": persona.pk,
+            "Code": scope
+        }
 
         request = requests.post(
             '{}{}'.format(settings.BETA_80_HOST, '/BO/api/v1/identitymanager/bo/User/Delete'),
             headers=self._headers(),
+            data=json.dumps(payload)
         )
 
-        return request.json() if request.status_code in [client.OK, client.CREATED] else None
-
-    def get_user_by_subject_id(self, subject_id: str):
-        pass
+        if request.status_code in [client.OK, client.CREATED]:
+            logger.info(
+                "{} SubjectId: {} Code:{} url: {} status_code: {}".format(
+                    persona, persona.pk, scope, '/BO/api/v1/identitymanager/bo/User/Delete', request.status_code
+                )
+            )
+            return request.json()
+        else:
+            logger.warning(
+                "{} SubjectId: {} Code:{} url: {} status_code: {}".format(
+                    persona, persona.pk, scope, '/BO/api/v1/identitymanager/bo/User/Delete', request.status_code
+                )
+            )
+            logger.warning("payload: {}".format(json.dumps(payload)))
+            logger.warning("response: {}".format(request.text))
+            return None
