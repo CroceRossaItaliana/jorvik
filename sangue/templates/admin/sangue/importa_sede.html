@@ -1,0 +1,36 @@
+{% extends "admin/base_custom.html" %}
+{% load i18n admin_urls l10n %}
+{% load bootstrap3 %}
+
+{% block breadcrumbs %}
+<div class="breadcrumbs">
+<a href="{% url 'admin:index' %}">{% trans 'Home' %}</a>
+&rsaquo; <a href="{% url 'admin:app_list' app_label=opts.app_label %}">{{ opts.app_config.verbose_name }}</a>
+&rsaquo; <a href="{% url opts|admin_urlname:'changelist' %}">{{ opts.verbose_name_plural|capfirst }}</a>
+&rsaquo; Import Sedi
+</div>
+{% endblock %}
+
+{% block content %}
+    <h1>
+        Import Sedi
+    </h1>
+    <h2>Formato file: CSV</h2>
+    <pre>
+        <br/>Regione<br/>Provincia<br/>Citta<br/>Nome<br/>
+    </pre>
+    <b>Delimitatore " , " </b>
+    <br/>
+    <form method="POST" enctype="multipart/form-data">
+        {% csrf_token %}
+        <input type="file" accept=".csv, text/csv" name="file" required/>
+        <input type="submit" style="padding: 5px 8px 5px 8px" data-toggle="tooltip" data-placement="top" title='Assicurarsi che i campi del file csv siano separati dal carattere ","' value="Carica">
+    </form>
+    <br/>
+    <br/>
+    {% if counts %}
+        <b>Processati:</b> {{ counts.totale }}
+        <b>Inseriti:</b> {{ counts.inserite }}
+        <b>Non inseriti:</b> {{ counts.non_inserite }}
+    {% endif %}
+{% endblock %}

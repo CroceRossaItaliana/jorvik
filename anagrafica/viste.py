@@ -1,4 +1,5 @@
 import codecs, csv, datetime
+import re
 from collections import OrderedDict
 from importlib import import_module
 
@@ -28,7 +29,7 @@ from curriculum.models import TitoloPersonale
 from formazione.models import Corso, CorsoBase
 from posta.models import Messaggio
 from posta.utils import imposta_destinatari_e_scrivi_messaggio
-from sangue.models import Donazione
+from sangue.models import Donazione, Sede as SedeSangue
 from .api_trippus import trippus_oauth, trippus_booking, trippus_booking_consiglieri, trippus_booking_volontari
 
 from .costanti import TERRITORIALE, REGIONALE
@@ -750,9 +751,47 @@ def utente_donazioni_sangue(request, me):
 
     contesto = {
         "modulo": modulo,
-        "donazioni": donazioni
+        "donazioni": donazioni,
     }
     return 'anagrafica_utente_donazioni_sangue.html', contesto
+
+
+# def scegliere_sedi2(request):
+#     from sangue.models import Sede as SedeSangue
+#     comitato_id = request.GET.get('comitato_id', '')
+#     comitato_list = []
+#     if comitato_id != '':
+#         comitato = Sede.objects.filter(pk=int(comitato_id)).values().first()['nome']
+#         comitato_list.append(comitato)
+#     else:
+#         for comitato in Sede.objects.filter(estensione__in=[REGIONALE]).values():
+#             comitato_list.append(comitato['nome'])
+#     if len(comitato_list) == 1:
+#         ultima_parola = re.findall(r'\s(\w+)$', comitato_list[0], re.MULTILINE)
+#         sedi_di_sangue = [sede for sede in SedeSangue.objects.filter(regione__icontains=ultima_parola[0]).values()]
+#     else:
+#         sedi_di_sangue = [sede for sede in SedeSangue.objects.all().values()]
+#     data = {
+#         'sedi': [sede for sede in SedeSangue.objects.all().values()],
+#         'sedi_di_sangue': sedi_di_sangue
+#             }
+#     return JsonResponse(data)
+
+
+def scegliere_sedi(request):
+    comitato = request.GET.get('comitato', '')
+    ultima_parola = re.findall(r'\s(\w+)$', comitato, re.MULTILINE)
+    if comitato == 'Trentino-Alto Adige':
+        sedi_di_sangue = [sede for sede in SedeSangue.objects.filter(Q(regione__icontains='bolzano') | Q(regione__icontains='trento')).values()]
+    elif comitato == 'Emilia Romagna' or comitato == 'Friuli Venezia Giulia' or comitato == "Valle DAosta":
+        sedi_di_sangue = [sede for sede in SedeSangue.objects.filter(regione__icontains=ultima_parola[0]).values()]
+    else:
+        sedi_di_sangue = [sede for sede in SedeSangue.objects.filter(regione__icontains=comitato).values()]
+    data = {
+        'sedi': [sede for sede in SedeSangue.objects.all().values()],
+        'sedi_di_sangue': sedi_di_sangue
+            }
+    return JsonResponse(data)
 
 
 @pagina_privata
