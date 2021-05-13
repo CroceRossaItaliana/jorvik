@@ -36,7 +36,9 @@ from survey.models import Survey
 from .training_api import TrainingApi
 from .validators import (course_file_directory_path, validate_file_extension,
                          delibera_file_upload_path)
+import logging
 
+logger = logging.getLogger(__name__)
 
 class Corso(ModelloSemplice, ConDelegati, ConMarcaTemporale,
             ConGeolocalizzazione, ConCommenti, ConGiudizio):
@@ -871,11 +873,14 @@ class CorsoBase(Corso, ConVecchioID, ConPDF):
         Trovare destinatari aspiranti o volontari da avvisare di un nuovo corso attivato.
         :return: <Persona>QuerySet
         """
+
         if self.titolo_cri and self.titolo_cri.is_titolo_corso_base:
             aspiranti_list = self.aspiranti_nelle_vicinanze().values_list('persona', flat=True)
             persone = Persona.objects.filter(pk__in=aspiranti_list)
+            logger.info('aspitanti persone: {}'.format(persone))
         else:
             persone = self.get_volunteers_by_course_requirements()
+            logger.info('volontari persone: {}'.format(persone))
         return persone
 
     def _corso_activation_recipients_for_email_generator(self):
@@ -891,9 +896,12 @@ class CorsoBase(Corso, ConVecchioID, ConPDF):
             yield current_qs
 
     def _invia_email_agli_aspiranti(self, rispondi_a=None):
+
         if self.is_nuovo_corso:
+            logger.info('Corso per volontari')
             subject = "Nuovo %s per Volontari CRI" % self.titolo_cri
         else:
+            logger.info('Corso per aspiranti')
             subject = "Nuovo Corso per Volontari CRI"
 
         for queryset in self._corso_activation_recipients_for_email_generator():
@@ -911,11 +919,13 @@ class CorsoBase(Corso, ConVecchioID, ConPDF):
 
                 if (self.tipo == Corso.BASE or self.tipo == Corso.BASE_ONLINE) and not recipient.volontario:
                     # Informa solo aspiranti di zona
+                    logger.info('accoda mail aspirante: {}'.format(email_data))
                     Messaggio.costruisci_e_accoda(**email_data)
 
                 if self.is_nuovo_corso:
                     # Informa volontari secondo le estensioni impostate (sedi, segmenti, titoli)
                     Messaggio.costruisci_e_accoda(**email_data)
+                    logger.info('accoda mail volontario: {}'.format(email_data))
 
     def has_extensions(self, is_active=True, **kwargs):
         """ Case: extension_type == EXT_LVL_REGIONALE """
