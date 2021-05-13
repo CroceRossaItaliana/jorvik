@@ -698,9 +698,13 @@ class CorsoBase(Corso, ConVecchioID, ConPDF):
     def aspiranti_nelle_vicinanze(self):
         from formazione.models import Aspirante
         if self.locazione:
-            return self.circonferenze_contenenti(Aspirante.query_contattabili())
+            aspiranti = self.circonferenze_contenenti(Aspirante.query_contattabili())
+            logger.info("Aspiranti nelle vicinanze: {}".format(aspiranti))
+            return aspiranti
         else:
-            return self.sede.circonferenze_contenenti(Aspirante.query_contattabili())
+            aspiranti = self.sede.circonferenze_contenenti(Aspirante.query_contattabili())
+            logger.info("Aspiranti nelle vicinanze: {}".format(aspiranti))
+            return aspiranti
 
     def partecipazioni_confermate_o_in_attesa(self):
         return self.partecipazioni_confermate() | self.partecipazioni_in_attesa()
@@ -890,9 +894,11 @@ class CorsoBase(Corso, ConVecchioID, ConPDF):
         from django.core.paginator import Paginator
 
         splitted = Paginator(self._corso_activation_recipients_for_email(), 1000)
+        logger.info('page : {}'.format(splitted.page_range))
         for i in splitted.page_range:
             current_page = splitted.page(i)
             current_qs = current_page.object_list
+            logger.info('object_list : {}'.format(current_qs))
             yield current_qs
 
     def _invia_email_agli_aspiranti(self, rispondi_a=None):
@@ -905,7 +911,9 @@ class CorsoBase(Corso, ConVecchioID, ConPDF):
             subject = "Nuovo Corso per Volontari CRI"
 
         for queryset in self._corso_activation_recipients_for_email_generator():
+            logger.info('page persone: {}'.format(queryset))
             for recipient in queryset:
+
                 email_data = dict(
                     oggetto=subject,
                     modello="email_aspirante_corso.html",
@@ -917,17 +925,16 @@ class CorsoBase(Corso, ConVecchioID, ConPDF):
                     rispondi_a=rispondi_a
                 )
 
-                logger.info('accoda mail: {}'.format(email_data))
-                Messaggio.costruisci_e_accoda(**email_data)
-                # if (self.tipo == Corso.BASE or self.tipo == Corso.BASE_ONLINE) and not recipient.volontario:
-                #     # Informa solo aspiranti di zona
-                #     logger.info('accoda mail aspirante: {}'.format(email_data))
-                #     Messaggio.costruisci_e_accoda(**email_data)
-                #
-                # if self.is_nuovo_corso:
-                #     # Informa volontari secondo le estensioni impostate (sedi, segmenti, titoli)
-                #     Messaggio.costruisci_e_accoda(**email_data)
-                #     logger.info('accoda mail volontario: {}'.format(email_data))
+                if (self.tipo == Corso.BASE or self.tipo == Corso.BASE_ONLINE) and not recipient.volontario:
+                    # Informa solo aspiranti di zona
+                    logger.info('accoda mail aspirante: {}'.format(email_data))
+                    Messaggio.costruisci_e_accoda(**email_data)
+                    logger.info('accoda mail: {}'.format(email_data))
+
+                if self.is_nuovo_corso:
+                    # Informa volontari secondo le estensioni impostate (sedi, segmenti, titoli)
+                    Messaggio.costruisci_e_accoda(**email_data)
+                    logger.info('accoda mail : {}'.format(email_data))
 
     def has_extensions(self, is_active=True, **kwargs):
         """ Case: extension_type == EXT_LVL_REGIONALE """
