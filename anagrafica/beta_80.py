@@ -38,15 +38,14 @@ class Beta80Api:
 
         return headers
 
-    def insert_or_update_user(self, persona: Persona, tipo_delega='', sede_id=None):
-        scope = self._scope(tipo_delega=tipo_delega, sede_id=sede_id)
+    def insert_or_update_user(self, persona: Persona):
         payload = {
             "SubjectId": persona.pk,
             "UserName": persona.utenza.email,
             "FirstName": persona.nome,
             "LastName": persona.cognome,
             "Email": persona.email,
-            "Code": scope
+            "ClientId": "Configurator",
         }
 
         request = requests.post(
@@ -57,15 +56,46 @@ class Beta80Api:
 
         if request.status_code in [client.OK, client.CREATED]:
             logger.info(
+                "{} SubjectId: {} url: {} status_code: {}".format(
+                    persona, persona.pk, '/BO/api/v1/identitymanager/bo/User/Save', request.status_code
+                )
+            )
+            return request.json()
+        else:
+            logger.warning(
+                "{} SubjectId: {} url: {} status_code: {}".format(
+                    persona, persona.pk, '/BO/api/v1/identitymanager/bo/User/Save', request.status_code
+                )
+            )
+            logger.warning("payload: {}".format(json.dumps(payload)))
+            logger.warning("response: {}".format(request.text))
+            return None
+
+    def set_scope_user(self, persona: Persona, tipo_delega='', sede_id=None):
+        scope = self._scope(tipo_delega=tipo_delega, sede_id=sede_id)
+        payload = {
+            "SubjectId": persona.pk,
+            "Code": scope,
+            "ClientId": "Configurator",
+        }
+
+        request = requests.post(
+            '{}{}'.format(settings.BETA_80_HOST, '/BO/api/v1/identitymanager/bo/UserScopes/Save'),
+            headers=self._headers(),
+            data=json.dumps(payload)
+        )
+
+        if request.status_code in [client.OK, client.CREATED]:
+            logger.info(
                 "{} SubjectId: {} Code:{} url: {} status_code: {}".format(
-                    persona, persona.pk, scope, '/BO/api/v1/identitymanager/bo/User/Save', request.status_code
+                    persona, persona.pk, scope, '/BO/api/v1/identitymanager/bo/UserScopes/Save', request.status_code
                 )
             )
             return request.json()
         else:
             logger.warning(
                 "{} SubjectId: {} Code:{} url: {} status_code: {}".format(
-                    persona, persona.pk, scope, '/BO/api/v1/identitymanager/bo/User/Save', request.status_code
+                    persona, persona.pk, scope, '/BO/api/v1/identitymanager/bo/UserScopes/Save', request.status_code
                 )
             )
             logger.warning("payload: {}".format(json.dumps(payload)))
@@ -76,6 +106,7 @@ class Beta80Api:
         scope = self._scope(tipo_delega=tipo_delega, sede_id=sede_id)
         payload = {
             "SubjectId": persona.pk,
+            "ClientId": "Configurator",
             "Code": scope
         }
 

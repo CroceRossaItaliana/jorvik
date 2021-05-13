@@ -2042,9 +2042,10 @@ def operatori_sale(request, me):
 
         beta80Api = Beta80Api(bearer=settings.BETA_80_BEARER)
 
-        result = beta80Api.insert_or_update_user(persona=cd['persona'], tipo_delega=cd['nomina'], sede_id=area.sede.pk)
+        result = beta80Api.insert_or_update_user(persona=cd['persona'])
+        result1 = beta80Api.set_scope_user(persona=cd['persona'], tipo_delega=cd['nomina'], sede_id=area.sede.pk)
 
-        if result:
+        if result and result1:
             area.aggiungi_delegato(cd['nomina'], cd['persona'], firmatario=me, inizio=poco_fa())
         else:
             messages.success(request, "Errore nomina Operatore di sala")
