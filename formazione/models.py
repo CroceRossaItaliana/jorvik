@@ -917,15 +917,17 @@ class CorsoBase(Corso, ConVecchioID, ConPDF):
                     rispondi_a=rispondi_a
                 )
 
-                if (self.tipo == Corso.BASE or self.tipo == Corso.BASE_ONLINE) and not recipient.volontario:
-                    # Informa solo aspiranti di zona
-                    logger.info('accoda mail aspirante: {}'.format(email_data))
-                    Messaggio.costruisci_e_accoda(**email_data)
-
-                if self.is_nuovo_corso:
-                    # Informa volontari secondo le estensioni impostate (sedi, segmenti, titoli)
-                    Messaggio.costruisci_e_accoda(**email_data)
-                    logger.info('accoda mail volontario: {}'.format(email_data))
+                logger.info('accoda mail: {}'.format(email_data))
+                Messaggio.costruisci_e_accoda(**email_data)
+                # if (self.tipo == Corso.BASE or self.tipo == Corso.BASE_ONLINE) and not recipient.volontario:
+                #     # Informa solo aspiranti di zona
+                #     logger.info('accoda mail aspirante: {}'.format(email_data))
+                #     Messaggio.costruisci_e_accoda(**email_data)
+                #
+                # if self.is_nuovo_corso:
+                #     # Informa volontari secondo le estensioni impostate (sedi, segmenti, titoli)
+                #     Messaggio.costruisci_e_accoda(**email_data)
+                #     logger.info('accoda mail volontario: {}'.format(email_data))
 
     def has_extensions(self, is_active=True, **kwargs):
         """ Case: extension_type == EXT_LVL_REGIONALE """
