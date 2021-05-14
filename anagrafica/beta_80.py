@@ -14,8 +14,8 @@ logger = logging.getLogger(__name__)
 class Beta80Api:
 
     SCOPE = {
-        DELEGATO_AREA: 'OPER',
-        RESPONSABILE_AREA: 'MANAGER'
+        DELEGATO_AREA: 'OPT',
+        RESPONSABILE_AREA: 'RESP'
     }
 
     def __init__(self, bearer=None):
