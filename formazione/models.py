@@ -936,6 +936,7 @@ class CorsoBase(Corso, ConVecchioID, ConPDF):
                     Messaggio.costruisci_e_accoda(**email_data)
                     logger.info('accoda mail : {}'.format(email_data))
 
+
     def has_extensions(self, is_active=True, **kwargs):
         """ Case: extension_type == EXT_LVL_REGIONALE """
         return self.corsoestensione_set.filter(is_active=is_active).exists()
