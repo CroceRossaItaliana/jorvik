@@ -12,7 +12,7 @@ from django.template.loader import render_to_string
 from django.core.urlresolvers import reverse
 
 from anagrafica.models import Persona, Sede
-from anagrafica.permessi.applicazioni import COMMISSARIO, PRESIDENTE
+from anagrafica.permessi.applicazioni import COMMISSARIO, PRESIDENTE, RESPONSABILE_FORMAZIONE
 from .tasks import send_mail, send_mail_regionale
 
 
@@ -56,7 +56,7 @@ class TypeForm:
     def comitato_id(self):
         persona = self.persona
 
-        deleghe = persona.deleghe_attuali(tipo__in=[COMMISSARIO, PRESIDENTE])
+        deleghe = persona.deleghe_attuali(tipo__in=[COMMISSARIO, PRESIDENTE, RESPONSABILE_FORMAZIONE])
 
         request_comitato = self.request.GET.get('comitato') if self.request else None
         if request_comitato:
@@ -418,15 +418,115 @@ class TypeFormResponsesTrasparenza(TypeForm):
         })
 
 
+class TypeFormResponsesFabbisogniFormativiTerritoriale(TypeForm):
+    form_ids = OrderedDict([
+        ('gt0uwrpJ', 'Questionario Fabbisogni Formativi'),
+    ])
+    email_body = """Grazie per aver completato il Questionario sulla Fabbisogni Formativi."""
+
+    # REGIONALE
+    email_body_regionale = """
+        Gentilissimi, \n
+        in allegato la Checklist di autovalutazione del Comitato {}
+    """
+
+    email_object = 'Risposte Questionario Fabbisogni Formativi di %s'
+    @property
+    def comitato_id(self):
+        persona = self.persona
+
+        delegato = persona.delege_responsabile_area_trasparenza
+
+        if len(delegato) == 1:
+            return delegato[0].oggetto.sede.pk
+        elif len(delegato) > 1:
+            return self.request.GET.get('comitato') if self.request else None
+
+        deleghe = persona.deleghe_attuali(tipo__in=[COMMISSARIO, PRESIDENTE, RESPONSABILE_FORMAZIONE])
+
+        request_comitato = self.request.GET.get('comitato') if self.request else None
+        if request_comitato:
+            # Check comitato_id validity
+            if int(request_comitato) not in deleghe.values_list('oggetto_id', flat=True):
+                raise ValueError("L'utenza non ha una delega con l'ID del comitato indicato.")
+            return request_comitato
+        else:
+            if persona.is_presidente:
+                # Il ruolo presidente può avere soltanto una delega attiva,
+                # quindi vado sicuro a prendere <oggetto_id> dell'unico record
+                return deleghe.filter(tipo=PRESIDENTE).last().oggetto_id
+
+    def _render_to_string(self, to_print=False):
+        return render_to_string('monitoraggio_print.html', {
+            'comitato': self.get_json_from_responses('gt0uwrpJ')['items'][0]['hidden']['nc'],
+            'user_details': self.user_details,
+            'request': self.request,
+            'results': self._retrieve_data(),
+            'to_print': to_print,
+        })
+
+
+class TypeFormResponsesFabbisogniFormativiRegionali(TypeForm):
+    form_ids = OrderedDict([
+        ('gt0uwrpJ', 'Questionario Fabbisogni Formativi'),
+    ])
+    email_body = """Grazie per aver completato il Questionario sulla Fabbisogni Formativi."""
+
+    # REGIONALE
+    email_body_regionale = """
+        Gentilissimi, \n
+        in allegato la Checklist di autovalutazione del Comitato {}
+    """
+
+    email_object = 'Risposte Questionario Fabbisogni Formativi di %s'
+    @property
+    def comitato_id(self):
+        persona = self.persona
+
+        delegato = persona.delege_responsabile_area_trasparenza
+
+        if len(delegato) == 1:
+            return delegato[0].oggetto.sede.pk
+        elif len(delegato) > 1:
+            return self.request.GET.get('comitato') if self.request else None
+
+        deleghe = persona.deleghe_attuali(tipo__in=[COMMISSARIO, PRESIDENTE, RESPONSABILE_FORMAZIONE])
+
+        request_comitato = self.request.GET.get('comitato') if self.request else None
+        if request_comitato:
+            # Check comitato_id validity
+            if int(request_comitato) not in deleghe.values_list('oggetto_id', flat=True):
+                raise ValueError("L'utenza non ha una delega con l'ID del comitato indicato.")
+            return request_comitato
+        else:
+            if persona.is_presidente:
+                # Il ruolo presidente può avere soltanto una delega attiva,
+                # quindi vado sicuro a prendere <oggetto_id> dell'unico record
+                return deleghe.filter(tipo=PRESIDENTE).last().oggetto_id
+
+    def _render_to_string(self, to_print=False):
+        return render_to_string('monitoraggio_print.html', {
+            'comitato': self.get_json_from_responses('gt0uwrpJ')['items'][0]['hidden']['nc'],
+            'user_details': self.user_details,
+            'request': self.request,
+            'results': self._retrieve_data(),
+            'to_print': to_print,
+        })
+
+
 MONITORAGGIO = 'monitoraggio'
 NONSONOUNBERSAGLIO = 'nonsonounbersaglio'
 MONITORAGGIO_TRASPARENZA = 'monitoraggiotrasparenza'
+MONITORAGGIO_FABBISOGNI_FORMATIVI_TERRITORIALE = 'monitoraggiofabbformterritoriale'
+MONITORAGGIO_FABBISOGNI_FORMATIVI_REGIONALE = 'monitoraggiofabbformragionale'
 
 
 MONITORAGGIOTYPE = {
     MONITORAGGIO: (TypeFormResponses, 'pages:monitoraggio'),
     MONITORAGGIO_TRASPARENZA: (TypeFormResponsesTrasparenza, 'pages:monitoraggio-trasparenza'),
-    NONSONOUNBERSAGLIO: (TypeFormNonSonoUnBersaglio, 'pages:monitoraggio-nonsonounbersaglio')
+    NONSONOUNBERSAGLIO: (TypeFormNonSonoUnBersaglio, 'pages:monitoraggio-nonsonounbersaglio'),
+    MONITORAGGIO_FABBISOGNI_FORMATIVI_TERRITORIALE: (TypeFormResponsesFabbisogniFormativiTerritoriale, 'pages:monitoraggio-fabbisogni-formativi-territoriale'),
+    MONITORAGGIO_FABBISOGNI_FORMATIVI_REGIONALE: (TypeFormResponsesFabbisogniFormativiRegionali, 'pages:monitoraggio-fabbisogni-formativi-ragionale'),
 }
 
 
@@ -673,6 +773,56 @@ class TypeFormResponsesAutocontrolloCheck(TypeFormResponsesCheck):
         print('_render_to_string TypeFormResponsesAutocontrolloCheck')
         return render_to_string('monitoraggio_print.html', {
             'comitato': comitato,
+            'user_details': self.me,
+            # 'request': self.request,
+            'results': self._retrieve_data(),
+            'to_print': to_print,
+        })
+
+    def print(self):
+        html = self._render_to_string(to_print=True)
+
+        # if hasattr(self, '_no_data_retrieved'):
+        #     messages.add_message(self.request, messages.ERROR,
+        #                          'Non ci sono i dati per generare il report.')
+        #     return redirect(reverse('pages:monitoraggio'))
+
+        return HttpResponse(html)
+
+
+class TypeFormResponsesFabbisogniFormativiTerritorialeCheck(TypeFormResponsesCheck):
+    form_ids = OrderedDict([
+        ('gt0uwrpJ', 'Questionario Fabbisogni Formativi'),
+    ])
+
+    def _render_to_string(self, to_print=False):
+        return render_to_string('monitoraggio_print.html', {
+            'comitato': self.get_json_from_responses('gt0uwrpJ')['items'][0]['hidden']['nc'],
+            'user_details': self.me,
+            # 'request': self.request,
+            'results': self._retrieve_data(),
+            'to_print': to_print,
+        })
+
+    def print(self):
+        html = self._render_to_string(to_print=True)
+
+        # if hasattr(self, '_no_data_retrieved'):
+        #     messages.add_message(self.request, messages.ERROR,
+        #                          'Non ci sono i dati per generare il report.')
+        #     return redirect(reverse('pages:monitoraggio'))
+
+        return HttpResponse(html)
+
+
+class TypeFormResponsesFabbisogniFormativiRagionaleCheck(TypeFormResponsesCheck):
+    form_ids = OrderedDict([
+        ('gt0uwrpJ', 'Questionario Fabbisogni Formativi'),
+    ])
+
+    def _render_to_string(self, to_print=False):
+        return render_to_string('monitoraggio_print.html', {
+            'comitato': self.get_json_from_responses('gt0uwrpJ')['items'][0]['hidden']['nc'],
             'user_details': self.me,
             # 'request': self.request,
             'results': self._retrieve_data(),
