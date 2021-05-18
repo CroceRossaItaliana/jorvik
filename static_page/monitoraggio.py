@@ -468,7 +468,7 @@ class TypeFormResponsesFabbisogniFormativiTerritoriale(TypeForm):
 
 class TypeFormResponsesFabbisogniFormativiRegionali(TypeForm):
     form_ids = OrderedDict([
-        ('gt0uwrpJ', 'Questionario Fabbisogni Formativi'),
+        ('Q3NO9HFP', 'Questionario Fabbisogni Formativi'),
     ])
     email_body = """Grazie per aver completato il Questionario sulla Fabbisogni Formativi."""
 
@@ -506,7 +506,7 @@ class TypeFormResponsesFabbisogniFormativiRegionali(TypeForm):
 
     def _render_to_string(self, to_print=False):
         return render_to_string('monitoraggio_print.html', {
-            'comitato': self.get_json_from_responses('gt0uwrpJ')['items'][0]['hidden']['nc'],
+            'comitato': self.get_json_from_responses('Q3NO9HFP')['items'][0]['hidden']['nc'],
             'user_details': self.user_details,
             'request': self.request,
             'results': self._retrieve_data(),
@@ -817,12 +817,12 @@ class TypeFormResponsesFabbisogniFormativiTerritorialeCheck(TypeFormResponsesChe
 
 class TypeFormResponsesFabbisogniFormativiRagionaleCheck(TypeFormResponsesCheck):
     form_ids = OrderedDict([
-        ('gt0uwrpJ', 'Questionario Fabbisogni Formativi'),
+        ('Q3NO9HFP', 'Questionario Fabbisogni Formativi'),
     ])
 
     def _render_to_string(self, to_print=False):
         return render_to_string('monitoraggio_print.html', {
-            'comitato': self.get_json_from_responses('gt0uwrpJ')['items'][0]['hidden']['nc'],
+            'comitato': self.get_json_from_responses('Q3NO9HFP')['items'][0]['hidden']['nc'],
             'user_details': self.me,
             # 'request': self.request,
             'results': self._retrieve_data(),

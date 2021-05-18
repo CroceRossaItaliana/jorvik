@@ -41,10 +41,10 @@ class MenuUtente:
         menu = list(formazione_menu('formazione')[0])
 
         menu[0] = "Formazione"
-        questionario_fabbisogni_formativi_territoriali = (("Questionario Fabbisogni Formativi c. Terrtoriale", 'fa-user', reverse('pages:monitoraggio-fabb-info-territoriale')) if (
+        questionario_fabbisogni_formativi_territoriali = (("Fabbisogni Formativi Comitato Terrtoriale", 'fa-user', reverse('pages:monitoraggio-fabb-info-territoriale')) if (
                         self.me.is_presidente_o_commissario_territoriale or self.me.is_responsabile_formazione_territoriale) else None, )
         questionario_fabbisogni_formativi_regionali = (
-            ("Questionario Fabbisogni Formativi c. Regionale", 'fa-user', reverse('pages:monitoraggio-fabb-info-regionale')) if (
+            ("Fabbisogni Formativi Comitato Regionale", 'fa-user', reverse('pages:monitoraggio-fabb-info-regionale')) if (
                     self.me.is_presidente_o_commissario_regionale or self.me.is_responsabile_formazione_regionale) else None,)
         monitora_fabbisogni_formativi_territoriali = ("Monitora Fabbisogni Formativi Territoriali", 'fa-user', reverse('pages:monitora-fabb-info-territoriale')) if (
                 self.me.is_responsabile_formazione_nazionale or self.me.delega_presidente_e_commissario_regionale or self.me.is_delgato_regionale_monitoraggio_fabbisogni_informativi

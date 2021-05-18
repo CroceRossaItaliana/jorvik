@@ -436,23 +436,15 @@ def monitora_fabb_info_territoriale(request, me):
     context = {}
     ids_regionale = []
     id_regionale = request.GET.get('r', None)
-    id_nazionale = request.GET.get('n', None)
-    print(id_regionale, '=======================================')
     action = request.GET.get('action', None)
     comitato = request.GET.get('comitato', None)
-    print(comitato, '-------------------------------')
-    print(ids_regionale, '++++++++++++++++++++++++++++++++++++++++')
-    print(action, '99999999999999999999999999999999999999')
-    print(id_nazionale, 'comitato nazionale')
 
     if not id_regionale and not action and not comitato:
         if me.delega_presidente_e_commissario_regionale:
-            print(True, 'aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa')
             for obj in me.delega_presidente_e_commissario_regionale:
                 ids_regionale.append(obj)
         ids_regionale.extend(me.delgato_ragionale_monitoraggio_fabb_info)
 
-    print(ids_regionale, 'lalallalalalalalalala')
     if ids_regionale:
         regionali = Sede.objects.filter(pk__in=ids_regionale)
         return 'monitoraggio_choose_monitoraggio_fabb_info_territoriale.html', {
@@ -492,23 +484,15 @@ def monitora_fabb_info_regionale(request, me):
     context = {}
     ids_regionale = []
     id_regionale = request.GET.get('r', None)
-    id_nazionale = request.GET.get('n', None)
-    print(id_regionale, '=======================================')
     action = request.GET.get('action', None)
     comitato = request.GET.get('comitato', None)
-    print(comitato, '-------------------------------')
-    print(ids_regionale, '++++++++++++++++++++++++++++++++++++++++')
-    print(action, '99999999999999999999999999999999999999')
-    print(id_nazionale, 'comitato nazionale')
 
     if not id_regionale and not action and not comitato:
         if me.delega_presidente_e_commissario_regionale:
-            print(True, 'aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa')
             for obj in me.delega_presidente_e_commissario_regionale:
                 ids_regionale.append(obj)
         ids_regionale.extend(me.delgato_ragionale_monitoraggio_fabb_info)
 
-    print(ids_regionale, 'lalallalalalalalalala')
     if ids_regionale:
         regionali = Sede.objects.filter(pk__in=ids_regionale)
         return 'monitoraggio_choose_monitoraggio_fabb_info_regionale.html', {
