@@ -49,7 +49,7 @@ class MenuUtente:
         monitora_fabbisogni_formativi_territoriali = ("Monitora Fabbisogni Formativi Territoriali", 'fa-user', reverse('pages:monitora-fabb-info-territoriale')) if (
                 self.me.delega_presidente_e_commissario_regionale or self.me.is_delgato_regionale_monitoraggio_fabbisogni_informativi
         ) else None,
-        monitora_fabbisogni_formativi_regionali = ("Monitora Fabbisogni Formativi Regionali", 'fa-user',
+        monitora_fabbisogni_formativi_regionali = ("Monitora Fabbisogni Formativi", 'fa-user',
                                                    reverse('pages:monitora-fabb-info-regionale')) if (
                 self.me.is_responsabile_formazione_nazionale
         ) else None,

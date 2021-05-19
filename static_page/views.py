@@ -184,7 +184,6 @@ def monitoraggio_fabb_info_territoriale(request, me):
     context['type_form'] = typeform.context_typeform
 
     typeform.get_responses_for_all_forms()  # checks for already compiled forms
-
     is_done = False
     typeform_id = request.GET.get('id', False)
     if typeform_id:
@@ -270,7 +269,7 @@ def monitoraggio_actions(request, me):
 
     if not action: return redirect_url
     if not hasattr(me, 'sede_riferimento'): return redirect_url
-    if True not in [me.is_comissario, me.is_presidente, me.is_delega_responsabile_area_trasparenza]: return redirect('/')
+    if True not in [me.is_comissario, me.is_presidente, me.is_delega_responsabile_area_trasparenza, me.is_responsabile_formazione]: return redirect('/')
 
     responses = MONITORAGGIOTYPE[target][0](request=request, me=me)
     if action == 'print':

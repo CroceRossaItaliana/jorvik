@@ -610,6 +610,7 @@ class TypeFormResponsesCheck:
 
     @property
     def all_forms_are_completed(self):
+        print([v[0] for k, v in self.context_typeform.items()])
         return 0 if False in [v[0] for k, v in self.context_typeform.items()] else 1
 
     def has_answers(self, json):
