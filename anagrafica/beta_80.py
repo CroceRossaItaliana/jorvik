@@ -45,7 +45,7 @@ class Beta80Api:
             "FirstName": persona.nome,
             "LastName": persona.cognome,
             "Email": persona.email,
-            "ClientId": "Configurator",
+            "ClientId": "CUSCRI",
         }
 
         request = requests.post(
@@ -76,7 +76,7 @@ class Beta80Api:
         payload = {
             "SubjectId": persona.pk,
             "Code": scope,
-            "ClientId": "Configurator",
+            "ClientId": "CUSCRI",
         }
 
         request = requests.post(
@@ -106,7 +106,7 @@ class Beta80Api:
         scope = self._scope(tipo_delega=tipo_delega, sede_id=sede_id)
         payload = {
             "SubjectId": persona.pk,
-            "ClientId": "Configurator",
+            "ClientId": "CUSCRI",
             "Code": scope
         }
 
