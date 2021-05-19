@@ -47,7 +47,7 @@ class MenuUtente:
             ("Fabbisogni Formativi Comitato Regionale", 'fa-user', reverse('pages:monitoraggio-fabb-info-regionale')) if (
                     self.me.is_presidente_o_commissario_regionale or self.me.is_responsabile_formazione_regionale) else None,)
         monitora_fabbisogni_formativi_territoriali = ("Monitora Fabbisogni Formativi Territoriali", 'fa-user', reverse('pages:monitora-fabb-info-territoriale')) if (
-                self.me.is_responsabile_formazione_nazionale or self.me.delega_presidente_e_commissario_regionale or self.me.is_delgato_regionale_monitoraggio_fabbisogni_informativi
+                self.me.delega_presidente_e_commissario_regionale or self.me.is_delgato_regionale_monitoraggio_fabbisogni_informativi
         ) else None,
         monitora_fabbisogni_formativi_regionali = ("Monitora Fabbisogni Formativi Regionali", 'fa-user',
                                                    reverse('pages:monitora-fabb-info-regionale')) if (

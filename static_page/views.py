@@ -221,7 +221,6 @@ def monitoraggio_fabb_info_regionale(request, me):
             deleghe = me.deleghe_attuali(tipo__in=[COMMISSARIO])
         else:
             deleghe = [Sede.objects.get(pk=area.oggetto.pk) for area in me.is_responsabile_formazione_regionale]
-
         return 'monitoraggio_choose_comitato.html', {
             'deleghe': deleghe.distinct('oggetto_id') if me.is_comissario else deleghe,
             'url': 'monitoraggio-fabb-info-regionale',
@@ -511,7 +510,7 @@ def monitora_fabb_info_regionale(request, me):
     if id_regionale:
         struttura = OrderedDict()
         regionale = Sede.objects.get(pk=id_regionale)
-        locali = regionale.ottieni_discendenti(includimi=True).filter(estensione__in=[LOCALE]).order_by('-estensione')
+        locali = regionale.ottieni_discendenti(includimi=True).filter(estensione__in=[LOCALE, REGIONALE]).order_by('-estensione')
         for locale in locali:
             delegato = locale.delegato_monitoraggio_trasparenza()
             typeform = TypeFormResponsesFabbisogniFormativiRagionaleCheck(
