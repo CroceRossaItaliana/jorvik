@@ -1,7 +1,7 @@
 [celery]
 
-broker_url = sentinel://sentinel:26379/0;
-result_backend = sentinel://sentinel:26379/0;
+broker_url = sentinel://sentinel01:26379/0;
+result_backend = sentinel://sentinel01:26379/0;
 
 [riaccoda]
 # 3600s = 1h

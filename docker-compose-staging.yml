@@ -30,8 +30,8 @@ services:
       - MOODLE_KEY=${MOODLE_KEY}
       - TOKEN_TYPE_FORM=${TOKEN_TYPE_FORM}
       - ELASTIC_HOST=${ELASTIC_HOST}
-      - REDIS_MASTER=devdjango
-      - REDIS_HOST=sentinel
+      - REDIS_MASTER=django
+      - REDIS_HOST=sentinel01
     networks:
       - "default"
 
@@ -48,8 +48,8 @@ services:
       - WAIT_HOSTS_TIMEOUT=1200
       - WAIT_SLEEP_INTERVAL=60
       - WAIT_HOST_CONNECT_TIMEOUT=60
-      - REDIS_MASTER=devdjango
-      - REDIS_HOST=sentinel
+      - REDIS_MASTER=django
+      - REDIS_HOST=sentinel01
     command: "celery worker -A jorvik -l info -Q queue_elastic,queue_monitoraggio,queue_formazione,coda_email_rischedula,coda_email_invio,queue_monitoraggio,periodic_ufficio_soci,shared_ufficio_soci -B"
 
   proxy:
