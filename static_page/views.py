@@ -485,7 +485,6 @@ def monitora_fabb_info_regionale(request, me):
     context = {}
     ids_regionale = []
     id_regionale = request.GET.get('r', None)
-    print(ids_regionale, id_regionale)
     action = request.GET.get('action', None)
     comitato = request.GET.get('comitato', None)
 
@@ -513,14 +512,22 @@ def monitora_fabb_info_regionale(request, me):
     if id_regionale:
         struttura = OrderedDict()
         regionale = Sede.objects.get(pk=id_regionale)
-        locali = regionale.ottieni_discendenti(includimi=True).filter(estensione__in=[LOCALE, REGIONALE]).order_by('-estensione')
-        for locale in locali:
-            delegato = locale.delegato_monitoraggio_trasparenza()
-            typeform = TypeFormResponsesFabbisogniFormativiRagionaleCheck(
-                persona=delegato, user_pk=delegato.id, comitato_id=locale.id
-            )
+        comitati = regionale.ottieni_discendenti(includimi=True).filter(estensione__in=[LOCALE, REGIONALE]).order_by(
+            '-estensione')
+        for comitato in comitati:
+            # se e comitato regionale, usi il typeform per comitati regionali
+            if comitato.estensione == 'R':
+                delegato = comitato.delegato_monitoraggio_trasparenza()
+                typeform = TypeFormResponsesFabbisogniFormativiRagionaleCheck(
+                    persona=delegato, user_pk=delegato.id, comitato_id=comitato.id
+                )
+            else:
+                delegato = comitato.delegato_monitoraggio_trasparenza()
+                typeform = TypeFormResponsesFabbisogniFormativiTerritorialeCheck(
+                    persona=delegato, user_pk=delegato.id, comitato_id=comitato.id
+                )
             typeform.get_responses_for_all_forms()
-            struttura[locale] = typeform.all_forms_are_completed
+            struttura[comitato] = typeform.all_forms_are_completed
         context['struttura'] = struttura
     else:
         context['regionali'] = Sede.objects.filter(estensione=REGIONALE, attiva=True)

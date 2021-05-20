@@ -40,11 +40,19 @@
                                         <span class="glyphicon glyphicon-remove-circle" style="color: #ea1717"></span>
                                     {% endif %}
                                 </td>
+                            {% if locale.estensione == 'R' %}
                                 <td>
                                     {% if completo %}
-                                        <a href="?action=print&comitato={{ locale.pk }}" target="_blank"><i class="fa fa-print fa-fw">PDF</i>
+                                        <a href="{% url 'pages:monitora-fabb-info-regionale' %}?action=print&comitato={{ locale.pk }}" target="_blank"><i class="fa fa-print fa-fw">PDF</i></a>
                                     {% endif %}
                                 </td>
+                            {% else %}
+                                <td>
+                                    {% if completo %}
+                                        <a href="{% url 'pages:monitora-fabb-info-territoriale' %}?action=print&comitato={{ locale.pk }}" target="_blank"><i class="fa fa-print fa-fw">PDF</i></a>
+                                    {% endif %}
+                                </td>
+                            {% endif %}
                             </tr>
                         {% endfor %}
                     </tbody>
