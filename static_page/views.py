@@ -169,7 +169,7 @@ def monitoraggio_fabb_info_territoriale(request, me):
         return 'monitoraggio_choose_comitato.html', {
             'deleghe': deleghe.distinct('oggetto_id') if me.is_comissario else deleghe,
             'url': 'monitoraggio-fabb-info-territoriale',
-            'titolo': 'Monitoraggio Fabbisogni Informativi comitato Territoriale',
+            'titolo': 'Monitoraggio Fabbisogni Informativi Comitato Territoriale',
             'target': MONITORAGGIO_FABBISOGNI_FORMATIVI_TERRITORIALE
         }
 
@@ -181,11 +181,15 @@ def monitoraggio_fabb_info_territoriale(request, me):
     if not typeform.make_test_request_to_api:
         return 'monitoraggio_fabb_info_territoriale.html', context
 
+    # print(typeform.context_typeform, 'ccccccccccccccccccccccccccccccc')
     context['type_form'] = typeform.context_typeform
+    print(context['type_form'])
 
     typeform.get_responses_for_all_forms()  # checks for already compiled forms
+    print(typeform.get_responses_for_all_forms(), 'aaaaaaaaaaaaaaaaaaaaaaaaaaaaaa')
     is_done = False
     typeform_id = request.GET.get('id', False)
+    print(typeform_id, 'bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb', typeform.comitato, typeform.comitato_id, typeform.get_user_pk)
     if typeform_id:
         typeform_ctx = context['type_form'][typeform_id]
         is_done = typeform_ctx[0]
@@ -223,7 +227,7 @@ def monitoraggio_fabb_info_regionale(request, me):
         return 'monitoraggio_choose_comitato.html', {
             'deleghe': deleghe.distinct('oggetto_id') if me.is_comissario else deleghe,
             'url': 'monitoraggio-fabb-info-regionale',
-            'titolo': 'Monitoraggio Fabbisogni Informativi comitato Regionale',
+            'titolo': 'Monitoraggio Fabbisogni Informativi Comitato Regionale',
             'target': MONITORAGGIO_FABBISOGNI_FORMATIVI_REGIONALE
         }
 
@@ -368,6 +372,7 @@ def monitora_trasparenza(request, me):
         locali = regionale.ottieni_discendenti(includimi=True).filter(estensione__in=[LOCALE, REGIONALE]).order_by('-estensione')
         for locale in locali:
             delegato = locale.delegato_monitoraggio_trasparenza()
+            print(delegato)
             typeform = TypeFormResponsesTrasparenzaCheck(
                 persona=delegato, user_pk=delegato.id, comitato_id=locale.id
             )
@@ -469,11 +474,9 @@ def monitora_fabb_info_territoriale(request, me):
             )
             typeform.get_responses_for_all_forms()
             struttura[locale] = typeform.all_forms_are_completed
-
         context['struttura'] = struttura
     else:
         context['regionali'] = Sede.objects.filter(estensione=REGIONALE, attiva=True)
-
     return 'monitora_fabb_info_territoriale.html', context
 
 
@@ -482,6 +485,7 @@ def monitora_fabb_info_regionale(request, me):
     context = {}
     ids_regionale = []
     id_regionale = request.GET.get('r', None)
+    print(ids_regionale, id_regionale)
     action = request.GET.get('action', None)
     comitato = request.GET.get('comitato', None)
 
@@ -517,9 +521,7 @@ def monitora_fabb_info_regionale(request, me):
             )
             typeform.get_responses_for_all_forms()
             struttura[locale] = typeform.all_forms_are_completed
-
         context['struttura'] = struttura
     else:
         context['regionali'] = Sede.objects.filter(estensione=REGIONALE, attiva=True)
-
     return 'monitora_fabb_info_regionale.html', context

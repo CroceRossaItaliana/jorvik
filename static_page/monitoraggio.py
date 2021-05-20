@@ -571,8 +571,12 @@ class TypeFormResponsesCheck:
 
     def get_responses_for_all_forms(self):
         comitato_id = str(self.comitato_id)
+        # print(comitato_id)
+        # print(self.form_ids.items(), '+++++++++++++++++++')
         for _id, bottone_name in self.form_ids.items():
+            # print(_id, bottone_name)
             json = self.get_json_from_responses(_id)
+            # print(json, 'json')
             for item in json['items']:
                 c = item.get('hidden', OrderedDict())
                 c = c.get('c')
@@ -582,12 +586,15 @@ class TypeFormResponsesCheck:
                     break  # bottone spento
 
     def get_json_from_responses(self, form_id=None, instance=None):
+        # print(instance, 'aaaaaaaaaaaaaaaaaaa')
         if instance:
             return instance.json()
         else:
             if form_id is not None:
+                # print(form_id, 'bbbbbbbbbbbbbbbbbbbbbbbbb')
                 # Make complete request
                 # return self.get_responses(form_id).json()
+                # print(self.get_completed_responses(form_id), 'ccccccccccccccc')
                 return self.get_completed_responses(form_id)
             else:
                 raise BaseException('You must pass form_id')
@@ -597,20 +604,24 @@ class TypeFormResponsesCheck:
                                      path='/responses',
                                      query=self.user_pk,
                                      completed=True)
+        # print(response.json(), 'ddddddddddddddddddddddddddddddddddddddd')
         return response.json()
 
     @classmethod
     def make_request(cls, form_id, path='', **kwargs):
         url = cls.ENDPOINT % form_id + path
+        # print(url, 'eeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeee')
+        # print(kwargs.get('completed'), kwargs.get('query'), 'ffffffffffffffffffffffffffffff')
         if kwargs.get('completed') == True and kwargs.get('query'):
             url += '?completed=true'
             url += '&query=%s' % kwargs.get('query')
+        # print(url, 'ggggggggggggggggggggggggggggggggggggggggg')
         response = requests.get(url, headers=cls.HEADERS)
+        # print(response.json(), 'hhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhh')
         return response
 
     @property
     def all_forms_are_completed(self):
-        print([v[0] for k, v in self.context_typeform.items()])
         return 0 if False in [v[0] for k, v in self.context_typeform.items()] else 1
 
     def has_answers(self, json):
@@ -805,13 +816,24 @@ class TypeFormResponsesAutocontrolloCheck(TypeFormResponsesCheck):
 
 class TypeFormResponsesFabbisogniFormativiTerritorialeCheck(TypeFormResponsesCheck):
     form_ids = OrderedDict([
-        ('gt0uwrpJ', 'Questionario Fabbisogni Formativi'),
+        ('gt0uwrpJ', 'Questionario Fabbisogni Formativi Comitato Territoriale'),
     ])
 
     def _render_to_string(self, to_print=False):
+        try:
+            comitato = self.get_json_from_responses('Jo7AmkVU')['items'][0]['hidden']['nc']
+        except BaseException:
+            # questa ritorna l'id dell comitato
+            # comitato = self.get_json_from_responses('ZwMX5rsG')['items'][0]['hidden']['c']
+            comitato = Sede.objects.get(pk=self.get_json_from_responses('gt0uwrpJ')['items'][0]['hidden']['c'])
+            deleghe = [a for a in self.me.deleghe_attuali()]
+            for ogni_delegha in deleghe:
+                if ogni_delegha.oggetto_id == comitato.id:
+                    delegha = ogni_delegha
         return render_to_string('monitoraggio_print.html', {
-            'comitato': self.get_json_from_responses('gt0uwrpJ')['items'][0]['hidden']['nc'],
+            'comitato': comitato,
             'user_details': self.me,
+            'delegha': delegha,
             # 'request': self.request,
             'results': self._retrieve_data(),
             'to_print': to_print,
@@ -830,13 +852,25 @@ class TypeFormResponsesFabbisogniFormativiTerritorialeCheck(TypeFormResponsesChe
 
 class TypeFormResponsesFabbisogniFormativiRagionaleCheck(TypeFormResponsesCheck):
     form_ids = OrderedDict([
-        ('Q3NO9HFP', 'Questionario Fabbisogni Formativi'),
+        ('Q3NO9HFP', 'Questionario Fabbisogni Formativi Comitato Regionale'),
     ])
 
     def _render_to_string(self, to_print=False):
+        try:
+            comitato = self.get_json_from_responses('Jo7AmkVU')['items'][0]['hidden']['nc']
+        except BaseException:
+            # questa ritorna l'id dell comitato
+            # comitato = self.get_json_from_responses('ZwMX5rsG')['items'][0]['hidden']['c']
+            comitato = Sede.objects.get(pk=self.get_json_from_responses('Q3NO9HFP')['items'][0]['hidden']['c'])
+            deleghe = [a for a in self.me.deleghe_attuali()]
+            for ogni_delegha in deleghe:
+                if ogni_delegha.oggetto_id == comitato.id:
+                    delegha = ogni_delegha
+
         return render_to_string('monitoraggio_print.html', {
-            'comitato': self.get_json_from_responses('Q3NO9HFP')['items'][0]['hidden']['nc'],
+            'comitato': comitato,
             'user_details': self.me,
+            'delegha': delegha,
             # 'request': self.request,
             'results': self._retrieve_data(),
             'to_print': to_print,
