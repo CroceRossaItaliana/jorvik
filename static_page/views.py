@@ -529,29 +529,25 @@ def monitora_fabb_info_regionale(request, me):
     if id_regionale:
         struttura = OrderedDict()
         regionale = Sede.objects.get(pk=id_regionale)
-        comitati = regionale.ottieni_discendenti(includimi=True).filter(estensione__in=[REGIONALE]).order_by(
+        comitati = regionale.ottieni_discendenti(includimi=True).filter(estensione__in=[LOCALE, REGIONALE]).order_by(
             '-estensione')
         for comitato in comitati:
             # se e comitato regionale, usi il typeform per comitati regionali
-            print(comitato.estensione, 'rrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrr')
             if comitato.estensione == 'R':
-                delegato = comitato.delegato_monitoraggio_trasparenza()
+                delegato = comitato.monitora_fabb_info_regionali()
+                print(delegato, 'nell view ..................................')
                 typeform = TypeFormResponsesFabbisogniFormativiRagionaleCheck(
                     persona=delegato, user_pk=delegato.id, comitato_id=comitato.id
                 )
-                print(typeform, 'aaaaaaaaaaaaaaaaafkdjfksdjfdsfsdfdyyyyyyyyyyyyyyyyyyyyyyyyyyyy')
                 typeform.get_responses_for_all_forms()
-                print(typeform.get_responses_for_all_forms(), 'ffffffffffffffffffffffffffffffffffffffffffffffffffffffffff')
                 struttura[comitato] = typeform.all_forms_are_completed
-            # else:
-            #     delegato = comitato.delegato_monitoraggio_trasparenza()
-            #     typeform = TypeFormResponsesFabbisogniFormativiTerritorialeCheck(
-            #         persona=delegato, user_pk=delegato.id, comitato_id=comitato.id
-            #     )
-            #     typeform.get_responses_for_all_forms()
-            #     struttura[comitato] = typeform.all_forms_are_completed
-                print(struttura)
-                print(struttura[comitato])
+            else:
+                delegato = comitato.delegato_monitoraggio_trasparenza()
+                typeform = TypeFormResponsesFabbisogniFormativiTerritorialeCheck(
+                    persona=delegato, user_pk=delegato.id, comitato_id=comitato.id
+                )
+                typeform.get_responses_for_all_forms()
+                struttura[comitato] = typeform.all_forms_are_completed
         context['struttura'] = struttura
     else:
         context['regionali'] = Sede.objects.filter(estensione=REGIONALE, attiva=True)

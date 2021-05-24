@@ -39,7 +39,7 @@ class MenuUtente:
     def menu_formazione(self):
         from formazione.menus import formazione_menu
 
-        menu = list(formazione_menu('formazione')[0])
+        menu = list(formazione_menu('formazione', self.me)[0])
 
         menu[0] = "Formazione"
         questionario_fabbisogni_formativi_territoriali = (("Fabbisogni Formativi Comitato Territoriale", 'fa-user', reverse('pages:monitoraggio-fabb-info-territoriale')) if (
@@ -54,11 +54,11 @@ class MenuUtente:
                                                    reverse('pages:monitora-fabb-info-regionale')) if (
                 self.me.is_responsabile_formazione_nazionale
         ) else None,
-        menu[1] = questionario_fabbisogni_formativi_regionali + \
-                  questionario_fabbisogni_formativi_territoriali + \
-                  monitora_fabbisogni_formativi_territoriali + \
-                  monitora_fabbisogni_formativi_regionali + \
-                  menu[1]
+        # menu[1] = questionario_fabbisogni_formativi_regionali + \
+        #           questionario_fabbisogni_formativi_territoriali + \
+        #           monitora_fabbisogni_formativi_territoriali + \
+        #           monitora_fabbisogni_formativi_regionali + \
+        #           menu[1]
         menu[1] += self._espandi_con_static_pege(Menu.FORMAZIONE)
         return menu
 

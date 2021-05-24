@@ -528,6 +528,8 @@ class TypeFormResponsesFabbisogniFormativiRegionali(TypeForm):
             comitato = Sede.objects.get(pk=self.get_json_from_responses('Q3NO9HFP')['items'][0]['hidden']['c'])
 
         deleghe = [a for a in self.me.deleghe_attuali()]
+        print(deleghe, 'aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa')
+        print(self.get_json_from_responses('gt0uwrpJ')['items'], '999999999999999999999999999999999999999999999999999999999')
         for ogni_delegha in deleghe:
             if ogni_delegha.oggetto_id == int(self.get_json_from_responses('gt0uwrpJ')['items'][0]['hidden']['c']):
                 delegha_list.append(ogni_delegha)
@@ -876,12 +878,17 @@ class TypeFormResponsesFabbisogniFormativiRagionaleCheck(TypeFormResponsesCheck)
 
     def _render_to_string(self, to_print=False):
         delegha_list = []
-        try:
-            comitato = self.get_json_from_responses('Jo7AmkVU')['items'][0]['hidden']['nc']
-        except BaseException:
-            # questa ritorna l'id dell comitato
-            # comitato = self.get_json_from_responses('ZwMX5rsG')['items'][0]['hidden']['c']
-            comitato = Sede.objects.get(pk=self.get_json_from_responses('Q3NO9HFP')['items'][0]['hidden']['c'])
+        print(self.get_json_from_responses('Q3NO9HFP'), 'aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa')
+        # try:
+        #     print('fjasf;jsadakfjdsfjdasffsfdsdfs')
+        #     print(self.get_json_from_responses('Jo7AmkVU')['items'], '-----------------------------------------------------------------')
+        #     comitato = self.get_json_from_responses('Jo7AmkVU')['items'][0]['hidden']['nc']
+        #     print(comitato, '-----------------------------------------------------------------')
+        # except BaseException:
+        # questa ritorna l'id dell comitato
+        # comitato = self.get_json_from_responses('ZwMX5rsG')['items'][0]['hidden']['c']
+        comitato = Sede.objects.get(pk=self.get_json_from_responses('Q3NO9HFP')['items'][0]['hidden']['c']).first()
+        print(comitato, '+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++')
         deleghe = [a for a in self.me.deleghe_attuali()]
         for ogni_delegha in deleghe:
             if ogni_delegha.oggetto_id == int(self.get_json_from_responses('Q3NO9HFP')['items'][0]['hidden']['c']):
