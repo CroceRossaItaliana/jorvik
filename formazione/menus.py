@@ -36,6 +36,25 @@ def formazione_menu(menu_name, me=None):
                 me, RUBRICA_DELEGATI_OBIETTIVO_ALL + [GESTIONE_CORSI_SEDE]
             ) or (me and me.is_responsabile_area_albo_formazione) else None,
         )),
+        # ("Monitoraggio", (
+        #     ("Fabbisogni Formativi Comitato Territoriale", 'fa-user',
+        #      reverse('formazione:monitoraggio-fabb-info-territoriale')) if (
+        #             me.is_presidente_o_commissario_territoriale or
+        #             me.is_responsabile_formazione_territoriale) else None,
+        #     ("Fabbisogni Formativi Comitato Regionale", 'fa-user',
+        #      reverse('formazione:monitoraggio-fabb-info-regionale')) if (
+        #             me.is_presidente_o_commissario_regionale or
+        #             me.is_responsabile_formazione_regionale) else None,
+        #     ("Monitora Fabbisogni Formativi Territoriali", 'fa-user',
+        #      reverse('pages:monitora-fabb-info-territoriale')) if (
+        #             me.delega_presidente_e_commissario_regionale or
+        #             me.is_delgato_regionale_monitoraggio_fabbisogni_informativi
+        #     ) else None,
+        #     ("Monitora Fabbisogni Formativi", 'fa-user',
+        #      reverse('pages:monitora-fabb-info-regionale')) if
+        #         me.is_responsabile_formazione_nazionale else None
+        #
+        # )),
     )
 
     ASPIRANTE = (

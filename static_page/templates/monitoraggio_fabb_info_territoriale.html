@@ -12,10 +12,9 @@
     {% endif %}
   <div class="articolo single-page">
     <h3>Questionario Fabbisogni Formativi <span style="color:#555; font-size:24px;">- {{ comitato }}</span></h3>
-    <p style="font-size: 10pt">
-          <b>La Rilevazione dei Fabbisogni Formativi per i Comitati Territoriali</b>
-      </p>
+      <br>
       <p style="font-size: 10pt">
+          <b>La Rilevazione dei Fabbisogni Formativi per i Comitati Territoriali</b><br>
           L’obiettivo della rilevazione dei fabbisogni formativi è quello di individuare la tipologia di formazione necessaria e i relativi docenti che possano colmare le esigenze formative dei territori e conseguentemente formare Volontari sempre più consapevoli e preparati. <br>
           Nel Regolamento dei Corsi di formazione per Volontari e Dipendenti della Croce Rossa Italiana, all’articolo 51, si prevede di monitorare annualmente i bisogni formativi dei Comitati Territoriali e Regionali in modo da aver un quadro di sistema per la programmazione dei corsi per l’anno successivo. Nella norma si dà rilievo ai bisogni espressi dai Comitati in termini di <b>competenze specifiche</b> da impiegare nei territori al fine di formare Volontari competenti a fronteggiare le diverse attività di informazione, prevenzione ed emergenza. In linea con il dettato normativo si è previsto di strutturare due questionari, uno in successione temporale rispetto all’altro, il primo dedicato ai Comitati Territoriali ed il secondo dedicato ai Comitati Regionali. <br>
           Il questionario che sottoponiamo è quello dedicato ai Comitati Territoriali e potrà essere compilato da parte del Presidente, del Commissario o del Responsabile Formazione <b>entro il 30 luglio di ogni anno</b>.
@@ -25,7 +24,7 @@
       </p>
 
     <ul class="typeform_widget">
-      <li><a href="?comitato={{user_comitato}}&id=gt0uwrpJ" class="{%if type_form.gt0uwrpJ.0 %}done{%endif%} typeform_widget__btn testi-lunghi hand" title="Questionario Fabbisogni Formativi">Questionario Fabbisogni Formativi</a></li>
+      <li><a href="?comitato={{user_comitato}}&id=gt0uwrpJ" class="{%if type_form.gt0uwrpJ.0 %}done{%endif%} {%if finito_di_compilare_per_questo_anno == True %}finito{% endif %} typeform_widget__btn testi-lunghi hand" title="Questionario Fabbisogni Formativi">Questionario Fabbisogni Formativi</a></li>
     </ul>
 
     <div class="typeform_widget__wrapper">
@@ -71,9 +70,12 @@
       {% if celery_task_id %}var celery_task_id = "{{ celery_task_id }}";{% endif %}
 
       $('.typeform_widget__btn').on('click', function(e) {
-        if ($(this).hasClass('done')) {
+        if ($(this).hasClass('finito')) {
           e.preventDefault();
-          alert("Hai già compilato questa form.");
+          alert("Il tempo di compilare i fabbisogni formativi e finito.");
+        } else if ($(this).hasClass('done')) {
+            e.preventDefault();
+            alert("Hai già compilato questa form. ");
         } else {
           $('body').prepend('<div class="typeform_widget-loading"><div class="text">Caricamento ...</div></div>');
         }

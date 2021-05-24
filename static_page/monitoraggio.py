@@ -457,13 +457,21 @@ class TypeFormResponsesFabbisogniFormativiTerritoriale(TypeForm):
                 return deleghe.filter(tipo=PRESIDENTE).last().oggetto_id
 
     def _render_to_string(self, to_print=False):
+        delegha_list = []
+        print(self.get_json_from_responses('gt0uwrpJ'), 'eeeeeeeeeeeeeeeeeeeeeeeeeeee')
         try:
             comitato = self.get_json_from_responses('Jo7AmkVU')['items'][0]['hidden']['nc']
         except BaseException:
             # questa ritorna l'id dell comitato
             # comitato = self.get_json_from_responses('ZwMX5rsG')['items'][0]['hidden']['c']
             comitato = Sede.objects.get(pk=self.get_json_from_responses('gt0uwrpJ')['items'][0]['hidden']['c'])
+
+        deleghe = [a for a in self.me.deleghe_attuali()]
+        for ogni_delegha in deleghe:
+            if ogni_delegha.oggetto_id == int(self.get_json_from_responses('gt0uwrpJ')['items'][0]['hidden']['c']):
+                delegha_list.append(ogni_delegha)
         return render_to_string('monitoraggio_print.html', {
+            'delegha': delegha_list[0],
             'comitato': comitato,
             'user_details': self.me,
             # 'request': self.request,
@@ -511,13 +519,20 @@ class TypeFormResponsesFabbisogniFormativiRegionali(TypeForm):
                 return deleghe.filter(tipo=PRESIDENTE).last().oggetto_id
 
     def _render_to_string(self, to_print=False):
+        delegha_list = []
         try:
             comitato = self.get_json_from_responses('Jo7AmkVU')['items'][0]['hidden']['nc']
         except BaseException:
             # questa ritorna l'id dell comitato
             # comitato = self.get_json_from_responses('ZwMX5rsG')['items'][0]['hidden']['c']
             comitato = Sede.objects.get(pk=self.get_json_from_responses('Q3NO9HFP')['items'][0]['hidden']['c'])
+
+        deleghe = [a for a in self.me.deleghe_attuali()]
+        for ogni_delegha in deleghe:
+            if ogni_delegha.oggetto_id == int(self.get_json_from_responses('gt0uwrpJ')['items'][0]['hidden']['c']):
+                delegha_list.append(ogni_delegha)
         return render_to_string('monitoraggio_print.html', {
+            'delegha': delegha_list[0],
             'comitato': comitato,
             'user_details': self.me,
             # 'request': self.request,
@@ -816,24 +831,28 @@ class TypeFormResponsesAutocontrolloCheck(TypeFormResponsesCheck):
 
 class TypeFormResponsesFabbisogniFormativiTerritorialeCheck(TypeFormResponsesCheck):
     form_ids = OrderedDict([
-        ('gt0uwrpJ', 'Questionario Fabbisogni Formativi Comitato Territoriale'),
+        ('gt0uwrpJ', 'Questionario Fabbisogni Formativi'),
     ])
 
     def _render_to_string(self, to_print=False):
+        delegha_list = []
         try:
             comitato = self.get_json_from_responses('Jo7AmkVU')['items'][0]['hidden']['nc']
         except BaseException:
             # questa ritorna l'id dell comitato
             # comitato = self.get_json_from_responses('ZwMX5rsG')['items'][0]['hidden']['c']
             comitato = Sede.objects.get(pk=self.get_json_from_responses('gt0uwrpJ')['items'][0]['hidden']['c'])
-            deleghe = [a for a in self.me.deleghe_attuali()]
-            for ogni_delegha in deleghe:
-                if ogni_delegha.oggetto_id == comitato.id:
-                    delegha = ogni_delegha
+
+        print(int(self.get_json_from_responses('gt0uwrpJ')['items'][0]['hidden']['c']), 'aaaaaaaaaaaaaaaaaaaaaaaaaaaaaa')
+
+        deleghe = [a for a in self.me.deleghe_attuali()]
+        for ogni_delegha in deleghe:
+            if ogni_delegha.oggetto_id == int(self.get_json_from_responses('gt0uwrpJ')['items'][0]['hidden']['c']):
+                delegha_list.append(ogni_delegha)
         return render_to_string('monitoraggio_print.html', {
             'comitato': comitato,
             'user_details': self.me,
-            'delegha': delegha,
+            'delegha': delegha_list[0],
             # 'request': self.request,
             'results': self._retrieve_data(),
             'to_print': to_print,
@@ -852,25 +871,25 @@ class TypeFormResponsesFabbisogniFormativiTerritorialeCheck(TypeFormResponsesChe
 
 class TypeFormResponsesFabbisogniFormativiRagionaleCheck(TypeFormResponsesCheck):
     form_ids = OrderedDict([
-        ('Q3NO9HFP', 'Questionario Fabbisogni Formativi Comitato Regionale'),
+        ('Q3NO9HFP', 'Questionario Fabbisogni Formativi'),
     ])
 
     def _render_to_string(self, to_print=False):
+        delegha_list = []
         try:
             comitato = self.get_json_from_responses('Jo7AmkVU')['items'][0]['hidden']['nc']
         except BaseException:
             # questa ritorna l'id dell comitato
             # comitato = self.get_json_from_responses('ZwMX5rsG')['items'][0]['hidden']['c']
             comitato = Sede.objects.get(pk=self.get_json_from_responses('Q3NO9HFP')['items'][0]['hidden']['c'])
-            deleghe = [a for a in self.me.deleghe_attuali()]
-            for ogni_delegha in deleghe:
-                if ogni_delegha.oggetto_id == comitato.id:
-                    delegha = ogni_delegha
-
+        deleghe = [a for a in self.me.deleghe_attuali()]
+        for ogni_delegha in deleghe:
+            if ogni_delegha.oggetto_id == int(self.get_json_from_responses('Q3NO9HFP')['items'][0]['hidden']['c']):
+                delegha_list.append(ogni_delegha)
         return render_to_string('monitoraggio_print.html', {
             'comitato': comitato,
             'user_details': self.me,
-            'delegha': delegha,
+            'delegha': delegha_list[0],
             # 'request': self.request,
             'results': self._retrieve_data(),
             'to_print': to_print,

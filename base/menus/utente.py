@@ -3,6 +3,7 @@ from anagrafica.models import Appartenenza
 from .utente_monitoraggio import menu_monitoraggio
 from ..models import Menu
 
+
 class MenuUtente:
     def __init__(self, me):
         self.me = me
@@ -41,7 +42,7 @@ class MenuUtente:
         menu = list(formazione_menu('formazione')[0])
 
         menu[0] = "Formazione"
-        questionario_fabbisogni_formativi_territoriali = (("Fabbisogni Formativi Comitato Terrtoriale", 'fa-user', reverse('pages:monitoraggio-fabb-info-territoriale')) if (
+        questionario_fabbisogni_formativi_territoriali = (("Fabbisogni Formativi Comitato Territoriale", 'fa-user', reverse('pages:monitoraggio-fabb-info-territoriale')) if (
                         self.me.is_presidente_o_commissario_territoriale or self.me.is_responsabile_formazione_territoriale) else None, )
         questionario_fabbisogni_formativi_regionali = (
             ("Fabbisogni Formativi Comitato Regionale", 'fa-user', reverse('pages:monitoraggio-fabb-info-regionale')) if (
