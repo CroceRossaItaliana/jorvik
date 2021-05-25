@@ -1,5 +1,4 @@
 import json
-from enum import Enum
 import requests
 from http import client
 from django.conf import settings
@@ -40,7 +39,7 @@ class Beta80Api:
 
     def insert_or_update_user(self, persona: Persona):
         payload = {
-            "SubjectId": persona.pk,
+            "SubjectId": persona.utenza.pk,
             "UserName": persona.utenza.email,
             "FirstName": persona.nome,
             "LastName": persona.cognome,
@@ -57,14 +56,14 @@ class Beta80Api:
         if request.status_code in [client.OK, client.CREATED]:
             logger.info(
                 "{} SubjectId: {} url: {} status_code: {}".format(
-                    persona, persona.pk, '/BO/api/v1/identitymanager/bo/User/Save', request.status_code
+                    persona, persona.utenza.pk, '/BO/api/v1/identitymanager/bo/User/Save', request.status_code
                 )
             )
             return request.json()
         else:
             logger.warning(
                 "{} SubjectId: {} url: {} status_code: {}".format(
-                    persona, persona.pk, '/BO/api/v1/identitymanager/bo/User/Save', request.status_code
+                    persona, persona.utenza.pk, '/BO/api/v1/identitymanager/bo/User/Save', request.status_code
                 )
             )
             logger.warning("payload: {}".format(json.dumps(payload)))
@@ -74,7 +73,7 @@ class Beta80Api:
     def set_scope_user(self, persona: Persona, tipo_delega='', sede_id=None):
         scope = self._scope(tipo_delega=tipo_delega, sede_id=sede_id)
         payload = {
-            "SubjectId": persona.pk,
+            "SubjectId": persona.utenza.pk,
             "Code": scope,
             "ClientId": "CUSCRI",
         }
@@ -88,14 +87,14 @@ class Beta80Api:
         if request.status_code in [client.OK, client.CREATED]:
             logger.info(
                 "{} SubjectId: {} Code:{} url: {} status_code: {}".format(
-                    persona, persona.pk, scope, '/BO/api/v1/identitymanager/bo/UserScopes/Save', request.status_code
+                    persona, persona.utenza.pk, scope, '/BO/api/v1/identitymanager/bo/UserScopes/Save', request.status_code
                 )
             )
             return request.json()
         else:
             logger.warning(
                 "{} SubjectId: {} Code:{} url: {} status_code: {}".format(
-                    persona, persona.pk, scope, '/BO/api/v1/identitymanager/bo/UserScopes/Save', request.status_code
+                    persona, persona.utenza.pk, scope, '/BO/api/v1/identitymanager/bo/UserScopes/Save', request.status_code
                 )
             )
             logger.warning("payload: {}".format(json.dumps(payload)))
@@ -105,7 +104,7 @@ class Beta80Api:
     def user_delete(self, persona: Persona, tipo_delega='', sede_id=None):
         scope = self._scope(tipo_delega=tipo_delega, sede_id=sede_id)
         payload = {
-            "SubjectId": persona.pk,
+            "SubjectId": persona.utenza.pk,
             "ClientId": "CUSCRI",
             "Code": scope
         }
@@ -119,14 +118,14 @@ class Beta80Api:
         if request.status_code in [client.OK, client.CREATED]:
             logger.info(
                 "{} SubjectId: {} Code:{} url: {} status_code: {}".format(
-                    persona, persona.pk, scope, '/BO/api/v1/identitymanager/bo/User/Delete', request.status_code
+                    persona, persona.utenza.pk, scope, '/BO/api/v1/identitymanager/bo/User/Delete', request.status_code
                 )
             )
             return request.json()
         else:
             logger.warning(
                 "{} SubjectId: {} Code:{} url: {} status_code: {}".format(
-                    persona, persona.pk, scope, '/BO/api/v1/identitymanager/bo/User/Delete', request.status_code
+                    persona, persona.utenza.pk, scope, '/BO/api/v1/identitymanager/bo/User/Delete', request.status_code
                 )
             )
             logger.warning("payload: {}".format(json.dumps(payload)))
