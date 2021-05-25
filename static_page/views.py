@@ -182,16 +182,12 @@ def monitoraggio_fabb_info_territoriale(request, me):
     if not typeform.make_test_request_to_api:
         return 'monitoraggio_fabb_info_territoriale.html', context
 
-    # print(typeform.context_typeform, 'ccccccccccccccccccccccccccccccc')
     context['type_form'] = typeform.context_typeform
-    print(context['type_form'])
 
     typeform.get_responses_for_all_forms()  # checks for already compiled forms
-    print(typeform.get_responses_for_all_forms(), 'aaaaaaaaaaaaaaaaaaaaaaaaaaaaaa')
     is_done = False
     finito_di_compilare_per_questo_anno = False
     typeform_id = request.GET.get('id', False)
-    print(typeform_id, 'bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb', typeform.comitato, typeform.comitato_id, typeform.get_user_pk)
     if typeform_id:
         typeform_ctx = context['type_form'][typeform_id]
         is_done = typeform_ctx[0]

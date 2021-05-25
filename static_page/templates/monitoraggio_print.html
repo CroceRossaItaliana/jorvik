@@ -21,7 +21,7 @@
   <table class="results-table">
     <tr>
       <td colspan="2" align="center">
-        <strong>{{ user_details.cognome }} {{ user_details.nome }}</strong> - {{ user_details.sede_riferimento }} - {{ delegha.get_tipo_display }}<br>
+        <strong>{{ user_details.cognome }} {{ user_details.nome }}</strong> - {{ comitato }} - {{ delegha.get_tipo_display }}<br>
         <a href="mailto:{{ user_details.utenza.email }}">{{ user_details.utenza.email }}</a> - {{ user_details.codice_fiscale }}
       </td>
     </tr>

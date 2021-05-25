@@ -129,7 +129,6 @@ class TypeForm:
             if form_id is not None:
                 # Make complete request
                 # return self.get_responses(form_id).json()
-                # print(self.get_completed_responses(form_id), '1111111111111111111111111111111111111111111111111111111111111111111111111111')
                 return self.get_completed_responses(form_id)
             else:
                 raise BaseException('You must pass form_id')
@@ -144,7 +143,6 @@ class TypeForm:
     def get_answers_from_json(self, json):
         items = json['items'][0]
         answers = items['answers']
-        print(answers)
         return answers
 
     def get_form_questions(self, form_id):
@@ -422,7 +420,7 @@ class TypeFormResponsesTrasparenza(TypeForm):
 
 class TypeFormResponsesFabbisogniFormativiTerritoriale(TypeForm):
     form_ids = OrderedDict([
-        ('gt0uwrpJ', 'Questionario Fabbisogni Formativi'),
+        ('jbUhZFun', 'Questionario Fabbisogni Formativi'),
     ])
     email_body = """Grazie per aver completato il Questionario sulla Fabbisogni Formativi."""
 
@@ -460,17 +458,15 @@ class TypeFormResponsesFabbisogniFormativiTerritoriale(TypeForm):
 
     def _render_to_string(self, to_print=False):
         delegha_list = []
-        print(self.get_json_from_responses('gt0uwrpJ'), 'eeeeeeeeeeeeeeeeeeeeeeeeeeee', self.comitato_id)
         try:
             comitato = self.get_json_from_responses('Jo7AmkVU')['items'][0]['hidden']['nc']
         except BaseException:
             # questa ritorna l'id dell comitato
             # comitato = self.get_json_from_responses('ZwMX5rsG')['items'][0]['hidden']['c']
-            comitato = Sede.objects.get(pk=self.get_json_from_responses('gt0uwrpJ')['items'][0]['hidden']['c'])
-
-        deleghe = [a for a in self.me.deleghe_attuali()]
+            comitato = Sede.objects.get(pk=self.get_json_from_responses('jbUhZFun')['items'][0]['hidden']['c'])
+        deleghe = [a for a in self.me.deleghe_attuali(tipo__in=[COMMISSARIO, PRESIDENTE, RESPONSABILE_FORMAZIONE])]
         for ogni_delegha in deleghe:
-            if ogni_delegha.oggetto_id == int(self.get_json_from_responses('gt0uwrpJ')['items'][0]['hidden']['c']):
+            if ogni_delegha.oggetto_id == int(self.get_json_from_responses('jbUhZFun')['items'][0]['hidden']['c']):
                 delegha_list.append(ogni_delegha)
         return render_to_string('monitoraggio_print.html', {
             'delegha': delegha_list[0],
@@ -529,7 +525,7 @@ class TypeFormResponsesFabbisogniFormativiRegionali(TypeForm):
             # comitato = self.get_json_from_responses('ZwMX5rsG')['items'][0]['hidden']['c']
             comitato = Sede.objects.get(pk=self.get_json_from_responses('Q3NO9HFP')['items'][0]['hidden']['c'])
 
-        deleghe = [a for a in self.me.deleghe_attuali()]
+        deleghe = [a for a in self.me.deleghe_attuali(tipo__in=[COMMISSARIO, PRESIDENTE, RESPONSABILE_FORMAZIONE])]
         for ogni_delegha in deleghe:
             if ogni_delegha.oggetto_id == int(self.get_json_from_responses('Q3NO9HFP')['items'][0]['hidden']['c']):
                 delegha_list.append(ogni_delegha)
@@ -820,7 +816,7 @@ class TypeFormResponsesAutocontrolloCheck(TypeFormResponsesCheck):
 
 class TypeFormResponsesFabbisogniFormativiTerritorialeCheck(TypeFormResponsesCheck):
     form_ids = OrderedDict([
-        ('gt0uwrpJ', 'Questionario Fabbisogni Formativi'),
+        ('jbUhZFun', 'Questionario Fabbisogni Formativi'),
     ])
 
     def _render_to_string(self, to_print=False):
@@ -830,11 +826,11 @@ class TypeFormResponsesFabbisogniFormativiTerritorialeCheck(TypeFormResponsesChe
         except BaseException:
             # questa ritorna l'id dell comitato
             # comitato = self.get_json_from_responses('ZwMX5rsG')['items'][0]['hidden']['c']
-            comitato = Sede.objects.get(pk=self.get_json_from_responses('gt0uwrpJ')['items'][0]['hidden']['c'])
+            comitato = Sede.objects.get(pk=self.get_json_from_responses('jbUhZFun')['items'][0]['hidden']['c'])
 
         deleghe = [a for a in self.me.deleghe_attuali().filter(tipo__in=[PRESIDENTE, COMMISSARIO, RESPONSABILE_FORMAZIONE])]
         for ogni_delegha in deleghe:
-            if ogni_delegha.oggetto_id == int(self.get_json_from_responses('gt0uwrpJ')['items'][0]['hidden']['c']):
+            if ogni_delegha.oggetto_id == int(self.get_json_from_responses('jbUhZFun')['items'][0]['hidden']['c']):
                 delegha_list.append(ogni_delegha)
         return render_to_string('monitoraggio_print.html', {
             'comitato': comitato,
@@ -869,7 +865,6 @@ class TypeFormResponsesFabbisogniFormativiRagionaleCheck(TypeFormResponsesCheck)
             # questa ritorna l'id dell comitato
             # comitato = self.get_json_from_responses('ZwMX5rsG')['items'][0]['hidden']['c']
             comitato = Sede.objects.get(pk=self.get_json_from_responses('Q3NO9HFP')['items'][0]['hidden']['c'])
-            print(comitato, '+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++')
         deleghe = [a for a in self.me.deleghe_attuali()]
         for ogni_delegha in deleghe:
             if ogni_delegha.oggetto_id == int(self.get_json_from_responses('Q3NO9HFP')['items'][0]['hidden']['c']):
