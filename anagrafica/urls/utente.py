@@ -53,6 +53,7 @@ urlpatterns = [
     url(r'^donazioni/profilo/$', views.utente_donazioni_profilo),
     url(r'^donazioni/sangue/(?P<pk>.*)/cancella/$', views.utente_donazioni_sangue_cancella),
     url(r'^donazioni/sangue/$', views.utente_donazioni_sangue),
+    url(r'^ajax/sangue/$', views.scegliere_sedi, name='scegliere_sedi'),
     url(r'^privacy/$', views.utente_privacy, name='privacy'),
     url(r'^cambia-password/?$', pagina_privata_no_cambio_firma(password_change), {
         "template_name": "anagrafica_utente_cambia_password.html",
@@ -64,5 +65,5 @@ urlpatterns = [
     }),
     # questo url (consiglier) fa un errore con l'ultima (volontari)
     # url(r'inscrizione_evento', views.inscrizione_evento_consiglieri, name='inscrizione_evento_consiglieri'),
-    # url(r'inscrizione_evento_volontari', views.inscrizione_evento_volontari, name='inscrizione_evento_volontari'),
+    url(r'inscrizione_evento_volontari', views.inscrizione_evento_volontari, name='inscrizione_evento_volontari'),
 ]

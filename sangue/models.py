@@ -158,6 +158,8 @@ class Donazione(ModelloSemplice, ConMarcaTemporale, ConAutorizzazioni):
     RICHIESTA_NOME = "conferma donazione sangue"
 
     class Meta:
+        verbose_name = "Donazione di Sangue"
+        verbose_name_plural = "Donazioni di Sangue"
         permissions = (
             ("view_donazione", "Can view Donazione"),
         )
