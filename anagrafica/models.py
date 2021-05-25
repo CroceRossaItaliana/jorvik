@@ -2256,19 +2256,14 @@ class Sede(ModelloAlbero, ConMarcaTemporale, ConGeolocalizzazione, ConVecchioID,
         return presidente
 
     def monitora_fabb_info_regionali(self):
-        deleghe = []
         presidente = self.comitato.delegati_attuali(tipo=PRESIDENTE, solo_deleghe_attive=True).first()
         commissario = self.comitato.delegati_attuali(tipo=COMMISSARIO, solo_deleghe_attive=True).first()
         responsabile_formazione = self.comitato.delegati_attuali(tipo=RESPONSABILE_FORMAZIONE, solo_deleghe_attive=True).first()
-        print(presidente, commissario, responsabile_formazione)
         if presidente:
             delegha = presidente
-            print(presidente)
         elif commissario:
-            print(commissario)
             delegha = commissario
         else:
-            print(responsabile_formazione)
             delegha = responsabile_formazione
         return delegha
 

@@ -389,7 +389,6 @@ def monitora_trasparenza(request, me):
         locali = regionale.ottieni_discendenti(includimi=True).filter(estensione__in=[LOCALE, REGIONALE]).order_by('-estensione')
         for locale in locali:
             delegato = locale.delegato_monitoraggio_trasparenza()
-            print(delegato)
             typeform = TypeFormResponsesTrasparenzaCheck(
                 persona=delegato, user_pk=delegato.id, comitato_id=locale.id
             )
@@ -519,7 +518,7 @@ def monitora_fabb_info_regionale(request, me):
 
     if action and comitato:
         sede = Sede.objects.get(pk=comitato)
-        delegato = sede.delegato_monitoraggio_trasparenza()
+        delegato = sede.monitora_fabb_info_regionali()
         typeform = TypeFormResponsesFabbisogniFormativiRagionaleCheck(
             persona=delegato, user_pk=delegato.id, comitato_id=comitato
         )
@@ -535,12 +534,12 @@ def monitora_fabb_info_regionale(request, me):
             # se e comitato regionale, usi il typeform per comitati regionali
             if comitato.estensione == 'R':
                 delegato = comitato.monitora_fabb_info_regionali()
-                print(delegato, 'nell view ..................................')
                 typeform = TypeFormResponsesFabbisogniFormativiRagionaleCheck(
                     persona=delegato, user_pk=delegato.id, comitato_id=comitato.id
                 )
                 typeform.get_responses_for_all_forms()
                 struttura[comitato] = typeform.all_forms_are_completed
+
             else:
                 delegato = comitato.delegato_monitoraggio_trasparenza()
                 typeform = TypeFormResponsesFabbisogniFormativiTerritorialeCheck(

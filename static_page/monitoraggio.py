@@ -129,6 +129,7 @@ class TypeForm:
             if form_id is not None:
                 # Make complete request
                 # return self.get_responses(form_id).json()
+                # print(self.get_completed_responses(form_id), '1111111111111111111111111111111111111111111111111111111111111111111111111111')
                 return self.get_completed_responses(form_id)
             else:
                 raise BaseException('You must pass form_id')
@@ -143,6 +144,7 @@ class TypeForm:
     def get_answers_from_json(self, json):
         items = json['items'][0]
         answers = items['answers']
+        print(answers)
         return answers
 
     def get_form_questions(self, form_id):
@@ -458,7 +460,7 @@ class TypeFormResponsesFabbisogniFormativiTerritoriale(TypeForm):
 
     def _render_to_string(self, to_print=False):
         delegha_list = []
-        print(self.get_json_from_responses('gt0uwrpJ'), 'eeeeeeeeeeeeeeeeeeeeeeeeeeee')
+        print(self.get_json_from_responses('gt0uwrpJ'), 'eeeeeeeeeeeeeeeeeeeeeeeeeeee', self.comitato_id)
         try:
             comitato = self.get_json_from_responses('Jo7AmkVU')['items'][0]['hidden']['nc']
         except BaseException:
@@ -528,10 +530,8 @@ class TypeFormResponsesFabbisogniFormativiRegionali(TypeForm):
             comitato = Sede.objects.get(pk=self.get_json_from_responses('Q3NO9HFP')['items'][0]['hidden']['c'])
 
         deleghe = [a for a in self.me.deleghe_attuali()]
-        print(deleghe, 'aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa')
-        print(self.get_json_from_responses('gt0uwrpJ')['items'], '999999999999999999999999999999999999999999999999999999999')
         for ogni_delegha in deleghe:
-            if ogni_delegha.oggetto_id == int(self.get_json_from_responses('gt0uwrpJ')['items'][0]['hidden']['c']):
+            if ogni_delegha.oggetto_id == int(self.get_json_from_responses('Q3NO9HFP')['items'][0]['hidden']['c']):
                 delegha_list.append(ogni_delegha)
         return render_to_string('monitoraggio_print.html', {
             'delegha': delegha_list[0],
@@ -588,30 +588,22 @@ class TypeFormResponsesCheck:
 
     def get_responses_for_all_forms(self):
         comitato_id = str(self.comitato_id)
-        # print(comitato_id)
-        # print(self.form_ids.items(), '+++++++++++++++++++')
         for _id, bottone_name in self.form_ids.items():
-            # print(_id, bottone_name)
             json = self.get_json_from_responses(_id)
-            # print(json, 'json')
             for item in json['items']:
                 c = item.get('hidden', OrderedDict())
                 c = c.get('c')
-
                 if c and c == comitato_id:
                     self.context_typeform[_id][0] = True
                     break  # bottone spento
 
     def get_json_from_responses(self, form_id=None, instance=None):
-        # print(instance, 'aaaaaaaaaaaaaaaaaaa')
         if instance:
             return instance.json()
         else:
             if form_id is not None:
-                # print(form_id, 'bbbbbbbbbbbbbbbbbbbbbbbbb')
                 # Make complete request
                 # return self.get_responses(form_id).json()
-                # print(self.get_completed_responses(form_id), 'ccccccccccccccc')
                 return self.get_completed_responses(form_id)
             else:
                 raise BaseException('You must pass form_id')
@@ -621,20 +613,15 @@ class TypeFormResponsesCheck:
                                      path='/responses',
                                      query=self.user_pk,
                                      completed=True)
-        # print(response.json(), 'ddddddddddddddddddddddddddddddddddddddd')
         return response.json()
 
     @classmethod
     def make_request(cls, form_id, path='', **kwargs):
         url = cls.ENDPOINT % form_id + path
-        # print(url, 'eeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeee')
-        # print(kwargs.get('completed'), kwargs.get('query'), 'ffffffffffffffffffffffffffffff')
         if kwargs.get('completed') == True and kwargs.get('query'):
             url += '?completed=true'
             url += '&query=%s' % kwargs.get('query')
-        # print(url, 'ggggggggggggggggggggggggggggggggggggggggg')
         response = requests.get(url, headers=cls.HEADERS)
-        # print(response.json(), 'hhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhh')
         return response
 
     @property
@@ -845,9 +832,7 @@ class TypeFormResponsesFabbisogniFormativiTerritorialeCheck(TypeFormResponsesChe
             # comitato = self.get_json_from_responses('ZwMX5rsG')['items'][0]['hidden']['c']
             comitato = Sede.objects.get(pk=self.get_json_from_responses('gt0uwrpJ')['items'][0]['hidden']['c'])
 
-        print(int(self.get_json_from_responses('gt0uwrpJ')['items'][0]['hidden']['c']), 'aaaaaaaaaaaaaaaaaaaaaaaaaaaaaa')
-
-        deleghe = [a for a in self.me.deleghe_attuali()]
+        deleghe = [a for a in self.me.deleghe_attuali().filter(tipo__in=[PRESIDENTE, COMMISSARIO, RESPONSABILE_FORMAZIONE])]
         for ogni_delegha in deleghe:
             if ogni_delegha.oggetto_id == int(self.get_json_from_responses('gt0uwrpJ')['items'][0]['hidden']['c']):
                 delegha_list.append(ogni_delegha)
@@ -878,17 +863,13 @@ class TypeFormResponsesFabbisogniFormativiRagionaleCheck(TypeFormResponsesCheck)
 
     def _render_to_string(self, to_print=False):
         delegha_list = []
-        print(self.get_json_from_responses('Q3NO9HFP'), 'aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa')
-        # try:
-        #     print('fjasf;jsadakfjdsfjdasffsfdsdfs')
-        #     print(self.get_json_from_responses('Jo7AmkVU')['items'], '-----------------------------------------------------------------')
-        #     comitato = self.get_json_from_responses('Jo7AmkVU')['items'][0]['hidden']['nc']
-        #     print(comitato, '-----------------------------------------------------------------')
-        # except BaseException:
-        # questa ritorna l'id dell comitato
-        # comitato = self.get_json_from_responses('ZwMX5rsG')['items'][0]['hidden']['c']
-        comitato = Sede.objects.get(pk=self.get_json_from_responses('Q3NO9HFP')['items'][0]['hidden']['c']).first()
-        print(comitato, '+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++')
+        try:
+            comitato = self.get_json_from_responses('Jo7AmkVU')['items'][0]['hidden']['nc']
+        except BaseException:
+            # questa ritorna l'id dell comitato
+            # comitato = self.get_json_from_responses('ZwMX5rsG')['items'][0]['hidden']['c']
+            comitato = Sede.objects.get(pk=self.get_json_from_responses('Q3NO9HFP')['items'][0]['hidden']['c'])
+            print(comitato, '+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++')
         deleghe = [a for a in self.me.deleghe_attuali()]
         for ogni_delegha in deleghe:
             if ogni_delegha.oggetto_id == int(self.get_json_from_responses('Q3NO9HFP')['items'][0]['hidden']['c']):
