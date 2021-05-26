@@ -45,6 +45,7 @@ class Beta80Api:
             "LastName": persona.cognome,
             "Email": persona.email,
             "ClientId": "CUSCRI",
+            "IsActive": "Y"
         }
 
         request = requests.post(
