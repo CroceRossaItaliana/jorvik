@@ -2137,6 +2137,10 @@ def operatori_sale_termina(request, me, pk=None):
 
     beta80Api = Beta80Api(bearer=settings.BETA_80_BEARER)
 
+    beta80Api.delete_scope_user(
+        persona=delega.persona, tipo_delega=delega.tipo, sede_id=delega.oggetto.sede.pk
+    )
+
     result = beta80Api.user_delete(
         persona=delega.persona, tipo_delega=delega.tipo, sede_id=delega.oggetto.sede.pk
     )

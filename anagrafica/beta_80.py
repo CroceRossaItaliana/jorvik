@@ -102,6 +102,38 @@ class Beta80Api:
             logger.warning("response: {}".format(request.text))
             return None
 
+    def delete_scope_user(self, persona: Persona, tipo_delega='', sede_id=None):
+        scope = self._scope(tipo_delega=tipo_delega, sede_id=sede_id)
+        payload = {
+            "SubjectId": persona.utenza.pk,
+            "Code": scope,
+            "ClientId": "CUSCRI",
+        }
+
+        request = requests.post(
+            '{}{}'.format(settings.BETA_80_HOST, '/BO/api/v1/identitymanager/bo/UserScopes/Delete'),
+            headers=self._headers(),
+            data=json.dumps(payload)
+        )
+
+        if request.status_code in [client.OK, client.CREATED]:
+            logger.info(
+                "{} SubjectId: {} Code:{} url: {} status_code: {}".format(
+                    persona, persona.utenza.pk, scope, '/BO/api/v1/identitymanager/bo/UserScopes/Delete', request.status_code
+                )
+            )
+            return request.json()
+        else:
+            logger.warning(
+                "{} SubjectId: {} Code:{} url: {} status_code: {}".format(
+                    persona, persona.utenza.pk, scope, '/BO/api/v1/identitymanager/bo/UserScopes/Delete', request.status_code
+                )
+            )
+            logger.warning("payload: {}".format(json.dumps(payload)))
+            logger.warning("response: {}".format(request.text))
+            return None
+
+
     def user_delete(self, persona: Persona, tipo_delega='', sede_id=None):
         scope = self._scope(tipo_delega=tipo_delega, sede_id=sede_id)
         payload = {
