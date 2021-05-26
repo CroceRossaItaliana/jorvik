@@ -44,8 +44,6 @@ def monitoraggio(request, me):
         else:
             deleghe = [Sede.objects.get(pk=area.oggetto.sede.pk) for area in me.delege_responsabile_area_trasparenza]
 
-            print(deleghe, '----------------------------------------')
-
         return 'monitoraggio_choose_comitato.html', {
             'deleghe': deleghe.distinct('oggetto_id') if me.is_comissario else deleghe,
             'url': 'monitoraggio',
@@ -468,7 +466,8 @@ def monitora_fabb_info_territoriale(request, me):
 
     if action and comitato:
         sede = Sede.objects.get(pk=comitato)
-        delegato = sede.delegato_monitoraggio_trasparenza()
+        delegato = sede.monitora_fabb_info_regionali()
+        print(delegato, '===============================================================')
         typeform = TypeFormResponsesFabbisogniFormativiTerritorialeCheck(
             persona=delegato, user_pk=delegato.id, comitato_id=comitato
         )
@@ -515,6 +514,7 @@ def monitora_fabb_info_regionale(request, me):
     if action and comitato:
         sede = Sede.objects.get(pk=comitato)
         delegato = sede.monitora_fabb_info_regionali()
+        print(delegato, '===========================================================')
         typeform = TypeFormResponsesFabbisogniFormativiRagionaleCheck(
             persona=delegato, user_pk=delegato.id, comitato_id=comitato
         )
