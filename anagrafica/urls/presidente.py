@@ -29,4 +29,9 @@ urlpatterns = [
     url(r'^checklist/%s/$' % pk, viste.presidente_checklist),
     url(r'^checklist/%s/(?P<tipo>.*)/(?P<oggetto_tipo>[0-9]+)/(?P<oggetto_id>['r'0-9]+)/' % pk, viste.presidente_checklist_delegati),
     url(r'inscrizione_evento', viste.inscrizione_evento, name='inscrizione_evento'),
+
+    # Operatori di sala
+    url(r'operatori/(?P<pk>[0-9]+)/termina', viste.operatori_sale_termina, name="operatori_sale_termina"),
+    url(r'operatori/', viste.operatori_sale, name="operatori_sale"),
+
 ]

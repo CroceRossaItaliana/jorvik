@@ -5,6 +5,9 @@ from django.core.exceptions import ValidationError
 from django.forms import ModelForm, modelformset_factory
 
 from autocomplete_light import shortcuts as autocomplete_light
+
+from anagrafica.permessi.applicazioni import DELEGATO_AREA, RESPONSABILE_AREA
+from anagrafica.permessi.costanti import GESTIONE_SEDE
 from django.utils.timezone import now
 
 from base.wysiwyg import WYSIWYGSemplice
@@ -39,8 +42,6 @@ class ModuloCreazioneCorsoBase(ModelForm):
 
     def clean_tipo(self):
         tipo = self.cleaned_data['tipo']
-
-
         if not tipo:
             raise ValidationError('Seleziona un valore.')
         return tipo
@@ -730,3 +731,25 @@ class FormCommissioneEsame(ModelForm):
 
 class CatalogoCorsiSearchForm(forms.Form):
     q = forms.CharField(label='')
+
+
+class ModuloCreaOperatoreSala(forms.Form):
+
+    NOMINA = (
+        (DELEGATO_AREA, 'Delegato area'),
+        (RESPONSABILE_AREA, 'Responsabile area'),
+    )
+
+    persona = autocomplete_light.ModelChoiceField('PersonaAutocompletamento')
+    nomina = forms.ChoiceField(choices=NOMINA, required=True)
+    sede = forms.ChoiceField(choices=())
+
+    @staticmethod
+    def popola_scelta(persona):
+        choices = [
+            (None, "--------------------------"),
+        ]
+        for sede in persona.oggetti_permesso(GESTIONE_SEDE):
+            choices.append((sede.pk, sede))
+
+        return choices
