@@ -736,8 +736,8 @@ class CatalogoCorsiSearchForm(forms.Form):
 class ModuloCreaOperatoreSala(forms.Form):
 
     NOMINA = (
-        (DELEGATO_AREA, 'Delegato area'),
-        (RESPONSABILE_AREA, 'Responsabile area'),
+        (DELEGATO_AREA, 'Operatore di sala'),
+        (RESPONSABILE_AREA, 'Responsabile di sala'),
     )
 
     persona = autocomplete_light.ModelChoiceField('PersonaAutocompletamento')
