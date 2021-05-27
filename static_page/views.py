@@ -467,9 +467,8 @@ def monitora_fabb_info_territoriale(request, me):
     if action and comitato:
         sede = Sede.objects.get(pk=comitato)
         delegato = sede.monitora_fabb_info_regionali()
-        print(delegato, '===============================================================')
         typeform = TypeFormResponsesFabbisogniFormativiTerritorialeCheck(
-            persona=delegato, user_pk=delegato.id, comitato_id=comitato
+            comitato_id=comitato, users_pk=delegato
         )
         typeform.get_responses_for_all_forms()
         return typeform.print()
@@ -514,11 +513,11 @@ def monitora_fabb_info_regionale(request, me):
     if action and comitato:
         sede = Sede.objects.get(pk=comitato)
         delegato = sede.monitora_fabb_info_regionali()
-        print(delegato, '===========================================================')
         typeform = TypeFormResponsesFabbisogniFormativiRagionaleCheck(
-            persona=delegato, user_pk=delegato.id, comitato_id=comitato
+            comitato_id=comitato, users_pk=delegato
         )
         typeform.get_responses_for_all_forms()
+
         return typeform.print()
 
     if id_regionale:
@@ -531,15 +530,15 @@ def monitora_fabb_info_regionale(request, me):
             if comitato.estensione == 'R':
                 delegato = comitato.monitora_fabb_info_regionali()
                 typeform = TypeFormResponsesFabbisogniFormativiRagionaleCheck(
-                    persona=delegato, user_pk=delegato.id, comitato_id=comitato.id
+                    persona=delegato, comitato_id=comitato.id, users_pk=delegato
                 )
                 typeform.get_responses_for_all_forms()
                 struttura[comitato] = typeform.all_forms_are_completed
 
             else:
-                delegato = comitato.delegato_monitoraggio_trasparenza()
+                delegato = comitato.monitora_fabb_info_regionali()
                 typeform = TypeFormResponsesFabbisogniFormativiTerritorialeCheck(
-                    persona=delegato, user_pk=delegato.id, comitato_id=comitato.id
+                    persona=delegato, comitato_id=comitato.id, users_pk=delegato
                 )
                 typeform.get_responses_for_all_forms()
                 struttura[comitato] = typeform.all_forms_are_completed
