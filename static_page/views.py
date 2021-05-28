@@ -468,7 +468,7 @@ def monitora_fabb_info_territoriale(request, me):
         sede = Sede.objects.get(pk=comitato)
         delegato = sede.monitora_fabb_info_regionali()
         typeform = TypeFormResponsesFabbisogniFormativiTerritorialeCheck(
-            comitato_id=comitato, users_pk=delegato
+            persona=delegato, comitato_id=sede.id, users_pk=delegato
         )
         typeform.get_responses_for_all_forms()
         return typeform.print()
@@ -478,9 +478,9 @@ def monitora_fabb_info_territoriale(request, me):
         regionale = Sede.objects.get(pk=id_regionale)
         locali = regionale.ottieni_discendenti(includimi=True).filter(estensione__in=[LOCALE]).order_by('-estensione')
         for locale in locali:
-            delegato = locale.delegato_monitoraggio_trasparenza()
+            delegato = locale.monitora_fabb_info_regionali()
             typeform = TypeFormResponsesFabbisogniFormativiTerritorialeCheck(
-                persona=delegato, user_pk=delegato.id, comitato_id=locale.id
+                persona=delegato, comitato_id=locale.id, users_pk=delegato
             )
             typeform.get_responses_for_all_forms()
             struttura[locale] = typeform.all_forms_are_completed
@@ -514,7 +514,7 @@ def monitora_fabb_info_regionale(request, me):
         sede = Sede.objects.get(pk=comitato)
         delegato = sede.monitora_fabb_info_regionali()
         typeform = TypeFormResponsesFabbisogniFormativiRagionaleCheck(
-            comitato_id=comitato, users_pk=delegato
+            persona=delegato, comitato_id=sede.id, users_pk=delegato
         )
         typeform.get_responses_for_all_forms()
 

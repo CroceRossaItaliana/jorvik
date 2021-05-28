@@ -458,12 +458,13 @@ class TypeFormResponsesFabbisogniFormativiTerritoriale(TypeForm):
 
     def _render_to_string(self, to_print=False):
         delegha_list = []
-        try:
-            comitato = self.get_json_from_responses('Jo7AmkVU')['items'][0]['hidden']['nc']
-        except BaseException:
+        # try:
+        #     comitato = self.get_json_from_responses('Jo7AmkVU')['items'][0]['hidden']['nc']
+        # except BaseException:
             # questa ritorna l'id dell comitato
             # comitato = self.get_json_from_responses('ZwMX5rsG')['items'][0]['hidden']['c']
-            comitato = Sede.objects.get(pk=self.get_json_from_responses('gt0uwrpJ')['items'][0]['hidden']['c'])
+
+        comitato = Sede.objects.get(pk=self.get_json_from_responses('gt0uwrpJ')['items'][0]['hidden']['c'])
         deleghe = [a for a in self.me.deleghe_attuali(tipo__in=[COMMISSARIO, PRESIDENTE, RESPONSABILE_FORMAZIONE])]
         for ogni_delegha in deleghe:
             if ogni_delegha.oggetto_id == int(self.get_json_from_responses('gt0uwrpJ')['items'][0]['hidden']['c']):
