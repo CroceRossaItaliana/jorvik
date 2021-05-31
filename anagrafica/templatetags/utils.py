@@ -10,6 +10,7 @@ from django.utils import timezone
 from django.utils.safestring import mark_safe
 from django.utils.encoding import force_text
 
+from formazione.forms import ModuloCreaOperatoreSala
 from jorvik import settings
 from jorvik.settings import GOOGLE_KEY
 from ..models import Persona, Delega
@@ -52,7 +53,7 @@ def partecipazione_riunione_volontari(persona):
 
 @register.filter
 def tipo_delega(tipo):
-    return PERMESSI_NOMI_DICT[tipo]
+    return dict(ModuloCreaOperatoreSala.NOMINA)[tipo]
 
 @register.filter
 def stato_riserva(riserva):
