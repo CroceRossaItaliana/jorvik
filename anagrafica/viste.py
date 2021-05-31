@@ -17,6 +17,7 @@ from django.utils import timezone
 from django.utils.crypto import get_random_string
 
 from articoli.viste import get_articoli
+from attivita.models import Area
 from autenticazione.funzioni import pagina_anonima, pagina_privata
 from autenticazione.models import Utenza
 from base.errori import (errore_generico, errore_nessuna_appartenenza,
@@ -26,14 +27,16 @@ from base.models import Log
 from base.stringhe import genera_uuid_casuale
 from base.utils import poco_fa, oggi
 from curriculum.models import TitoloPersonale
+from formazione.forms import ModuloCreaOperatoreSala
 from formazione.forms import FormCreateResponsabileEventoDelega
 from formazione.models import Corso, CorsoBase
 from posta.models import Messaggio
 from posta.utils import imposta_destinatari_e_scrivi_messaggio
 from sangue.models import Donazione, Sede as SedeSangue
 from .api_trippus import trippus_oauth, trippus_booking, trippus_booking_consiglieri, trippus_booking_volontari
+from .beta_80 import Beta80Api
 
-from .costanti import TERRITORIALE, REGIONALE
+from .costanti import TERRITORIALE, REGIONALE, NAZIONALE
 from .elenchi import ElencoDelegati
 from .utils import _conferma_email, _richiesta_conferma_email
 from .permessi.applicazioni import (PRESIDENTE, UFFICIO_SOCI,
@@ -2060,4 +2063,94 @@ def inscrizione_evento_volontari(request, me):
         res = trippus_booking_volontari(me, access_token)
         return JsonResponse({'link': res['url']})
     return JsonResponse({})
+
+
+@pagina_privata
+def operatori_sale(request, me):
+
+    stato = request.GET.get('stato', '')
+    sedi = me.oggetti_permesso(GESTIONE_SEDE)
+
+    form = ModuloCreaOperatoreSala(request.POST or None, locale=not sedi.filter(estensione__in=[REGIONALE, NAZIONALE]).exists())
+    form.fields['sede'].choices = ModuloCreaOperatoreSala.popola_scelta(sedi)
+
+    if request.POST and form.is_valid():
+        cd = form.cleaned_data
+        area = Area.objects.filter(nome='Operatore di sala', sede__pk=cd['sede'])
+        if area:
+            area = area.first()
+        else:
+            area = Area(nome='Operatore di sala', sede=Sede.objects.get(pk=cd['sede']))
+            area.save()
+
+        beta80Api = Beta80Api(bearer=settings.BETA_80_BEARER)
+
+        result = beta80Api.insert_or_update_user(persona=cd['persona'])
+        result1 = beta80Api.set_scope_user(persona=cd['persona'], tipo_delega=cd['nomina'], sede_id=area.sede.pk)
+
+        if result and result1:
+            area.aggiungi_delegato(cd['nomina'], cd['persona'], firmatario=me, inizio=poco_fa())
+        else:
+            messages.success(request, "Errore nomina Operatore di sala")
+
+        form = ModuloCreaOperatoreSala(locale=not sedi.filter(estensione__in=[REGIONALE, NAZIONALE]).exists())
+        form.fields['sede'].choices = ModuloCreaOperatoreSala.popola_scelta(sedi)
+
+    aree = Area.objects.filter(nome='Operatore di sala', sede__in=me.oggetti_permesso(GESTIONE_SEDE))
+
+    def attive():
+        return Delega.objects.filter(
+            Q(
+                inizio__lte=timezone.now() - datetime.timedelta(seconds=1),
+                fine__gt=timezone.now() - datetime.timedelta(seconds=1)
+            ) | Q(fine__isnull=True),
+            tipo__in=[RESPONSABILE_AREA, DELEGATO_AREA],
+            oggetto_id__in=aree.values_list('id', flat=True),
+        )
+
+    def terminate():
+        return Delega.objects.filter(
+            fine__lt=timezone.now() - datetime.timedelta(seconds=1),
+            tipo__in=[RESPONSABILE_AREA, DELEGATO_AREA],
+            oggetto_id__in=aree.values_list('id', flat=True)
+        )
+
+    def tutte():
+        return Delega.objects.filter(
+            tipo__in=[RESPONSABILE_AREA, DELEGATO_AREA],
+            oggetto_id__in=aree.values_list('id', flat=True)
+        )
+
+    filtro = {
+        'Attive': attive,
+        'Terminate': terminate,
+    }
+
+    contesto = {
+        'form': form,
+        "deleghe": filtro.get(stato, tutte)(),
+        "stato": stato
+    }
+
+    return 'anagrafica_presidente_operatori.html', contesto
+
+
+@pagina_privata
+def operatori_sale_termina(request, me, pk=None):
+    delega = get_object_or_404(Delega, pk=pk)
+
+    beta80Api = Beta80Api(bearer=settings.BETA_80_BEARER)
+
+    result = beta80Api.delete_scope_user(
+        persona=delega.persona, tipo_delega=delega.tipo, sede_id=delega.oggetto.sede.pk
+    )
+
+    if result:
+        delega.termina(termina_at=poco_fa())
+        messages.success(request, "{} è stata terminata correttamente".format(delega))
+    else:
+        messages.success(request, " Errore terminazone {}".format(delega))
+
+    return redirect(reverse('presidente:operatori_sale'))
+
 

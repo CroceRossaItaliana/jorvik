@@ -30,6 +30,7 @@ services:
       - MOODLE_KEY=${MOODLE_KEY}
       - TOKEN_TYPE_FORM=${TOKEN_TYPE_FORM}
       - ELASTIC_HOST=${ELASTIC_HOST}
+      - BETA_80_BEARER=${BETA_80_BEARER}
       - REDIS_MASTER=django
       - REDIS_HOST=sentinel01
     networks:

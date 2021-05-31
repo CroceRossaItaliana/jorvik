@@ -85,6 +85,7 @@ class Menu:
         return (
             ("Sedi CRI", (
                 ("Elenco", "fa-list", "/presidente/"),
+                ("Operatori di sala", "fa-list", "/presidente/operatori/"),
             )),
         )
 
@@ -147,7 +148,7 @@ class Menu:
                 'name_for_template': 'autorizzazioni',
             }),
             ({
-                'urls': ['/presidente/', '/strumenti/delegati/'],
+                'urls': ['/presidente/', '/strumenti/delegati/', '/presidente/operatori/'],
                 'method': 'presidente',
                 'name_for_template': 'presidente',
             }),
