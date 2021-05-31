@@ -14,7 +14,7 @@ from base.wysiwyg import WYSIWYGSemplice
 
 from anagrafica.permessi import applicazioni as permessi
 from anagrafica.costanti import LOCALE, REGIONALE, NAZIONALE
-from anagrafica.models import Delega, Appartenenza
+from anagrafica.models import Delega, Appartenenza, Sede
 from curriculum.models import Titolo
 from curriculum.areas import OBBIETTIVI_STRATEGICI
 from jorvik import settings
@@ -734,6 +734,9 @@ class CatalogoCorsiSearchForm(forms.Form):
 
 
 class ModuloCreaOperatoreSala(forms.Form):
+    NOMINA_LOCALI = (
+        (RESPONSABILE_AREA, 'Responsabile di sala'),
+    )
 
     NOMINA = (
         (DELEGATO_AREA, 'Operatore di sala'),
@@ -744,12 +747,28 @@ class ModuloCreaOperatoreSala(forms.Form):
     nomina = forms.ChoiceField(choices=NOMINA, required=True)
     sede = forms.ChoiceField(choices=())
 
+    def clean(self):
+        cd = self.cleaned_data
+        if Sede.objects.get(pk=cd['sede']).estensione == LOCALE and cd['nomina'] == DELEGATO_AREA:
+            self._errors['nomina'] = self.error_class(['Non puoi aggiungere questa nomina su un comitato Locale'])
+
+        return cd
+
     @staticmethod
-    def popola_scelta(persona):
+    def popola_scelta(sedi):
         choices = [
             (None, "--------------------------"),
         ]
-        for sede in persona.oggetti_permesso(GESTIONE_SEDE):
+        for sede in sedi:
             choices.append((sede.pk, sede))
 
         return choices
+
+    def __init__(self, *args, **kwargs):
+        self.locale = kwargs.pop('locale', None)
+
+        super().__init__(*args, **kwargs)
+
+        if self.locale:
+            self.fields['nomina'].choices = self.NOMINA_LOCALI
+

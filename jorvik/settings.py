@@ -187,7 +187,7 @@ DATABASES = {
     }
 }
 
-SESSION_COOKIE_SECURE = True
+# SESSION_COOKIE_SECURE = True
 CSRF_COOKIE_SECURE = True
 
 # Internazionalizzazione
@@ -292,7 +292,7 @@ ELASTIC_PERSONA_INDEX = ELASTIC_CONF.get('index', 'persona_index', fallback=os.e
 ELASTIC_COMITATO_INDEX = ELASTIC_CONF.get('index', 'comitato_index', fallback=os.environ.get("ELASTIC_COMITATO_INDEX"))
 
 BETA_80_HOST = APIS_CONF.get('beta_80', 'host')
-BETA_80_BEARER = APIS_CONF.get('beta_80', 'bearer', fallback=None)
+BETA_80_BEARER = APIS_CONF.get('beta_80', 'bearer', fallback=os.environ.get("BETA_80_BEARER"))
 
 DESTINATARI_REPORT = ['sviluppo@cri.it', 'info@gaia.cri.it']
 

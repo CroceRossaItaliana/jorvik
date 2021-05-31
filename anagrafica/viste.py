@@ -35,7 +35,7 @@ from sangue.models import Donazione, Sede as SedeSangue
 from .api_trippus import trippus_oauth, trippus_booking, trippus_booking_consiglieri, trippus_booking_volontari
 from .beta_80 import Beta80Api
 
-from .costanti import TERRITORIALE, REGIONALE
+from .costanti import TERRITORIALE, REGIONALE, NAZIONALE
 from .elenchi import ElencoDelegati
 from .utils import _conferma_email, _richiesta_conferma_email
 from .permessi.applicazioni import (PRESIDENTE, UFFICIO_SOCI,
@@ -2066,9 +2066,10 @@ def inscrizione_evento_volontari(request, me):
 def operatori_sale(request, me):
 
     stato = request.GET.get('stato', '')
+    sedi = me.oggetti_permesso(GESTIONE_SEDE)
 
-    form = ModuloCreaOperatoreSala(request.POST or None)
-    form.fields['sede'].choices = ModuloCreaOperatoreSala.popola_scelta(me)
+    form = ModuloCreaOperatoreSala(request.POST or None, locale=not sedi.filter(estensione__in=[REGIONALE, NAZIONALE]).exists())
+    form.fields['sede'].choices = ModuloCreaOperatoreSala.popola_scelta(sedi)
 
     if request.POST and form.is_valid():
         cd = form.cleaned_data
@@ -2089,8 +2090,8 @@ def operatori_sale(request, me):
         else:
             messages.success(request, "Errore nomina Operatore di sala")
 
-        form = ModuloCreaOperatoreSala()
-        form.fields['sede'].choices = ModuloCreaOperatoreSala.popola_scelta(me)
+        form = ModuloCreaOperatoreSala(locale=not sedi.filter(estensione__in=[REGIONALE, NAZIONALE]).exists())
+        form.fields['sede'].choices = ModuloCreaOperatoreSala.popola_scelta(sedi)
 
     aree = Area.objects.filter(nome='Operatore di sala', sede__in=me.oggetti_permesso(GESTIONE_SEDE))
 
