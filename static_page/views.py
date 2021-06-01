@@ -182,7 +182,7 @@ def monitoraggio_fabb_info_territoriale(request, me):
     typeform.get_responses_for_all_forms()  # checks for already compiled forms
 
     is_done = False
-    # finito_di_compilare_per_questo_anno = True
+    finito_di_compilare_per_questo_anno = False
     typeform_id = request.GET.get('id', False)
     if typeform_id:
         typeform_ctx = context['type_form'][typeform_id]
@@ -192,11 +192,11 @@ def monitoraggio_fabb_info_territoriale(request, me):
     if is_done:
         context['is_done'] = True
 
-    # today = datetime.today()
-    # questo_anno = datetime.today().year
-    # trenta_uno_luglio = '{}-07-31'.format(questo_anno)
-    # if today > datetime.strptime(trenta_uno_luglio, '%Y-%m-%d'):
-    #     finito_di_compilare_per_questo_anno = True
+    today = datetime.today()
+    questo_anno = datetime.today().year
+    trenta_uno_luglio = '{}-07-31'.format(questo_anno)
+    if today > datetime.strptime(trenta_uno_luglio, '%Y-%m-%d'):
+        finito_di_compilare_per_questo_anno = True
 
     context['comitato'] = typeform.comitato
     context['user_comitato'] = typeform.comitato_id
@@ -204,7 +204,7 @@ def monitoraggio_fabb_info_territoriale(request, me):
     context['nome_comitato'] = context['comitato'].nome_completo
     context['nome_regionale'] = context['comitato'].sede_regionale.nome_completo
     context['all_forms_are_completed'] = typeform.all_forms_are_completed
-    # context['finito_di_compilare_per_questo_anno'] = finito_di_compilare_per_questo_anno
+    context['finito_di_compilare_per_questo_anno'] = finito_di_compilare_per_questo_anno
 
     context['target'] = MONITORAGGIO_FABBISOGNI_FORMATIVI_TERRITORIALE
 
@@ -254,13 +254,13 @@ def monitoraggio_fabb_info_regionale(request, me):
         context['typeform_id'] = typeform_id
     if is_done:
         context['is_done'] = True
-    # today = datetime.today()
-    # # print(date.today(), 'qqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqq')
-    # # data_tjeter = '2021-05-23'
-    # questo_anno = datetime.today().year
-    # trenta_setembre = '{}-09-30'.format(questo_anno)
-    # if today > datetime.strptime(trenta_setembre, '%Y-%m-%d'):
-    #     finito_di_compilare_per_questo_anno = True
+    today = datetime.today()
+    # print(date.today(), 'qqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqq')
+    # data_tjeter = '2021-05-23'
+    questo_anno = datetime.today().year
+    trenta_setembre = '{}-09-30'.format(questo_anno)
+    if today > datetime.strptime(trenta_setembre, '%Y-%m-%d'):
+        finito_di_compilare_per_questo_anno = True
 
     context['comitato'] = typeform.comitato
     context['user_comitato'] = typeform.comitato_id
@@ -268,7 +268,7 @@ def monitoraggio_fabb_info_regionale(request, me):
     context['nome_comitato'] = context['comitato'].nome_completo
     context['nome_regionale'] = context['comitato'].sede_regionale.nome_completo
     context['all_forms_are_completed'] = typeform.all_forms_are_completed
-    # context['finito_di_compilare_per_questo_anno'] = finito_di_compilare_per_questo_anno
+    context['finito_di_compilare_per_questo_anno'] = finito_di_compilare_per_questo_anno
 
     context['target'] = MONITORAGGIO_FABBISOGNI_FORMATIVI_REGIONALE
 
