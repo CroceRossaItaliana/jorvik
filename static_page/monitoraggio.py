@@ -346,10 +346,16 @@ class TypeFormResponses(TypeForm):
                 return deleghe.filter(tipo=PRESIDENTE).last().oggetto_id
 
     def _render_to_string(self, to_print=False):
+        try:
+            comitato = self.get_json_from_responses('Jo7AmkVU')['items'][0]['hidden']['nc']
+        except BaseException:
+            # questa ritorna l'id dell comitato
+            # comitato = self.get_json_from_responses('ZwMX5rsG')['items'][0]['hidden']['c']
+            comitato = Sede.objects.get(pk=self.get_json_from_responses('ttOyXCJR')['items'][0]['hidden']['c'])
         return render_to_string('monitoraggio_print.html', {
-            'comitato': self.get_json_from_responses('ttOyXCJR')['items'][0]['hidden']['nc'],
-            'user_details': self.user_details,
-            'request': self.request,
+            'comitato': comitato,
+            'user_details': self.me,
+            # 'request': self.request,
             'results': self._retrieve_data(),
             'to_print': to_print,
         })

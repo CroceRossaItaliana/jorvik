@@ -5,13 +5,16 @@ from django.core.exceptions import ValidationError
 from django.forms import ModelForm, modelformset_factory
 
 from autocomplete_light import shortcuts as autocomplete_light
+
+from anagrafica.permessi.applicazioni import DELEGATO_AREA, RESPONSABILE_AREA
+from anagrafica.permessi.costanti import GESTIONE_SEDE
 from django.utils.timezone import now
 
 from base.wysiwyg import WYSIWYGSemplice
 
 from anagrafica.permessi import applicazioni as permessi
 from anagrafica.costanti import LOCALE, REGIONALE, NAZIONALE
-from anagrafica.models import Delega, Appartenenza
+from anagrafica.models import Delega, Appartenenza, Sede
 from curriculum.models import Titolo
 from curriculum.areas import OBBIETTIVI_STRATEGICI
 from jorvik import settings
@@ -39,8 +42,6 @@ class ModuloCreazioneCorsoBase(ModelForm):
 
     def clean_tipo(self):
         tipo = self.cleaned_data['tipo']
-
-
         if not tipo:
             raise ValidationError('Seleziona un valore.')
         return tipo
@@ -730,3 +731,44 @@ class FormCommissioneEsame(ModelForm):
 
 class CatalogoCorsiSearchForm(forms.Form):
     q = forms.CharField(label='')
+
+
+class ModuloCreaOperatoreSala(forms.Form):
+    NOMINA_LOCALI = (
+        (RESPONSABILE_AREA, 'Responsabile di sala'),
+    )
+
+    NOMINA = (
+        (DELEGATO_AREA, 'Operatore di sala'),
+        (RESPONSABILE_AREA, 'Responsabile di sala'),
+    )
+
+    persona = autocomplete_light.ModelChoiceField('PersonaAutocompletamento')
+    nomina = forms.ChoiceField(choices=NOMINA, required=True)
+    sede = forms.ChoiceField(choices=())
+
+    def clean(self):
+        cd = self.cleaned_data
+        if Sede.objects.get(pk=cd['sede']).estensione == LOCALE and cd['nomina'] == DELEGATO_AREA:
+            self._errors['nomina'] = self.error_class(['Non puoi aggiungere questa nomina su un comitato Locale'])
+
+        return cd
+
+    @staticmethod
+    def popola_scelta(sedi):
+        choices = [
+            (None, "--------------------------"),
+        ]
+        for sede in sedi:
+            choices.append((sede.pk, sede))
+
+        return choices
+
+    def __init__(self, *args, **kwargs):
+        self.locale = kwargs.pop('locale', None)
+
+        super().__init__(*args, **kwargs)
+
+        if self.locale:
+            self.fields['nomina'].choices = self.NOMINA_LOCALI
+

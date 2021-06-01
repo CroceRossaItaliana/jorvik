@@ -393,11 +393,12 @@ def monitora_trasparenza(request, me):
         locali = regionale.ottieni_discendenti(includimi=True).filter(estensione__in=[LOCALE, REGIONALE]).order_by('-estensione')
         for locale in locali:
             delegato = locale.delegato_monitoraggio_trasparenza()
-            typeform = TypeFormResponsesTrasparenzaCheck(
-                persona=delegato, user_pk=delegato.id, comitato_id=locale.id
-            )
-            typeform.get_responses_for_all_forms()
-            struttura[locale] = typeform.all_forms_are_completed
+            if delegato:
+                typeform = TypeFormResponsesTrasparenzaCheck(
+                    persona=delegato, user_pk=delegato.id, comitato_id=locale.id
+                )
+                typeform.get_responses_for_all_forms()
+                struttura[locale] = typeform.all_forms_are_completed
 
         context['struttura'] = struttura
     else:
@@ -441,11 +442,12 @@ def monitora_autocontrollo(request, me):
         locali = regionale.ottieni_discendenti(includimi=True).filter(estensione__in=[LOCALE, REGIONALE]).order_by('-estensione')
         for locale in locali:
             delegato = locale.delegato_monitoraggio_trasparenza()
-            typeform = TypeFormResponsesAutocontrolloCheck(
-                persona=delegato, user_pk=delegato.id, comitato_id=locale.id
-            )
-            typeform.get_responses_for_all_forms()
-            struttura[locale] = typeform.all_forms_are_completed
+            if delegato:
+                typeform = TypeFormResponsesAutocontrolloCheck(
+                    persona=delegato, user_pk=delegato.id, comitato_id=locale.id
+                )
+                typeform.get_responses_for_all_forms()
+                struttura[locale] = typeform.all_forms_are_completed
 
         context['struttura'] = struttura
     else:
