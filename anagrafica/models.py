@@ -2256,24 +2256,24 @@ class Sede(ModelloAlbero, ConMarcaTemporale, ConGeolocalizzazione, ConVecchioID,
         return presidente
 
     # def monitora_fabb_info_regionali(self):
-    #     presidente = self.comitato.delegati_attuali(tipo=PRESIDENTE, solo_deleghe_attive=True).first()
-    #     commissario = self.comitato.delegati_attuali(tipo=COMMISSARIO, solo_deleghe_attive=True).first()
-    #     responsabile_formazione = self.comitato.delegati_attuali(tipo=RESPONSABILE_FORMAZIONE, solo_deleghe_attive=True).first()
-    #     # if presidente:
-    #     # delegha = presidente
-    #     # elif commissario:
-    #     # delegha = commissario
-    #     # else:
-    #     delegha = responsabile_formazione
-    #     return delegha
+    #     deleghe_list = []
+    #     queryset = Persona.objects.none()
+    #     responsabile_formazione = self.comitato.delegati_attuali(tipo=RESPONSABILE_FORMAZIONE,
+    #                                                              solo_deleghe_attive=True).first()
+    #
+    #     if responsabile_formazione:
+    #         deleghe_list.append(responsabile_formazione.pk)
+    #     if self.presidente():
+    #         deleghe_list.append(self.presidente().pk)
+    #     return deleghe_list
 
     def monitora_fabb_info_regionali(self):
+        # prende tutte le deleghe di responsabile formazioni, possono esere piu di una
         deleghe_list = []
-        queryset = Persona.objects.none()
         responsabile_formazione = self.comitato.delegati_attuali(tipo=RESPONSABILE_FORMAZIONE,
-                                                                 solo_deleghe_attive=True).first()
-        if responsabile_formazione:
-            deleghe_list.append(responsabile_formazione.pk)
+                                                                 solo_deleghe_attive=True)
+        for resp_formazione in responsabile_formazione:
+            deleghe_list.append(resp_formazione.pk)
         if self.presidente():
             deleghe_list.append(self.presidente().pk)
         return deleghe_list

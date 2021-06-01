@@ -26,7 +26,7 @@ class TypeForm:
         'Content-Type': 'application/json'
     }
 
-    def __init__(self, request=None, me=None, user_pk=None):
+    def __init__(self, request=None, me=None, user_pk=None, **kwargs):
         self.request = request
         self.me = me
         self.user_pk = user_pk  # Celery
@@ -118,7 +118,7 @@ class TypeForm:
                 c = item.get('hidden', OrderedDict())
                 c = c.get('c')
 
-                if c and c == comitato_id:
+                if c and c == comitato_id and not self.context_typeform[_id][0]:
                     self.context_typeform[_id][0] = True
                     break  # bottone spento
 
@@ -426,22 +426,22 @@ class TypeFormResponsesFabbisogniFormativiTerritoriale(TypeForm):
 
     # REGIONALE
     email_body_regionale = """
-        Gentilissimi, \n
-        in allegato la Checklist di autovalutazione del Comitato {}
-    """
+            Gentilissimi, \n
+            in allegato la Checklist di autovalutazione del Comitato {}
+        """
 
     email_object = 'Risposte Questionario Fabbisogni Formativi di %s'
+
+    def __init__(self, request=None, me=None, user_pk=None, **kwargs):
+        super(TypeFormResponsesFabbisogniFormativiTerritoriale, self).__init__(me=me, user_pk=user_pk, request=request, **kwargs)
+        deleghe = me.deleghe_attuali(tipo__in=[COMMISSARIO, PRESIDENTE, RESPONSABILE_FORMAZIONE])
+        comitato = Sede.objects.get(pk=self.comitato_id if self.comitato_id is not None else deleghe.values_list('oggetto_id', flat=True)[0])
+        delegati = comitato.monitora_fabb_info_regionali()
+        self.users_pk = delegati
+
     @property
     def comitato_id(self):
-        persona = self.persona
-
-        # delegato = persona.delege_responsabile_area_trasparenza
-        #
-        # if len(delegato) == 1:
-        #     return delegato[0].oggetto.sede.pk
-        # elif len(delegato) > 1:
-        #     return self.request.GET.get('comitato') if self.request else None
-
+        persona = self.me
         deleghe = persona.deleghe_attuali(tipo__in=[COMMISSARIO, PRESIDENTE, RESPONSABILE_FORMAZIONE])
 
         request_comitato = self.request.GET.get('comitato') if self.request else None
@@ -456,23 +456,54 @@ class TypeFormResponsesFabbisogniFormativiTerritoriale(TypeForm):
                 # quindi vado sicuro a prendere <oggetto_id> dell'unico record
                 return deleghe.filter(tipo=PRESIDENTE).last().oggetto_id
 
+    def get_responses_for_all_forms(self):
+        comitato_id = str(self.comitato_id)
+        for user_pk in self.users_pk:
+            for _id, bottone_name in self.form_ids.items():
+                json = self.get_json_from_responses(_id, user_pk=user_pk)
+                for item in json['items']:
+                    c = item.get('hidden', OrderedDict())
+                    c = c.get('c')
+                    if c and c == comitato_id and not self.context_typeform[_id][0]:
+                        self.context_typeform[_id][0] = True
+                        self.user_pk = user_pk
+                        # self.me = Persona.objects.get(pk=user_pk)
+                        break  # bottone spento
+
+    def get_json_from_responses(self, form_id=None, instance=None, user_pk=None):
+        if instance:
+            return instance.json()
+        else:
+            if form_id is not None:
+                # Make complete request
+                # return self.get_responses(form_id).json()
+                return self.get_completed_responses(form_id, user_pk)
+            else:
+                raise BaseException('You must pass form_id')
+
+    def get_completed_responses(self, form_id, user_pk=None):
+        response = self.make_request(form_id,
+                                     path='/responses',
+                                     query=user_pk,
+                                     completed=True)
+        return response.json()
+
     def _render_to_string(self, to_print=False):
         delegha_list = []
-        # try:
-        #     comitato = self.get_json_from_responses('Jo7AmkVU')['items'][0]['hidden']['nc']
-        # except BaseException:
-            # questa ritorna l'id dell comitato
-            # comitato = self.get_json_from_responses('ZwMX5rsG')['items'][0]['hidden']['c']
 
-        comitato = Sede.objects.get(pk=self.get_json_from_responses('gt0uwrpJ')['items'][0]['hidden']['c'])
-        deleghe = [a for a in self.me.deleghe_attuali(tipo__in=[COMMISSARIO, PRESIDENTE, RESPONSABILE_FORMAZIONE])]
-        for ogni_delegha in deleghe:
-            if ogni_delegha.oggetto_id == int(self.get_json_from_responses('gt0uwrpJ')['items'][0]['hidden']['c']):
-                delegha_list.append(ogni_delegha)
+        comitato = Sede.objects.get(pk=self.get_json_from_responses('gt0uwrpJ', user_pk=self.user_pk)['items'][0]['hidden']['c'])
+        print('comitato: ', comitato, self.user_pk)
+        deleghe = comitato.deleghe_attuali(tipo__in=[COMMISSARIO, PRESIDENTE, RESPONSABILE_FORMAZIONE], persona__id=self.user_pk).first()
+        print('deleghe: ', deleghe)
+        # for ogni_delegha in deleghe:
+        #     print(ogni_delegha.oggetto_id, int(self.get_json_from_responses('gt0uwrpJ', user_pk=self.user_pk)['items'][0]['hidden']['c']), 'aaaaaaaaaaa')
+        #     if ogni_delegha.oggetto_id == int(self.get_json_from_responses('gt0uwrpJ', user_pk=self.user_pk)['items'][0]['hidden']['c']):
+        #         delegha_list.append(ogni_delegha)
+        print('deleghe_list: ', delegha_list)
         return render_to_string('monitoraggio_print.html', {
-            'delegha': delegha_list[0],
+            'delegha': deleghe,
             'comitato': comitato,
-            'user_details': self.me,
+            'user_details': self.user_pk,
             # 'request': self.request,
             'results': self._retrieve_data(),
             'to_print': to_print,
@@ -490,6 +521,16 @@ class TypeFormResponsesFabbisogniFormativiRegionali(TypeForm):
         Gentilissimi, \n
         in allegato la Checklist di autovalutazione del Comitato {}
     """
+
+    def __init__(self, request=None, me=None, user_pk=None, **kwargs):
+        super(TypeFormResponsesFabbisogniFormativiRegionali, self).__init__(me=me, user_pk=user_pk, request=request, **kwargs)
+        comitato = Sede.objects.get(pk=self.comitato_id)
+        print(comitato, 'mmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmm')
+        delegati = comitato.monitora_fabb_info_regionali()
+        print(delegati, 'mmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmm')
+        self.users_pk = delegati
+        # if kwargs.get('users_pk'):
+        #     self.users_pk = kwargs.get('users_pk')
 
     email_object = 'Risposte Questionario Fabbisogni Formativi di %s'
     @property
@@ -517,15 +558,47 @@ class TypeFormResponsesFabbisogniFormativiRegionali(TypeForm):
                 # quindi vado sicuro a prendere <oggetto_id> dell'unico record
                 return deleghe.filter(tipo=PRESIDENTE).last().oggetto_id
 
+    def get_responses_for_all_forms(self):
+        comitato_id = str(self.comitato_id)
+        for user_pk in self.users_pk:
+            for _id, bottone_name in self.form_ids.items():
+                json = self.get_json_from_responses(_id, user_pk=user_pk)
+                for item in json['items']:
+                    c = item.get('hidden', OrderedDict())
+                    c = c.get('c')
+                    if c and c == comitato_id:
+                        self.context_typeform[_id][0] = True
+                        self.user_pk = user_pk
+                        # self.me = Persona.objects.get(pk=user_pk)
+                        break  # bottone spento
+
+    def get_json_from_responses(self, form_id=None, instance=None, user_pk=None):
+        if instance:
+            return instance.json()
+        else:
+            if form_id is not None:
+                # Make complete request
+                # return self.get_responses(form_id).json()
+                return self.get_completed_responses(form_id, user_pk)
+            else:
+                raise BaseException('You must pass form_id')
+
+    def get_completed_responses(self, form_id, user_pk=None):
+        response = self.make_request(form_id,
+                                     path='/responses',
+                                     query=user_pk,
+                                     completed=True)
+        return response.json()
+
     def _render_to_string(self, to_print=False):
         delegha_list = []
-        try:
-            comitato = self.get_json_from_responses('Jo7AmkVU')['items'][0]['hidden']['nc']
-        except BaseException:
-            # questa ritorna l'id dell comitato
-            # comitato = self.get_json_from_responses('ZwMX5rsG')['items'][0]['hidden']['c']
-            comitato = Sede.objects.get(pk=self.get_json_from_responses('Q3NO9HFP')['items'][0]['hidden']['c'])
+        # try:
+        #     comitato = self.get_json_from_responses('Jo7AmkVU')['items'][0]['hidden']['nc']
+        # except BaseException:
+        #     # questa ritorna l'id dell comitato
+        #     # comitato = self.get_json_from_responses('ZwMX5rsG')['items'][0]['hidden']['c']
 
+        comitato = Sede.objects.get(pk=self.get_json_from_responses('Q3NO9HFP')['items'][0]['hidden']['c'])
         deleghe = [a for a in self.me.deleghe_attuali(tipo__in=[COMMISSARIO, PRESIDENTE, RESPONSABILE_FORMAZIONE])]
         for ogni_delegha in deleghe:
             if ogni_delegha.oggetto_id == int(self.get_json_from_responses('Q3NO9HFP')['items'][0]['hidden']['c']):
@@ -795,7 +868,6 @@ class TypeFormResponsesAutocontrolloCheck(TypeFormResponsesCheck):
             # questa ritorna l'id dell comitato
             # comitato = self.get_json_from_responses('ZwMX5rsG')['items'][0]['hidden']['c']
             comitato = Sede.objects.get(pk=self.get_json_from_responses('ZwMX5rsG')['items'][0]['hidden']['c'])
-        print('_render_to_string TypeFormResponsesAutocontrolloCheck')
         return render_to_string('monitoraggio_print.html', {
             'comitato': comitato,
             'user_details': self.me,
