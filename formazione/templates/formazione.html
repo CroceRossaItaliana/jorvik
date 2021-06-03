@@ -87,7 +87,9 @@
                             Corso online
                         </b>
                     {% endif %}
-
+                    {% if corso.evento %}
+                        <i class="fa fa-link"></i> <a href="{{ corso.evento.url }}">{{ corso.evento }}</a>
+                    {% endif %}
                 </td>
 
                 <td>

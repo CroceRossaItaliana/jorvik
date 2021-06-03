@@ -200,12 +200,7 @@ class Evento(ModelloSemplice, ConDelegati, ConMarcaTemporale, ConGeolocalizzazio
         if self.stato == self.ATTIVO:
             corsi = self.corsi_associati
             if corsi:
-                return any(
-                    [
-                        True for corso in corsi
-                        if corso.stato == Corso.TERMINATO or corso.stato == Corso.ANNULLATO
-                    ]
-                )
+                return False not in [corso.stato == Corso.TERMINATO or corso.stato == Corso.ANNULLATO for corso in corsi]
             else:
                 return False
         return False
