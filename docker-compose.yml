@@ -33,6 +33,14 @@ services:
     volumes:
       - .:/code
       - /tmp/media:/tmp/media
+    links:
+      - db
+      - sentinel01
+      - pdf
+    depends_on:
+      - db
+      - pdf
+      - sentinel01
     environment:
       - "SKIP_DJANGO_COLLECSTATIC=1"
       - "SKIP_DJANGO_MIGRATE=1"
@@ -40,17 +48,22 @@ services:
       - "REDIS_HOST=sentinel01"
     command: "celery worker -A jorvik -l info -Q queue_elastic,queue_monitoraggio,queue_formazione,coda_email_rischedula,coda_email_invio,queue_monitoraggio,periodic_ufficio_soci,shared_ufficio_soci -B"
 
+
   redis:
     image: 'bitnami/redis:latest'
     environment:
       - ALLOW_EMPTY_PASSWORD=yes
       - REDIS_MASTER_SET=django
 
+
   sentinel01:
     image: 'bitnami/redis-sentinel:latest'
+    links:
+      - redis
     environment:
       - REDIS_MASTER_HOST=redis
       - REDIS_MASTER_SET=django
 
   pdf:
     build: https://github.com/CroceRossaItaliana/gaia-dompdf.git#master
+

@@ -194,25 +194,23 @@ class Autorizzazione(ModelloSemplice, ConMarcaTemporale):
                 self.notifica_negata(auto=auto)
             return
 
-        if isinstance(self.oggetto, PartecipazioneCorsoBase):
-            evento = self.oggetto.corso.evento
-            if evento:
-                corsi = evento.corsi_associati
-                for corso in corsi:
-                    if corso.pk != self.oggetto.corso.pk:
-                        from posta.models import Messaggio
-                        Messaggio.costruisci_e_accoda(
-                            oggetto="Partecipazione al corso {}".format(self.oggetto.corso),
-                            modello="email_partecipazione_evento_formazione.html",
-                            corpo={
-                                "persona": self.oggetto.persona,
-                                "corso": self.oggetto.corso
-                            },
-                            destinatari=corso.direttori_corso(),
-                        )
-
         from formazione.models import PartecipazioneCorsoBase
         from formazione.models import Corso
+        if isinstance(self.oggetto, PartecipazioneCorsoBase) and self.oggetto.corso.evento:
+            corsi = self.oggetto.corso.evento.corsi_associati
+            for corso in corsi:
+                if corso.pk != self.oggetto.corso.pk:
+                    from posta.models import Messaggio
+                    Messaggio.costruisci_e_accoda(
+                        oggetto="Partecipazione al corso {}".format(self.oggetto.corso),
+                        modello="email_partecipazione_evento_formazione.html",
+                        corpo={
+                            "persona": self.oggetto.persona,
+                            "corso": self.oggetto.corso
+                        },
+                        destinatari=corso.direttori_corso(),
+                    )
+
         if isinstance(self.oggetto, PartecipazioneCorsoBase) and (
                 (self.oggetto.corso.online and self.oggetto.corso.moodle) or self.oggetto.corso.tipo == Corso.BASE_ONLINE
         ):

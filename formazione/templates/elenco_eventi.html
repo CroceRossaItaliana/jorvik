@@ -47,13 +47,13 @@
                 </td>
                 <td>
                     {% if evento.attivabile %}
-                        <i class="fa fa-fw fa-check"></i><a href="{{ evento.url_attiva }}" data-conferma="Vuoi attivare questo corso?">Attiva</a><br>
+                        <i class="fa fa-fw fa-check"></i><a href="{{ evento.url_attiva }}" data-conferma="Vuoi attivare questo evento?">Attiva</a><br>
                     {% endif %}
                     {% if evento.annullabile %}
-                        <i class="fa fa-fw fa-trash"></i><a href="{{ evento.url_annulla }}" data-conferma="Vuoi annullare questo corso?">Annulla</a><br>
+                        <i class="fa fa-fw fa-trash"></i><a href="{{ evento.url_annulla }}" data-conferma="Vuoi annullare questo evento?">Annulla</a><br>
                     {% endif %}
                     {% if evento.terminabile %}
-                        <i class="glyphicon glyphicon-eye-close"></i> <a href="{{ evento.url_termina }}" data-conferma="Vuoi terminare questo corso?">Termina</a>
+                        <i class="glyphicon glyphicon-eye-close"></i> <a href="{{ evento.url_termina }}" data-conferma="Vuoi terminare questo evento?">Termina</a>
                     {% endif %}
                 </td>
             </tr>

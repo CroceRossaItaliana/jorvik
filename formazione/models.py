@@ -165,7 +165,7 @@ class Evento(ModelloSemplice, ConDelegati, ConMarcaTemporale, ConGeolocalizzazio
         corso = self.corsi_associati.first()
 
         for queryset in corso._corso_activation_recipients_for_email_generator():
-            oggetto = "{} evento Formazione".format(self)
+            oggetto = "Evento Formazione: {}".format(self)
 
             for recipient in queryset:
                 email_data = dict(

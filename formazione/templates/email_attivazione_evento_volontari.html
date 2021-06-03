@@ -12,7 +12,7 @@
         <a href="/login/?next={{ evento.url_mappa }}">{{ evento.locazione }} (vedi in mappa)</a>.
     </p>
     <div>
-        Durante l'evento saranno organizzati i seguenti Corsi di formazione:
+        Durante <a href="{{ evento.url }}">l'evento</a> saranno organizzati i seguenti Corsi di formazione:
         <ul>
             {% for corso in evento.corsi_associati %}
                 <li>{{ corso }} <a href="/login/?next={{ corso.url }}">Entra in Gaia (clicca qui)</a>, Direttore del Corso: {{ corso.direttori_corso.first }}</li>
