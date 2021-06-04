@@ -425,7 +425,7 @@ class TypeFormResponsesTrasparenza(TypeForm):
 
 class TypeFormResponsesFabbisogniFormativiTerritoriale(TypeForm):
     form_ids = OrderedDict([
-        ('gt0uwrpJ', 'Questionario Fabbisogni Formativi'),
+        ('ZrgLp6bQ', 'Questionario Fabbisogni Formativi'),
     ])
     email_body = """Grazie per aver completato il Questionario sulla Fabbisogni Formativi."""
 
@@ -499,10 +499,10 @@ class TypeFormResponsesFabbisogniFormativiTerritoriale(TypeForm):
 
         delegha_list = []
         # comitato = Sede.objects.get(
-        #     pk=self.get_json_from_responses('Q3NO9HFP', user_pk=self.user_pk)['items'][0]['hidden']['c'])
+        #     pk=self.get_json_from_responses('zW2FMF2Y', user_pk=self.user_pk)['items'][0]['hidden']['c'])
         comitato_da_request = Sede.objects.get(pk=int(self.comitato_id))
         # persona = Persona.objects.get(
-        #     pk=self.get_json_from_responses('gt0uwrpJ', user_pk=self.user_pk)['items'][0]['hidden']['u'])
+        #     pk=self.get_json_from_responses('ZrgLp6bQ', user_pk=self.user_pk)['items'][0]['hidden']['u'])
         persona = Persona.objects.get(pk=self.user_pk) if self.user_pk else self.me
 
         deleghe = comitato_da_request.deleghe_attuali(
@@ -537,7 +537,7 @@ class TypeFormResponsesFabbisogniFormativiTerritoriale(TypeForm):
 
 class TypeFormResponsesFabbisogniFormativiRegionali(TypeForm):
     form_ids = OrderedDict([
-        ('Q3NO9HFP', 'Questionario Fabbisogni Formativi'),
+        ('zW2FMF2Y', 'Questionario Fabbisogni Formativi'),
     ])
     email_body = """Grazie per aver completato il Questionario sulla Fabbisogni Formativi."""
 
@@ -610,7 +610,7 @@ class TypeFormResponsesFabbisogniFormativiRegionali(TypeForm):
         delegha_list = []
         comitato_da_request = Sede.objects.get(pk=int(self.comitato_id))
         # persona = Persona.objects.get(
-        #     pk=self.get_json_from_responses('Q3NO9HFP', user_pk=self.user_pk)['items'][0]['hidden']['u'])
+        #     pk=self.get_json_from_responses('zW2FMF2Y', user_pk=self.user_pk)['items'][0]['hidden']['u'])
         persona = Persona.objects.get(pk=self.user_pk) if self.user_pk else self.me
         deleghe = comitato_da_request.deleghe_attuali(
             tipo__in=[COMMISSARIO, PRESIDENTE, RESPONSABILE_FORMAZIONE]).filter(
@@ -915,7 +915,7 @@ class TypeFormResponsesAutocontrolloCheck(TypeFormResponsesCheck):
 
 class TypeFormResponsesFabbisogniFormativiTerritorialeCheck(TypeFormResponsesCheck):
     form_ids = OrderedDict([
-        ('gt0uwrpJ', 'Questionario Fabbisogni Formativi'),
+        ('ZrgLp6bQ', 'Questionario Fabbisogni Formativi'),
     ])
 
     def __init__(self, persona=None, user_pk=None, comitato_id=None, **kwargs):
@@ -957,12 +957,12 @@ class TypeFormResponsesFabbisogniFormativiTerritorialeCheck(TypeFormResponsesChe
 
     def _render_to_string(self, to_print=False):
         delegha_list = []
-        comitato = Sede.objects.get(pk=self.get_json_from_responses('gt0uwrpJ', user_pk=self.me.pk)['items'][0]['hidden']['c'])
+        comitato = Sede.objects.get(pk=self.get_json_from_responses('ZrgLp6bQ', user_pk=self.me.pk)['items'][0]['hidden']['c'])
         request_comitato = Sede.objects.get(pk=self.comitato_id)
         deleghe = [a for a in self.me.deleghe_attuali().filter(tipo__in=[PRESIDENTE, COMMISSARIO, RESPONSABILE_FORMAZIONE])]
         # print(self.comitato_id, 'aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa')
         for ogni_delegha in deleghe:
-            # print(ogni_delegha.oggetto_id, self.comitato_id, int(self.get_json_from_responses('gt0uwrpJ', user_pk=self.me.pk)['items'][0]['hidden']['c']))
+            # print(ogni_delegha.oggetto_id, self.comitato_id, int(self.get_json_from_responses('ZrgLp6bQ', user_pk=self.me.pk)['items'][0]['hidden']['c']))
             if ogni_delegha.oggetto_id == self.comitato_id:
                 delegha_list.append(ogni_delegha)
         return render_to_string('monitoraggio_print.html', {
@@ -987,7 +987,7 @@ class TypeFormResponsesFabbisogniFormativiTerritorialeCheck(TypeFormResponsesChe
 
 class TypeFormResponsesFabbisogniFormativiRagionaleCheck(TypeFormResponsesCheck):
     form_ids = OrderedDict([
-        ('Q3NO9HFP', 'Questionario Fabbisogni Formativi'),
+        ('zW2FMF2Y', 'Questionario Fabbisogni Formativi'),
     ])
 
     def __init__(self, persona=None, user_pk=None, comitato_id=None, **kwargs):
@@ -1030,7 +1030,7 @@ class TypeFormResponsesFabbisogniFormativiRagionaleCheck(TypeFormResponsesCheck)
     def _render_to_string(self, to_print=False):
         delegha_list = []
         comitato = Sede.objects.get(
-            pk=self.get_json_from_responses('Q3NO9HFP', user_pk=self.me.pk)['items'][0]['hidden']['c'])
+            pk=self.get_json_from_responses('zW2FMF2Y', user_pk=self.me.pk)['items'][0]['hidden']['c'])
         request_comitato = Sede.objects.get(pk=self.comitato_id)
         deleghe = [a for a in
                    self.me.deleghe_attuali().filter(tipo__in=[PRESIDENTE, COMMISSARIO, RESPONSABILE_FORMAZIONE])]
