@@ -432,21 +432,22 @@ class TypeFormResponsesFabbisogniFormativiTerritoriale(TypeForm):
     # REGIONALE
     email_body_regionale = """
             Gentilissimi, \n
-            in allegato la Checklist di autovalutazione del Comitato {}
+            in allegato il questionario del Fabbisogni Formativi del Comitato {}
         """
 
     email_object = 'Risposte Questionario Fabbisogni Formativi di %s'
 
     def __init__(self, request=None, me=None, user_pk=None, **kwargs):
         super(TypeFormResponsesFabbisogniFormativiTerritoriale, self).__init__(me=me, user_pk=user_pk, request=request, **kwargs)
-        deleghe = me.deleghe_attuali(tipo__in=[COMMISSARIO, PRESIDENTE, RESPONSABILE_FORMAZIONE])
+        persona = Persona.objects.get(pk=self.user_pk) if self.user_pk else self.me
+        deleghe = persona.deleghe_attuali(tipo__in=[COMMISSARIO, PRESIDENTE, RESPONSABILE_FORMAZIONE])
         comitato = Sede.objects.get(pk=self.comitato_id if self.comitato_id is not None else deleghe.values_list('oggetto_id', flat=True)[0])
         delegati = comitato.monitora_fabb_info_regionali()
         self.users_pk = delegati
 
     @property
     def comitato_id(self):
-        persona = self.me
+        persona = Persona.objects.get(pk=self.user_pk) if self.user_pk else self.me
         deleghe = persona.deleghe_attuali(tipo__in=[COMMISSARIO, PRESIDENTE, RESPONSABILE_FORMAZIONE])
 
         request_comitato = self.request.GET.get('comitato') if self.request else None
@@ -499,36 +500,39 @@ class TypeFormResponsesFabbisogniFormativiTerritoriale(TypeForm):
         delegha_list = []
         # comitato = Sede.objects.get(
         #     pk=self.get_json_from_responses('Q3NO9HFP', user_pk=self.user_pk)['items'][0]['hidden']['c'])
-        comitato_da_request = Sede.objects.get(pk=int(self.request.GET.get('comitato')))
-        persona = Persona.objects.get(
-            pk=self.get_json_from_responses('gt0uwrpJ', user_pk=self.user_pk)['items'][0]['hidden']['u'])
+        comitato_da_request = Sede.objects.get(pk=int(self.comitato_id))
+        # persona = Persona.objects.get(
+        #     pk=self.get_json_from_responses('gt0uwrpJ', user_pk=self.user_pk)['items'][0]['hidden']['u'])
+        persona = Persona.objects.get(pk=self.user_pk) if self.user_pk else self.me
+
         deleghe = comitato_da_request.deleghe_attuali(
             tipo__in=[COMMISSARIO, PRESIDENTE, RESPONSABILE_FORMAZIONE]).filter(
             persona=persona
-        ).first()
-        deleghe2 = [a for a in self.me.deleghe_attuali(tipo__in=[COMMISSARIO, PRESIDENTE, RESPONSABILE_FORMAZIONE])]
-        for ogni_delegha in deleghe2:
-            if ogni_delegha.oggetto_id == int(self.request.GET.get('comitato')):
+        )
+        # persona = Persona.objects.get(pk=self.user_pk) if self.user_pk else self.me
+        # deleghe2 = [a for a in persona.deleghe_attuali(tipo__in=[COMMISSARIO, PRESIDENTE, RESPONSABILE_FORMAZIONE])]
+        for ogni_delegha in deleghe:
+            if ogni_delegha.oggetto_id == int(self.comitato_id):
                 delegha_list.append(ogni_delegha)
 
         return render_to_string('monitoraggio_print.html', {
             'delegha': delegha_list[0],
             'comitato': comitato_da_request,
-            'user_details': deleghe.persona,
+            'user_details': delegha_list[0].persona,
             # 'request': self.request,
             'results': self._retrieve_data(),
             'to_print': to_print,
         })
 
-    def print(self, redirect_url):
-        html = self._render_to_string(to_print=True)
-
-        if hasattr(self, '_no_data_retrieved'):
-            messages.add_message(self.request, messages.ERROR,
-                                 'Non ci sono i dati per generare il report.')
-            return redirect(reverse('pages:monitoraggio'))
-
-        return HttpResponse(html)
+    # def print(self, redirect_url):
+    #     html = self._render_to_string(to_print=True)
+    #
+    #     if hasattr(self, '_no_data_retrieved'):
+    #         messages.add_message(self.request, messages.ERROR,
+    #                              'Non ci sono i dati per generare il report.')
+    #         return redirect(reverse('pages:monitoraggio'))
+    #
+    #     return HttpResponse(html)
 
 
 class TypeFormResponsesFabbisogniFormativiRegionali(TypeForm):
@@ -540,7 +544,7 @@ class TypeFormResponsesFabbisogniFormativiRegionali(TypeForm):
     # REGIONALE
     email_body_regionale = """
         Gentilissimi, \n
-        in allegato la Checklist di autovalutazione del Comitato {}
+        in allegato il Questionario Fabbisogni Formativi del Comitato {}
     """
 
     def __init__(self, request=None, me=None, user_pk=None, **kwargs):
@@ -553,8 +557,7 @@ class TypeFormResponsesFabbisogniFormativiRegionali(TypeForm):
 
     @property
     def comitato_id(self):
-        persona = self.persona
-
+        persona = Persona.objects.get(pk=self.user_pk) if self.user_pk else self.me
         deleghe = persona.deleghe_attuali(tipo__in=[COMMISSARIO, PRESIDENTE, RESPONSABILE_FORMAZIONE])
 
         request_comitato = self.request.GET.get('comitato') if self.request else None
@@ -603,29 +606,28 @@ class TypeFormResponsesFabbisogniFormativiRegionali(TypeForm):
         return response.json()
 
     def _render_to_string(self, to_print=False):
-        delegha_list = []
-        # comitato = Sede.objects.get(
-        #     pk=self.get_json_from_responses('Q3NO9HFP', user_pk=self.user_pk)['items'][0]['hidden']['c'])
-        comitato_da_request = Sede.objects.get(pk=int(self.request.GET.get('comitato')))
-        persona = Persona.objects.get(
-            pk=self.get_json_from_responses('Q3NO9HFP', user_pk=self.user_pk)['items'][0]['hidden']['u'])
 
-        deleghe = comitato_da_request.deleghe_attuali(tipo__in=[COMMISSARIO, PRESIDENTE, RESPONSABILE_FORMAZIONE]).filter(
+        delegha_list = []
+        comitato_da_request = Sede.objects.get(pk=int(self.comitato_id))
+        # persona = Persona.objects.get(
+        #     pk=self.get_json_from_responses('Q3NO9HFP', user_pk=self.user_pk)['items'][0]['hidden']['u'])
+        persona = Persona.objects.get(pk=self.user_pk) if self.user_pk else self.me
+        deleghe = comitato_da_request.deleghe_attuali(
+            tipo__in=[COMMISSARIO, PRESIDENTE, RESPONSABILE_FORMAZIONE]).filter(
             persona=persona
-        ).first()
-        deleghe2 = [a for a in self.me.deleghe_attuali(tipo__in=[COMMISSARIO, PRESIDENTE, RESPONSABILE_FORMAZIONE])]
-        for ogni_delegha in deleghe2:
-            if ogni_delegha.oggetto_id == int(self.request.GET.get('comitato')):
+        )
+        for ogni_delegha in deleghe:
+            if ogni_delegha.oggetto_id == int(self.comitato_id):
                 delegha_list.append(ogni_delegha)
 
         return render_to_string('monitoraggio_print.html', {
-                'delegha': delegha_list[0],
-                'comitato': comitato_da_request,
-                'user_details': deleghe.persona,
-                # 'request': self.request,
-                'results': self._retrieve_data(),
-                'to_print': to_print,
-            })
+            'delegha': delegha_list[0],
+            'comitato': comitato_da_request,
+            'user_details': delegha_list[0].persona,
+            # 'request': self.request,
+            'results': self._retrieve_data(),
+            'to_print': to_print,
+        })
 
     def print(self, redirect_url):
         html = self._render_to_string(to_print=True)
