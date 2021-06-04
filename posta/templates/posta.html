@@ -20,6 +20,47 @@
 {% block app_contenuto %}
 
 <div class="row">
+    <div class="col-md-12 padding-verticale-20">
+        <form method='GET' action='/posta/{{ direzione }}/'>
+            <div class="form-check">
+                <label class="margine-nullo">Cerca per</label>
+                <label class="form-check-label radio-inline">
+                    <input class="form-check-input" type="radio" name="mailfilterby" {% if filterby == 'oggetto' %}checked{% endif %} value="oggetto">Oggetto
+                </label>
+                {% if direzione == 'in-arrivo' %}
+                    <label class="radio-inline">
+                        <input type="radio" name="mailfilterby" {% if filterby == 'mittente' %}checked{% endif %} value="mittente">Mittente
+                    </label>
+                {% else %}
+                    <label class="radio-inline">
+                        <input type="radio" name="mailfilterby" {% if filterby == 'destinatario' %}checked{% endif %} value="destinatario">Destinatario   
+                    </label>
+                {% endif %}
+            </div>
+            <div class="input-group">
+                <input type="text" class="form-control" placeholder="testo da ricercare"
+                        name="q" id="query-nome" value="{{ query }}"
+                >
+                <span class="input-group-btn">
+                    <button class="btn btn-primary" type="submit">
+                        <i class="fa fa-fw fa-search"></i>
+                        <span class="sr-only">Cerca</span>
+                    </button>
+                    {% if query %}
+                        <a href="/posta/{{ direzione }}" class="btn btn-danger">
+                            <i class="fa fa-fw fa-times"></i>
+                            <span class="sr-only">Annulla</span>
+                        </a>
+                    {% endif %}
+
+                </span>
+
+            </div><!-- /input-group -->
+        </form>
+    </div>
+</div>
+
+<div class="row">
 
     <div class="col-md-4">
 
