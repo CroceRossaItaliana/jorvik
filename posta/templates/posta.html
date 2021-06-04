@@ -20,7 +20,7 @@
 {% block app_contenuto %}
 
 <div class="row">
-    <div class="col-md-12 padding-verticale-20">
+    <div class="col-md-12 padding-sotto-15">
         <form method='GET' action='/posta/{{ direzione }}/'>
             <div class="form-check">
                 <label class="margine-nullo">Cerca per</label>
@@ -62,7 +62,7 @@
 
 <div class="row">
 
-    <div class="col-md-4">
+    <div class="col-md-{% if messaggi|length > 0 %}4{% else %}12{% endif %}" >
 
         {% for msg in messaggi %}
             <div class="panel-messaggio panel panel-{% if messaggio and messaggio.pk == msg.pk %}primary{% else %}info{% endif %}"
@@ -108,55 +108,56 @@
         {% empty %}
             <div class="alert alert-warning allinea-centro">
                 <h4>Nessun messaggio.</h4>
-                <p>Torna pi&ugrave; tardi.</p>
+                <p>La ricerca non ha prodotto risultati.</p>
             </div>
 
         {% endfor %}
 
 
+        {% if messaggi|length > 0 %}
+            <div class="allinea-centro">
+                <ul class="pagination">
 
-        <div class="allinea-centro">
-            <ul class="pagination">
 
+                    {% if ha_precedente %}
+                        <li class="prev">
+                            <a href="/posta/{{ direzione }}/{{ pagina_precedente }}/">
+                                <i class="fa fa-arrow-left"></i>
+                            </a>
+                        </li>
+                    {% else %}
+                        <li class="prev disabled">
+                            <a href="#">
+                                <i class="fa fa-arrow-left"></i>
+                            </a>
+                        </li>
 
-                {% if ha_precedente %}
-                    <li class="prev">
-                        <a href="/posta/{{ direzione }}/{{ pagina_precedente }}/">
-                            <i class="fa fa-arrow-left"></i>
-                        </a>
-                    </li>
-                {% else %}
-                    <li class="prev disabled">
-                        <a href="#">
-                            <i class="fa fa-arrow-left"></i>
-                        </a>
-                    </li>
+                    {% endif %}
 
-                {% endif %}
-
-                <li class="active">
-                    <a href="#">Pag. {{ pagina }} di {{ pagine }}</a>
-                </li>
-
-                {% if ha_successivo %}
-                    <li class="prev">
-                        <a href="/posta/{{ direzione }}/{{ pagina_successiva }}/">
-                            <i class="fa fa-arrow-right"></i>
-                        </a>
-                    </li>
-                {% else %}
-                    <li class="prev disabled">
-                        <a href="#">
-                            <i class="fa fa-arrow-right"></i>
-                        </a>
+                    <li class="active">
+                        <a href="#">Pag. {{ pagina }} di {{ pagine }}</a>
                     </li>
 
-                {% endif %}
+                    {% if ha_successivo %}
+                        <li class="prev">
+                            <a href="/posta/{{ direzione }}/{{ pagina_successiva }}/">
+                                <i class="fa fa-arrow-right"></i>
+                            </a>
+                        </li>
+                    {% else %}
+                        <li class="prev disabled">
+                            <a href="#">
+                                <i class="fa fa-arrow-right"></i>
+                            </a>
+                        </li>
 
-            </ul>
+                    {% endif %}
 
-            {% if messaggi|length > 0 %}<p>{{ totale  }} messaggi in questa casella.</p>{% endif %}
-        </div>
+                </ul>
+
+                {% if messaggi|length > 0 %}<p>{{ totale  }} messaggi in questa casella.</p>{% endif %}
+            </div>
+        {% endif %}
 
     </div>
 
