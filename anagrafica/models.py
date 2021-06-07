@@ -1267,8 +1267,26 @@ class Persona(ModelloSemplice, ConMarcaTemporale, ConAllegati, ConVecchioID):
                     return True
 
     @property
+    def is_commissario_territoriale(self):
+        deleghe = self.deleghe_attuali(tipo__in=[COMMISSARIO])
+        if deleghe:
+            for delega in deleghe:
+                if delega.oggetto.estensione == TERRITORIALE or \
+                        delega.oggetto.estensione == LOCALE or \
+                        delega.oggetto.estensione == PROVINCIALE:
+                    return True
+
+    @property
     def is_presidente_o_commissario_regionale(self):
         deleghe = self.deleghe_attuali(tipo__in=[PRESIDENTE, COMMISSARIO])
+        if deleghe:
+            for delega in deleghe:
+                if delega.oggetto.estensione == REGIONALE:
+                    return True
+
+    @property
+    def is_commissario_regionale(self):
+        deleghe = self.deleghe_attuali(tipo__in=[COMMISSARIO])
         if deleghe:
             for delega in deleghe:
                 if delega.oggetto.estensione == REGIONALE:

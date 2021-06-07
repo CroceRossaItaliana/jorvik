@@ -159,11 +159,11 @@ def monitoraggio_fabb_info_territoriale(request, me):
     if (me.is_presidente_o_commissario_territoriale or me.is_responsabile_formazione_territoriale) and not request_comitato:
         # GAIA-58: Seleziona comitato
         if me.is_presidente:
-            deleghe = me.deleghe_attuali(tipo__in=[COMMISSARIO, PRESIDENTE])
+            deleghe = me.is_presidente_o_commissario_territoriale
         elif me.is_comissario:
-            deleghe = me.deleghe_attuali(tipo__in=[COMMISSARIO])
+            deleghe = me.is_commissario_territoriale
         else:
-            deleghe = me.deleghe_attuali(tipo__in=[RESPONSABILE_FORMAZIONE])
+            deleghe = me.is_responsabile_formazione_territoriale
         return 'monitoraggio_choose_comitato.html', {
             'deleghe': deleghe.distinct('oggetto_id') if me.is_comissario else deleghe,
             'url': 'monitoraggio-fabb-info-territoriale',
@@ -220,11 +220,11 @@ def monitoraggio_fabb_info_regionale(request, me):
     if (me.is_presidente_o_commissario_regionale or me.is_responsabile_formazione_regionale) and not request_comitato:
         # GAIA-58: Seleziona comitato
         if me.is_presidente:
-            deleghe = me.deleghe_attuali(tipo__in=[COMMISSARIO, PRESIDENTE])
+            deleghe = me.is_presidente_o_commissario_regionale
         elif me.is_comissario:
-            deleghe = me.deleghe_attuali(tipo__in=[COMMISSARIO])
+            deleghe = me.is_commissario_regionale
         else:
-            deleghe = me.deleghe_attuali(tipo__in=[RESPONSABILE_FORMAZIONE])
+            deleghe = me.is_responsabile_formazione_regionale
         return 'monitoraggio_choose_comitato.html', {
             'deleghe': deleghe.distinct('oggetto_id') if me.is_comissario else deleghe,
             'url': 'monitoraggio-fabb-info-regionale',
