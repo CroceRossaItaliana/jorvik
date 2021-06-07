@@ -33,11 +33,13 @@ def posta(request, me, direzione="in-arrivo", pagina=1, messaggio_id=None):
     :param messaggio_id: ID del messaggio da aprire, None altrimenti.
     :return:
     """
+    query = request.GET.get('q')
+    filterby = request.GET.get('mailfilterby')
 
     if direzione == "in-arrivo":
-        messaggi = me.posta_in_arrivo()
+        messaggi = me.posta_in_arrivo(query, filterby)
     else:
-        messaggi = me.posta_in_uscita()
+        messaggi = me.posta_in_uscita(query, filterby)
 
     if messaggio_id is None:
         messaggio = None
@@ -74,6 +76,8 @@ def posta(request, me, direzione="in-arrivo", pagina=1, messaggio_id=None):
         'pagina_successiva': pagina+1,
         'inviato': 'inviato' in request.GET,
         'accodato': 'accodato' in request.GET,
+        'query': query or '',
+        'filterby': filterby or 'oggetto',
     }
 
     return 'posta.html', contesto
