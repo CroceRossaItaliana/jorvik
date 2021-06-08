@@ -28,6 +28,7 @@
       Come strumento di supporto ti abbiamo condiviso il <a href="https://datafiles.gaia.cri.it/media/filer_public/05/7c/057ce599-879a-48b4-9774-427135008c2a/vademecum_obblighi_di_pubblcita_rev_2021_1.pdf" target="_blank">VADEMECUM</a>
   </p>
 
+  {% if False %}
     <ul class="typeform_widget">
       <li><a href="?comitato={{user_comitato}}&id=Jo7AmkVU" class="{%if type_form.Jo7AmkVU.0 %}done{%endif%} typeform_widget__btn testi-lunghi hand" title="Questionario Trasparenza L. 124/2017">Questionario Trasparenza L. 124/2017</a></li>
     </ul>
@@ -53,6 +54,8 @@
         Per passare da una domanda all'altra scorrere con il mouse.
     </p>
 
+  {% endif %}
+
 {#    <div>#}
 {#      <p>Prima di iniziare il questionario, puoi consultare le istruzioni per la compilazione e il glossario ai link di seguito:#}
 {#        <a href="https://datafiles.gaia.cri.it/media/filer_public/7a/6e/7a6e0fe0-a3f8-42ac-bca4-5a5873355049/allegato_2-glossario.pdf" target="_blank">glossario</a>, #}
@@ -65,8 +68,8 @@
         <div class="typeform_widget-tools">
           <ul class="typeform_widget-tools__list">
             <li><a class="monitoraggio_action_btn" href="{% url 'pages:monitoraggio_actions' %}?action=print&target={{ target }}" target="_blank"><i class="fa fa-print fa-fw"></i> Stampa le risposte</a></li>
-            <li><a class="monitoraggio_action_btn" href="{% url 'pages:monitoraggio_actions' %}?action=send_via_mail&target={{ target }}" target="_blank"><i class="fa fa-envelope fa-fw"></i> Invia via e-mail a te stesso</a></li>
-            <li><a class="monitoraggio_action_btn" href="{% url 'pages:monitoraggio_actions' %}?action=send_via_mail_regionale&target={{ target }}" target="_blank"><i class="fa fa-envelope fa-fw"></i> Invia via e-mail al regionale</a></li>
+            <li><a class="monitoraggio_action_btn nascosto" href="{% url 'pages:monitoraggio_actions' %}?action=send_via_mail&target={{ target }}" target="_blank"><i class="fa fa-envelope fa-fw"></i> Invia via e-mail a te stesso</a></li>
+            <li><a class="monitoraggio_action_btn nascosto" href="{% url 'pages:monitoraggio_actions' %}?action=send_via_mail_regionale&target={{ target }}" target="_blank"><i class="fa fa-envelope fa-fw"></i> Invia via e-mail al regionale</a></li>
           </ul>
         </div>
     {% endif %}
