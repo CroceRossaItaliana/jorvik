@@ -1267,6 +1267,30 @@ class Persona(ModelloSemplice, ConMarcaTemporale, ConAllegati, ConVecchioID):
                     return True
 
     @property
+    def deleghe_presidente_o_commissario_territoriale(self):
+        deleghe_list = []
+        deleghe = self.deleghe_attuali(tipo__in=[PRESIDENTE, COMMISSARIO])
+        if deleghe:
+            for delega in deleghe:
+                if delega.oggetto.estensione == TERRITORIALE or \
+                        delega.oggetto.estensione == LOCALE or \
+                        delega.oggetto.estensione == PROVINCIALE:
+                    deleghe_list.append(delega)
+        return deleghe_list
+
+    @property
+    def deleghe_commissario_territoriale(self):
+        deleghe_list = []
+        deleghe = self.deleghe_attuali(tipo=COMMISSARIO)
+        if deleghe:
+            for delega in deleghe:
+                if delega.oggetto.estensione == TERRITORIALE or \
+                        delega.oggetto.estensione == LOCALE or \
+                        delega.oggetto.estensione == PROVINCIALE:
+                    deleghe_list.append(delega)
+        return deleghe_list
+
+    @property
     def is_commissario_territoriale(self):
         deleghe = self.deleghe_attuali(tipo__in=[COMMISSARIO])
         if deleghe:
@@ -1332,6 +1356,26 @@ class Persona(ModelloSemplice, ConMarcaTemporale, ConAllegati, ConVecchioID):
     def is_responsabile_formazione_regionale(self):
         deleghe_list = []
         deleghe = self.deleghe_attuali(tipo=RESPONSABILE_FORMAZIONE)
+        if deleghe:
+            for delega in deleghe:
+                if delega.oggetto.estensione == REGIONALE:
+                    deleghe_list.append(delega)
+        return deleghe_list
+
+    @property
+    def deleghe_presidente_o_commissario_regionale(self):
+        deleghe_list = []
+        deleghe = self.deleghe_attuali(tipo__in=[PRESIDENTE, COMMISSARIO])
+        if deleghe:
+            for delega in deleghe:
+                if delega.oggetto.estensione == REGIONALE:
+                    deleghe_list.append(delega)
+        return deleghe_list
+
+    @property
+    def deleghe_commissario_regionale(self):
+        deleghe_list = []
+        deleghe = self.deleghe_attuali(tipo=COMMISSARIO)
         if deleghe:
             for delega in deleghe:
                 if delega.oggetto.estensione == REGIONALE:
