@@ -121,7 +121,7 @@
 
                     {% if ha_precedente %}
                         <li class="prev">
-                            <a href="/posta/{{ direzione }}/{{ pagina_precedente }}/">
+                            <a href="/posta/{{ direzione }}/{{ pagina_precedente }}/{% if query %}?mailfilterby={{filterby}}&q={{query}}{% endif %}">
                                 <i class="fa fa-arrow-left"></i>
                             </a>
                         </li>
@@ -131,7 +131,6 @@
                                 <i class="fa fa-arrow-left"></i>
                             </a>
                         </li>
-
                     {% endif %}
 
                     <li class="active">
@@ -140,7 +139,7 @@
 
                     {% if ha_successivo %}
                         <li class="prev">
-                            <a href="/posta/{{ direzione }}/{{ pagina_successiva }}/">
+                            <a href="/posta/{{ direzione }}/{{ pagina_successiva }}/{% if query %}?mailfilterby={{filterby}}&q={{query}}{% endif %}">
                                 <i class="fa fa-arrow-right"></i>
                             </a>
                         </li>
