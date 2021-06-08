@@ -164,7 +164,6 @@ def monitoraggio_fabb_info_territoriale(request, me):
             deleghe = me.deleghe_commissario_territoriale
         else:
             deleghe = me.is_responsabile_formazione_territoriale
-        print(deleghe, '-----------------------------------------------------------------------------------------')
         return 'monitoraggio_choose_comitato.html', {
             'deleghe': deleghe.distinct('oggetto_id') if me.is_comissario else deleghe,
             'url': 'monitoraggio-fabb-info-territoriale',
