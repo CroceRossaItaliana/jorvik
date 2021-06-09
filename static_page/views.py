@@ -165,7 +165,8 @@ def monitoraggio_fabb_info_territoriale(request, me):
         else:
             deleghe = me.is_responsabile_formazione_territoriale
         return 'monitoraggio_choose_comitato.html', {
-            'deleghe': deleghe.distinct('oggetto_id') if me.is_comissario else deleghe,
+            'deleghe': deleghe,
+            # 'deleghe': deleghe.distinct('oggetto_id') if me.is_comissario else deleghe,
             'url': 'monitoraggio-fabb-info-territoriale',
             'titolo': 'Monitoraggio Fabbisogni Informativi Comitato Territoriale',
             'target': MONITORAGGIO_FABBISOGNI_FORMATIVI_TERRITORIALE
@@ -226,7 +227,8 @@ def monitoraggio_fabb_info_regionale(request, me):
         else:
             deleghe = me.is_responsabile_formazione_regionale
         return 'monitoraggio_choose_comitato.html', {
-            'deleghe': deleghe.distinct('oggetto_id') if me.is_comissario else deleghe,
+            'deleghe': deleghe,
+            # 'deleghe': deleghe.distinct('oggetto_id') if me.is_comissario else deleghe,
             'url': 'monitoraggio-fabb-info-regionale',
             'titolo': 'Monitoraggio Fabbisogni Informativi Comitato Regionale',
             'target': MONITORAGGIO_FABBISOGNI_FORMATIVI_REGIONALE
