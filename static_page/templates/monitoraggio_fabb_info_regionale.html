@@ -30,8 +30,23 @@
     <div class="typeform_widget__wrapper">
       {% if not is_done %}
         {% if typeform_id and user_comitato and user_id %}
-          <div class="typeform-widget" data-url="https://crocerossaitaliana.typeform.com/to/{{typeform_id}}?c={{user_comitato}}&u={{user_id}}&nc={{nome_comitato}}&nr={{nome_regionale}}" data-transparency="100" data-hide-headers=true data-hide-footer=true style="width: 100%; height: 500px;"></div>
-          <script> (function() { var qs,js,q,s,d=document, gi=d.getElementById, ce=d.createElement, gt=d.getElementsByTagName, id="typef_orm", b="https://embed.typeform.com/"; if(!gi.call(d,id)) { js=ce.call(d,"script"); js.id=id; js.src=b+"embed.js"; q=gt.call(d,"script")[0]; q.parentNode.insertBefore(js,q) } })() </script>
+{#          <div class="typeform-widget" data-url="https://crocerossaitaliana.typeform.com/to/{{typeform_id}}?c={{user_comitato}}&u={{user_id}}&nc={{nome_comitato}}&nr={{nome_regionale}}" data-transparency="100" data-hide-headers=true data-hide-footer=true style="width: 100%; height: 500px;"></div>#}
+          <div id="typeform-widget" style="width: 100%; height: 570px;"></div>
+            <script>
+                {#(function() { var qs,js,q,s,d=document, gi=d.getElementById, ce=d.createElement, gt=d.getElementsByTagName, id="typef_orm", b="https://embed.typeform.com/"; if(!gi.call(d,id)) { js=ce.call(d,"script"); js.id=id; js.src=b+"embed.js"; q=gt.call(d,"script")[0]; q.parentNode.insertBefore(js,q) } })() #}
+
+                {#Vedi qua: https://github.com/Typeform/embed/blob/main/packages/demo-html/public/popup-js.html#}
+                {#    o qua: https://medium.com/typeforms-engineering-blog/typeform-embed-sdk-is-going-open-source-997d2626cf2a#}
+                src="https://embed.typeform.com/embed.js"
+                window.typeformEmbed.makeWidget(
+                    document.getElementById("typeform-widget"),
+                    "https://crocerossaitaliana.typeform.com/to/{{typeform_id}}?c={{user_comitato}}&u={{user_id}}&nc={{nome_comitato}}&nr={{nome_regionale}}",
+                    {
+                        hideHeaders: true,
+                        hideFooter: true
+                    }
+                );
+            </script>
         {% endif %}
       {% endif %}
 
