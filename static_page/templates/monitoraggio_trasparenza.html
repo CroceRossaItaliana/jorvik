@@ -28,7 +28,7 @@
       Come strumento di supporto ti abbiamo condiviso il <a href="https://datafiles.gaia.cri.it/media/filer_public/05/7c/057ce599-879a-48b4-9774-427135008c2a/vademecum_obblighi_di_pubblcita_rev_2021_1.pdf" target="_blank">VADEMECUM</a>
   </p>
 
-  {% if False %}
+  {% if can_compile %}
     <ul class="typeform_widget">
       <li><a href="?comitato={{user_comitato}}&id=Jo7AmkVU" class="{%if type_form.Jo7AmkVU.0 %}done{%endif%} typeform_widget__btn testi-lunghi hand" title="Questionario Trasparenza L. 124/2017">Questionario Trasparenza L. 124/2017</a></li>
     </ul>
@@ -68,10 +68,19 @@
         <div class="typeform_widget-tools">
           <ul class="typeform_widget-tools__list">
             <li><a class="monitoraggio_action_btn" href="{% url 'pages:monitoraggio_actions' %}?action=print&target={{ target }}" target="_blank"><i class="fa fa-print fa-fw"></i> Stampa le risposte</a></li>
-            <li><a class="monitoraggio_action_btn nascosto" href="{% url 'pages:monitoraggio_actions' %}?action=send_via_mail&target={{ target }}" target="_blank"><i class="fa fa-envelope fa-fw"></i> Invia via e-mail a te stesso</a></li>
-            <li><a class="monitoraggio_action_btn nascosto" href="{% url 'pages:monitoraggio_actions' %}?action=send_via_mail_regionale&target={{ target }}" target="_blank"><i class="fa fa-envelope fa-fw"></i> Invia via e-mail al regionale</a></li>
+            {% if can_compile %}
+              <li><a class="monitoraggio_action_btn" href="{% url 'pages:monitoraggio_actions' %}?action=send_via_mail&target={{ target }}" target="_blank"><i class="fa fa-envelope fa-fw"></i> Invia via e-mail a te stesso</a></li>
+              <li><a class="monitoraggio_action_btn" href="{% url 'pages:monitoraggio_actions' %}?action=send_via_mail_regionale&target={{ target }}" target="_blank"><i class="fa fa-envelope fa-fw"></i> Invia via e-mail al regionale</a></li>
+            {% endif %}
           </ul>
         </div>
+        {% if not can_compile %}
+          <p style="text-align:center;">Il Questionario non è più disponibile in quanto il termine ultimo è scaduto. Puoi comunque scaricare le risposte.</p>
+        {% endif %}
+    {% else %}
+        {% if not can_compile %}
+          <p style="text-align:center;">Risposte non disponibili, in quanto il questionario non è stato compilato entro il termine ultimo.</p>
+        {% endif %}
     {% endif %}
 
     <script>
