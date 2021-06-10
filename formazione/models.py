@@ -39,7 +39,7 @@ from survey.models import Survey
 from .tasks import task_invia_email_apertura_evento
 from .training_api import TrainingApi
 from .validators import (course_file_directory_path, validate_file_extension,
-                         delibera_file_upload_path)
+                         delibera_file_upload_path, evento_file_directory_path)
 import logging
 
 logger = logging.getLogger(__name__)
@@ -234,6 +234,13 @@ class Evento(ModelloSemplice, ConDelegati, ConMarcaTemporale, ConGeolocalizzazio
     def corsi_terminati(self):
         return CorsoBase.objects.filter(evento=self, stato=Corso.TERMINATO)
 
+    @property
+    def get_evento_links(self):
+        return self.eventolink_set.filter(is_enabled=True)
+
+    @property
+    def get_evento_files(self):
+        return self.eventofile_set.filter(is_enabled=True)
 
     class Meta:
         verbose_name = 'Evento'
@@ -308,6 +315,32 @@ class CorsoFile(models.Model):
         return '<%s> of %s' % (file, corso)
 
 
+class EventoFile(models.Model):
+    is_enabled = models.BooleanField(default=True)
+    evento = models.ForeignKey('Evento')
+    file = models.FileField(
+        'File',
+        null=True,
+        blank=True,
+        upload_to=evento_file_directory_path,
+        validators=[valida_dimensione_file_8mb, validate_file_extension],
+    )
+    download_count = models.PositiveIntegerField(default=0)
+
+    def download_url(self):
+        reverse_url = reverse('evento:evento_file', args=[self.evento.pk])
+        return reverse_url + "?id=%s" % self.pk
+
+    def filename(self):
+        import os
+        return os.path.basename(self.file.name)
+
+    def __str__(self):
+        file = self.file if self.file else ''
+        evento = self.evento if hasattr(self, 'evento') else ''
+        return '<%s> of %s' % (file, evento)
+
+
 class CorsoLink(models.Model):
     is_enabled = models.BooleanField(default=True)
     corso = models.ForeignKey('CorsoBase')
@@ -316,6 +349,16 @@ class CorsoLink(models.Model):
     def __str__(self):
         corso = self.corso if hasattr(self, 'corso') else ''
         return '<%s> of %s' % (self.link, corso)
+
+
+class EventoLink(models.Model):
+    is_enabled = models.BooleanField(default=True)
+    evento = models.ForeignKey('Evento')
+    link = models.URLField('Link', null=True, blank=True)
+
+    def __str__(self):
+        evento = self.evento if hasattr(self, 'evento') else ''
+        return '<%s> of %s' % (self.link, evento)
 
 
 class CorsoBase(Corso, ConVecchioID, ConPDF):

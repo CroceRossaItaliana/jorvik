@@ -18,6 +18,10 @@
                 <form method="POST" enctype="multipart/form-data">
                     {% csrf_token %}
                     {% bootstrap_form modulo %}
+
+                    <h4>Condividi il materiale didattico</h4>
+                    {{ file_formset.as_p }}
+                    {{ link_formset.as_p }}
                     <button type="submit" class="btn btn-block btn-primary">
                         <i class="fa fa-fw fa-asterisk"></i> Modifica evento
                     </button>

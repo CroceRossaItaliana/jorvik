@@ -32,8 +32,9 @@ from posta.models import Messaggio
 from survey.models import Survey
 from .elenchi import ElencoPartecipantiCorsiBase
 from .decorators import can_access_to_course
+from .formsets import EventoFileFormSet, EventoLinkFormSet
 from .models import (Aspirante, Corso, CorsoBase, CorsoEstensione, LezioneCorsoBase,
-                     PartecipazioneCorsoBase, InvitoCorsoBase, RelazioneCorso, Evento)
+                     PartecipazioneCorsoBase, InvitoCorsoBase, RelazioneCorso, Evento, EventoLink, EventoFile)
 from .forms import (ModuloCreazioneCorsoBase, ModuloModificaLezione,
                     ModuloModificaCorsoBase, ModuloIscrittiCorsoBaseAggiungi, FormCommissioneEsame,
                     FormVerbaleCorso, FormRelazioneDelDirettoreCorso, ModuloCreazioneEvento, FiltraEvento,
@@ -1546,6 +1547,34 @@ def course_send_questionnaire_to_participants(request, me, pk):
 
     return 'course_send_questionnaire_to_participants.html', context
 
+@pagina_privata
+def evento_materiale_didattico_download(request, me, pk):
+    evento = get_object_or_404(Evento, pk=pk)
+    try:
+        file_id = request.GET.get('id')
+
+        if not file_id:
+            raise Http404
+
+        materiale = EventoFile.objects.get(pk=int(file_id))  # fallisce se si passa non un number
+        file_path = materiale.file.path
+
+        # Preparare la risposta
+        with open(file_path, 'rb') as f:
+            response = HttpResponse(content=f.read(),
+                                    content_type='application/force-download')
+        filename = '_'.join(materiale.filename().split())
+        response['Content-Disposition'] = 'attachment; filename=%s' % filename
+
+        # Incrementare il contatore
+        materiale.download_count = F('download_count') + 1
+        materiale.save()
+
+        return response
+    except:
+        pass
+
+    return HttpResponse('Non hai accesso a questo file.')
 
 @pagina_privata
 def course_materiale_didattico_download(request, me, pk):
@@ -1833,15 +1862,60 @@ def evento_scheda_info(request, me=None, pk=None):
 def evento_scheda_modifica(request, me=None, pk=None):
     evento = get_object_or_404(Evento, pk=pk)
 
-    form = ModuloModificaEvento(request.POST or None, instance=evento)
+    FILEFORM_PREFIX = 'files'
+    LINKFORM_PREFIX = 'links'
 
-    if form.is_valid():
-        form.save()
-        return redirect(reverse('evento:info', args=[evento.pk]))
+    evento_files = EventoFile.objects.filter(evento=evento)
+    evento_links = EventoLink.objects.filter(evento=evento)
+
+    if request.POST:
+
+        file_formset = EventoFileFormSet(request.POST, request.FILES,
+                                                queryset=evento_files,
+                                                form_kwargs={'empty_permitted': False},
+                                                prefix=FILEFORM_PREFIX)
+
+        if file_formset.is_valid():
+            file_formset.save(commit=False)
+
+            for obj in file_formset.deleted_objects:
+                obj.delete()
+
+            for form in file_formset:
+                if form.is_valid() and not form.empty_permitted:
+                    instance = form.instance
+                    instance.evento = evento
+
+            file_formset.save()
+
+        link_formset = EventoLinkFormSet(request.POST,
+                                        queryset=evento_links,
+                                        prefix=LINKFORM_PREFIX)
+
+        if link_formset.is_valid():
+            link_formset.save(commit=False)
+            for form in link_formset:
+                instance = form.instance
+                instance.evento = evento
+            link_formset.save()
+
+        form = ModuloModificaEvento(request.POST or None, instance=evento)
+        if form.is_valid():
+            form.save()
+
+        if form.is_valid() and link_formset.is_valid() and file_formset.is_valid():
+            return redirect(reverse('evento:modifica', args=[pk]))
+
+    else:
+        form = ModuloModificaEvento(instance=evento)
+        file_formset = EventoFileFormSet(queryset=evento_files, prefix=FILEFORM_PREFIX)
+        link_formset = EventoLinkFormSet(queryset=evento_links, prefix=LINKFORM_PREFIX)
 
     return 'evento_scheda_modifica.html', {
         'evento': evento,
         'modulo': form,
+        'file_formset': file_formset,
+        'link_formset': link_formset,
         'puo_modificare': me.permessi_almeno(evento, MODIFICA)
     }
 

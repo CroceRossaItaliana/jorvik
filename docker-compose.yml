@@ -21,6 +21,9 @@ services:
     depends_on:
       - db
       - pdf
+      - redis
+      - sentinel01
+      - celery
     hostname: web
     shm_size: 1g
     environment:
@@ -38,18 +41,22 @@ services:
       - /tmp/media:/tmp/media
     links:
       - db
+      - redis
       - sentinel01
       - pdf
     depends_on:
       - db
       - pdf
+      - redis
       - sentinel01
     environment:
       - "SKIP_DJANGO_COLLECSTATIC=1"
       - "SKIP_DJANGO_MIGRATE=1"
+      - "SKIP_REQUIREMENTS_CHECK=1"
       - "REDIS_MASTER=django"
       - "REDIS_HOST=sentinel01"
-      - "SKIP_REQUIREMENTS_CHECK=1"
+      - "WAIT_HOSTS_TIMEOUT=1200"
+      - "WAIT_SLEEP_INTERVAL=60"
     command: "celery worker -A jorvik -l info -Q queue_elastic,queue_monitoraggio,queue_formazione,coda_email_rischedula,coda_email_invio,queue_monitoraggio,periodic_ufficio_soci,shared_ufficio_soci -B"
 
 
@@ -63,6 +70,8 @@ services:
   sentinel01:
     image: 'bitnami/redis-sentinel:latest'
     links:
+      - redis
+    depends_on:
       - redis
     environment:
       - "REDIS_MASTER_HOST=redis"

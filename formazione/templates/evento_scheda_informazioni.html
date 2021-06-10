@@ -68,6 +68,26 @@
             {% if evento.descrizione %}
                 {{ evento.descrizione }}
             {% endif %}
+            <h4>Materiale didattico</h4>
+            {% if evento.get_evento_links %}
+                <div style="margin:0 0 20px;">
+                    <strong>Link:</strong><br>
+                    {% for link in evento.get_evento_links %}
+                        {% if link.link %}
+                            <a href="{{link.link}}" target="_blank">{{link.link}}</a><br>
+                        {% endif %}
+                    {% endfor %}
+                </div>
+            {%endif%}
+
+            {% if evento.get_evento_files %}
+                <div style="margin:0 0 20px;">
+                    <strong>File:</strong><br>
+                    {% for file in evento.get_evento_files %}
+                        <a href="{{ file.download_url }}" target="_blank">{{file.filename}}</a> <small>({{file.download_count}})</small><br>
+                    {% endfor %}
+                </div>
+            {% endif %}
         </div>
         <div class="col-md-6">
             <h3><i class="fa fa-fw fa-info-circle"></i> Corsi</h3>

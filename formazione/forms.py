@@ -19,7 +19,7 @@ from curriculum.models import Titolo
 from curriculum.areas import OBBIETTIVI_STRATEGICI
 from jorvik import settings
 from .models import (Corso, CorsoBase, CorsoFile, CorsoEstensione,
-                     LezioneCorsoBase, PartecipazioneCorsoBase, RelazioneCorso, Evento)
+                     LezioneCorsoBase, PartecipazioneCorsoBase, RelazioneCorso, Evento, EventoFile)
 
 
 class ModuloCreazioneEvento(ModelForm):
@@ -381,6 +381,31 @@ class CorsoLinkForm(ModelForm):
         self.fields['file'].widget.attrs = {'accept': ", ".join(
             acceptable_extensions)}
 
+
+class EventoLinkForm(ModelForm):
+    class Meta:
+        model = EventoFile
+        fields = ['file',]
+
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        acceptable_extensions = [
+            'application/pdf',
+            'application/msword', # .doc
+            'application/vnd.openxmlformats-officedocument.wordprocessingml.document', # .docx
+            'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
+            'application/vnd.ms-excel', # xls
+            'application/vnd.ms-powerpoint',
+            'application/x-rar-compressed', 'application/octet-stream', # rar
+            'application/zip', 'application/octet-stream',
+            'application/x-zip-compressed', 'multipart/x-zip',
+            'image/jpeg',
+            'image/png',
+            'text/csv',
+            'application/rtf',
+        ]
+        self.fields['file'].widget.attrs = {'accept': ", ".join(
+            acceptable_extensions)}
 
 class ModuloIscrittiCorsoBaseAggiungi(forms.Form):
     persone = autocomplete_light.ModelMultipleChoiceField(
