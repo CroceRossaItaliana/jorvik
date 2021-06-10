@@ -5,7 +5,7 @@ from django.shortcuts import redirect, get_object_or_404
 from django.core.urlresolvers import reverse
 from django.contrib import messages
 
-from anagrafica.costanti import REGIONALE, LOCALE
+from anagrafica.costanti import REGIONALE, LOCALE, PROVINCIALE
 from anagrafica.models import Sede, Persona
 from autenticazione.funzioni import pagina_privata
 from anagrafica.permessi.applicazioni import COMMISSARIO, PRESIDENTE, RESPONSABILE_FORMAZIONE
@@ -480,7 +480,7 @@ def monitora_fabb_info_territoriale(request, me):
     if id_regionale:
         struttura = OrderedDict()
         regionale = Sede.objects.get(pk=id_regionale)
-        locali = regionale.ottieni_discendenti(includimi=True).filter(estensione__in=[LOCALE]).order_by('-estensione')
+        locali = regionale.ottieni_discendenti(includimi=True).filter(estensione__in=[LOCALE, PROVINCIALE]).order_by('-estensione')
         for locale in locali:
             delegato = locale.monitora_fabb_info_regionali()
             typeform = TypeFormResponsesFabbisogniFormativiTerritorialeCheck(
@@ -527,7 +527,7 @@ def monitora_fabb_info_regionale(request, me):
     if id_regionale:
         struttura = OrderedDict()
         regionale = Sede.objects.get(pk=id_regionale)
-        comitati = regionale.ottieni_discendenti(includimi=True).filter(estensione__in=[LOCALE, REGIONALE]).order_by(
+        comitati = regionale.ottieni_discendenti(includimi=True).filter(estensione__in=[LOCALE, REGIONALE, PROVINCIALE]).order_by(
             '-estensione')
         for comitato in comitati:
             # se e comitato regionale, usi il typeform per comitati regionali
