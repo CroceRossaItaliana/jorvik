@@ -831,6 +831,7 @@ class ElencoPerTitoli(ElencoVistaAnagrafica):
 
         return super().excel_colonne() + (
             ("Titoli - Data ottenimento - Data scadenza", lambda p: titoli(p)),
+            ("Comitato di appartenenza", lambda p: p.sede_riferimento()),
         )
 
 
