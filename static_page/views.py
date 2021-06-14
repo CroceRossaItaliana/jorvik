@@ -15,7 +15,8 @@ from .monitoraggio import TypeFormResponses, TypeFormNonSonoUnBersaglio, NONSONO
     TypeFormResponsesAutocontrolloCheck, TypeFormResponsesFabbisogniFormativiTerritoriale, \
     MONITORAGGIO_FABBISOGNI_FORMATIVI_TERRITORIALE, MONITORAGGIO_FABBISOGNI_FORMATIVI_REGIONALE, \
     TypeFormResponsesFabbisogniFormativiRegionali, TypeFormResponsesFabbisogniFormativiTerritorialeCheck, \
-    TypeFormResponsesFabbisogniFormativiRagionaleCheck
+    TypeFormResponsesFabbisogniFormativiRagionaleCheck, TypeFormResponsesAutocontrolloCheck
+from datetime import datetime
 
 
 @pagina_privata
@@ -121,6 +122,7 @@ def monitoraggio_trasparenza(request, me):
 
     # Make test request (API/connection availability, etc)
     if not typeform.make_test_request_to_api:
+        context['can_compile'] = datetime.now() < datetime(2021, 6, 12, 0, 0)
         return 'monitoraggio_trasparenza.html', context
 
     context['type_form'] = typeform.context_typeform
@@ -138,6 +140,7 @@ def monitoraggio_trasparenza(request, me):
     if is_done:
         context['is_done'] = True
 
+    context['can_compile'] = datetime.now() < datetime(2021, 6, 12, 0, 0)
     context['comitato'] = typeform.comitato
     context['user_comitato'] = typeform.comitato_id
     context['user_id'] = typeform.get_user_pk

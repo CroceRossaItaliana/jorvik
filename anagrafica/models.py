@@ -653,19 +653,55 @@ class Persona(ModelloSemplice, ConMarcaTemporale, ConAllegati, ConVecchioID):
             destinatari=[self]
         )
 
-    def posta_in_arrivo(self):
+    def posta_in_arrivo(self, query = None, filterby='oggetto'):
         """
         Ottiene il queryset della posta in arrivo per la Persona.
         :return: Queryset della posta in arrivo.
         """
-        return Messaggio.objects.filter(oggetti_destinatario__persona=self).order_by('-creazione')
+        emails = Messaggio.objects.filter(oggetti_destinatario__persona=self)
+        
+        if query:
+            if filterby == 'oggetto':
+                emails = emails.filter(oggetto__icontains=query)
+            if filterby == 'mittente':
+                if '@' in query:
+                    emails = emails.filter(
+                        Q(mittente__email_contatto__icontains=query)
+                        | Q(mittente__utenza__email__icontains=query)
+                    )
+                else:
+                    for term in query.split():
+                        emails = emails.filter(
+                            Q(mittente__nome__icontains=term)
+                            | Q(mittente__cognome__icontains=term)
+                        )
 
-    def posta_in_uscita(self):
+        return emails.order_by('-creazione')
+
+    def posta_in_uscita(self, query=None, filterby='oggetto'):
         """
         Ottiene il queryset della posta in uscita per la Persona.
         :return: Queryset della posta in uscita.
         """
-        return Messaggio.objects.filter(mittente=self).order_by('-creazione')
+        emails = Messaggio.objects.filter(mittente=self)
+
+        if query:
+            if filterby == 'oggetto':
+                emails = emails.filter(oggetto__icontains=query)
+            if filterby == 'destinatario':
+                if '@' in query:
+                    emails = emails.filter(
+                        Q(oggetti_destinatario__persona__email_contatto__icontains=query)
+                        | Q(oggetti_destinatario__persona__utenza__email__icontains=query)
+                    )
+                else:
+                    for term in query.split():
+                        emails = emails.filter(
+                            Q(oggetti_destinatario__persona__nome__icontains=term)
+                            | Q(oggetti_destinatario__persona__cognome__icontains=term)
+                        )
+            
+        return emails.distinct().order_by('-creazione')
 
     def da_aspirante_a_volontario(self, sede, inizio=None, mittente=None):
         """

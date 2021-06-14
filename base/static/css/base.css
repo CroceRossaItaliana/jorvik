@@ -83,7 +83,7 @@
 }
 
 .allinea-sinistra {
-    text-aligh: left;
+    text-align: left;
 }
 
 .margine-verticale-20 {
@@ -94,6 +94,11 @@
 .padding-verticale-20 {
     padding-top: 20px;
     padding-bottom: 20px;
+}
+
+.padding-sotto-15 {
+    padding-top: 0px;
+    padding-bottom: 15px;
 }
 
 .padding-verticale-40 {
@@ -273,4 +278,31 @@ body, p, span, div {
 
 .wait:hover {
     cursor: wait;
+}
+
+.form-check {
+    margin-bottom: 5px;
+}
+
+.form-check .margine-nullo {
+    padding-right: 10px;
+}
+.form-check input[type='radio']:checked {
+    -webkit-appearance: none;
+    -moz-appearance: none;
+    appearance: none;
+    outline: none;
+}
+
+.form-check input[type='radio']:checked:after {
+    width: 13px;
+    height: 13px;
+    border-radius: 13px;
+    position: relative;
+    background: #555;
+    content: '';
+    display: inline-block;
+    visibility: visible;
+    border: 3px solid #ccc;
+    left: 1px;
 }
