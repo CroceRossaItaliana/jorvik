@@ -79,4 +79,3 @@ services:
 
   pdf:
     build: https://github.com/CroceRossaItaliana/gaia-dompdf.git#master
-
