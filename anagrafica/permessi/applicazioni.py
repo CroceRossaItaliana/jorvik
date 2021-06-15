@@ -33,6 +33,8 @@ RESPONSABILE_AUTOPARCO = 'AP'
 RESPONSABILE_PATENTI = 'PA'
 RESPONSABILE_DONAZIONI = 'DO'
 DIRETTORE_CORSO = 'DC'
+# Non è una delega ma solo un segna posto per la rubriva
+GIOVANI = 'GO'
 
 OBIETTIVI = {
     1: DELEGATO_OBIETTIVO_1,
@@ -50,7 +52,7 @@ PERMESSI_NOMI = (
     (COMMISSARIO,               "Commissario"),
     (CONSIGLIERE,               "Consigliere"),
     (CONSIGLIERE_GIOVANE,       "Consigliere Rappresentante dei Giovani"),
-    (CONSIGLIERE_GIOVANE_COOPTATO,       "Consigliere Giovane Cooptato"),
+    (CONSIGLIERE_GIOVANE_COOPTATO,       "Consigliere Rappresentante dei Giovani Cooptato"),
     (UFFICIO_SOCI,              "Ufficio Soci"),
     (UFFICIO_SOCI_CM,           "Ufficio Soci corpo militare"),
     (UFFICIO_SOCI_IIVV,         "Ufficio Soci Infermiere volontarie"),
@@ -81,7 +83,7 @@ DELEGHE_RUBRICA = (
     PRESIDENTE, COMMISSARIO, CONSIGLIERE_GIOVANE, CONSIGLIERE_GIOVANE_COOPTATO, UFFICIO_SOCI, UFFICIO_SOCI_UNITA,
     DELEGATO_OBIETTIVO_1, DELEGATO_OBIETTIVO_2, DELEGATO_OBIETTIVO_3,
     DELEGATO_OBIETTIVO_4, DELEGATO_OBIETTIVO_5, DELEGATO_OBIETTIVO_6,
-    RESPONSABILE_FORMAZIONE, DELEGATO_CO, DELEGATO_SO, RESPONSABILE_AUTOPARCO,
+    RESPONSABILE_FORMAZIONE, DELEGATO_CO, DELEGATO_SO, RESPONSABILE_AUTOPARCO, GIOVANI
 )
 
 PERMESSI_NOMI_DICT = dict(PERMESSI_NOMI)
@@ -90,7 +92,8 @@ RUBRICHE_TITOLI = OrderedDict((
     ('presidenti', (PRESIDENTE, 'Presidenti', True)),
     ('commissari', (COMMISSARIO, 'Commissari', True)),
     ('condigliere_giovane', (CONSIGLIERE_GIOVANE, 'Consiglieri Rappresentanti dei Giovani', True)),
-    ('condigliere_giovane_cooptato', (CONSIGLIERE_GIOVANE_COOPTATO, 'Consiglieri Giovani Cooptato', True)),
+    ('consigliere_giovane_cooptato', (CONSIGLIERE_GIOVANE_COOPTATO, 'Consiglieri Rappresentanti dei Giovani Cooptato', True)),
+    ('giovani', (GIOVANI, 'Giovani', True)),
     ('delegati_us', (UFFICIO_SOCI, 'Delegati Ufficio Soci', True)),
     ('delegati_us_unita', (UFFICIO_SOCI_UNITA, 'Delegati Ufficio Soci Unità territoriali', True)),
     ('delegati_us_corpo_militare', (UFFICIO_SOCI_CM, 'Delegati Ufficio Soci Corpo militare', True)),

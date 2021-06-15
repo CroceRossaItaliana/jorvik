@@ -2,7 +2,7 @@ from django.apps import apps
 from django.contrib.contenttypes.models import ContentType
 
 from .models import Persona, Delega, Sede
-from .permessi.applicazioni import DELEGATO_OBIETTIVO_5, CONSIGLIERE_GIOVANE, CONSIGLIERE_GIOVANE_COOPTATO
+from .permessi.applicazioni import GIOVANI
 from .permessi.costanti import DELEGHE_OGGETTI_DICT
 from .templatetags.utils import sede_delega
 from ufficio_soci.elenchi import ElencoVistaAnagrafica, ElencoVolontariGiovani
@@ -47,7 +47,7 @@ class ElencoDelegati(ElencoVistaAnagrafica):
                     ).via('delega')
                 ).exclude(pk=me)
 
-            if delega in [CONSIGLIERE_GIOVANE, CONSIGLIERE_GIOVANE_COOPTATO]:
+            if delega == GIOVANI:
                 delegati |= Persona.objects.filter(id__in=ElencoVolontariGiovani(qs_sedi).risultati().values_list('id', flat=True))
 
         return delegati.order_by('nome', 'cognome', 'codice_fiscale')\

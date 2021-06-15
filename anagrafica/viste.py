@@ -1313,7 +1313,7 @@ def _presidente_sede_ruoli(sede):
             (CONSIGLIERE, "Consigliere", sede.delegati_attuali(tipo=CONSIGLIERE).count(), sede.consiglieri()),
             (CONSIGLIERE_GIOVANE, "Consigliere Rappresentante dei Giovani", sede.delegati_attuali(tipo=CONSIGLIERE_GIOVANE).count(),
              [sede.consigliere_giovane()] if sede.consigliere_giovane() else []),
-            (CONSIGLIERE_GIOVANE_COOPTATO, "Consigliere Giovane Cooptato",
+            (CONSIGLIERE_GIOVANE_COOPTATO, "Consigliere Rappresentante Giovane Cooptato",
              sede.delegati_attuali(tipo=CONSIGLIERE_GIOVANE_COOPTATO).count(),
              [sede.consigliere_giovane_cooptato()] if sede.consigliere_giovane_cooptato() else []
              ),
@@ -1863,6 +1863,30 @@ def admin_import_presidenti(request, me):
 
                 gia_consigliere = persona.deleghe_attuali(
                     al_giorno=datetime.datetime.now(), tipo=CONSIGLIERE_GIOVANE, fine=None
+                ).first()
+
+                if gia_consigliere:
+                    gia_consigliere.termina(mittente=me, accoda=True, termina_at=datetime.datetime.now())
+
+                msg = "OK, Nomina effettuata."
+            elif nomina == CONSIGLIERE_GIOVANE_COOPTATO:
+                delega_consigliere_giovane_cooptato = sede.deleghe_attuali(
+                    al_giorno=datetime.datetime.now(), tipo=CONSIGLIERE_GIOVANE_COOPTATO, fine=None
+                ).first()
+
+                if delega_consigliere_giovane_cooptato:
+                    if delega_consigliere_giovane_cooptato.persona == persona:
+                        esiti += [
+                            (
+                                persona,
+                                sede,
+                                "Saltato. E' già Consigliere giovane cooptato di questa Sede."
+                            )
+                        ]
+                        continue
+
+                gia_consigliere = persona.deleghe_attuali(
+                    al_giorno=datetime.datetime.now(), tipo=CONSIGLIERE_GIOVANE_COOPTATO, fine=None
                 ).first()
 
                 if gia_consigliere:
