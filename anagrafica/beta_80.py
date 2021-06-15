@@ -23,6 +23,14 @@ class Beta80Api:
 
     def _scope(self, tipo_delega='', sede_id=None):
         delega = self.SCOPE.get(tipo_delega, '')
+        if sede_id:
+            sede = Sede.objects.get(pk=sede_id)
+            # 1638 -> Comitato dell'Area Metropolitana di Roma Capitale Coordinamento
+            if sede and sede.estensione == 'R' and sede.pk != 1638:
+                return "CRI.CREG.CREG_{}.{}".format(sede_id, delega)
+            if sede and sede.estensione == 'P' and sede.pk == 525:
+                return "CRI.CPROV.CPROV_RM.{}".format(delega)
+
         return "CRI.CT.CT_{}.{}".format(sede_id, delega)
 
     def _headers(self, **kwargs):

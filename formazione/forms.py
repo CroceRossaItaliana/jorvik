@@ -809,7 +809,7 @@ class ModuloCreaOperatoreSala(forms.Form):
     )
 
     NOMINA = (
-        (DELEGATO_AREA, 'Operatore di sala'),
+        # (DELEGATO_AREA, 'Operatore di sala'),
         (RESPONSABILE_AREA, 'Responsabile di sala'),
     )
 
