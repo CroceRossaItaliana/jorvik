@@ -7,6 +7,7 @@ VICE_PRESIDENTE = 'VP'
 COMMISSARIO = 'CM'
 CONSIGLIERE = 'CN'
 CONSIGLIERE_GIOVANE = 'CG'
+CONSIGLIERE_GIOVANE_COOPTATO = 'CC'
 UFFICIO_SOCI = 'US'
 UFFICIO_SOCI_CM = 'UM'
 UFFICIO_SOCI_IIVV = 'IV'
@@ -48,7 +49,8 @@ PERMESSI_NOMI = (
     (VICE_PRESIDENTE,           "Vice Presidente"),
     (COMMISSARIO,               "Commissario"),
     (CONSIGLIERE,               "Consigliere"),
-    (CONSIGLIERE_GIOVANE,       "Consigliere giovane"),
+    (CONSIGLIERE_GIOVANE,       "Consigliere Rappresentante dei Giovani"),
+    (CONSIGLIERE_GIOVANE_COOPTATO,       "Consigliere Giovane Cooptato"),
     (UFFICIO_SOCI,              "Ufficio Soci"),
     (UFFICIO_SOCI_CM,           "Ufficio Soci corpo militare"),
     (UFFICIO_SOCI_IIVV,         "Ufficio Soci Infermiere volontarie"),
@@ -76,7 +78,7 @@ PERMESSI_NOMI = (
 )
 
 DELEGHE_RUBRICA = (
-    PRESIDENTE, COMMISSARIO, CONSIGLIERE_GIOVANE, UFFICIO_SOCI, UFFICIO_SOCI_UNITA,
+    PRESIDENTE, COMMISSARIO, CONSIGLIERE_GIOVANE, CONSIGLIERE_GIOVANE_COOPTATO, UFFICIO_SOCI, UFFICIO_SOCI_UNITA,
     DELEGATO_OBIETTIVO_1, DELEGATO_OBIETTIVO_2, DELEGATO_OBIETTIVO_3,
     DELEGATO_OBIETTIVO_4, DELEGATO_OBIETTIVO_5, DELEGATO_OBIETTIVO_6,
     RESPONSABILE_FORMAZIONE, DELEGATO_CO, DELEGATO_SO, RESPONSABILE_AUTOPARCO,
@@ -87,7 +89,8 @@ PERMESSI_NOMI_DICT = dict(PERMESSI_NOMI)
 RUBRICHE_TITOLI = OrderedDict((
     ('presidenti', (PRESIDENTE, 'Presidenti', True)),
     ('commissari', (COMMISSARIO, 'Commissari', True)),
-    ('condigliere_giovane', (CONSIGLIERE_GIOVANE, 'Consiglieri giovani', True)),
+    ('condigliere_giovane', (CONSIGLIERE_GIOVANE, 'Consiglieri Rappresentanti dei Giovani', True)),
+    ('condigliere_giovane_cooptato', (CONSIGLIERE_GIOVANE_COOPTATO, 'Consiglieri Giovani Cooptato', True)),
     ('delegati_us', (UFFICIO_SOCI, 'Delegati Ufficio Soci', True)),
     ('delegati_us_unita', (UFFICIO_SOCI_UNITA, 'Delegati Ufficio Soci Unità territoriali', True)),
     ('delegati_us_corpo_militare', (UFFICIO_SOCI_CM, 'Delegati Ufficio Soci Corpo militare', True)),

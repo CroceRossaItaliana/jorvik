@@ -53,7 +53,7 @@ from .permessi.applicazioni import (PRESIDENTE, UFFICIO_SOCI,
                                     PERMESSI_NOMI, RUBRICHE_TITOLI, CONSIGLIERE,
                                     VICE_PRESIDENTE, CONSIGLIERE_GIOVANE,
                                     DELEGATO_SO, UFFICIO_SOCI_CM,
-                                    UFFICIO_SOCI_IIVV, )
+                                    UFFICIO_SOCI_IIVV, CONSIGLIERE_GIOVANE_COOPTATO, )
 from .permessi.costanti import (ERRORE_PERMESSI, MODIFICA, LETTURA, GESTIONE_SEDE,
                                 GESTIONE, ELENCHI_SOCI, GESTIONE_ATTIVITA, GESTIONE_ATTIVITA_AREA, GESTIONE_CORSO)
 from .permessi.incarichi import (INCARICO_GESTIONE_RISERVE, INCARICO_GESTIONE_TITOLI,
@@ -1311,8 +1311,12 @@ def _presidente_sede_ruoli(sede):
             (VICE_PRESIDENTE, "Vice Presidente", sede.delegati_attuali(tipo=VICE_PRESIDENTE).count(),
              [sede.vice_presidente()] if sede.vice_presidente() else []),
             (CONSIGLIERE, "Consigliere", sede.delegati_attuali(tipo=CONSIGLIERE).count(), sede.consiglieri()),
-            (CONSIGLIERE_GIOVANE, "Consigliere giovane", sede.delegati_attuali(tipo=CONSIGLIERE_GIOVANE).count(),
+            (CONSIGLIERE_GIOVANE, "Consigliere Rappresentante dei Giovani", sede.delegati_attuali(tipo=CONSIGLIERE_GIOVANE).count(),
              [sede.consigliere_giovane()] if sede.consigliere_giovane() else []),
+            (CONSIGLIERE_GIOVANE_COOPTATO, "Consigliere Giovane Cooptato",
+             sede.delegati_attuali(tipo=CONSIGLIERE_GIOVANE_COOPTATO).count(),
+             [sede.consigliere_giovane_cooptato()] if sede.consigliere_giovane_cooptato() else []
+             ),
         ]
     })
 

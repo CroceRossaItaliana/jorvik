@@ -13,7 +13,8 @@ from ..permessi.applicazioni import (PRESIDENTE, DIRETTORE_CORSO,
                                      CONSIGLIERE_GIOVANE, VICE_PRESIDENTE,
                                      UFFICIO_SOCI, DELEGATO_AREA,
                                      RESPONSABILE_AREA, REFERENTE, REFERENTE_SERVIZI_SO,
-                                     UFFICIO_SOCI_CM, UFFICIO_SOCI_IIVV, REFERENTE_OPERAZIONE_SO, REFERENTE_FUNZIONE_SO)
+                                     UFFICIO_SOCI_CM, UFFICIO_SOCI_IIVV, REFERENTE_OPERAZIONE_SO, REFERENTE_FUNZIONE_SO,
+                                     CONSIGLIERE_GIOVANE_COOPTATO)
 from ..permessi.costanti import (GESTIONE_SOCI, ELENCHI_SOCI, \
                                  GESTIONE_ATTIVITA_SEDE, GESTIONE_CORSI_SEDE, \
                                  GESTIONE_SEDE, GESTIONE_ATTIVITA_AREA,
@@ -47,7 +48,8 @@ from ..permessi.costanti import (GESTIONE_SOCI, ELENCHI_SOCI, \
                                  RUBRICA_COMMISSARI, GESTIONE_SERVIZI,
                                  GESTIONE_REFERENTI_SO,
                                  GESTIONE_SOCI_CM, GESTIONE_SOCI_IIVV, GESTIONE_OPERAZIONI,
-                                 GESTIONE_REFERENTI_OPERAZIONI_SO, GESTIONE_FUNZIONI, GESTIONE_REFERENTI_FUNZIONI_SO, )
+                                 GESTIONE_REFERENTI_OPERAZIONI_SO, GESTIONE_FUNZIONI, GESTIONE_REFERENTI_FUNZIONI_SO,
+                                 RUBRICA_CONSIGLIERE_GIOVANE, )
 
 """
 Questo modulo contiene tutte le funzioni per testare i permessi
@@ -154,6 +156,30 @@ def permessi_consigliere(sede):
     :return: Lista di permessi.
     """
     return []
+
+
+def permessi_consigliere_giovane(sede):
+    """
+    Permessi della delega di CONSIGLIERE.
+
+    :param sede: Sede di cui si e' consigliere.
+    :return: Lista di permessi.
+    """
+    return [
+        (RUBRICA_CONSIGLIERE_GIOVANE, sede.espandi(includi_me=True, pubblici=True))
+    ]
+
+
+def permessi_consigliere_giovane_cooptato(sede):
+    """
+    Permessi della delega di CONSIGLIERE.
+
+    :param sede: Sede di cui si e' consigliere.
+    :return: Lista di permessi.
+    """
+    return [
+        (RUBRICA_CONSIGLIERE_GIOVANE, sede.espandi(includi_me=True, pubblici=True))
+    ]
 
 
 def permessi_ufficio_soci_unita(sede):
@@ -473,7 +499,8 @@ def permessi_responsabile_autoparco(sede):
 PERMESSI_FUNZIONI = (
     (COMMISSARIO,               permessi_presidente),
     (CONSIGLIERE,               permessi_consigliere),
-    (CONSIGLIERE_GIOVANE,       permessi_consigliere),
+    (CONSIGLIERE_GIOVANE,       permessi_consigliere_giovane),
+    (CONSIGLIERE_GIOVANE_COOPTATO,       permessi_consigliere_giovane_cooptato),
     (PRESIDENTE,                permessi_presidente),
     # (VICE_PRESIDENTE,           permessi_presidente),
     (UFFICIO_SOCI,              permessi_ufficio_soci),
