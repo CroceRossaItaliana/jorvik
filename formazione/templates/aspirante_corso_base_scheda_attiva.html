@@ -15,12 +15,15 @@
                 <p>Assicurati di aver inserito tutte le informazioni utili per la partecipazione al Corso nella descrizione del corso.</p>
 
                 <p>Invieremo un messaggio a tutti i
+                {% if corso.evento %}
+                    <strong>Responsabili evento</strong>
+                {% else %}
                     {% if corso.is_nuovo_corso or corso.online %}
                         <strong>volontari in base all' estensione impostata</strong>
                     {% else %}
                         <strong>{{ corso.aspiranti_nelle_vicinanze.count }} aspiranti nelle vicinanze</strong>
                     {% endif %} avvisandoli dell'attivazione di questo corso.
-
+                {% endif %}
                     Tieni presente che puoi attivare il corso, ed inviare questa e-mail, solo una volta.</p>
                 <p>Ecco un'anteprima dell'e-mail che invieremo a tutti {% if corso.is_nuovo_corso %}i volontari{%else%}gli aspiranti{%endif%}:</p>
                 <div class="panel panel-info">

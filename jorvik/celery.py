@@ -28,6 +28,7 @@ app.conf.task_routes = {
     'static_page.tasks.send_mail_regionale': {'queue': 'queue_monitoraggio'},
 
     'formazione.tasks.task_invia_email_agli_aspiranti': {'queue': 'queue_formazione'},
+    'formazione.tasks.task_invia_email_apertura_evento': {'queue': 'queue_formazione'},
 
     'anagrafica.tasks.load_elastic': {'queue': 'queue_elastic'},
     'anagrafica.tasks.delete_elastic': {'queue': 'queue_elastic'},

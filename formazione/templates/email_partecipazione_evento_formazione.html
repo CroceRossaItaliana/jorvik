@@ -1,0 +1,10 @@
+{% extends 'email.html' %}
+
+{% block corpo %}
+
+    <p>Gentilissimi, </p>
+    <p>
+        La presente per informarvi sulla iscrizione del discente {{ persona }} al corso <a href="{{ corso.url }}">{{ corso }}</a> associato all'evento formativo <a href="{{ corso.evento.url }}">{{ corso.evento }}</a>
+    </p>
+
+{% endblock %}

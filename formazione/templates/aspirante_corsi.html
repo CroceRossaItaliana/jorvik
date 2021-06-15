@@ -53,12 +53,16 @@
                         {% for d in corso.deleghe.all %}
                             {{ d.persona.link|safe }}
                         {% endfor %}
-                    {% if corso.online or corso.tipo == 'BO'%}
+                    {% if corso.online or corso.tipo == 'BO' %}
                         <br>
                         <b style="color: #00ff1d;">
                             <i class="fa fa-exclamation"></i>
                             Corso online
                         </b>
+                    {% endif %}
+                    {% if corso.evento %}
+                        <br>
+                       <i class="fa fa-link"></i> <a href="{{ corso.evento.url }}">{{ corso.evento }}</a>
                     {% endif %}
                 </td>
                 <td>{{ corso.partecipazioni.count }} richieste</td>
@@ -117,6 +121,10 @@
                             <i class="fa fa-exclamation"></i>
                             Corso online
                         </b>
+                    {% endif %}
+                    {% if corso.evento %}
+                        <br>
+                        <i class="fa fa-link"></i> <a href="{{ corso.evento.url }}">{{ corso.evento }}</a>
                     {% endif %}
                 </td>
             </tr>

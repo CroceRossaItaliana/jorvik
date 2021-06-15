@@ -5,6 +5,7 @@ import uuid
 from dateutil.relativedelta import relativedelta
 
 from django.conf import settings
+from django.contrib import messages
 from django.core.urlresolvers import reverse
 from django.db import models, transaction
 from django.db.models import Q
@@ -20,6 +21,8 @@ from anagrafica.models import Sede, Persona, Appartenenza, Delega
 from anagrafica.costanti import PROVINCIALE, TERRITORIALE, LOCALE, REGIONALE, NAZIONALE
 from anagrafica.validators import valida_dimensione_file_8mb, valida_dimensione_file_6mb
 from anagrafica.permessi.applicazioni import (DIRETTORE_CORSO, OBIETTIVI, PRESIDENTE, COMMISSARIO)
+from anagrafica.validators import (valida_dimensione_file_8mb, ValidateFileSize)
+from anagrafica.permessi.applicazioni import (DIRETTORE_CORSO, OBIETTIVI, PRESIDENTE, COMMISSARIO, RESPONSABILE_EVENTO)
 from anagrafica.permessi.incarichi import (INCARICO_ASPIRANTE, INCARICO_GESTIONE_CORSOBASE_PARTECIPANTI)
 from anagrafica.permessi.costanti import MODIFICA
 from base.files import PDF, Zip
@@ -33,12 +36,216 @@ from curriculum.areas import OBBIETTIVI_STRATEGICI
 from posta.models import Messaggio
 from social.models import ConCommenti, ConGiudizio
 from survey.models import Survey
+from .tasks import task_invia_email_apertura_evento
 from .training_api import TrainingApi
 from .validators import (course_file_directory_path, validate_file_extension,
-                         delibera_file_upload_path)
+                         delibera_file_upload_path, evento_file_directory_path)
 import logging
 
 logger = logging.getLogger(__name__)
+
+class Evento(ModelloSemplice, ConDelegati, ConMarcaTemporale, ConGeolocalizzazione, ConCommenti):
+    PREPARAZIONE = 'P'
+    ATTIVO = 'A'
+    ANNULLATO = 'X'
+    TERMINATO = 'T'
+
+    STATO = (
+        (PREPARAZIONE, 'In preparazione'),
+        (ATTIVO, 'Attivo'),
+        (TERMINATO, 'Terminato'),
+        (ANNULLATO, 'Annullato'),
+    )
+
+    nome = models.CharField(max_length=200)
+    data_inizio = models.DateTimeField(blank=False, null=False)
+    data_fine = models.DateTimeField(blank=False, null=False)
+    sede = models.ForeignKey(Sede, help_text="La Sede organizzatrice dell'Evento.")
+    stato = models.CharField('Stato', choices=STATO, max_length=1, default=PREPARAZIONE)
+    descrizione = models.TextField(blank=True, null=True)
+
+    def __str__(self):
+        return '%s' % self.nome
+
+    @property
+    def url_responsabile(self):
+        return reverse('formazione:responsabile_evento', args=[self.pk])
+
+    @property
+    def url_position(self):
+        return reverse('evento:position_change', args=[self.pk])
+
+    @property
+    def url_modifica(self):
+        return reverse('evento:modifica', args=[self.pk])
+
+    @property
+    def url(self):
+        return reverse('evento:info', args=[self.pk])
+
+    @property
+    def link(self):
+        return '<a href="%s">%s</a>' % (self.url, self.nome)
+
+    @property
+    def url_attiva(self):
+        return reverse('evento:attiva', args=[self.pk])
+
+    @property
+    def url_annulla(self):
+        return reverse('evento:annulla', args=[self.pk])
+
+    @property
+    def url_termina(self):
+        return reverse('evento:termina', args=[self.pk])
+
+    @property
+    def ha_posizione(self):
+        return True if self.locazione else False
+
+    @property
+    def url_mappa(self):
+        return reverse('evento:mappa', args=[self.pk])
+
+    @property
+    def attivabile(self):
+        if self.stato == self.PREPARAZIONE and self.locazione:
+            corsi = self.corsi_associati
+
+            if corsi:
+                return False not in [corso.stato == Corso.ATTIVO for corso in corsi]
+            else:
+                return False
+
+        return False
+
+    def attiva(self, rispondi_a=None):
+        if self.attivabile:
+            if self.ha_posizione:
+                self.stato = self.ATTIVO
+
+                task_invia_email_apertura_evento.apply_async(args=(self.pk, rispondi_a.pk),)
+
+                self.save()
+
+                if self.sede.estensione == TERRITORIALE:
+                    destinatari = [self.sede.sede_regionale.presidente()]
+                    destinatari.extend(self.sede.sede_regionale.delegati_formazione())
+                    Messaggio.costruisci_e_accoda(
+                        oggetto="Attivazione Evento {}".format(self),
+                        modello="email_attivazione_evento_presidente_delegati_fomazioni.html",
+                        corpo={
+                            "evento": self
+                        },
+                        destinatari=destinatari,
+                    )
+                elif self.sede.estensione == REGIONALE:
+                    Messaggio.invia_raw(
+                        oggetto="Attivazione Evento {}".format(self),
+                        corpo_html=get_template(
+                            'email_attivazione_evento_presidente_delegati_fomazioni.html'
+                        ).render({"evento": self}),
+                        email_mittente=Messaggio.NOREPLY_EMAIL,
+                        lista_email_destinatari=['formazione@cri.it', ],
+                    )
+
+                return self.url
+            else:
+                return self.url_position
+
+    def referenti_evento(self):
+        oggetto_tipo = ContentType.objects.get_for_model(self)
+        deleghe = Delega.objects.filter(tipo=RESPONSABILE_EVENTO,
+                                        oggetto_tipo=oggetto_tipo.pk,
+                                        oggetto_id=self.pk)
+        return deleghe
+
+    def _invia_email_volotari(self, rispondi_a=None):
+        # Tutti i corsi sono aperti per la stessa lista di volontari/dipendenti
+        corso = self.corsi_associati.first()
+
+        for queryset in corso._corso_activation_recipients_for_email_generator():
+            oggetto = "Evento Formazione: {}".format(self)
+
+            for recipient in queryset:
+                email_data = dict(
+                    oggetto=oggetto,
+                    modello="email_attivazione_evento_volontari.html",
+                    corpo={
+                        'persona': recipient,
+                        'evento': self,
+                    },
+                    destinatari=[recipient],
+                    rispondi_a=rispondi_a
+                )
+
+                Messaggio.costruisci_e_accoda(**email_data)
+
+    @property
+    def annullabile(self):
+        if self.stato == self.PREPARAZIONE or self.stato == self.ATTIVO:
+            corsi = self.corsi_associati
+            if corsi:
+                # se tutti i corsi sono in attivo/preparazione e non ci sono lezioni iniziate
+                return False not in [
+                    (corso.stato == Corso.PREPARAZIONE or corso.stato == Corso.ATTIVO) and
+                    not corso.lezioni.filter(inizio__lte=datetime.datetime.now()).exists() for corso in corsi
+                ]
+            else:
+                return True
+        return False
+
+    @property
+    def terminabile(self):
+        if self.stato == self.ATTIVO:
+            corsi = self.corsi_associati
+            if corsi:
+                return False not in [corso.stato == Corso.TERMINATO or corso.stato == Corso.ANNULLATO for corso in corsi]
+            else:
+                return False
+        return False
+
+    def termina(self):
+        self.stato = self.TERMINATO
+        self.save()
+        return reverse('formazione:evento_elenco')
+
+    def annulla(self, persona):
+        self.stato = self.ANNULLATO
+        corsi = self.corsi_associati
+        for corso in corsi:
+            corso.annulla(persona)
+        self.save()
+        return reverse('formazione:evento_elenco')
+
+    @property
+    def corsi_associati(self):
+        return CorsoBase.objects.filter(evento=self)
+
+    @property
+    def totale_corsi(self):
+        return CorsoBase.objects.filter(evento=self)
+
+    @property
+    def corsi_attivi(self):
+        return CorsoBase.objects.filter(evento=self, stato=Corso.ATTIVO)
+
+    @property
+    def corsi_terminati(self):
+        return CorsoBase.objects.filter(evento=self, stato=Corso.TERMINATO)
+
+    @property
+    def get_evento_links(self):
+        return self.eventolink_set.filter(is_enabled=True)
+
+    @property
+    def get_evento_files(self):
+        return self.eventofile_set.filter(is_enabled=True)
+
+    class Meta:
+        verbose_name = 'Evento'
+        verbose_name_plural = 'Eventi'
+
 
 class Corso(ModelloSemplice, ConDelegati, ConMarcaTemporale,
             ConGeolocalizzazione, ConCommenti, ConGiudizio):
@@ -108,6 +315,32 @@ class CorsoFile(models.Model):
         return '<%s> of %s' % (file, corso)
 
 
+class EventoFile(models.Model):
+    is_enabled = models.BooleanField(default=True)
+    evento = models.ForeignKey('Evento')
+    file = models.FileField(
+        'File',
+        null=True,
+        blank=True,
+        upload_to=evento_file_directory_path,
+        validators=[valida_dimensione_file_8mb, validate_file_extension],
+    )
+    download_count = models.PositiveIntegerField(default=0)
+
+    def download_url(self):
+        reverse_url = reverse('evento:evento_file', args=[self.evento.pk])
+        return reverse_url + "?id=%s" % self.pk
+
+    def filename(self):
+        import os
+        return os.path.basename(self.file.name)
+
+    def __str__(self):
+        file = self.file if self.file else ''
+        evento = self.evento if hasattr(self, 'evento') else ''
+        return '<%s> of %s' % (file, evento)
+
+
 class CorsoLink(models.Model):
     is_enabled = models.BooleanField(default=True)
     corso = models.ForeignKey('CorsoBase')
@@ -116,6 +349,16 @@ class CorsoLink(models.Model):
     def __str__(self):
         corso = self.corso if hasattr(self, 'corso') else ''
         return '<%s> of %s' % (self.link, corso)
+
+
+class EventoLink(models.Model):
+    is_enabled = models.BooleanField(default=True)
+    evento = models.ForeignKey('Evento')
+    link = models.URLField('Link', null=True, blank=True)
+
+    def __str__(self):
+        evento = self.evento if hasattr(self, 'evento') else ''
+        return '<%s> of %s' % (self.link, evento)
 
 
 class CorsoBase(Corso, ConVecchioID, ConPDF):
@@ -171,6 +414,8 @@ class CorsoBase(Corso, ConVecchioID, ConPDF):
                                  null=True, blank=True)
     survey = models.ForeignKey(Survey, blank=True, null=True,
                                verbose_name='Questionario di gradimento')
+
+    evento = models.ForeignKey(Evento, blank=True, null=True)
 
     PUOI_ISCRIVERTI_OK = "IS"
     PUOI_ISCRIVERTI = (PUOI_ISCRIVERTI_OK,)
@@ -357,7 +602,7 @@ class CorsoBase(Corso, ConVecchioID, ConPDF):
             ))
 
     @classmethod
-    def find_courses_for_volunteer(cls, volunteer, sede):
+    def find_courses_for_volunteer(cls, volunteer, sede, evento=True):
         today = now().today()
 
         if not sede:
@@ -373,7 +618,7 @@ class CorsoBase(Corso, ConVecchioID, ConPDF):
                                                              Corso.BASE,
                                                              Corso.CORSO_EQUIPOLLENZA
                                                          ],
-                                                         corso__stato=Corso.ATTIVO,)
+                                                         corso__stato=Corso.ATTIVO)
         courses_1 = cls.objects.filter(id__in=qs_estensioni_1.values_list('corso__id'))
 
         ###
@@ -500,6 +745,10 @@ class CorsoBase(Corso, ConVecchioID, ConPDF):
     @property
     def iniziato(self):
         return self.data_inizio < timezone.now()
+
+    @property
+    def prevede_evento(self):
+        return self.evento
 
     @property
     def troppo_tardi_per_iscriverti(self):
@@ -818,8 +1067,11 @@ class CorsoBase(Corso, ConVecchioID, ConPDF):
         self.data_attivazione = now()
         self.stato = self.ATTIVO
         self.save()
+        if not self.evento:
+            task_invia_email_agli_aspiranti.apply_async(args=(self.pk, rispondi_a.pk),)
+        else:
+            self.mail_attivazione_corso_per_responsabili_evento()
 
-        task_invia_email_agli_aspiranti.apply_async(args=(self.pk, rispondi_a.pk),)
         self.mail_attivazione_con_delibera()
 
         return messaggio_generico(request, rispondi_a,
@@ -1330,6 +1582,17 @@ class CorsoBase(Corso, ConVecchioID, ConPDF):
                 lista_email_destinatari=email_destinatari,
                 allegati=self.delibera_file
             )
+
+    def mail_attivazione_corso_per_responsabili_evento(self):
+        Messaggio.costruisci_e_accoda(
+            oggetto="Attivazione Corso: %s" % self,
+            modello='email_attivazione_corso_responsabile_evento.html',
+            corpo={
+                'direttore': self.direttori_corso().first(),
+                'corso': self
+            },
+            destinatari=[delega.persona for delega in self.evento.deleghe_attuali(tipo=RESPONSABILE_EVENTO)],
+        )
 
     # GAIA 306
     def mail_attivazione_con_delibera(self):

@@ -26,7 +26,8 @@ from .validators import (valida_codice_fiscale, ottieni_genere_da_codice_fiscale
     valida_dimensione_file_8mb, valida_partita_iva, valida_dimensione_file_5mb,
     valida_iban, valida_email_personale) # valida_almeno_14_anni, crea_validatore_dimensione_file)
 from .permessi.shortcuts import *
-from .permessi.costanti import RUBRICA_DELEGATI_OBIETTIVO_ALL, GESTIONE_SOCI_CM, GESTIONE_SOCI_IIVV
+from .permessi.costanti import RUBRICA_DELEGATI_OBIETTIVO_ALL, GESTIONE_SOCI_CM, GESTIONE_SOCI_IIVV, GESTIONE_EVENTO, \
+    GESTIONE_EVENTI_SEDE
 from attivita.models import Turno, Partecipazione, Area
 from base.files import PDF, Excel, FoglioExcel
 from base.geo import ConGeolocalizzazione, Locazione
@@ -560,7 +561,8 @@ class Persona(ModelloSemplice, ConMarcaTemporale, ConAllegati, ConVecchioID):
             # [(reverse('so:index'), "SO", "fa-compass"), visibilita_menu_top(self)],
             [('/centrale-operativa/', "CO", "fa-compass"), self.ha_permesso(GESTIONE_CENTRALE_OPERATIVA_SEDE)],
             [('/formazione/', 'Formazione', 'fa-graduation-cap'),
-             self.ha_permesso(GESTIONE_CORSO) or self.ha_permesso(GESTIONE_CORSI_SEDE) or self.is_responsabile_area_albo_formazione != None
+             self.ha_permesso(GESTIONE_CORSO) or self.ha_permesso(GESTIONE_CORSI_SEDE) or self.is_responsabile_area_albo_formazione != None or
+             self.ha_permesso(GESTIONE_EVENTO) or self.ha_permesso(GESTIONE_EVENTI_SEDE)
              ],
             [('/articoli/', 'Articoli', 'fa-newspaper'), True],
             [('/documenti/', 'Documenti', 'fa-folder'), True],

@@ -70,6 +70,7 @@ urlpatterns = [
     url(r'^aspirante/', include('formazione.urls.aspirante', namespace='aspirante')),
     url(r'^courses/', include('formazione.urls.courses', namespace='courses')),
     url(r'^survey/', include('survey.urls', namespace='survey')),
+    url(r'^evento/', include('formazione.urls.evento', namespace='evento')),
 
     # Static pages
     url(r'^page/', include('static_page.urls', namespace='pages')),
