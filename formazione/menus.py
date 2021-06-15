@@ -18,7 +18,7 @@ def to_show(me, permissions):
     return False
 
 
-def formazione_menu(menu_name, me):
+def formazione_menu(menu_name, me=None):
     from curriculum.models import Titolo
 
     FORMAZIONE = (
