@@ -1,0 +1,19 @@
+{% extends "anagrafica_utente_vuota.html" %}
+
+{% load bootstrap3 %}
+
+{% block app_contenuto %}
+  <div class="articolo single-page">
+    <h1>Seleziona il comitato</h1>
+
+    {% for comitato in comitati %}
+          <div>
+              <a href="{% url 'pages:monitora-fabb-info-regionale' %}?r={{ comitato.pk }}">{{ comitato }}</a>
+          </div>
+    {% endfor %}
+
+  {% if has_privacy_popup %}
+    {% include "base_privacy_policy_popup.html" %}
+  {% endif %}
+
+{% endblock %}
