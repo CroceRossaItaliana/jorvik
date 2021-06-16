@@ -391,7 +391,7 @@ def espandi_gestione_evento(qs_eventi, al_giorno=None):
 
     try:
         return [
-            (GESTIONE, qs_eventi),
+            (COMPLETO, qs_eventi),
             (MODIFICA, Persona.objects.filter(
                 Appartenenza.query_attuale(membro__in=Appartenenza.MEMBRO_DIRETTO).via("appartenenze"))
              ),
