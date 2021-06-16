@@ -184,3 +184,4 @@ class AdminEvento(ReadonlyAdminMixin, admin.ModelAdmin):
     list_display = ['nome', 'sede', 'data_inizio', 'data_fine', 'stato']
     list_filter = ['stato', 'sede__estensione']
     ordering = ['-creazione',]
+    exclude = ['locazione']
