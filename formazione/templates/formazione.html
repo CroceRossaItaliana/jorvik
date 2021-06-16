@@ -44,7 +44,7 @@
             <th width="15%" class="formazione-courses__th">Stato <div class="filter-tag">{% corsi_filter %}</div></th>
             <th class="formazione-courses__th">Corso e Sede</th>
             <th class="formazione-courses__th">Luogo e data</th>
-            <th class="formazione-courses__th">Iscritti</th>
+            <th class="formazione-courses__th">Iscritti </th>
         </thead>
 
         {% for corso in corsi %}
@@ -87,7 +87,9 @@
                             Corso online
                         </b>
                     {% endif %}
-
+                    {% if corso.evento %}
+                        <i class="fa fa-link"></i> <a href="{{ corso.evento.url }}">{{ corso.evento }}</a>
+                    {% endif %}
                 </td>
 
                 <td>

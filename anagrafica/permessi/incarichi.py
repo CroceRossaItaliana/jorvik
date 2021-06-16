@@ -1,6 +1,6 @@
 from anagrafica.permessi.applicazioni import (UFFICIO_SOCI, UFFICIO_SOCI_UNITA,
-    DIRETTORE_CORSO, RESPONSABILE_FORMAZIONE, REFERENTE, REFERENTE_SERVIZI_SO,
-    COMMISSARIO, VICE_PRESIDENTE, PRESIDENTE, )
+                                              DIRETTORE_CORSO, RESPONSABILE_FORMAZIONE, REFERENTE, REFERENTE_SERVIZI_SO,
+                                              COMMISSARIO, VICE_PRESIDENTE, PRESIDENTE, RESPONSABILE_EVENTO, )
 
 
 """
@@ -22,7 +22,7 @@ INCARICO_GESTIONE_CORSOBASE_PARTECIPANTI = "CB-PART"
 INCARICO_GESTIONE_ATTIVITA_PARTECIPANTI = "ATT-PART"
 INCARICO_GESTIONE_SO_SERVIZI_PARTECIPANTI = "SOS-PART"
 INCARICO_ASPIRANTE = "ASP"
-
+INCARICO_GESTIONE_EVENTO = 'EVN-PART'
 
 INCARICHI = (
     (INCARICO_PRESIDENZA,                       "Presidenza"),
@@ -39,6 +39,7 @@ INCARICHI = (
     (INCARICO_GESTIONE_APPARTENENZE,            "Gestione degli Appartenenti alla Sede"),
     (INCARICO_GESTIONE_SANGUE,                  "Gestione delle Donazioni Sangue"),
     (INCARICO_ASPIRANTE,                        "Autogestione Aspirante"),
+    (INCARICO_GESTIONE_EVENTO,                  "Responsabile Evento"),
 )
 INCARICHI_DICT = dict(INCARICHI)
 
@@ -57,6 +58,7 @@ INCARICHI_TIPO = (
     (INCARICO_GESTIONE_APPARTENENZE,            "anagrafica.Sede"),
     (INCARICO_GESTIONE_SANGUE,                  "anagrafica.Sede"),
     (INCARICO_ASPIRANTE,                        "anagrafica.Persona"),
+    (INCARICO_GESTIONE_EVENTO,                  "formazione.Evento"),
 )
 INCARICHI_TIPO_DICT = dict(INCARICHI_TIPO)
 
@@ -97,6 +99,12 @@ def espandi_incarichi_direttore_corso(corso, al_giorno=None):
     ]
 
 
+def espandi_incarichi_responsabile_evento(evento, al_giorno=None):
+    return [
+        (INCARICO_GESTIONE_EVENTO,      evento)
+    ]
+
+
 def espandi_incarichi_responsabile_formazione(sede, al_giorno=None):
     from formazione.models import CorsoBase
     return [
@@ -134,6 +142,7 @@ ESPANSIONE_DELEGHE = {
     REFERENTE_SERVIZI_SO:   espandi_incarichi_referente_servizio,
     DIRETTORE_CORSO:        espandi_incarichi_direttore_corso,
     RESPONSABILE_FORMAZIONE:espandi_incarichi_responsabile_formazione,
+    RESPONSABILE_EVENTO: espandi_incarichi_responsabile_evento
 }
 
 

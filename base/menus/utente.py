@@ -3,6 +3,7 @@ from anagrafica.models import Appartenenza
 from .utente_monitoraggio import menu_monitoraggio
 from ..models import Menu
 
+
 class MenuUtente:
     def __init__(self, me):
         self.me = me
@@ -37,8 +38,27 @@ class MenuUtente:
 
     def menu_formazione(self):
         from formazione.menus import formazione_menu
-        menu = list(formazione_menu('formazione')[0])
-        menu[0] = 'Formazione'
+
+        menu = list(formazione_menu('formazione', self.me)[0])
+
+        menu[0] = "Formazione"
+        questionario_fabbisogni_formativi_territoriali = (("Fabbisogni Formativi Comitato Territoriale", 'fa-user', reverse('pages:monitoraggio-fabb-info-territoriale')) if (
+                        self.me.is_presidente_o_commissario_territoriale or self.me.is_responsabile_formazione_territoriale) else None, )
+        questionario_fabbisogni_formativi_regionali = (
+            ("Fabbisogni Formativi Comitato Regionale", 'fa-user', reverse('pages:monitoraggio-fabb-info-regionale')) if (
+                    self.me.is_presidente_o_commissario_regionale or self.me.is_responsabile_formazione_regionale) else None,)
+        monitora_fabbisogni_formativi_territoriali = ("Monitora Fabbisogni Formativi Territoriali", 'fa-user', reverse('pages:monitora-fabb-info-territoriale')) if (
+                self.me.delega_presidente_e_commissario_regionale or self.me.is_delgato_regionale_monitoraggio_fabbisogni_informativi
+        ) else None,
+        monitora_fabbisogni_formativi_regionali = ("Monitora Fabbisogni Formativi", 'fa-user',
+                                                   reverse('pages:monitora-fabb-info-regionale')) if (
+                self.me.is_responsabile_formazione_nazionale
+        ) else None,
+        # menu[1] = questionario_fabbisogni_formativi_regionali + \
+        #           questionario_fabbisogni_formativi_territoriali + \
+        #           monitora_fabbisogni_formativi_territoriali + \
+        #           monitora_fabbisogni_formativi_regionali + \
+        #           menu[1]
         menu[1] += self._espandi_con_static_pege(Menu.FORMAZIONE)
         return menu
 

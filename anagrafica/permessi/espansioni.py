@@ -42,7 +42,8 @@ from anagrafica.permessi.costanti import (GESTIONE_SOCI, ELENCHI_SOCI,
                                           GESTIONE_REFERENTI_SO,
                                           GESTIONE_SOCI_CM,
                                           GESTIONE_SOCI_IIVV, GESTIONE_OPERAZIONI, GESTIONE_REFERENTI_OPERAZIONI_SO,
-                                          GESTIONE_FUNZIONI, GESTIONE_REFERENTI_FUNZIONI_SO, )
+                                          GESTIONE_FUNZIONI, GESTIONE_REFERENTI_FUNZIONI_SO, GESTIONE_EVENTO,
+                                          GESTIONE_EVENTI_SEDE, )
 
 """            Questo file gestisce la espansione dei permessi in Gaia.
  ===============================================================================
@@ -361,6 +362,7 @@ def espandi_gestione_corsi_sede(qs_sedi, al_giorno=None):
 def espandi_gestione_corso(qs_corsi, al_giorno=None):
     from anagrafica.models import Persona
     from formazione.models import PartecipazioneCorsoBase
+
     try:
         return [
             (MODIFICA, qs_corsi),
@@ -368,6 +370,31 @@ def espandi_gestione_corso(qs_corsi, al_giorno=None):
              Persona.objects.filter(partecipazioni_corsi__corso__in=qs_corsi).exclude(aspirante__id__isnull=True)),
             (MODIFICA, PartecipazioneCorsoBase.objects.filter(corso__in=qs_corsi)),
             (LETTURA, Persona.objects.filter(partecipazioni_corsi__corso__in=qs_corsi)),
+        ]
+    except (AttributeError, ValueError, KeyError, TypeError):
+        return []
+
+
+def espandi_gestione_eventi_sede(qs_sedi, al_giorno=None):
+    from formazione.models import Evento
+    try:
+        return [
+                   (COMPLETO, Evento.objects.filter(sede__in=qs_sedi)),
+               ] \
+               + espandi_gestione_evento(Evento.objects.filter(sede__in=qs_sedi))
+    except (AttributeError, ValueError, KeyError, TypeError):
+        return []
+
+
+def espandi_gestione_evento(qs_eventi, al_giorno=None):
+    from anagrafica.models import Persona, Appartenenza
+
+    try:
+        return [
+            (COMPLETO, qs_eventi),
+            (MODIFICA, Persona.objects.filter(
+                Appartenenza.query_attuale(membro__in=Appartenenza.MEMBRO_DIRETTO).via("appartenenze"))
+             ),
         ]
     except (AttributeError, ValueError, KeyError, TypeError):
         return []
@@ -486,6 +513,8 @@ ESPANDI_PERMESSI = {
     # FORMAZIONE
     GESTIONE_CORSI_SEDE: espandi_gestione_corsi_sede,
     GESTIONE_CORSO: espandi_gestione_corso,
+    GESTIONE_EVENTO: espandi_gestione_evento,
+    GESTIONE_EVENTI_SEDE: espandi_gestione_corsi_sede,
     GESTIONE_AUTOPARCHI_SEDE: espandi_gestione_autoparchi_sede,
 
     # GRUPPI

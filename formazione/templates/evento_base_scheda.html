@@ -1,0 +1,79 @@
+{% extends "aspirante_vuota.html" %}
+
+{% load bootstrap3 %}
+{% load static %}
+{% load utils %}
+{% load formazione_templatetags %}
+
+{% block pagina_titolo %}
+    {% block scheda_titolo %}{% endblock %}
+    {{ evento.nome }} ({{ evento.sede.nome_completo }})
+{% endblock %}
+
+
+{% block app_contenuto %}
+    <style>
+        .course__name-without-title-cri {
+            font-weight: bold;
+            font-size: 22px;
+            color: #3c763d;
+        }
+
+        .verbale__table {
+            width: 100%;
+            text-align: center;
+            margin: 20px auto 0;
+        }
+
+        .verbale__seconda-data-esame {
+            text-align: center;
+        }
+    </style>
+
+    <h4 class="course__name {% if not corso.titolo_cri %}course__name-without-title-cri{% endif %}">{{ evento.nome }}
+        ({{ evento.sede.nome_completo }})</h4>
+
+    <h4 class="allinea-centro">
+        <i class="fa fa-fw fa-map-marker"></i>
+        {% if evento.locazione %}
+            <a href="{{ evento.url_mappa }}">{{ evento.locazione }}</a>
+        {% else %}
+            Posizione non impostata
+        {% endif %} &mdash;
+        <i class="fa fa-fw fa-info-circle"></i> {{ evento.get_stato_display }}
+    </h4>
+
+    <ul class="nav nav-tabs">
+        <li role="presentation" {% if request.path == evento.url %}class="active"{% endif %}>
+            <a data-tab-id="#tabDettagliEvento" href="{{ evento.url }}">
+            <i class="fa fa-fw fa-info"></i> Informazioni evento</a>
+        </li>
+        <li role="presentation" {% if request.path == evento.url_mappa %}class="active"{% endif %}>
+            <a data-tab-id="#tabDettagliEvento" href="{{ evento.url_mappa }}">
+            <i class="fa fa-fw fa-map"></i> Mappa</a>
+        </li>
+        {% if puo_modificare%}
+            <li role="presentation" {% if request.path == evento.url_modifica %}class="active"{% endif %}>
+                <a data-tab-id="#tabModificaEvento" href="{{ evento.url_modifica }}">
+                <i class="fa fa-fw fa-pen"></i> Modifica evento</a>
+            </li>
+        {% endif %}
+        {% if puo_modificare%}
+            <li role="presentation" {% if request.path == evento.url_position %}class="active"{% endif %}>
+                <a data-tab-id="#tabModificaEvento" href="{{ evento.url_position }}">
+                <i class="fa fa-fw fa-globe"></i> Posizione evento</a>
+            </li>
+        {% endif %}
+        {% if evento.attivabile and puo_modificare%}
+            <li role="presentation" style="background: #c00;">
+                <a data-tab-id="#tabModificaEvento" href="{{ evento.url_attiva }}" style="color: #f5f5f5;" data-conferma="Vuoi attivare questo evento?">
+                <i class="fa fa-fw fa-check"></i> Attiva Evento</a>
+            </li>
+        {% endif %}
+    </ul>
+
+    <p>&nbsp;</p>
+    {% block scheda_contenuto %}{% endblock %}
+
+
+{% endblock %}

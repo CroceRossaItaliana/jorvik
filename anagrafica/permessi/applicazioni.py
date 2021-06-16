@@ -33,6 +33,7 @@ RESPONSABILE_AUTOPARCO = 'AP'
 RESPONSABILE_PATENTI = 'PA'
 RESPONSABILE_DONAZIONI = 'DO'
 DIRETTORE_CORSO = 'DC'
+RESPONSABILE_EVENTO = 'EF'
 # Non è una delega ma solo un segna posto per la rubriva
 GIOVANI = 'GO'
 
@@ -74,6 +75,7 @@ PERMESSI_NOMI = (
     (DELEGATO_SO,               "Delegato Sala Operativa"),
     (RESPONSABILE_FORMAZIONE,   "Responsabile Formazione"),
     (DIRETTORE_CORSO,           "Direttore Corso"),
+    (RESPONSABILE_EVENTO,       "Responsabile Evento"),
     (RESPONSABILE_AUTOPARCO,    "Responsabile Autoparco"),
     #(RESPONSABILE_PATENTI,      "Responsabile Patenti"),
     #(RESPONSABILE_DONAZIONI,    "Responsabile Donazioni Sangue"),

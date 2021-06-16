@@ -9,7 +9,7 @@ from ..permessi.applicazioni import (PRESIDENTE,
                                      REFERENTE_SERVIZI_SO,
                                      DIRETTORE_CORSO,
                                      RESPONSABILE_AUTOPARCO,
-                                     UFFICIO_SOCI, UFFICIO_SOCI_CM, )
+                                     UFFICIO_SOCI, UFFICIO_SOCI_CM, RESPONSABILE_EVENTO, )
 
 """
                        Questo file gestisce i permessi in Gaia.
@@ -53,6 +53,8 @@ RUBRICA_RESPONSABILI_FORMAZIONE = "RUBRICA_RESPONSABILI_FORMAZIONE"
 RUBRICA_DIRETTORI_CORSI = "RUBRICA_DIRETTORI_CORSI"
 GESTIONE_CORSI_SEDE = "GESTIONE_CORSI_SEDE"
 GESTIONE_CORSO = "GESTIONE_CORSO"
+GESTIONE_EVENTI_SEDE = "GESTIONE_EVENTI_SEDE"
+GESTIONE_EVENTO = "GESTIONE_EVENTO"
 
 # VEICOLI
 RUBRICA_RESPONSABILI_AUTOPARCO = "RUBRICA_RESPONSABILI_AUTOPARCO"
@@ -140,6 +142,8 @@ PERMESSI_OGGETTI = (
     (GESTIONE_CORSI_SEDE,       ('anagrafica', 'Sede')),
     (GESTIONE_CORSO,            ('formazione', 'CorsoBase')),
     (ASPIRANTE,                 ('formazione', 'InvitoCorsoBase')),
+    (GESTIONE_EVENTI_SEDE,      ('formazione', 'Sede')),
+    (GESTIONE_EVENTO,           ('formazione', 'Evento')),
 
     # VEICOLI
     (GESTIONE_AUTOPARCHI_SEDE,  ('anagrafica', 'Sede')),
@@ -171,6 +175,7 @@ DELEGHE_OGGETTI = (
 
     # FORMAZIONE
     (DIRETTORE_CORSO,           ('formazione', 'CorsoBase', 'sede__in')),
+    (RESPONSABILE_EVENTO,       ('formazione', 'Evento', 'sede__in')),
 
     # VEICOLI
     (RESPONSABILE_AUTOPARCO,    ('anagrafica', 'Sede', None)),

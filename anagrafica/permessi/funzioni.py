@@ -1,6 +1,7 @@
 from datetime import timedelta
 from django.db.models import QuerySet, Q
 
+
 from ..permessi.applicazioni import (PRESIDENTE, DIRETTORE_CORSO,
                                      RESPONSABILE_AUTOPARCO,
                                      REFERENTE_GRUPPO, COMMISSARIO,
@@ -14,7 +15,9 @@ from ..permessi.applicazioni import (PRESIDENTE, DIRETTORE_CORSO,
                                      UFFICIO_SOCI, DELEGATO_AREA,
                                      RESPONSABILE_AREA, REFERENTE, REFERENTE_SERVIZI_SO,
                                      UFFICIO_SOCI_CM, UFFICIO_SOCI_IIVV, REFERENTE_OPERAZIONE_SO, REFERENTE_FUNZIONE_SO,
-                                     CONSIGLIERE_GIOVANE_COOPTATO)
+                                     CONSIGLIERE_GIOVANE_COOPTATO,
+                                     UFFICIO_SOCI_CM, UFFICIO_SOCI_IIVV, REFERENTE_OPERAZIONE_SO, REFERENTE_FUNZIONE_SO,
+                                     RESPONSABILE_EVENTO)
 from ..permessi.costanti import (GESTIONE_SOCI, ELENCHI_SOCI, \
                                  GESTIONE_ATTIVITA_SEDE, GESTIONE_CORSI_SEDE, \
                                  GESTIONE_SEDE, GESTIONE_ATTIVITA_AREA,
@@ -48,6 +51,8 @@ from ..permessi.costanti import (GESTIONE_SOCI, ELENCHI_SOCI, \
                                  RUBRICA_COMMISSARI, GESTIONE_SERVIZI,
                                  GESTIONE_REFERENTI_SO,
                                  GESTIONE_SOCI_CM, GESTIONE_SOCI_IIVV, GESTIONE_OPERAZIONI,
+                                 GESTIONE_REFERENTI_OPERAZIONI_SO, GESTIONE_FUNZIONI, GESTIONE_REFERENTI_FUNZIONI_SO,
+                                 GESTIONE_EVENTI_SEDE, GESTIONE_EVENTO,
                                  GESTIONE_REFERENTI_OPERAZIONI_SO, GESTIONE_FUNZIONI, GESTIONE_REFERENTI_FUNZIONI_SO,
                                  RUBRICA_CONSIGLIERE_GIOVANE, )
 
@@ -334,12 +339,14 @@ def permessi_responsabile_formazione(sede):
     :return: Lista di permessi.
     """
     from formazione.models import CorsoBase
+    from formazione.models import Evento
     sede_espansa = sede.espandi(includi_me=True)
     return [
         (RUBRICA_RESPONSABILI_FORMAZIONE, sede.espandi(includi_me=True, pubblici=True)),
         (GESTIONE_CORSI_SEDE,       sede_espansa),
-        (GESTIONE_CORSO,            CorsoBase.objects.filter(sede__in=sede_espansa))
-
+        (GESTIONE_CORSO,            CorsoBase.objects.filter(sede__in=sede_espansa)),
+        (GESTIONE_EVENTI_SEDE,      sede_espansa),
+        (GESTIONE_EVENTO,           Evento.objects.filter(sede__in=sede_espansa)),
     ]
 
 
@@ -463,6 +470,13 @@ def permessi_referente_funzione_so(funzione):
     ]
 
 
+def permessi_responsabile_evento(evento):
+    from formazione.models import Evento
+    return [
+        (GESTIONE_EVENTO, Evento.objects.filter(pk=evento.pk))
+    ]
+
+
 
 def permessi_direttore_corso(corso):
     """
@@ -516,6 +530,7 @@ PERMESSI_FUNZIONI = (
     (REFERENTE_OPERAZIONE_SO,   permessi_referente_operazione_so),
     (REFERENTE_FUNZIONE_SO,     permessi_referente_funzione_so),
     (DIRETTORE_CORSO,           permessi_direttore_corso),
+    (RESPONSABILE_EVENTO,       permessi_responsabile_evento),
     (RESPONSABILE_AUTOPARCO,    permessi_responsabile_autoparco),
     (REFERENTE_GRUPPO,          permessi_referente_gruppo),
     (DELEGATO_OBIETTIVO_1,      permessi_delegato_obiettivo_1),

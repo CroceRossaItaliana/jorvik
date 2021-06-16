@@ -1,0 +1,10 @@
+{% extends 'email.html' %}
+
+{% block corpo %}
+
+    <p>Gentilissimi, </p>
+    <p>
+        La presente per informarvi della attivazione dell'enento formativo <a href="{{ evento.url }}">{{ evento }}</a>
+    </p>
+
+{% endblock %}
