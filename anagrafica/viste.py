@@ -1863,6 +1863,11 @@ def admin_import_presidenti(request, me):
                             )
                         ]
                         continue
+                # chiudi deleghe precedenti rappresentante dei gionvani e cooptato
+                for delega in sede.deleghe_attuali(
+                    al_giorno=datetime.datetime.now(), tipo__in=[CONSIGLIERE_GIOVANE, CONSIGLIERE_GIOVANE_COOPTATO], fine=None
+                ):
+                    delega.termina(mittente=me, accoda=True, termina_at=datetime.datetime.now())
 
                 gia_consigliere = persona.deleghe_attuali(
                     al_giorno=datetime.datetime.now(), tipo=CONSIGLIERE_GIOVANE, fine=None
@@ -1887,6 +1892,12 @@ def admin_import_presidenti(request, me):
                             )
                         ]
                         continue
+                # chiudi deleghe precedenti rappresentante dei gionvani e cooptato
+                for delega in sede.deleghe_attuali(
+                        al_giorno=datetime.datetime.now(),
+                        tipo__in=[CONSIGLIERE_GIOVANE, CONSIGLIERE_GIOVANE_COOPTATO], fine=None
+                ):
+                    delega.termina(mittente=me, accoda=True, termina_at=datetime.datetime.now())
 
                 gia_consigliere = persona.deleghe_attuali(
                     al_giorno=datetime.datetime.now(), tipo=CONSIGLIERE_GIOVANE_COOPTATO, fine=None

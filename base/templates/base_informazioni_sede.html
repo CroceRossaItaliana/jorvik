@@ -114,6 +114,11 @@
                         <dd>{{ consigliere_giovane.link|safe }}</dd>
                     {% endif %}
 
+                    {% if consigliere_giovane_cooptato %}
+                        <dt>Consigliere Giovane Cooptato <i class="fa fa-fw fa-user"></i></dt>
+                        <dd>{{ consigliere_giovane_cooptato.link|safe }}</dd>
+                    {% endif %}
+
                     {% if sede.nominativi_rdc  %}
                         {% for revisore in sede.nominativi_rdc %}
                             <dt>Revisore dei Conti  <i class="fa fa-fw fa-user"></i></dt>
