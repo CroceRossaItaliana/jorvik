@@ -677,8 +677,8 @@ class ModuloImportPresidenti(forms.Form):
                                        (PRESIDENTE, 'Presidente'),
                                        (COMMISSARIO, 'Commissario'),
                                        (CONSIGLIERE, 'Consigliere'),
-                                       (CONSIGLIERE_GIOVANE, 'Consigliere rapresentante dei giovani'),
-                                       (CONSIGLIERE_GIOVANE_COOPTATO, 'Consigliere rapresentante dei giovani cooptato'),
+                                       (CONSIGLIERE_GIOVANE, 'Consigliere rappresentante dei giovani'),
+                                       (CONSIGLIERE_GIOVANE_COOPTATO, 'Consigliere rappresentante dei giovani cooptato'),
                                        (VICE_PRESIDENTE, 'Vice presidente'),
                                    ]
                                ),
