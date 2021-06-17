@@ -1855,7 +1855,12 @@ class CorsoEstensione(ConMarcaTemporale):
     segmento = MultiSelectField(max_length=100, choices=Appartenenza.MEMBRO, blank=True)
     titolo = models.ManyToManyField(Titolo, blank=True)
     sede = models.ManyToManyField(Sede)
-    sedi_sottostanti = models.BooleanField(default=False, db_index=True)
+    sedi_sottostanti = models.BooleanField(default=False, db_index=True,
+        help_text='Flaggare "sedi sottostanti" per rendere visibile il corso a tutti '
+                  'i Comitati/unità territoriali che afferiscono al Comitato organizzatore; '
+                  'qualora non venga messa la spunta, il corso sarà visibile solo alle sedi '
+                  'principali e verranno informati solo i Volontari delle stesse'
+    )
 
     # todo: sospeso (GAIA-116/32)
     # PRESIDENTI_COMMISSARI = 'pr'
