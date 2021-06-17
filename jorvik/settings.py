@@ -477,3 +477,6 @@ CELERY_RESULT_BACKEND = "sentinel://sentinel01.cri.it:26379/0;sentinel://{}01.cr
 CELERY_BROKER_TRANSPORT_OPTIONS = {"visibility_timeout": 43200, "master_name": os.environ.get('REDIS_MASTER', "django")}
 CELERY_RESULT_BACKEND_TRANSPORT_OPTIONS = {"visibility_timeout": 43200, "master_name": os.environ.get('REDIS_MASTER', "django")}
 
+FORMAZIONE_MASSMAIL_CHUNK = 100
+FORMAZIONE_MASSMAIL_SLEEP = 5
+
