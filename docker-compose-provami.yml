@@ -33,7 +33,7 @@ services:
       - "traefik.http.middlewares.provamih.headers.sslForceHost=true"
       - "traefik.http.middlewares.provamih.headers.forceSTSHeader=true"
 
-      container_name: provami_proxy
+    container_name: provami_proxy
     networks:
       - "traefik-public"
       - "provami-network"
