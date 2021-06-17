@@ -709,3 +709,6 @@ class ModuloUSModificaUtenza(ModuloUtenza):
                                   "richiesta dall'utente, oppure hai già avvisato l'utente della "
                                   "modifica e della nuova e-mail per accedere.")
 
+
+class ModuloCercaPersona(forms.Form):
+    persona = autocomplete_light.ModelChoiceField('PersonaAutocompletamento')

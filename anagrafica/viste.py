@@ -68,7 +68,8 @@ from .forms import (ModuloStepComitato, ModuloStepCredenziali, ModuloStepFine,
                     ModuloCreazioneRiserva, ModuloModificaPrivacy, ModuloPresidenteSede,
                     ModuloImportVolontari, ModuloImportPresidenti, ModuloPulisciEmail,
                     ModuloReportFederazione, ModuloStepCodiceFiscale, ModuloStepAnagrafica,
-                    ModuloPresidenteSedePersonaDiRiferimento, ModuloPresidenteSedeNominativo, )
+                    ModuloPresidenteSedePersonaDiRiferimento, ModuloPresidenteSedeNominativo,
+                    ModuloCercaPersona, )
 
 from .models import (Persona, Documento, Telefono, Estensione, Delega, Trasferimento,
                      Appartenenza, Sede, Riserva, Dimissione, Nominativo, )
@@ -2154,3 +2155,16 @@ def operatori_sale_termina(request, me, pk=None):
     return redirect(reverse('presidente:operatori_sale'))
 
 
+@pagina_privata
+def cerca_scheda(request, me):
+    form = ModuloCercaPersona(request.POST or None)
+    if request.POST and form.is_valid():
+        persona = form.cleaned_data['persona']
+        return redirect("/profilo/%d/" % (persona.pk,))
+
+    contesto = {
+        'form': form,
+        'base_template': 'formazione_vuota.html' if 'formazione' in request.path else 'us_vuota.html'
+    }
+
+    return 'anagrafica_cerca_scheda_persona.html', contesto
