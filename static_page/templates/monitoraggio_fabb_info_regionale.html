@@ -1,0 +1,105 @@
+{% extends "anagrafica_utente_vuota.html" %}
+
+{% load bootstrap3 %}
+
+{% block app_contenuto %}
+    {% if messages %}
+        <ul class="messages">
+            {% for message in messages %}
+            <li{% if message.tags %} class="{{ message.tags }}"{% endif %}>{{ message }}</li>
+            {% endfor %}
+        </ul>
+    {% endif %}
+  <div class="articolo single-page">
+    <h3>Questionario Fabbisogni Formativi <span style="color:#555; font-size:24px;">- {{ comitato }}</span></h3>
+      <br>
+      <p style="font-size: 10pt">
+          <b>La Rilevazione dei Fabbisogni Formativi per il Comitato Regionale</b><br>
+          L’obiettivo della rilevazione dei fabbisogni formativi è quello di individuare la tipologia di formazione necessaria e i relativi docenti che possano colmare le esigenze formative dei territori e conseguentemente formare Volontari sempre più consapevoli e preparati.<br>
+          Nel Regolamento dei Corsi di formazione per Volontari e Dipendenti della Croce Rossa Italiana, all’articolo 51, si prevede di monitorare annualmente i bisogni formativi dei Comitati Territoriali e Regionali in modo da aver un quadro di sistema per la programmazione dei corsi per l’anno successivo. Nella norma si dà rilievo ai bisogni espressi dai Comitati in termini di <b>competenze specifiche</b> da impiegare nei territori al fine di formare Volontari competenti a fronteggiare le diverse attività di informazione, prevenzione ed emergenza. In linea con il dettato normativo si è previsto di strutturare due questionari, uno in successione temporale rispetto all’altro, il primo dedicato ai Comitati Territoriali ed il secondo dedicato ai Comitati Regionali. <br>
+          Il questionario che sottoponiamo è quello dedicato ai Comitati Regionali e potrà essere compilato da parte del Presidente, del Commissario o del Responsabile Formazione <b>entro il 30 settembre di ciascun anno</b>.
+      </p>
+      <p style="font-size: 10pt">
+          Per ogni ulteriore informazione potete contattare l’Unità Operativa Formazione dei Volontari: <a href="formazione@cri.it">formazione@cri.it</a>
+      </p>
+
+    <ul class="typeform_widget">
+      <li><a href="?comitato={{user_comitato}}&id=zW2FMF2Y" class="{%if type_form.zW2FMF2Y.0 %}done{%endif%} {%if finito_di_compilare_per_questo_anno == True %}finito{% endif %} typeform_widget__btn testi-lunghi hand" title="Questionario Fabbisogni Formativi">Questionario Fabbisogni Formativi</a></li>
+    </ul>
+
+    <div class="typeform_widget__wrapper">
+      {% if not is_done %}
+        {% if typeform_id and user_comitato and user_id %}
+{#          <div class="typeform-widget" data-url="https://crocerossaitaliana.typeform.com/to/{{typeform_id}}?c={{user_comitato}}&u={{user_id}}&nc={{nome_comitato}}&nr={{nome_regionale}}" data-transparency="100" data-hide-headers=true data-hide-footer=true style="width: 100%; height: 500px;"></div>#}
+          <div id="typeform-widget" style="width: 100%; height: 570px;"></div>
+            <script>
+                {#(function() { var qs,js,q,s,d=document, gi=d.getElementById, ce=d.createElement, gt=d.getElementsByTagName, id="typef_orm", b="https://embed.typeform.com/"; if(!gi.call(d,id)) { js=ce.call(d,"script"); js.id=id; js.src=b+"embed.js"; q=gt.call(d,"script")[0]; q.parentNode.insertBefore(js,q) } })() #}
+
+                {#Vedi qua: https://github.com/Typeform/embed/blob/main/packages/demo-html/public/popup-js.html#}
+                {#    o qua: https://medium.com/typeforms-engineering-blog/typeform-embed-sdk-is-going-open-source-997d2626cf2a#}
+                src="https://embed.typeform.com/embed.js"
+                window.typeformEmbed.makeWidget(
+                    document.getElementById("typeform-widget"),
+                    "https://crocerossaitaliana.typeform.com/to/{{typeform_id}}?c={{user_comitato}}&u={{user_id}}&nc={{nome_comitato}}&nr={{nome_regionale}}",
+                    {
+                        hideHeaders: true,
+                        hideFooter: true
+                    }
+                );
+            </script>
+        {% endif %}
+      {% endif %}
+
+      <p style="text-align:center;"><strong>
+        {% if all_forms_are_completed %}
+          Complimenti! Hai compilato il questionario "Questionario Fabbisogni Formativi per i comitati Regionali".<br>
+          Clicca su "Invia via e-mail al Regionale" per trasmettere i dati inseriti.
+        {% elif is_done %}
+          Questa sezione è già compilata.
+        {% endif %}
+      </strong></p>
+    </div>
+    <p style="font-size: 10pt;">
+        Per passare da una domanda all'altra scorrere con il mouse.
+    </p>
+
+    {% if all_forms_are_completed %}
+        <div class="typeform_widget-tools">
+          <ul class="typeform_widget-tools__list">
+            <li><a class="monitoraggio_action_btn" href="{% url 'pages:monitoraggio_actions' %}?action=print&target={{ target }}&comitato={{user_comitato}}" target="_blank"><i class="fa fa-print fa-fw"></i> Stampa le risposte</a></li>
+            <li><a class="monitoraggio_action_btn" href="{% url 'pages:monitoraggio_actions' %}?action=send_via_mail&target={{ target }}&comitato={{user_comitato}}" target="_blank"><i class="fa fa-envelope fa-fw"></i> Invia via e-mail a te stesso</a></li>
+            <li><a class="monitoraggio_action_btn" href="{% url 'pages:monitoraggio_actions' %}?action=send_via_mail_regionale&target={{ target }}&comitato={{user_comitato}}" target="_blank"><i class="fa fa-envelope fa-fw"></i> Invia via e-mail al regionale</a></li>
+          </ul>
+        </div>
+    {% endif %}
+
+    <script>
+      {% if celery_task_id %}var celery_task_id = "{{ celery_task_id }}";{% endif %}
+
+      $('.typeform_widget__btn').on('click', function(e) {
+        if ($(this).hasClass('finito')) {
+          e.preventDefault();
+          alert("Il tempo di compilare i fabbisogni formativi e finito.");
+        } else if ($(this).hasClass('done')) {
+            e.preventDefault();
+            alert("Hai già compilato questa form. ");
+        } else {
+          $('body').prepend('<div class="typeform_widget-loading"><div class="text">Caricamento ...</div></div>');
+        }
+      });
+
+      var all_forms_are_completed = {{ all_forms_are_completed }};
+      $('.monitoraggio_action_btn').on('click', function(e){
+        if (all_forms_are_completed === 0) {
+          alert('Attenzione! Compila prima le parti mancanti del monitoraggio');
+          e.preventDefault();
+        }
+      });
+    </script>
+  </div>
+
+  {% if has_privacy_popup %}
+    {% include "base_privacy_policy_popup.html" %}
+  {% endif %}
+
+{% endblock %}

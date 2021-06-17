@@ -1,0 +1,70 @@
+{% extends 'formazione_vuota.html' %}
+{% load formazione_templatetags %}
+
+{% load bootstrap3 %}
+
+{% block pagina_titolo %}Eventi{% endblock %}
+
+{% block app_contenuto %}
+
+    {% include 'paginate.html' with url=url prev=prev next=next stato=stato %}
+    <table class="formazione-courses__table table table-striped table-bordered">
+        <thead>
+            <th width="15%" class="formazione-courses__th">Stato <div class="filter-tag">{% corsi_filter %}</div></th>
+            <th class="formazione-courses__th">Evento e Sede</th>
+            <th class="formazione-courses__th">Luogo e data</th>
+            <th class="formazione-courses__th">Azioni</th>
+        </thead>
+
+        {% for evento in eventi %}
+            <tr>
+                <td>
+                    {{ evento.get_stato_display }}
+                </td>
+                <td>
+                    <i class="fas fa-pencil-alt"></i> <strong>{{ evento.link|safe }}</strong><br />
+                    <i class="fa fa-fw fa-home"></i> {{ evento.sede.link|safe }}
+                    {% if puo_pianificare %}
+                        <br /><i class="fas fa-users"></i> <a href="{{ evento.url_responsabile }}">{{ evento.deleghe.count }} responsabili</a>
+                    {% endif %}
+                </td>
+                <td class="piu-piccolo">
+                     <i class="fa fa-fw fa-map-marker"></i>
+                        {% if evento.locazione %}
+                            {{ evento.locazione }}
+                        {% else %}
+                            <a href="{{ evento.url_position }}">(Nessun indirizzo specificato aggiungilo ora)</a>
+                        {% endif %}
+                        <br />
+                    <i class="fa fa-fw fa-calendar"></i>
+                        Inizio: {{ evento.data_inizio }}
+                        <br />
+                    <i class="fa fa-fw fa-calendar"></i>
+                        Fine: {{ evento.data_fine }}
+                        <br />
+                    <i class="fa fa-fw fa-info-circle"></i>
+                        <b>Corsi Totali:</b> {{ evento.corsi_associati.count }} <b>Corsi Attivi:</b> {{ evento.corsi_attivi.count }} <b>Corsi Terminati:</b> {{ evento.corsi_terminati.count }}
+                </td>
+                <td>
+                    {% if evento.attivabile %}
+                        <i class="fa fa-fw fa-check"></i><a href="{{ evento.url_attiva }}" data-conferma="Vuoi attivare questo evento?">Attiva</a><br>
+                    {% endif %}
+                    {% if evento.annullabile %}
+                        <i class="fa fa-fw fa-trash"></i><a href="{{ evento.url_annulla }}" data-conferma="Vuoi annullare questo evento?">Annulla</a><br>
+                    {% endif %}
+                    {% if evento.terminabile %}
+                        <i class="glyphicon glyphicon-eye-close"></i> <a href="{{ evento.url_termina }}" data-conferma="Vuoi terminare questo evento?">Termina</a>
+                    {% endif %}
+                </td>
+            </tr>
+
+        {% empty %}
+            <tr class="info">
+                <td colspan="4">
+                    <h4><i class="fa fa-fw fa-info-circle"></i> Ancora nessun evento pianificato.</h4>
+                </td>
+            </tr>
+        {% endfor %}
+    </table>
+    {% include 'paginate.html' with url=url prev=prev next=next stato=stato %}
+{% endblock %}

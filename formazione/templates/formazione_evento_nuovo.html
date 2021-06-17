@@ -1,0 +1,22 @@
+{% extends 'formazione_vuota.html' %}
+
+{% load bootstrap3 %}
+{% load mptt_tags %}
+{% load staticfiles %}
+
+{% block app_contenuto %}
+    <div class="row">
+        <div class="panel panel-primary">
+            <div class="panel-body">
+                <h3 style="margin:0 0 15px;">Attivazione Evento</h3>
+                <form method="POST" enctype="multipart/form-data">
+                    {% csrf_token %}
+                    {% bootstrap_form modulo %}
+                    <button type="submit" class="btn btn-block btn-primary" data-conferma="Confermi di voler pianificare l'evento?">
+                        <i class="fa fa-fw fa-asterisk"></i> Crea evento
+                    </button>
+                </form>
+            </div>
+        </div>
+    </div>
+{% endblock %}

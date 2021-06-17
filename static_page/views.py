@@ -1,17 +1,21 @@
 from collections import OrderedDict
+from datetime import date, datetime
 
 from django.shortcuts import redirect, get_object_or_404
 from django.core.urlresolvers import reverse
 from django.contrib import messages
 
-from anagrafica.costanti import REGIONALE, LOCALE
-from anagrafica.models import Sede
+from anagrafica.costanti import REGIONALE, LOCALE, PROVINCIALE
+from anagrafica.models import Sede, Persona
 from autenticazione.funzioni import pagina_privata
-from anagrafica.permessi.applicazioni import COMMISSARIO, PRESIDENTE
+from anagrafica.permessi.applicazioni import COMMISSARIO, PRESIDENTE, RESPONSABILE_FORMAZIONE
 from .models import Page
 from .monitoraggio import TypeFormResponses, TypeFormNonSonoUnBersaglio, NONSONOUNBERSAGLIO, MONITORAGGIO, \
     MONITORAGGIOTYPE, MONITORAGGIO_TRASPARENZA, TypeFormResponsesTrasparenza, TypeFormResponsesTrasparenzaCheck, \
-    TypeFormResponsesAutocontrolloCheck
+    TypeFormResponsesAutocontrolloCheck, TypeFormResponsesFabbisogniFormativiTerritoriale, \
+    MONITORAGGIO_FABBISOGNI_FORMATIVI_TERRITORIALE, MONITORAGGIO_FABBISOGNI_FORMATIVI_REGIONALE, \
+    TypeFormResponsesFabbisogniFormativiRegionali, TypeFormResponsesFabbisogniFormativiTerritorialeCheck, \
+    TypeFormResponsesFabbisogniFormativiRagionaleCheck, TypeFormResponsesAutocontrolloCheck
 from datetime import datetime
 
 
@@ -104,7 +108,6 @@ def monitoraggio_trasparenza(request, me):
             deleghe = me.deleghe_attuali(tipo__in=[COMMISSARIO])
         else:
             deleghe = [Sede.objects.get(pk=area.oggetto.sede.pk) for area in me.delege_responsabile_area_trasparenza]
-            print(deleghe)
 
         return 'monitoraggio_choose_comitato.html', {
             'deleghe': deleghe.distinct('oggetto_id') if me.is_comissario else deleghe,
@@ -151,6 +154,133 @@ def monitoraggio_trasparenza(request, me):
 
 
 @pagina_privata
+def monitoraggio_fabb_info_territoriale(request, me):
+    if True not in [me.is_presidente_o_commissario_territoriale, me.is_responsabile_formazione]: return redirect('/')
+    if not hasattr(me, 'sede_riferimento'): return redirect('/')
+
+    request_comitato = request.GET.get('comitato')
+    if (me.is_presidente_o_commissario_territoriale or me.is_responsabile_formazione_territoriale) and not request_comitato:
+        # GAIA-58: Seleziona comitato
+        if me.is_presidente:
+            deleghe = me.deleghe_presidente_o_commissario_territoriale
+        elif me.is_comissario:
+            deleghe = me.deleghe_commissario_territoriale
+        else:
+            deleghe = me.is_responsabile_formazione_territoriale
+        return 'monitoraggio_choose_comitato.html', {
+            'deleghe': deleghe,
+            # 'deleghe': deleghe.distinct('oggetto_id') if me.is_comissario else deleghe,
+            'url': 'monitoraggio-fabb-info-territoriale',
+            'titolo': 'Monitoraggio Fabbisogni Informativi Comitato Territoriale',
+            'target': MONITORAGGIO_FABBISOGNI_FORMATIVI_TERRITORIALE
+        }
+    context = dict()
+    typeform = TypeFormResponsesFabbisogniFormativiTerritoriale(request=request, me=me)
+
+    # Make test request (API/connection availability, etc)
+    if not typeform.make_test_request_to_api:
+        return 'monitoraggio_trasparenza.html', context
+
+    context['type_form'] = typeform.context_typeform
+
+    typeform.get_responses_for_all_forms()  # checks for already compiled forms
+
+    is_done = False
+    finito_di_compilare_per_questo_anno = False
+    typeform_id = request.GET.get('id', False)
+    if typeform_id:
+        typeform_ctx = context['type_form'][typeform_id]
+        is_done = typeform_ctx[0]
+        context['section'] = typeform_ctx
+        context['typeform_id'] = typeform_id
+    if is_done:
+        context['is_done'] = True
+
+    today = datetime.today()
+    questo_anno = datetime.today().year
+    trenta_uno_luglio = '{}-07-31'.format(questo_anno)
+    if today > datetime.strptime(trenta_uno_luglio, '%Y-%m-%d'):
+        finito_di_compilare_per_questo_anno = True
+
+    context['comitato'] = typeform.comitato
+    context['user_comitato'] = typeform.comitato_id
+    context['user_id'] = typeform.get_user_pk
+    context['nome_comitato'] = context['comitato'].nome_completo
+    context['nome_regionale'] = context['comitato'].sede_regionale.nome_completo
+    context['all_forms_are_completed'] = typeform.all_forms_are_completed
+    context['finito_di_compilare_per_questo_anno'] = finito_di_compilare_per_questo_anno
+
+    context['target'] = MONITORAGGIO_FABBISOGNI_FORMATIVI_TERRITORIALE
+
+    return 'monitoraggio_fabb_info_territoriale.html', context
+
+
+@pagina_privata
+def monitoraggio_fabb_info_regionale(request, me):
+    if True not in [me.is_presidente_o_commissario_regionale, me.is_responsabile_formazione]: return redirect('/')
+    if not hasattr(me, 'sede_riferimento'): return redirect('/')
+
+    request_comitato = request.GET.get('comitato')
+    if (me.is_presidente_o_commissario_regionale or me.is_responsabile_formazione_regionale) and not request_comitato:
+        # GAIA-58: Seleziona comitato
+        if me.is_presidente:
+            deleghe = me.deleghe_presidente_o_commissario_regionale
+        elif me.is_comissario:
+            deleghe = me.deleghe_commissario_regionale
+        else:
+            deleghe = me.is_responsabile_formazione_regionale
+        return 'monitoraggio_choose_comitato.html', {
+            'deleghe': deleghe,
+            # 'deleghe': deleghe.distinct('oggetto_id') if me.is_comissario else deleghe,
+            'url': 'monitoraggio-fabb-info-regionale',
+            'titolo': 'Monitoraggio Fabbisogni Informativi Comitato Regionale',
+            'target': MONITORAGGIO_FABBISOGNI_FORMATIVI_REGIONALE
+        }
+
+    # Comitato selezionato, mostrare le form di typeform
+    context = dict()
+    typeform = TypeFormResponsesFabbisogniFormativiRegionali(request=request, me=me)
+
+    # Make test request (API/connection availability, etc)
+    if not typeform.make_test_request_to_api:
+        return 'monitoraggio_trasparenza.html', context
+
+    context['type_form'] = typeform.context_typeform
+
+    typeform.get_responses_for_all_forms()  # checks for already compiled forms
+
+    is_done = False
+    finito_di_compilare_per_questo_anno = False
+    typeform_id = request.GET.get('id', False)
+    if typeform_id:
+        typeform_ctx = context['type_form'][typeform_id]
+        is_done = typeform_ctx[0]
+        context['section'] = typeform_ctx
+        context['typeform_id'] = typeform_id
+    if is_done:
+        context['is_done'] = True
+    today = datetime.today()
+    # print(date.today(), 'qqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqq')
+    # data_tjeter = '2021-05-23'
+    questo_anno = datetime.today().year
+    trenta_setembre = '{}-09-30'.format(questo_anno)
+    if today > datetime.strptime(trenta_setembre, '%Y-%m-%d'):
+        finito_di_compilare_per_questo_anno = True
+
+    context['comitato'] = typeform.comitato
+    context['user_comitato'] = typeform.comitato_id
+    context['user_id'] = typeform.get_user_pk
+    context['nome_comitato'] = context['comitato'].nome_completo
+    context['nome_regionale'] = context['comitato'].sede_regionale.nome_completo
+    context['all_forms_are_completed'] = typeform.all_forms_are_completed
+    context['finito_di_compilare_per_questo_anno'] = finito_di_compilare_per_questo_anno
+
+    context['target'] = MONITORAGGIO_FABBISOGNI_FORMATIVI_REGIONALE
+
+    return 'monitoraggio_fabb_info_regionale.html', context
+
+
+@pagina_privata
 def monitoraggio_actions(request, me):
     action = request.GET.get('action')
     target = request.GET.get('target')
@@ -158,9 +288,10 @@ def monitoraggio_actions(request, me):
 
     if not action: return redirect_url
     if not hasattr(me, 'sede_riferimento'): return redirect_url
-    if True not in [me.is_comissario, me.is_presidente, me.is_delega_responsabile_area_trasparenza]: return redirect('/')
+    if True not in [me.is_comissario, me.is_presidente, me.is_delega_responsabile_area_trasparenza, me.is_responsabile_formazione]: return redirect('/')
 
     responses = MONITORAGGIOTYPE[target][0](request=request, me=me)
+    responses.get_responses_for_all_forms()
     if action == 'print':
         return responses.print(redirect_url)
     elif action == 'send_via_mail':
@@ -318,3 +449,107 @@ def monitora_autocontrollo(request, me):
         context['regionali'] = Sede.objects.filter(estensione=REGIONALE, attiva=True)
 
     return 'monitora_autocontrollo.html', context
+
+
+@pagina_privata
+def monitora_fabb_info_territoriale(request, me):
+    context = {}
+    ids_regionale = []
+    id_regionale = request.GET.get('r', None)
+    action = request.GET.get('action', None)
+    comitato = request.GET.get('comitato', None)
+
+    if not id_regionale and not action and not comitato:
+        if me.delega_presidente_e_commissario_regionale:
+            for obj in me.delega_presidente_e_commissario_regionale:
+                ids_regionale.append(obj)
+        ids_regionale.extend(me.delgato_ragionale_monitoraggio_fabb_info)
+
+    if ids_regionale:
+        regionali = Sede.objects.filter(pk__in=ids_regionale)
+        return 'monitoraggio_choose_monitoraggio_fabb_info_territoriale.html', {
+            'comitati': regionali,
+        }
+
+    if action and comitato:
+        sede = Sede.objects.get(pk=comitato)
+        delegato = sede.monitora_fabb_info_regionali()
+        typeform = TypeFormResponsesFabbisogniFormativiTerritorialeCheck(
+            persona=delegato, comitato_id=sede.id, users_pk=delegato
+        )
+        typeform.get_responses_for_all_forms()
+        return typeform.print()
+
+    if id_regionale:
+        struttura = OrderedDict()
+        regionale = Sede.objects.get(pk=id_regionale)
+        locali = regionale.ottieni_discendenti(includimi=True).filter(estensione__in=[LOCALE, PROVINCIALE]).order_by('-estensione')
+        for locale in locali:
+            delegato = locale.monitora_fabb_info_regionali()
+            typeform = TypeFormResponsesFabbisogniFormativiTerritorialeCheck(
+                persona=delegato, comitato_id=locale.id, users_pk=delegato
+            )
+            typeform.get_responses_for_all_forms()
+            struttura[locale] = typeform.all_forms_are_completed
+        context['struttura'] = struttura
+    else:
+        context['regionali'] = Sede.objects.filter(estensione=REGIONALE, attiva=True)
+    return 'monitora_fabb_info_territoriale.html', context
+
+
+@pagina_privata
+def monitora_fabb_info_regionale(request, me):
+    context = {}
+    ids_regionale = []
+    id_regionale = request.GET.get('r', None)
+    action = request.GET.get('action', None)
+    comitato = request.GET.get('comitato', None)
+
+    if not id_regionale and not action and not comitato:
+        if me.delega_presidente_e_commissario_regionale:
+            for obj in me.delega_presidente_e_commissario_regionale:
+                ids_regionale.append(obj)
+        ids_regionale.extend(me.delgato_ragionale_monitoraggio_fabb_info)
+
+    if ids_regionale:
+        regionali = Sede.objects.filter(pk__in=ids_regionale)
+        return 'monitoraggio_choose_monitoraggio_fabb_info_regionale.html', {
+            'comitati': regionali,
+        }
+
+    if action and comitato:
+        sede = Sede.objects.get(pk=comitato)
+        delegato = sede.monitora_fabb_info_regionali()
+        typeform = TypeFormResponsesFabbisogniFormativiRagionaleCheck(
+            persona=delegato, comitato_id=sede.id, users_pk=delegato
+        )
+        typeform.get_responses_for_all_forms()
+
+        return typeform.print()
+
+    if id_regionale:
+        struttura = OrderedDict()
+        regionale = Sede.objects.get(pk=id_regionale)
+        comitati = regionale.ottieni_discendenti(includimi=True).filter(estensione__in=[LOCALE, REGIONALE, PROVINCIALE]).order_by(
+            '-estensione')
+        for comitato in comitati:
+            # se e comitato regionale, usi il typeform per comitati regionali
+            if comitato.estensione == 'R':
+                delegato = comitato.monitora_fabb_info_regionali()
+                typeform = TypeFormResponsesFabbisogniFormativiRagionaleCheck(
+                    persona=delegato, comitato_id=comitato.id, users_pk=delegato
+                )
+                typeform.get_responses_for_all_forms()
+                struttura[comitato] = typeform.all_forms_are_completed
+
+            else:
+                delegato = comitato.monitora_fabb_info_regionali()
+                typeform = TypeFormResponsesFabbisogniFormativiTerritorialeCheck(
+                    persona=delegato, comitato_id=comitato.id, users_pk=delegato
+                )
+                typeform.get_responses_for_all_forms()
+                struttura[comitato] = typeform.all_forms_are_completed
+        context['struttura'] = struttura
+    else:
+        context['regionali'] = Sede.objects.filter(estensione=REGIONALE, attiva=True)
+    return 'monitora_fabb_info_regionale.html', context

@@ -1,0 +1,25 @@
+{% extends 'evento_base_scheda.html' %}
+
+{% load bootstrap3 %}
+{% load mptt_tags %}
+{% load utils %}
+
+{% block scheda_titolo %}Seleziona Responsabile/i Evento{% endblock %}
+{% block scheda_contenuto %}
+    <h2 class="allinea-centro text-success">Seleziona Responsabile/i Evento</h2>
+{#    <div class="alert alert-block alert-info">#}
+{#        <h4><i class="fa fa-fw fa-question-circle"></i> Chi è il direttore?</h4>#}
+{#        <ul>#}
+{#          <li>Punto di riferimento per gli aspiranti volontari che vogliono partecipare al corso e per i docenti;</li>#}
+{#          <li>I suoi contatti verranno divulgati agli aspiranti volontari interessati al corso;</li>#}
+{#          <li>Generalmente è presente durante le lezioni e conosce i docenti;</li>#}
+{#          <li><i class="fa fa-fw fa-warning"></i> Potr&agrave; accettare o negare le iscrizioni al Corso.</li>#}
+{#        </ul>#}
+{#    </div>#}
+
+    {# template-tag "delegati" si trova nell'app "anagrafica" #}
+    {# la view che gestisce selezione direttore: anagrafica.strumenti_delegati #}
+
+    {% delegati delega evento continua_url=continua_url almeno=1 %}
+
+{% endblock %}

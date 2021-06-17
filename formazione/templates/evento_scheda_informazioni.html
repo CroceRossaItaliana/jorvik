@@ -1,0 +1,128 @@
+{% extends 'evento_base_scheda.html' %}
+
+{% load utils %}
+{% load social %}
+{% load humanize %}
+{% load bootstrap3 %}
+{% load formazione_templatetags %}
+
+{% block scheda_contenuto %}
+
+    <div class="row">
+        <div class="col-md-3">
+            <div class="panel panel-info">
+                <div class="panel-heading">
+                    <h3 class="panel-title"><i class="fa fa-fw fa-user"></i> Responsabili <span
+                            class="pull-right">{{ evento.delegati_attuali.count }}</span></h3>
+                </div>
+
+                <div class="panel-body">
+                    <div class="btn-group btn-group-vertical">
+                        {% for responsabile in evento.delegati_attuali %}
+                            <i class="fa fa-fw fa-info-circle"></i>
+                            <a href="{{ responsabile.url }}">{{ responsabile.nome_completo }}</a><br>
+                        {% empty %}
+                            <i class="fa fa-fw fa-warning"></i> Nessun Responsabili.
+                        {% endfor %}
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="col-md-3">
+            <div class="panel panel-info">
+                <div class="panel-heading">
+                    <h3 class="panel-title"><i class="fa fa-fw fa-home"></i> Organizzatore</h3>
+                </div>
+                <div class="panel-body">
+                    <strong><a href="{{ evento.sede.url }}"
+                               target="_new">{{ evento.sede.nome }}</a></strong><br/>
+                    {{ evento.sede.get_tipo_display }} &mdash;
+                    {{ evento.sede.get_estensione_display }}
+                </div>
+            </div>
+        </div>
+
+        <div class="col-md-3">
+            <div class="panel panel-info">
+                <div class="panel-heading">
+                    <h3 class="panel-title"><i class="fa fa-fw fa-calendar"></i> Data di inizio</h3>
+                </div>
+                <div class="panel-body">{{ evento.data_inizio }}</div>
+            </div>
+        </div>
+
+        <div class="col-md-3">
+            <div class="panel panel-info">
+                <div class="panel-heading">
+                    <h3 class="panel-title"><i class="fa fa-fw fa-calendar"></i> Data di fine</h3>
+                </div>
+                <div class="panel-body">{{ evento.data_fine }}</div>
+            </div>
+        </div>
+    </div>
+
+    <div class="row">
+        <div class="col-md-6">
+            <h3><i class="fa fa-fw fa-info-circle"></i> Informazioni</h3>
+            {% if evento.descrizione %}
+                {{ evento.descrizione }}
+            {% endif %}
+            <h4>Informazioni aggiuntive</h4>
+            {% if evento.get_evento_links %}
+                <div style="margin:0 0 20px;">
+                    <strong>Link:</strong><br>
+                    {% for link in evento.get_evento_links %}
+                        {% if link.link %}
+                            <a href="{{link.link}}" target="_blank">{{link.link}}</a><br>
+                        {% endif %}
+                    {% endfor %}
+                </div>
+            {%endif%}
+
+            {% if evento.get_evento_files %}
+                <div style="margin:0 0 20px;">
+                    <strong>File:</strong><br>
+                    {% for file in evento.get_evento_files %}
+                        <a href="{{ file.download_url }}" target="_blank">{{file.filename}}</a> <small>({{file.download_count}})</small><br>
+                    {% endfor %}
+                </div>
+            {% endif %}
+        </div>
+        <div class="col-md-6">
+            <h3><i class="fa fa-fw fa-info-circle"></i> Corsi</h3>
+
+                <table class="table table-striped">
+                    <thead>
+                        <tr>
+                            <th>Nome</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for corso in evento.corsi_associati %}
+                            <tr>
+                                <td>
+                                    <i class="fa fa-fw fa-list"></i> <a href="{{ corso.url }}">{{ corso.nome }}</a><br>
+                                    <span class="piu-piccolo">
+                                        {{ corso.data_inizio }}
+                                    </span>
+                                </td>
+                            </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+        </div>
+    </div>
+
+    <div class="row">
+        <div class="col-md-6 col-md-offset-3">
+            <h3>
+                <i class="fa fa-fw fa-comments-o"></i>
+                Commenti
+                <span class="text-muted">{{ corso.commenti.count }}</span>
+            </h3>
+            {% commenti evento 10 %}
+        </div>
+    </div>
+
+{% endblock %}

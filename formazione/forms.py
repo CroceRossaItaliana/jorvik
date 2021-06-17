@@ -19,8 +19,37 @@ from curriculum.models import Titolo
 from curriculum.areas import OBBIETTIVI_STRATEGICI
 from jorvik import settings
 from .models import (Corso, CorsoBase, CorsoFile, CorsoEstensione,
-                     LezioneCorsoBase, PartecipazioneCorsoBase, RelazioneCorso)
+                     LezioneCorsoBase, PartecipazioneCorsoBase, RelazioneCorso, Evento, EventoFile)
 
+
+class ModuloCreazioneEvento(ModelForm):
+    class Meta:
+        model = Evento
+        fields = [
+            'nome',
+            'data_inizio',
+            'data_fine',
+            'sede',
+            'descrizione'
+        ]
+
+
+class ModuloModificaEvento(ModelForm):
+    class Meta:
+        model = Evento
+        fields = [
+            'nome',
+            'data_inizio',
+            'data_fine',
+            'descrizione'
+        ]
+
+class FiltraEvento(ModelForm):
+    class Meta:
+        model = Evento
+        fields = [
+            'stato',
+        ]
 
 class ModuloCreazioneCorsoBase(ModelForm):
     PRESSO_SEDE = "PS"
@@ -110,7 +139,7 @@ class ModuloCreazioneCorsoBase(ModelForm):
     class Meta:
         model = CorsoBase
         fields = ['tipo', 'level', 'titolo_cri', 'data_inizio', 'data_esame',
-                  'delibera_file', 'sede',]
+                  'delibera_file', 'sede', 'evento']
         help_texts = {
             'sede': 'Inserire il Comitato CRI che organizza il Corso',
         }
@@ -352,6 +381,31 @@ class CorsoLinkForm(ModelForm):
         self.fields['file'].widget.attrs = {'accept': ", ".join(
             acceptable_extensions)}
 
+
+class EventoLinkForm(ModelForm):
+    class Meta:
+        model = EventoFile
+        fields = ['file',]
+
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        acceptable_extensions = [
+            'application/pdf',
+            'application/msword', # .doc
+            'application/vnd.openxmlformats-officedocument.wordprocessingml.document', # .docx
+            'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
+            'application/vnd.ms-excel', # xls
+            'application/vnd.ms-powerpoint',
+            'application/x-rar-compressed', 'application/octet-stream', # rar
+            'application/zip', 'application/octet-stream',
+            'application/x-zip-compressed', 'multipart/x-zip',
+            'image/jpeg',
+            'image/png',
+            'text/csv',
+            'application/rtf',
+        ]
+        self.fields['file'].widget.attrs = {'accept': ", ".join(
+            acceptable_extensions)}
 
 class ModuloIscrittiCorsoBaseAggiungi(forms.Form):
     persone = autocomplete_light.ModelMultipleChoiceField(
@@ -683,6 +737,22 @@ class FormCreateDirettoreDelega(ModelForm):
         super().__init__(*args, **kwargs)
 
 
+class FormCreateResponsabileEventoDelega(ModelForm):
+    persona = autocomplete_light.ModelChoiceField('CreateDirettoreDelegaAutocompletamento')
+
+    class Meta:
+        model = Delega
+        fields = ['persona',]
+
+    def __init__(self, *args, **kwargs):
+        # These attrs are passed in anagrafica.viste.strumenti_delegati()
+        for attr in ['me', 'oggetto']:
+            if attr in kwargs:
+                setattr(self, attr, kwargs.pop(attr))
+        super().__init__(*args, **kwargs)
+
+
+
 class InformCourseParticipantsForm(forms.Form):
     ALL = '1'
     UNCONFIRMED_REQUESTS = '2'
@@ -739,7 +809,7 @@ class ModuloCreaOperatoreSala(forms.Form):
     )
 
     NOMINA = (
-        (DELEGATO_AREA, 'Operatore di sala'),
+        # (DELEGATO_AREA, 'Operatore di sala'),
         (RESPONSABILE_AREA, 'Responsabile di sala'),
     )
 

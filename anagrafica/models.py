@@ -26,7 +26,8 @@ from .validators import (valida_codice_fiscale, ottieni_genere_da_codice_fiscale
     valida_dimensione_file_8mb, valida_partita_iva, valida_dimensione_file_5mb,
     valida_iban, valida_email_personale) # valida_almeno_14_anni, crea_validatore_dimensione_file)
 from .permessi.shortcuts import *
-from .permessi.costanti import RUBRICA_DELEGATI_OBIETTIVO_ALL, GESTIONE_SOCI_CM, GESTIONE_SOCI_IIVV
+from .permessi.costanti import RUBRICA_DELEGATI_OBIETTIVO_ALL, GESTIONE_SOCI_CM, GESTIONE_SOCI_IIVV, GESTIONE_EVENTO, \
+    GESTIONE_EVENTI_SEDE
 from attivita.models import Turno, Partecipazione, Area
 from base.files import PDF, Excel, FoglioExcel
 from base.geo import ConGeolocalizzazione, Locazione
@@ -560,7 +561,8 @@ class Persona(ModelloSemplice, ConMarcaTemporale, ConAllegati, ConVecchioID):
             # [(reverse('so:index'), "SO", "fa-compass"), visibilita_menu_top(self)],
             [('/centrale-operativa/', "CO", "fa-compass"), self.ha_permesso(GESTIONE_CENTRALE_OPERATIVA_SEDE)],
             [('/formazione/', 'Formazione', 'fa-graduation-cap'),
-             self.ha_permesso(GESTIONE_CORSO) or self.ha_permesso(GESTIONE_CORSI_SEDE) or self.is_responsabile_area_albo_formazione != None
+             self.ha_permesso(GESTIONE_CORSO) or self.ha_permesso(GESTIONE_CORSI_SEDE) or self.is_responsabile_area_albo_formazione != None or
+             self.ha_permesso(GESTIONE_EVENTO) or self.ha_permesso(GESTIONE_EVENTI_SEDE)
              ],
             [('/articoli/', 'Articoli', 'fa-newspaper'), True],
             [('/documenti/', 'Documenti', 'fa-folder'), True],
@@ -1293,6 +1295,74 @@ class Persona(ModelloSemplice, ConMarcaTemporale, ConAllegati, ConVecchioID):
         return self.deleghe_attuali(tipo=PRESIDENTE).exists()
 
     @property
+    def is_presidente_o_commissario_territoriale(self):
+        deleghe = self.deleghe_attuali(tipo__in=[PRESIDENTE, COMMISSARIO])
+        if deleghe:
+            for delega in deleghe:
+                if delega.oggetto.estensione == TERRITORIALE or \
+                        delega.oggetto.estensione == LOCALE or \
+                        delega.oggetto.estensione == PROVINCIALE:
+                    return True
+
+    @property
+    def deleghe_presidente_o_commissario_territoriale(self):
+        deleghe_list = []
+        deleghe = self.deleghe_attuali(tipo__in=[PRESIDENTE, COMMISSARIO])
+        if deleghe:
+            for delega in deleghe:
+                if delega.oggetto.estensione == TERRITORIALE or \
+                        delega.oggetto.estensione == LOCALE or \
+                        delega.oggetto.estensione == PROVINCIALE:
+                    deleghe_list.append(delega)
+        return deleghe_list
+
+    @property
+    def deleghe_commissario_territoriale(self):
+        deleghe_list = []
+        deleghe = self.deleghe_attuali(tipo=COMMISSARIO)
+        if deleghe:
+            for delega in deleghe:
+                if delega.oggetto.estensione == TERRITORIALE or \
+                        delega.oggetto.estensione == LOCALE or \
+                        delega.oggetto.estensione == PROVINCIALE:
+                    deleghe_list.append(delega)
+        return deleghe_list
+
+    @property
+    def is_commissario_territoriale(self):
+        deleghe = self.deleghe_attuali(tipo__in=[COMMISSARIO])
+        if deleghe:
+            for delega in deleghe:
+                if delega.oggetto.estensione == TERRITORIALE or \
+                        delega.oggetto.estensione == LOCALE or \
+                        delega.oggetto.estensione == PROVINCIALE:
+                    return True
+
+    @property
+    def is_presidente_o_commissario_regionale(self):
+        deleghe = self.deleghe_attuali(tipo__in=[PRESIDENTE, COMMISSARIO])
+        if deleghe:
+            for delega in deleghe:
+                if delega.oggetto.estensione == REGIONALE:
+                    return True
+
+    @property
+    def is_commissario_regionale(self):
+        deleghe = self.deleghe_attuali(tipo__in=[COMMISSARIO])
+        if deleghe:
+            for delega in deleghe:
+                if delega.oggetto.estensione == REGIONALE:
+                    return True
+
+    @property
+    def is_presidente_o_commissario_nazionale(self):
+        deleghe = self.deleghe_attuali(tipo__in=[PRESIDENTE, COMMISSARIO])
+        if deleghe:
+            for delega in deleghe:
+                if delega.oggetto.estensione == NAZIONALE:
+                    return True
+
+    @property
     def delega_presidente(self):
         return self.deleghe_attuali(tipo=PRESIDENTE).first()
 
@@ -1309,8 +1379,56 @@ class Persona(ModelloSemplice, ConMarcaTemporale, ConAllegati, ConVecchioID):
         return self.deleghe_attuali(tipo=COMMISSARIO).exists()
 
     @property
-    def is_responsabile_formazione(self):
-        return self.deleghe_attuali(tipo=RESPONSABILE_FORMAZIONE).exists()
+    def is_responsabile_formazione_territoriale(self):
+        deleghe_list = []
+        deleghe = self.deleghe_attuali(tipo=RESPONSABILE_FORMAZIONE)
+        if deleghe:
+            for delega in deleghe:
+                if delega.oggetto.estensione == TERRITORIALE or \
+                        delega.oggetto.estensione == LOCALE or \
+                        delega.oggetto.estensione == PROVINCIALE:
+                    deleghe_list.append(delega)
+        return deleghe_list
+
+    @property
+    def is_responsabile_formazione_regionale(self):
+        deleghe_list = []
+        deleghe = self.deleghe_attuali(tipo=RESPONSABILE_FORMAZIONE)
+        if deleghe:
+            for delega in deleghe:
+                if delega.oggetto.estensione == REGIONALE:
+                    deleghe_list.append(delega)
+        return deleghe_list
+
+    @property
+    def deleghe_presidente_o_commissario_regionale(self):
+        deleghe_list = []
+        deleghe = self.deleghe_attuali(tipo__in=[PRESIDENTE, COMMISSARIO])
+        if deleghe:
+            for delega in deleghe:
+                if delega.oggetto.estensione == REGIONALE:
+                    deleghe_list.append(delega)
+        return deleghe_list
+
+    @property
+    def deleghe_commissario_regionale(self):
+        deleghe_list = []
+        deleghe = self.deleghe_attuali(tipo=COMMISSARIO)
+        if deleghe:
+            for delega in deleghe:
+                if delega.oggetto.estensione == REGIONALE:
+                    deleghe_list.append(delega)
+        return deleghe_list
+
+    @property
+    def is_responsabile_formazione_nazionale(self):
+        deleghe_list = []
+        deleghe = self.deleghe_attuali(tipo=RESPONSABILE_FORMAZIONE)
+        if deleghe:
+            for delega in deleghe:
+                if delega.oggetto.estensione == NAZIONALE:
+                    deleghe_list.append(delega)
+        return deleghe_list
 
     @property
     def delega_responsabile_formazione(self):
@@ -1387,6 +1505,14 @@ class Persona(ModelloSemplice, ConMarcaTemporale, ConAllegati, ConVecchioID):
         return deleghe_id
 
     @property
+    def delgato_ragionale_monitoraggio_fabb_info(self):
+        deleghe = []
+        for delega in self.deleghe_attuali(tipo=DELEGATO_AREA):
+            if 'Fabbisogni Informativi'.lower() in delega.oggetto.__str__().lower():
+                deleghe.append(delega.oggetto.sede.id)
+        return deleghe
+
+    @property
     def delgato_regionale_monitoraggio_trasparenza(self):
         deleghe = []
         for delega in self.deleghe_attuali(tipo=DELEGATO_AREA):
@@ -1411,6 +1537,14 @@ class Persona(ModelloSemplice, ConMarcaTemporale, ConAllegati, ConVecchioID):
         return delegato_area
 
     @property
+    def is_delgato_regionale_monitoraggio_fabbisogni_informativi(self):
+        delegato_area = False
+        for delega in self.deleghe_attuali(tipo=DELEGATO_AREA):
+            if 'Fabbisogni'.lower() in delega.oggetto.__str__().lower():
+                delegato_area = True
+        return delegato_area
+
+    @property
     def delega_responsabile_area_monitoraggio_trasparenza(self):
         for delega in self.deleghe_attuali(tipo=RESPONSABILE_AREA):
             if 'Monitoraggio Trasparenza'.lower() in delega.oggetto.__str__().lower():
@@ -1420,6 +1554,12 @@ class Persona(ModelloSemplice, ConMarcaTemporale, ConAllegati, ConVecchioID):
     def delega_responsabile_area_trasparenza(self):
         for delega in self.deleghe_attuali(tipo=DELEGATO_AREA):
             if 'Trasparenza'.lower() in delega.oggetto.__str__().lower():
+                return delega
+
+    @property
+    def delega_responsabile_area_fabbisogni_formativi(self):
+        for delega in self.deleghe_attuali(tipo=DELEGATO_AREA):
+            if 'Fabbisogni'.lower() in delega.oggetto.__str__().lower():
                 return delega
 
     @property
@@ -2214,6 +2354,29 @@ class Sede(ModelloAlbero, ConMarcaTemporale, ConGeolocalizzazione, ConVecchioID,
                 return delega.persona
         presidente = self.presidente()
         return presidente
+
+    # def monitora_fabb_info_regionali(self):
+    #     deleghe_list = []
+    #     queryset = Persona.objects.none()
+    #     responsabile_formazione = self.comitato.delegati_attuali(tipo=RESPONSABILE_FORMAZIONE,
+    #                                                              solo_deleghe_attive=True).first()
+    #
+    #     if responsabile_formazione:
+    #         deleghe_list.append(responsabile_formazione.pk)
+    #     if self.presidente():
+    #         deleghe_list.append(self.presidente().pk)
+    #     return deleghe_list
+
+    def monitora_fabb_info_regionali(self):
+        # prende tutte le deleghe di responsabile formazioni, possono esere piu di una
+        deleghe_list = []
+        responsabile_formazione = self.comitato.delegati_attuali(tipo=RESPONSABILE_FORMAZIONE,
+                                                                 solo_deleghe_attive=True)
+        for resp_formazione in responsabile_formazione:
+            deleghe_list.append(resp_formazione.pk)
+        if self.presidente():
+            deleghe_list.append(self.presidente().pk)
+        return deleghe_list
 
     def delegati_formazione(self):
         return self.comitato.delegati_attuali(tipo=RESPONSABILE_FORMAZIONE, solo_deleghe_attive=True)
