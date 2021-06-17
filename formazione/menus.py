@@ -99,7 +99,7 @@ def formazione_menu(menu_name, me=None):
 
 def puo_vedere_fabbisogni(me, formazione):
     if me.is_presidente_o_commissario_territoriale or \
-            me.is_presidente_o_commissario_regionale or \
+            me.is_responsabile_formazione_territoriale or \
             me.is_presidente_o_commissario_regionale or \
             me.is_responsabile_formazione_regionale or \
             me.delega_presidente_e_commissario_regionale or \
