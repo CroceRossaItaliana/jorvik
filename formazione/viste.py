@@ -387,20 +387,20 @@ def aspirante_corso_base_iscriviti(request, me=None, pk=None):
         )
         # GAIA-423
         # invio notifica al presidente sui comitato di appartenenza dove e volontario
-        presidente_sede_vo = appartenenza_vo.sede.presidente()
-
-        Messaggio.costruisci_e_accoda(
-            # questa sembra di esere il titolo
-            oggetto="Richiesta di partecipazione al corso di {}".format(
-                appartenenza_vo.persona
-            ),
-            modello='email_presidente_comitato_di_appartenenza.html',
-            corpo={
-                "corso": corso,
-                "persona": appartenenza_vo.persona
-            },
-            destinatari=[presidente_sede_vo, ]
-        )
+        # presidente_sede_vo = appartenenza_vo.sede.presidente()
+        #
+        # Messaggio.costruisci_e_accoda(
+        #     # questa sembra di esere il titolo
+        #     oggetto="Richiesta di partecipazione al corso di {}".format(
+        #         appartenenza_vo.persona
+        #     ),
+        #     modello='email_presidente_comitato_di_appartenenza.html',
+        #     corpo={
+        #         "corso": corso,
+        #         "persona": appartenenza_vo.persona
+        #     },
+        #     destinatari=[presidente_sede_vo, ]
+        # )
 
     return messaggio_generico(request, me,
         titolo="Sei iscritt%s al corso" % me.genere_o_a,
