@@ -1,0 +1,8 @@
+{% extends 'email.html' %}
+
+{% block corpo %}
+    <p class="grassetto">Caro presidente,</p>
+    <p>
+        ti informiamo che il Volontario {{ persona.nome_completo }} ha inviato la richiesta di partecipazione al corso <a href="{{ corso.url }}">{{ corso }}</a> che si terrà presso il Comitato {{ corso.sede }} ed avrà inizio il giorno {{ corso.data_inizio|date:"d/m/Y" }}.
+    </p>
+{% endblock %}
