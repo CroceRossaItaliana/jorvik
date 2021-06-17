@@ -1,7 +1,8 @@
 [celery]
 
-broker_url = sentinel://sentinel01:26379/0;
-result_backend = sentinel://sentinel01:26379/0;
+broker_url = sentinel://devcriredis01.cri.it:26379/0;sentinel://devcriredis02.cri.it:26379/0;sentinel://devcriredis03.cri.it:26379/0
+result_backend = sentinel://devcriredis01.cri.it:26379/0;sentinel://devcriredis02.cri.it:26379/0;sentinel://devcriredis03.cri.it:26379/0
+result_expires = 3600
 
 [riaccoda]
 # 3600s = 1h
