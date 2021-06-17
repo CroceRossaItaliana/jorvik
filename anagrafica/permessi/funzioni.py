@@ -17,7 +17,7 @@ from ..permessi.applicazioni import (PRESIDENTE, DIRETTORE_CORSO,
                                      UFFICIO_SOCI_CM, UFFICIO_SOCI_IIVV, REFERENTE_OPERAZIONE_SO, REFERENTE_FUNZIONE_SO,
                                      CONSIGLIERE_GIOVANE_COOPTATO,
                                      UFFICIO_SOCI_CM, UFFICIO_SOCI_IIVV, REFERENTE_OPERAZIONE_SO, REFERENTE_FUNZIONE_SO,
-                                     RESPONSABILE_EVENTO)
+                                     RESPONSABILE_EVENTO, DELEGATO_OBIETTIVO_7, DELEGATO_OBIETTIVO_8)
 from ..permessi.costanti import (GESTIONE_SOCI, ELENCHI_SOCI, \
                                  GESTIONE_ATTIVITA_SEDE, GESTIONE_CORSI_SEDE, \
                                  GESTIONE_SEDE, GESTIONE_ATTIVITA_AREA,
@@ -54,7 +54,8 @@ from ..permessi.costanti import (GESTIONE_SOCI, ELENCHI_SOCI, \
                                  GESTIONE_REFERENTI_OPERAZIONI_SO, GESTIONE_FUNZIONI, GESTIONE_REFERENTI_FUNZIONI_SO,
                                  GESTIONE_EVENTI_SEDE, GESTIONE_EVENTO,
                                  GESTIONE_REFERENTI_OPERAZIONI_SO, GESTIONE_FUNZIONI, GESTIONE_REFERENTI_FUNZIONI_SO,
-                                 RUBRICA_CONSIGLIERE_GIOVANE, )
+                                 RUBRICA_CONSIGLIERE_GIOVANE, RUBRICA_DELEGATI_OBIETTIVO_7,
+                                 RUBRICA_DELEGATI_OBIETTIVO_8, )
 
 """
 Questo modulo contiene tutte le funzioni per testare i permessi
@@ -307,7 +308,7 @@ def permessi_delegato_obiettivo_5(sede):
     sede_espansa = sede.espandi(includi_me=True)
     return [
         (RUBRICA_DELEGATI_GIOVANI, sede.espandi(includi_me=True, pubblici=True)),
-           ] + permessi_delegato_area(Area.objects.filter(sede__in=sede_espansa, obiettivo=5))
+    ] + permessi_delegato_area(Area.objects.filter(sede__in=sede_espansa, obiettivo=5))
 
 
 def permessi_delegato_obiettivo_6(sede):
@@ -315,7 +316,24 @@ def permessi_delegato_obiettivo_6(sede):
     sede_espansa = sede.espandi(includi_me=True)
     return [
         (RUBRICA_DELEGATI_OBIETTIVO_6, sede.espandi(includi_me=True, pubblici=True)),
-           ] + permessi_delegato_area(Area.objects.filter(sede__in=sede_espansa, obiettivo=6))
+    ] + permessi_delegato_area(Area.objects.filter(sede__in=sede_espansa, obiettivo=6)) \
+      + permessi_responsabile_formazione(sede)
+
+
+def permessi_delegato_obiettivo_7(sede):
+    from attivita.models import Area
+    sede_espansa = sede.espandi(includi_me=True)
+    return [
+        (RUBRICA_DELEGATI_OBIETTIVO_7, sede.espandi(includi_me=True, pubblici=True)),
+           ] + permessi_delegato_area(Area.objects.filter(sede__in=sede_espansa, obiettivo=7))
+
+
+def permessi_delegato_obiettivo_8(sede):
+    from attivita.models import Area
+    sede_espansa = sede.espandi(includi_me=True)
+    return [
+        (RUBRICA_DELEGATI_OBIETTIVO_8, sede.espandi(includi_me=True, pubblici=True)),
+           ] + permessi_delegato_area(Area.objects.filter(sede__in=sede_espansa, obiettivo=8))
 
 
 def permessi_referente_gruppo(gruppo):
@@ -539,6 +557,8 @@ PERMESSI_FUNZIONI = (
     (DELEGATO_OBIETTIVO_4,      permessi_delegato_obiettivo_4),
     (DELEGATO_OBIETTIVO_5,      permessi_delegato_obiettivo_5),
     (DELEGATO_OBIETTIVO_6,      permessi_delegato_obiettivo_6),
+    (DELEGATO_OBIETTIVO_7,      permessi_delegato_obiettivo_7),
+    (DELEGATO_OBIETTIVO_8,      permessi_delegato_obiettivo_8),
     (RESPONSABILE_FORMAZIONE,   permessi_responsabile_formazione),
 )
 

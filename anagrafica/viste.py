@@ -54,7 +54,8 @@ from .permessi.applicazioni import (PRESIDENTE, UFFICIO_SOCI,
                                     PERMESSI_NOMI, RUBRICHE_TITOLI, CONSIGLIERE,
                                     VICE_PRESIDENTE, CONSIGLIERE_GIOVANE,
                                     DELEGATO_SO, UFFICIO_SOCI_CM,
-                                    UFFICIO_SOCI_IIVV, CONSIGLIERE_GIOVANE_COOPTATO, )
+                                    UFFICIO_SOCI_IIVV, CONSIGLIERE_GIOVANE_COOPTATO, DELEGATO_OBIETTIVO_7,
+                                    DELEGATO_OBIETTIVO_8, )
 from .permessi.costanti import (ERRORE_PERMESSI, MODIFICA, LETTURA, GESTIONE_SEDE,
                                 GESTIONE, ELENCHI_SOCI, GESTIONE_ATTIVITA, GESTIONE_ATTIVITA_AREA, GESTIONE_CORSO)
 from .permessi.incarichi import (INCARICO_GESTIONE_RISERVE, INCARICO_GESTIONE_TITOLI,
@@ -1277,18 +1278,20 @@ def _presidente_sede_ruoli(sede):
     sezioni = OrderedDict()
 
     sezioni.update({
-        "Obiettivi Strategici": [
-            (DELEGATO_OBIETTIVO_1, "Obiettivo Strategico I", sede.delegati_attuali(tipo=DELEGATO_OBIETTIVO_1).count(),
+        "Delegati": [
+            (DELEGATO_OBIETTIVO_1, "Salute", sede.delegati_attuali(tipo=DELEGATO_OBIETTIVO_1).count(),
              []),
-            (DELEGATO_OBIETTIVO_2, "Obiettivo Strategico II", sede.delegati_attuali(tipo=DELEGATO_OBIETTIVO_2).count(),
+            (DELEGATO_OBIETTIVO_2, "Inclusione Sociale", sede.delegati_attuali(tipo=DELEGATO_OBIETTIVO_2).count(),
              []),
-            (DELEGATO_OBIETTIVO_3, "Obiettivo Strategico III", sede.delegati_attuali(tipo=DELEGATO_OBIETTIVO_3).count(),
+            (DELEGATO_OBIETTIVO_3, "Operazione, Emergenza e Soccorso", sede.delegati_attuali(tipo=DELEGATO_OBIETTIVO_3).count(),
              []),
-            (DELEGATO_OBIETTIVO_4, "Obiettivo Strategico IV", sede.delegati_attuali(tipo=DELEGATO_OBIETTIVO_4).count(),
+            (DELEGATO_OBIETTIVO_4, "Principi e Valori Umanitari", sede.delegati_attuali(tipo=DELEGATO_OBIETTIVO_4).count(),
              []),
-            (DELEGATO_OBIETTIVO_5, "Obiettivo Strategico V", sede.delegati_attuali(tipo=DELEGATO_OBIETTIVO_5).count(),
+            (DELEGATO_OBIETTIVO_6, "Innovazione, Volontariato e Formazione", sede.delegati_attuali(tipo=DELEGATO_OBIETTIVO_6).count(),
              []),
-            (DELEGATO_OBIETTIVO_6, "Obiettivo Strategico VI", sede.delegati_attuali(tipo=DELEGATO_OBIETTIVO_6).count(),
+            (DELEGATO_OBIETTIVO_7, "Cooperazione internazionale decentrata", sede.delegati_attuali(tipo=DELEGATO_OBIETTIVO_7).count(),
+             []),
+            (DELEGATO_OBIETTIVO_8, "Riduzione del rischio da disastri e resilienza", sede.delegati_attuali(tipo=DELEGATO_OBIETTIVO_8).count(),
              []),
         ]
 
@@ -1306,6 +1309,9 @@ def _presidente_sede_ruoli(sede):
             (RESPONSABILE_AUTOPARCO, "Autoparco", sede.delegati_attuali(tipo=RESPONSABILE_AUTOPARCO).count(), []),
             (DELEGATO_CO, "Centrale Operativa", sede.delegati_attuali(tipo=DELEGATO_CO).count(), []),
             (DELEGATO_SO, "Sala Operativa", sede.delegati_attuali(tipo=DELEGATO_SO).count(), []),
+            (DELEGATO_OBIETTIVO_5, "Coordinatore attività per i Giovani",
+             sede.delegati_attuali(tipo=DELEGATO_OBIETTIVO_5).count(),
+             []),
         ]
     })
 

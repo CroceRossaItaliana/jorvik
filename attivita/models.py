@@ -674,6 +674,20 @@ class Partecipazione(ModelloSemplice, ConMarcaTemporale, ConAutorizzazioni):
 
 
 class Area(ModelloSemplice, ConMarcaTemporale, ConDelegati):
+
+    SETTORI = (
+        (1, 'Salute'),
+        (2, 'Inclusione Sociale'),
+        (3, 'Operazione, Emergenza e Soccorso'),
+        (4, 'Principi e Valori Umanitari'),
+        (5, 'Coordinatore attività per i Giovani'),
+        (6, 'Innovazione, Volontariato e Formazione'),
+        (7, 'Cooperazione internazionale decentrata'),
+        (8, 'Riduzione del rischio da disastri e resilienza'),
+    )
+
+    SETTORI_DICT = dict(SETTORI)
+
     sede = models.ForeignKey('anagrafica.Sede', related_name='aree', on_delete=models.PROTECT)
     nome = models.CharField(max_length=256, db_index=True, default='Generale', blank=False)
     obiettivo = models.SmallIntegerField(null=False, blank=False, default=1, db_index=True,
@@ -689,9 +703,13 @@ class Area(ModelloSemplice, ConMarcaTemporale, ConDelegati):
             ("view_area", "Can view area"),
         )
 
+    @property
+    def settore_display(self):
+        return self.SETTORI_DICT[self.obiettivo]
+
     def __str__(self):
-        return "%s, Ob. %d: %s" % (
-            self.sede.nome_completo, self.obiettivo,
+        return "%s, %s: %s" % (
+            self.sede.nome_completo, self.settore_display,
             self.nome,
         )
 

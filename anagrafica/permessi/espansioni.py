@@ -43,7 +43,8 @@ from anagrafica.permessi.costanti import (GESTIONE_SOCI, ELENCHI_SOCI,
                                           GESTIONE_SOCI_CM,
                                           GESTIONE_SOCI_IIVV, GESTIONE_OPERAZIONI, GESTIONE_REFERENTI_OPERAZIONI_SO,
                                           GESTIONE_FUNZIONI, GESTIONE_REFERENTI_FUNZIONI_SO, GESTIONE_EVENTO,
-                                          GESTIONE_EVENTI_SEDE, )
+                                          GESTIONE_EVENTI_SEDE, RUBRICA_DELEGATI_OBIETTIVO_7,
+                                          RUBRICA_DELEGATI_OBIETTIVO_8, )
 
 """            Questo file gestisce la espansione dei permessi in Gaia.
  ===============================================================================
@@ -217,6 +218,11 @@ def espandi_rubrica_delegati_obiettivo_4(qs_sedi, al_giorno=date.today()):
 def espandi_rubrica_delegati_obiettivo_6(qs_sedi, al_giorno=date.today()):
     return espandi_rubriche(qs_sedi, al_giorno)
 
+def espandi_rubrica_delegati_obiettivo_7(qs_sedi, al_giorno=date.today()):
+    return espandi_rubriche(qs_sedi, al_giorno)
+
+def espandi_rubrica_delegati_obiettivo_8(qs_sedi, al_giorno=date.today()):
+    return espandi_rubriche(qs_sedi, al_giorno)
 
 def espandi_rubrica_delegati_giovani(qs_sedi, al_giorno=date.today()):
     return espandi_rubriche(qs_sedi, al_giorno)
@@ -538,6 +544,8 @@ ESPANDI_PERMESSI = {
     RUBRICA_DELEGATI_OBIETTIVO_3: espandi_rubrica_delegati_obiettivo_3,
     RUBRICA_DELEGATI_OBIETTIVO_4: espandi_rubrica_delegati_obiettivo_4,
     RUBRICA_DELEGATI_OBIETTIVO_6: espandi_rubrica_delegati_obiettivo_6,
+    RUBRICA_DELEGATI_OBIETTIVO_7: espandi_rubrica_delegati_obiettivo_7,
+    RUBRICA_DELEGATI_OBIETTIVO_8: espandi_rubrica_delegati_obiettivo_8,
     RUBRICA_DELEGATI_GIOVANI: espandi_rubrica_delegati_giovani,
     RUBRICA_RESPONSABILI_AREA: espandi_rubrica_responsabili_area,
     RUBRICA_REFERENTI_ATTIVITA: espandi_rubrica_referenti_attivita,

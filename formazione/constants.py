@@ -7,4 +7,5 @@ FORMAZIONE_ROLES = [applicazioni.PRESIDENTE,  # Può creare
                     applicazioni.COMMISSARIO,  # Può creare
                     applicazioni.DIRETTORE_CORSO, # Accesso solo al corso delegato
                     applicazioni.RESPONSABILE_FORMAZIONE,  # Può creare
+                    applicazioni.DELEGATO_OBIETTIVO_6, # Può crare
 ]
