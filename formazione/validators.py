@@ -17,3 +17,8 @@ def course_file_directory_path(instance, filename):
 
 def delibera_file_upload_path(instance, filename):
     return 'courses/delibere/%s' % (filename,)
+
+
+def evento_file_directory_path(instance, filename):
+    # file will be uploaded to MEDIA_ROOT/course/<course_id>
+    return 'evento/%s/%s' % (instance.id, filename)

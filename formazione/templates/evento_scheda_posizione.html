@@ -1,0 +1,19 @@
+{% extends 'evento_base_scheda.html' %}
+
+{% load utils %}
+{% load social %}
+{% load humanize %}
+{% load bootstrap3 %}
+{% load formazione_templatetags %}
+
+{% block scheda_contenuto %}
+
+    <div class="row">
+        <div id="chooseGeoPositionForCourse" class="panel panel-info">
+            <div class="panel-heading"><h2 class="panel-title"><i class="fa fa-fw fa-globe"></i> Scegli l'indirizzo di
+                svolgimento dell'evento</h2></div>
+            <div class="panel-body">{% localizzatore evento solo_italia=1 %}</div>
+        </div>
+    </div>
+
+{% endblock %}

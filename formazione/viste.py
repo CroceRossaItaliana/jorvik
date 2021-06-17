@@ -2,6 +2,7 @@ import calendar
 from datetime import datetime, timedelta, date
 from collections import OrderedDict
 
+from django.core.paginator import Paginator
 from django.db.models import Q, F
 from django.utils import timezone
 from django.shortcuts import redirect, get_object_or_404, Http404, HttpResponse
@@ -14,10 +15,11 @@ from django.utils.timezone import now
 from anagrafica.models import Persona, Documento, Sede
 from anagrafica.forms import ModuloCreazioneDocumento
 from anagrafica.permessi.applicazioni import (DIRETTORE_CORSO, RESPONSABILE_FORMAZIONE,
-    COMMISSARIO, PRESIDENTE)
+                                              COMMISSARIO, PRESIDENTE, RESPONSABILE_EVENTO)
 from anagrafica.costanti import NAZIONALE, REGIONALE, LOCALE
 from anagrafica.permessi.costanti import (GESTIONE_CORSI_SEDE,
-    GESTIONE_CORSO, ERRORE_PERMESSI, COMPLETO, MODIFICA, RUBRICA_DELEGATI_OBIETTIVO_ALL)
+                                          GESTIONE_CORSO, ERRORE_PERMESSI, COMPLETO, MODIFICA,
+                                          RUBRICA_DELEGATI_OBIETTIVO_ALL, GESTIONE_EVENTI_SEDE, GESTIONE_EVENTO)
 from curriculum.models import Titolo, TitoloPersonale
 from jorvik.settings import MOODLE_DOMAIN
 from sala_operativa.utils import CalendarTurniSO
@@ -30,11 +32,13 @@ from posta.models import Messaggio
 from survey.models import Survey
 from .elenchi import ElencoPartecipantiCorsiBase
 from .decorators import can_access_to_course
+from .formsets import EventoFileFormSet, EventoLinkFormSet
 from .models import (Aspirante, Corso, CorsoBase, CorsoEstensione, LezioneCorsoBase,
-                     PartecipazioneCorsoBase, InvitoCorsoBase, RelazioneCorso)
+                     PartecipazioneCorsoBase, InvitoCorsoBase, RelazioneCorso, Evento, EventoLink, EventoFile)
 from .forms import (ModuloCreazioneCorsoBase, ModuloModificaLezione,
-    ModuloModificaCorsoBase, ModuloIscrittiCorsoBaseAggiungi, FormCommissioneEsame,
-    FormVerbaleCorso, FormRelazioneDelDirettoreCorso)
+                    ModuloModificaCorsoBase, ModuloIscrittiCorsoBaseAggiungi, FormCommissioneEsame,
+                    FormVerbaleCorso, FormRelazioneDelDirettoreCorso, ModuloCreazioneEvento, FiltraEvento,
+                    ModuloModificaEvento)
 from .classes import GeneraReport, GestioneLezioni
 from .utils import costruisci_titoli, CalendarCorsi
 from .training_api import TrainingApi
@@ -183,6 +187,8 @@ def formazione_corsi_base_nuovo(request, me):
         me=me
     )
     form.fields['sede'].queryset = me.oggetti_permesso(GESTIONE_CORSI_SEDE)
+    form.fields['evento'].queryset = me.oggetti_permesso(GESTIONE_EVENTO).filter(stato=Evento.PREPARAZIONE)
+
 
     if form.is_valid():
         kwargs = {}
@@ -214,6 +220,7 @@ def formazione_corsi_base_nuovo(request, me):
             tipo=tipo,
             delibera_file=cd['delibera_file'],
             survey=Survey.survey_for_corso(),
+            evento=cd['evento'],
             **kwargs
         )
         course.get_or_create_lezioni_precompilate()
@@ -656,9 +663,14 @@ def aspirante_corso_base_attiva(request, me, pk):
             torna_url=corso.url
         )
 
-    email_body = {"corso": corso, "persona": me}
-    text = get_template("email_aspirante_corso_inc_testo.html").render(
-        email_body)
+    if not corso.evento:
+        email_body = {"corso": corso, "persona": me}
+        text = get_template("email_aspirante_corso_inc_testo.html").render(
+            email_body)
+    else:
+        email_body = {"corso": corso, 'direttore': me}
+        text = get_template("email_attivazione_corso_responsabile_evento.html").render(
+            email_body)
 
     if request.POST:
         activation = corso.attiva(request=request, rispondi_a=me)
@@ -669,12 +681,26 @@ def aspirante_corso_base_attiva(request, me, pk):
             asp_or_vol = "volontari"
             if corso.titolo_cri and corso.titolo_cri.is_titolo_corso_base:
                 asp_or_vol = "aspiranti"
-            messages.success(request, "Saranno avvisati %s %s del %s" % (volontari_o_aspiranti_da_informare,
-                                                                         asp_or_vol,
-                                                                         corso.sede))
+
+            if not corso.prevede_evento:
+                messages.success(request, "Saranno avvisati %s %s del %s" % (volontari_o_aspiranti_da_informare,
+                                                                             asp_or_vol,
+                                                                             corso.sede))
+            else:
+                messages.success(
+                    request, "Saranno avvisati %s %s del %s quando l'evento %s sarà attivato" % (
+                        volontari_o_aspiranti_da_informare,
+                        asp_or_vol,
+                        corso.sede, corso.evento)
+                )
         else:
-            messages.success(request, "Saranno avvisati %s volontari dei comitati secondo le impostazioni delle estensioni." % volontari_o_aspiranti_da_informare)
-        
+            if not corso.prevede_evento:
+                messages.success(request, "Saranno avvisati %s volontari dei comitati secondo le impostazioni delle estensioni." % volontari_o_aspiranti_da_informare)
+            else:
+                messages.success(
+                    request, "Saranno avvisati %s volontari dei comitati secondo le impostazioni delle estensioni quando l'evento %s sarà attivato" % volontari_o_aspiranti_da_informare
+                )
+
         return activation
 
     context = {
@@ -1179,13 +1205,26 @@ def aspirante_corsi(request, me):
             stato=CorsoBase.ATTIVO,
             extension_type=CorsoBase.EXT_MIA_SEDE,
             sede__in=mie_sedi,
-            titolo_cri__isnull=False,)
+            titolo_cri__isnull=False,
+            evento__isnull=True
+        )
 
         # Trova corsi da partecipare
-        corsi_da_partecipare = CorsoBase.find_courses_for_volunteer(volunteer=me, sede=mie_sedi)
+        corsi_da_partecipare = CorsoBase.find_courses_for_volunteer(volunteer=me, sede=mie_sedi, evento=True)
+
+        # Cirsi associati ad un avento
+        corsi_eventi = CorsoBase.objects.filter(
+            tipo__isnull=False,
+            stato=CorsoBase.ATTIVO,
+            extension_type=CorsoBase.EXT_MIA_SEDE,
+            sede__in=mie_sedi,
+            titolo_cri__isnull=False,
+            evento__isnull=False,
+            evento__stato=Evento.ATTIVO
+        )
 
         # Unisci 2 categorie di corsi
-        corsi = corsi_confermati | corsi_da_partecipare | corsi_estensione_mia_appartenenze
+        corsi = corsi_confermati | corsi_da_partecipare | corsi_estensione_mia_appartenenze | corsi_eventi
         corsi = corsi.filter(tipo__in=[Corso.CORSO_NUOVO, Corso.CORSO_ONLINE, Corso.CORSO_EQUIPOLLENZA])
 
     corsi_frequentati = me.corsi_frequentati
@@ -1533,6 +1572,34 @@ def course_send_questionnaire_to_participants(request, me, pk):
 
     return 'course_send_questionnaire_to_participants.html', context
 
+@pagina_privata
+def evento_materiale_didattico_download(request, me, pk):
+    evento = get_object_or_404(Evento, pk=pk)
+    try:
+        file_id = request.GET.get('id')
+
+        if not file_id:
+            raise Http404
+
+        materiale = EventoFile.objects.get(pk=int(file_id))  # fallisce se si passa non un number
+        file_path = materiale.file.path
+
+        # Preparare la risposta
+        with open(file_path, 'rb') as f:
+            response = HttpResponse(content=f.read(),
+                                    content_type='application/force-download')
+        filename = '_'.join(materiale.filename().split())
+        response['Content-Disposition'] = 'attachment; filename=%s' % filename
+
+        # Incrementare il contatore
+        materiale.download_count = F('download_count') + 1
+        materiale.save()
+
+        return response
+    except:
+        pass
+
+    return HttpResponse('Non hai accesso a questo file.')
 
 @pagina_privata
 def course_materiale_didattico_download(request, me, pk):
@@ -1736,3 +1803,192 @@ def formazione_calendar(request, me=None):
         'prev_month': CalendarTurniSO.prev_month(inizio_mese),
     }
     return 'formazione_calendar.html', context
+
+
+@pagina_privata
+def evento_nuovo(request, me=None):
+    form = ModuloCreazioneEvento(request.POST or None)
+
+    form.fields['sede'].queryset = me.oggetti_permesso(GESTIONE_EVENTI_SEDE)
+
+    if form.is_valid():
+        cd = form.cleaned_data
+        evento = Evento(
+            nome=cd['nome'],
+            data_inizio=cd['data_inizio'],
+            data_fine=cd['data_fine'],
+            sede=cd['sede'],
+            descrizione=cd['descrizione']
+        )
+        evento.save()
+        return redirect(reverse('formazione:responsabile_evento', args=[evento.pk]))
+
+    return 'formazione_evento_nuovo.html', {
+        'modulo':  form
+    }
+
+
+@pagina_privata
+def evento_elenco(request, me=None):
+
+    num_page = int(request.GET.get('page', "1"))
+    stato = request.GET.get('stato', None)
+    e = me.oggetti_permesso(GESTIONE_EVENTO).order_by('-creazione')
+    if stato:
+        e = e.filter(stato=stato)
+
+    eventi = Paginator(e, 5)
+
+    page = eventi.page(num_page)
+
+    return 'elenco_eventi.html', {
+        'eventi': page,
+        'next': num_page + 1 if page.has_next() else None,
+        'prev': num_page - 1 if page.has_previous() else None,
+        'stato': stato,
+        'url': reverse('formazione:evento_elenco'),
+        'puo_pianificare': True,
+    }
+
+
+@pagina_privata
+def formazione_evento_position_change(request, me=None, pk=None):
+
+    evento = get_object_or_404(Evento, pk=pk)
+
+    if request.POST:
+        evento.locazione = evento.sede.locazione
+        evento.save()
+        messages.success(request, 'La sede del\'evento è stata modificata.')
+        return redirect(reverse('evento:info', args=[evento.pk]))
+
+    context = {
+        'evento': evento,
+        'puo_modificare': me.permessi_almeno(evento, MODIFICA)
+    }
+
+    return 'evento_scheda_posizione.html', context
+
+
+@pagina_privata
+def evento_scheda_info(request, me=None, pk=None):
+    evento = get_object_or_404(Evento, pk=pk)
+
+    if not evento.locazione:
+        return redirect(reverse('evento:position_change', args=[evento.pk]))
+
+    return 'evento_scheda_informazioni.html', {
+        'evento': evento,
+        'puo_modificare': me.permessi_almeno(evento, MODIFICA)
+    }
+
+
+@pagina_privata
+def evento_scheda_modifica(request, me=None, pk=None):
+    evento = get_object_or_404(Evento, pk=pk)
+
+    FILEFORM_PREFIX = 'files'
+    LINKFORM_PREFIX = 'links'
+
+    evento_files = EventoFile.objects.filter(evento=evento)
+    evento_links = EventoLink.objects.filter(evento=evento)
+
+    if request.POST:
+
+        file_formset = EventoFileFormSet(request.POST, request.FILES,
+                                                queryset=evento_files,
+                                                form_kwargs={'empty_permitted': False},
+                                                prefix=FILEFORM_PREFIX)
+
+        if file_formset.is_valid():
+            file_formset.save(commit=False)
+
+            for obj in file_formset.deleted_objects:
+                obj.delete()
+
+            for form in file_formset:
+                if form.is_valid() and not form.empty_permitted:
+                    instance = form.instance
+                    instance.evento = evento
+
+            file_formset.save()
+
+        link_formset = EventoLinkFormSet(request.POST,
+                                        queryset=evento_links,
+                                        prefix=LINKFORM_PREFIX)
+
+        if link_formset.is_valid():
+            link_formset.save(commit=False)
+            for form in link_formset:
+                instance = form.instance
+                instance.evento = evento
+            link_formset.save()
+
+        form = ModuloModificaEvento(request.POST or None, instance=evento)
+        if form.is_valid():
+            form.save()
+
+        if form.is_valid() and link_formset.is_valid() and file_formset.is_valid():
+            return redirect(reverse('evento:modifica', args=[pk]))
+
+    else:
+        form = ModuloModificaEvento(instance=evento)
+        file_formset = EventoFileFormSet(queryset=evento_files, prefix=FILEFORM_PREFIX)
+        link_formset = EventoLinkFormSet(queryset=evento_links, prefix=LINKFORM_PREFIX)
+
+    return 'evento_scheda_modifica.html', {
+        'evento': evento,
+        'modulo': form,
+        'file_formset': file_formset,
+        'link_formset': link_formset,
+        'puo_modificare': me.permessi_almeno(evento, MODIFICA)
+    }
+
+
+@pagina_privata
+def evento_attiva(request, me=None, pk=None):
+    evento = get_object_or_404(Evento, pk=pk)
+
+    return redirect(evento.attiva(rispondi_a=me), request=request)
+
+
+@pagina_privata
+def formazione_evento_resoponsabile(request, me, pk):
+
+    evento = get_object_or_404(Evento, pk=pk)
+    if not me.permessi_almeno(evento, MODIFICA):
+        return redirect(ERRORE_PERMESSI)
+
+    continua_url = evento.url
+
+    context = {
+        "delega": RESPONSABILE_EVENTO,
+        "evento": evento,
+        "continua_url": continua_url,
+        'puo_modificare': me.permessi_almeno(evento, MODIFICA)
+    }
+    return 'formazione_evento_responsabile.html', context
+
+
+@pagina_privata
+def evento_annulla(request, me, pk):
+    evento = get_object_or_404(Evento, pk=pk)
+
+    return redirect(evento.annulla(me), request=request)
+
+
+@pagina_privata
+def evento_scheda_mappa(request, me, pk):
+    evento = get_object_or_404(Evento, pk=pk)
+    context = {
+        "evento": evento,
+        "puo_modificare": me.permessi_almeno(evento, MODIFICA)
+    }
+    return 'evento_scheda_mappa.html', context
+
+
+@pagina_privata
+def evento_termina(request, me, pk):
+    evento = get_object_or_404(Evento, pk=pk)
+
+    return redirect(evento.termina(), request=request)

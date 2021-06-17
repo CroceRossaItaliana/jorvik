@@ -474,5 +474,9 @@ INIZIO_CRIOL_ATTIVABILE = '05/08/2021 16:00:00'
 _redis_host = os.environ.get('REDIS_HOST', "criredis")
 CELERY_BROKER_URL = "sentinel://sentinel01.cri.it:26379/0;sentinel://{}01.cri.it:26379/0;sentinel://{}02.cri.it:26379/0;sentinel://{}03.cri.it:26379/0".format(_redis_host, _redis_host, _redis_host)
 CELERY_RESULT_BACKEND = "sentinel://sentinel01.cri.it:26379/0;sentinel://{}01.cri.it:26379/0;sentinel://{}02.cri.it:26379/0;sentinel://{}03.cri.it:26379/0".format(_redis_host, _redis_host, _redis_host)
-CELERY_BROKER_TRANSPORT_OPTIONS = {"visibility_timeout": 3600, "master_name": os.environ.get('REDIS_MASTER', "django")}
-CELERY_RESULT_BACKEND_TRANSPORT_OPTIONS = {"visibility_timeout": 3600, "master_name": os.environ.get('REDIS_MASTER', "django")}
+CELERY_BROKER_TRANSPORT_OPTIONS = {"visibility_timeout": 43200, "master_name": os.environ.get('REDIS_MASTER', "django")}
+CELERY_RESULT_BACKEND_TRANSPORT_OPTIONS = {"visibility_timeout": 43200, "master_name": os.environ.get('REDIS_MASTER', "django")}
+
+FORMAZIONE_MASSMAIL_CHUNK = 100
+FORMAZIONE_MASSMAIL_SLEEP = 5
+

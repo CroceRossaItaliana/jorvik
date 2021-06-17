@@ -1,6 +1,7 @@
 from django.core.urlresolvers import reverse
 
-from anagrafica.permessi.costanti import GESTIONE_CORSI_SEDE, ELENCHI_SOCI, RUBRICA_DELEGATI_OBIETTIVO_ALL
+from anagrafica.permessi.costanti import GESTIONE_CORSI_SEDE, ELENCHI_SOCI, RUBRICA_DELEGATI_OBIETTIVO_ALL, \
+    GESTIONE_EVENTI_SEDE, GESTIONE_EVENTO
 
 
 def to_show(me, permissions):
@@ -24,6 +25,10 @@ def formazione_menu(menu_name, me=None):
         ("Corsi", (
             ("Attiva Corso", "fa-asterisk", reverse('formazione:new_course')) if to_show(me, GESTIONE_CORSI_SEDE) else None,
             ("Elenco Corsi", "fa-list", reverse('aspirante:corsi_base')),
+
+            ("Attiva Evento", "fa-asterisk", reverse('formazione:evento_nuovo')) if to_show(me, GESTIONE_EVENTI_SEDE) else None,
+            ("Gestione Eventi", "fa-list", reverse('formazione:evento_elenco')) if to_show(me, GESTIONE_EVENTO) else None,
+
             ("Domanda formativa", "fas fa-chart-pie", reverse('formazione:domanda')) if to_show(me, GESTIONE_CORSI_SEDE) else None,
             ('Catalogo Corsi', 'fa-list-alt', reverse('courses:catalog')),
             ('Acronimi', 'fa-book', '/page/glossario-corsi/'),
@@ -35,6 +40,25 @@ def formazione_menu(menu_name, me=None):
                 'formazione:albo_info')) if to_show(
                 me, RUBRICA_DELEGATI_OBIETTIVO_ALL + [GESTIONE_CORSI_SEDE]
             ) or (me and me.is_responsabile_area_albo_formazione) else None,
+        )),
+        ("Monitoraggio", (
+            ("Fabbisogni Formativi Comitato Territoriale", 'fa-user',
+             reverse('pages:monitoraggio-fabb-info-territoriale')) if ( me and (
+                    me.is_presidente_o_commissario_territoriale or
+                    me.is_responsabile_formazione_territoriale)) else None,
+            ("Fabbisogni Formativi Comitato Regionale", 'fa-user',
+             reverse('pages:monitoraggio-fabb-info-regionale')) if ( me and (
+                    me.is_presidente_o_commissario_regionale or
+                    me.is_responsabile_formazione_regionale)) else None,
+            ("Monitora Fabbisogni Formativi Territoriali", 'fa-user',
+             reverse('pages:monitora-fabb-info-territoriale')) if ( me and (
+                    me.delega_presidente_e_commissario_regionale or
+                    me.is_delgato_regionale_monitoraggio_fabbisogni_informativi
+            )) else None,
+            ("Monitora Fabbisogni Formativi", 'fa-user',
+             reverse('pages:monitora-fabb-info-regionale')) if
+                me and me.is_responsabile_formazione_nazionale else None
+
         )),
     )
 
