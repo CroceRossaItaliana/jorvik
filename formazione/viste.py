@@ -39,7 +39,7 @@ from .forms import (ModuloCreazioneCorsoBase, ModuloModificaLezione,
                     ModuloModificaCorsoBase, ModuloIscrittiCorsoBaseAggiungi, FormCommissioneEsame,
                     FormVerbaleCorso, FormRelazioneDelDirettoreCorso, ModuloCreazioneEvento, FiltraEvento,
                     ModuloModificaEvento)
-from .classes import GeneraReport, GestioneLezioni
+from .classes import GeneraReport, GestioneLezioni, GeneraReportVolontari
 from .utils import costruisci_titoli, CalendarCorsi
 from .training_api import TrainingApi
 
@@ -1169,6 +1169,22 @@ def aspirante_corso_base_report_schede(request, me, pk):
         return redirect(ERRORE_PERMESSI)
 
     report = GeneraReport(request, corso)
+    return report.download()
+
+
+@pagina_privata
+def scarica_aspirante_corso_base_report_schede(request, me, pk, id):
+    corso = get_object_or_404(CorsoBase, pk=pk)
+    persona = get_object_or_404(Persona, pk=id)
+
+    can_download = False
+    if request.GET.get('scarica_uno_attestato'):
+        can_download = True
+
+    # if not can_download and not me.permessi_almeno(corso, MODIFICA):
+    #     return redirect(ERRORE_PERMESSI)
+
+    report = GeneraReportVolontari(request, corso, persona)
     return report.download()
 
 

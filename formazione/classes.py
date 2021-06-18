@@ -157,6 +157,52 @@ class GeneraReport:
         return attestato
 
 
+class GeneraReportVolontari(GeneraReport):
+    ATTESTATO_FILENAME = "%s %s - Attestato.pdf"
+    SCHEDA_FILENAME = "%s %s - Scheda di Valutazione.pdf"
+
+    def __init__(self, request=None, corso=None, persona=None, single_attestato=False):
+        super(GeneraReportVolontari, self).__init__(request=request, corso=corso)
+        self.persona = persona
+
+    def download(self):
+        """ Returns a HTTP response """
+
+        self.archive = Zip(oggetto=self.corso)
+
+        if self.request.GET.get('scarica_uno_attestato'):
+            return self._scarica_uno_attestato()
+        else:
+            self._generate()
+            self.archive.comprimi_e_salva(nome="Corso %d-%d.zip" % (self.corso.progressivo,
+                                                                    self.corso.anno))
+            return redirect(self.archive.download_url)
+
+    def _scarica_uno_attestato(self):
+        from .models import PartecipazioneCorsoBase
+        from curriculum.models import Titolo
+
+        try:
+            partecipazione = self.corso.partecipazioni_confermate().get(
+            titolo_ottenuto__pk=self.request.GET.get('scarica_uno_attestato'),
+            persona=self.persona)
+        except PartecipazioneCorsoBase.DoesNotExist:
+            messages.error(self.request, "Questo attestato non esiste.")
+            return redirect(reverse('utente:cv_tipo', args=[Titolo.TITOLO_CRI,]))
+
+        # Genera attestato
+        attestato = self._attestato(partecipazione)
+        filename = self.ATTESTATO_FILENAME % (partecipazione.titolo_ottenuto.last(), '')
+
+        with open(attestato.file.path, 'rb') as f:
+            pdf = f.read()
+
+        response = HttpResponse(pdf, content_type='application/pdf')
+        response['Content-Disposition'] = 'attachment; filename=%s' % '-'.join(filename.split())
+        response.write(pdf)
+        return response
+
+
 class GestioneLezioni:
     def __init__(self, request, me, pk, lezione_pk=None):
         self.request = request
@@ -416,3 +462,5 @@ class GestioneLezioni:
             return redirect("%s#%d" % (self.corso.url_lezioni, self.created.pk))
 
         return self.get_context()
+
+
