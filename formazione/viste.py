@@ -302,14 +302,6 @@ def aspirante_corso_base_informazioni(request, me=None, pk=None):
     puoi_partecipare = corso.persona(me) if me else None
     appartenenza = me.appartenenza_volontario.first()
 
-    print(
-        'Appartenenza: ', me.appartenenza_volontario.first(), '===\n',
-        'Persona: ', appartenenza.persona, '===\n',
-        'Comitato di corso: ', corso.sede.nome, '-----\n',
-        'Presidente di comitato dove e volontario: ', me.appartenenza_volontario.first().sede.presidente(), '-----\n',
-        'Corso: ', corso, '-----\n',
-    )
-
     if corso.locazione is None and corso.tipo not in [Corso.CORSO_ONLINE, Corso.BASE_ONLINE]:
         # Il corso non ha una locazione (è stata selezionata la voce °Sede presso Altrove"
         messages.error(request, "Imposta una locazione per procedere la navigazione del Corso.")
