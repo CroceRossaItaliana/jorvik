@@ -1,5 +1,6 @@
 import re
 import datetime
+import time
 import uuid
 
 from dateutil.relativedelta import relativedelta
@@ -33,6 +34,7 @@ from base.models import ConAutorizzazioni, ConVecchioID, Autorizzazione, Modello
 from base.errori import messaggio_generico
 from curriculum.models import Titolo
 from curriculum.areas import OBBIETTIVI_STRATEGICI
+from jorvik.settings import FORMAZIONE_MASSMAIL_CHUNK, FORMAZIONE_MASSMAIL_SLEEP
 from posta.models import Messaggio
 from social.models import ConCommenti, ConGiudizio
 from survey.models import Survey
@@ -180,6 +182,8 @@ class Evento(ModelloSemplice, ConDelegati, ConMarcaTemporale, ConGeolocalizzazio
                 )
 
                 Messaggio.costruisci_e_accoda(**email_data)
+
+            time.sleep(FORMAZIONE_MASSMAIL_SLEEP)
 
     @property
     def annullabile(self):
@@ -1145,7 +1149,7 @@ class CorsoBase(Corso, ConVecchioID, ConPDF):
         """
         from django.core.paginator import Paginator
 
-        splitted = Paginator(self._corso_activation_recipients_for_email(), 1000)
+        splitted = Paginator(self._corso_activation_recipients_for_email(), FORMAZIONE_MASSMAIL_CHUNK)
         logger.info('page : {}'.format(splitted.page_range))
         for i in splitted.page_range:
             current_page = splitted.page(i)
@@ -1188,6 +1192,7 @@ class CorsoBase(Corso, ConVecchioID, ConPDF):
                     Messaggio.costruisci_e_accoda(**email_data)
                     logger.info('accoda mail : {}'.format(email_data))
 
+            time.sleep(FORMAZIONE_MASSMAIL_SLEEP)
 
     def has_extensions(self, is_active=True, **kwargs):
         """ Case: extension_type == EXT_LVL_REGIONALE """
@@ -1850,7 +1855,12 @@ class CorsoEstensione(ConMarcaTemporale):
     segmento = MultiSelectField(max_length=100, choices=Appartenenza.MEMBRO, blank=True)
     titolo = models.ManyToManyField(Titolo, blank=True)
     sede = models.ManyToManyField(Sede)
-    sedi_sottostanti = models.BooleanField(default=False, db_index=True)
+    sedi_sottostanti = models.BooleanField(default=False, db_index=True,
+        help_text='Flaggare "sedi sottostanti" per rendere visibile il corso a tutti '
+                  'i Comitati/unità territoriali che afferiscono al Comitato organizzatore; '
+                  'qualora non venga messa la spunta, il corso sarà visibile solo alle sedi '
+                  'principali e verranno informati solo i Volontari delle stesse'
+    )
 
     # todo: sospeso (GAIA-116/32)
     # PRESIDENTI_COMMISSARI = 'pr'

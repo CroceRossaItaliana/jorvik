@@ -1,0 +1,36 @@
+{% extends base_template %}
+
+{% load bootstrap3 %}
+{% load mptt_tags %}
+{% load utils %}
+
+{% block pagina_titolo %}
+    Cerca persona
+{% endblock %}
+
+{% block app_contenuto %}
+
+    <h2 class="allinea-centro">
+        <i class="fa fa-fw fa-users"></i>
+        Cerca persona
+    </h2>
+
+    {% if form %}
+        <div class="cerca_persona">
+            <form method="POST">
+                {% csrf_token %}
+                {% bootstrap_form form %}
+                <button type="submit" class="btn btn-block btn-primary">
+                    <i class="fa fa-fw fa-check"></i>
+                    Apri scheda
+                </button>
+            </form>
+        </div>
+    {% endif %}
+    
+    <style>
+        .cerca_persona #id_persona-wrapper { width: 100%; }
+        .cerca_persona .remove { top: 4px; position: relative; margin-right: 5px; }
+    </style>
+
+{% endblock %}

@@ -300,6 +300,7 @@ def aspirante_corso_base_informazioni(request, me=None, pk=None):
     context = dict()
     corso = get_object_or_404(CorsoBase, pk=pk)
     puoi_partecipare = corso.persona(me) if me else None
+    appartenenza = me.appartenenza_volontario.first()
 
     if corso.locazione is None and corso.tipo not in [Corso.CORSO_ONLINE, Corso.BASE_ONLINE]:
         # Il corso non ha una locazione (è stata selezionata la voce °Sede presso Altrove"
@@ -383,6 +384,22 @@ def aspirante_corso_base_iscriviti(request, me=None, pk=None):
             },
             destinatari=[presidente_sede_vo, ]
         )
+        # GAIA-423
+        # invio notifica al presidente sui comitato di appartenenza dove e volontario
+        # presidente_sede_vo = appartenenza_vo.sede.presidente()
+        #
+        # Messaggio.costruisci_e_accoda(
+        #     # questa sembra di esere il titolo
+        #     oggetto="Richiesta di partecipazione al corso di {}".format(
+        #         appartenenza_vo.persona
+        #     ),
+        #     modello='email_presidente_comitato_di_appartenenza.html',
+        #     corpo={
+        #         "corso": corso,
+        #         "persona": appartenenza_vo.persona
+        #     },
+        #     destinatari=[presidente_sede_vo, ]
+        # )
 
     return messaggio_generico(request, me,
         titolo="Sei iscritt%s al corso" % me.genere_o_a,

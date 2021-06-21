@@ -13,6 +13,7 @@ def menu_us(me):
     print(iv)
     return (
         ("Elenchi", (
+            ("Negli elenchi", "fa-search", "/us/cerca_persona") if us else None,
             ("Volontari", "fa-list", "/us/elenchi/volontari/") if us else None,
             ("Vol. giovani", "fa-list", "/us/elenchi/giovani/") if us else None,
             ("Estesi", "fa-list", "/us/elenchi/estesi/") if us else None,

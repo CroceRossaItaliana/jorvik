@@ -3,6 +3,7 @@ stages:
   - maintenance
   - migrations
   - release
+  - post_release
   - build
   - setup
   - restore_db
@@ -164,6 +165,31 @@ migrate_db:
     - /home/appserver/venv/bin/python /home/appserver/jorvik/manage.py collectstatic --no-input
   after_script:
     - sudo service jorvik start
+  only:
+    - release
+  when: manual
+  tags:
+    - gaia-app02,prod
+
+stop_celery:
+  stage: maintenance
+  before_script:
+    - cd /home/appserver/jorvik
+  script:
+    - sudo service celery stop
+  only:
+    - release
+  when: manual
+  tags:
+    - gaia-app02,prod
+
+
+start_celery:
+  stage: post_release
+  before_script:
+    - cd /home/appserver/jorvik
+  script:
+    - sudo service celery start
   only:
     - release
   when: manual

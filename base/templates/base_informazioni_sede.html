@@ -93,25 +93,25 @@
 
                     {% if presidente %}
                         <dt>{{ sede | select_nomina_presidenziale }} <i class="fa fa-fw fa-user"></i></dt>
-                        <dd>{{ presidente.link|safe }}</dd>
+                        <dd>{{ presidente }}</dd>
                     {% endif %}
 
 
                     {% if vice_presidente %}
                         <dt>Vice Presidente <i class="fa fa-fw fa-user"></i></dt>
-                        <dd>{{ vice_presidente.link|safe }}</dd>
+                        <dd>{{ vice_presidente }}</dd>
                     {% endif %}
 
                     {% if consiglieri %}
                         {% for consigliere in consiglieri %}
                             <dt>Consigliere <i class="fa fa-fw fa-user"></i></dt>
-                            <dd>{{ consigliere.link|safe }}</dd>
+                            <dd>{{ consigliere }}</dd>
                         {% endfor %}
                     {% endif %}
 
                     {% if consigliere_giovane %}
                         <dt>Consigliere Giovane <i class="fa fa-fw fa-user"></i></dt>
-                        <dd>{{ consigliere_giovane.link|safe }}</dd>
+                        <dd>{{ consigliere_giovane }}</dd>
                     {% endif %}
 
                     {% if consigliere_giovane_cooptato %}

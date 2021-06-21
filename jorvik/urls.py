@@ -62,11 +62,13 @@ urlpatterns = [
     url(r'^presidente/', include('anagrafica.urls.presidente', namespace='presidente')),
     url(r'^posta/', include('posta.urls', namespace='posta')),
     url(r'^us/', include('ufficio_soci.urls', namespace='ufficio_soci')),
+    url(r'^us/cerca_persona', anagrafica.viste.cerca_scheda),
     url(r'^cv/', include('curriculum.urls', namespace='cv')),
     url(r'^so/', include('sala_operativa.urls', namespace='so')),
 
     # Formazione
     url(r'^formazione/', include('formazione.urls.formazione', namespace='formazione')),
+    url(r'^formazione/cerca_persona', anagrafica.viste.cerca_scheda),
     url(r'^aspirante/', include('formazione.urls.aspirante', namespace='aspirante')),
     url(r'^courses/', include('formazione.urls.courses', namespace='courses')),
     url(r'^survey/', include('survey.urls', namespace='survey')),

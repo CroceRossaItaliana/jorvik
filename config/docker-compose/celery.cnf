@@ -2,6 +2,7 @@
 
 broker_url = sentinel://sentinel01:26379/0;
 result_backend = sentinel://sentinel01:26379/0;
+result_expires = 3600
 
 [riaccoda]
 # 3600s = 1h

@@ -36,6 +36,10 @@ def formazione_menu(menu_name, me=None):
             ('Regolamento Formazione', 'fa-file-alt', 'https://datafiles.gaia.cri.it/media/filer_public/08/59/0859cd54-ddad-4f26-8f8d-f48d2c92801d/regolamento_dei_corsi_di_formazione_per_volontari_e_dipendenti_della_croce_rossa_italiana.pdf'),
             ('Schema equipollenze Del. N° 66-20', 'fa-file-alt', 'https://datafiles.gaia.cri.it/media/filer_public/22/c4/22c446a7-d981-4cb9-be95-f6afec4b53d2/schema_per_equipollenze_del_66-20_per_gaia_1.pdf'),
             ('Schema equipollenze Del. N° 94-20', 'fa-file-alt', 'https://datafiles.gaia.cri.it/media/filer_public/a6/1b/a61b14e5-7286-4028-8aeb-255e0a4a7209/schema_per_equipollenze_94-20_per_gaia.pdf'),
+            # TODO: GAIA-424: commentato momentaneamente
+            #("Nell'albo", "fa-search", "/formazione/cerca_persona") if to_show(
+            #    me, RUBRICA_DELEGATI_OBIETTIVO_ALL + [GESTIONE_CORSI_SEDE]
+            #) or (me and me.is_responsabile_area_albo_formazione) else None,
             ('Albo Informatizzato', 'fa-list', reverse(
                 'formazione:albo_info')) if to_show(
                 me, RUBRICA_DELEGATI_OBIETTIVO_ALL + [GESTIONE_CORSI_SEDE]
@@ -87,8 +91,30 @@ def formazione_menu(menu_name, me=None):
         )),
     )
 
+    # se l'utenza non ha la propia delegha, non puo vedere Monitoraggio
+    formazione = puo_vedere_fabbisogni(me, FORMAZIONE)
+
     MENUS = dict(
-        formazione=FORMAZIONE,
+        formazione=formazione,
         aspirante=ASPIRANTE,
     )
     return MENUS[menu_name]
+
+
+def puo_vedere_fabbisogni(me, formazione):
+    if me:
+        if me.is_presidente_o_commissario_territoriale or \
+                me.is_responsabile_formazione_territoriale or \
+                me.is_presidente_o_commissario_regionale or \
+                me.is_responsabile_formazione_regionale or \
+                me.delega_presidente_e_commissario_regionale or \
+                me.is_delgato_regionale_monitoraggio_fabbisogni_informativi or \
+                me.is_responsabile_formazione_nazionale:
+            formazione = formazione
+        else:
+            formazione = list(formazione)
+            formazione[1] = None
+            formazione = tuple(formazione)
+        return formazione
+    else:
+        return None
