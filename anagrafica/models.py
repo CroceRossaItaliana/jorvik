@@ -1367,6 +1367,10 @@ class Persona(ModelloSemplice, ConMarcaTemporale, ConAllegati, ConVecchioID):
         return self.deleghe_attuali(tipo=PRESIDENTE).first()
 
     @property
+    def delega_responsabile_formazione(self):
+        return self.deleghe_attuali(tipo=RESPONSABILE_FORMAZIONE).first()
+
+    @property
     def is_consigliere_giovane(self):
         return self.deleghe_attuali(tipo=CONSIGLIERE_GIOVANE).exists()
 
@@ -1431,10 +1435,6 @@ class Persona(ModelloSemplice, ConMarcaTemporale, ConAllegati, ConVecchioID):
         return deleghe_list
 
     @property
-    def delega_responsabile_formazione(self):
-        return self.deleghe_attuali(tipo=RESPONSABILE_FORMAZIONE).first()
-
-    @property
     def delega_commissario(self):
         return self.deleghe_attuali(tipo=COMMISSARIO).first()
 
@@ -1497,6 +1497,18 @@ class Persona(ModelloSemplice, ConMarcaTemporale, ConAllegati, ConVecchioID):
             deleghe.append(self.delega_presidente)
         if self.delega_commissario:
             deleghe.append(self.delega_commissario)
+        deleghe_id = []
+        if deleghe:
+            for delega in deleghe:
+                if delega.oggetto.estensione == REGIONALE:
+                    deleghe_id.append(delega.oggetto.id)
+        return deleghe_id
+
+    @property
+    def delega_responsabile_formazione_regionale(self):
+        deleghe = []
+        if self.delega_responsabile_formazione:
+            deleghe.append(self.delega_responsabile_formazione)
         deleghe_id = []
         if deleghe:
             for delega in deleghe:

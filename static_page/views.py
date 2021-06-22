@@ -460,8 +460,10 @@ def monitora_fabb_info_territoriale(request, me):
     comitato = request.GET.get('comitato', None)
 
     if not id_regionale and not action and not comitato:
-        if me.delega_presidente_e_commissario_regionale:
+        if me.delega_presidente_e_commissario_regionale or me.delega_responsabile_formazione_regionale:
             for obj in me.delega_presidente_e_commissario_regionale:
+                ids_regionale.append(obj)
+            for obj in me.delega_responsabile_formazione_regionale:
                 ids_regionale.append(obj)
         ids_regionale.extend(me.delgato_ragionale_monitoraggio_fabb_info)
 
