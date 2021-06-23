@@ -586,7 +586,10 @@ def trasparenza_publica(request, me):
                     persona=delegato, user_pk=delegato.id, comitato_id=locale.id
                 )
                 typeform.get_responses_for_all_forms()
-                struttura[locale] = typeform.all_forms_are_completed
+                if typeform.all_forms_are_completed:
+                    struttura[locale] = typeform.all_forms_are_completed
+                else:
+                    continue
 
         context['struttura'] = struttura
     else:
