@@ -4,10 +4,11 @@ from datetime import date, datetime
 from django.shortcuts import redirect, get_object_or_404
 from django.core.urlresolvers import reverse
 from django.contrib import messages
+from django.views.decorators.clickjacking import xframe_options_exempt
 
 from anagrafica.costanti import REGIONALE, LOCALE, PROVINCIALE
 from anagrafica.models import Sede, Persona
-from autenticazione.funzioni import pagina_privata
+from autenticazione.funzioni import pagina_privata, pagina_pubblica
 from anagrafica.permessi.applicazioni import COMMISSARIO, PRESIDENTE, RESPONSABILE_FORMAZIONE
 from .models import Page
 from .monitoraggio import TypeFormResponses, TypeFormNonSonoUnBersaglio, NONSONOUNBERSAGLIO, MONITORAGGIO, \
@@ -15,7 +16,8 @@ from .monitoraggio import TypeFormResponses, TypeFormNonSonoUnBersaglio, NONSONO
     TypeFormResponsesAutocontrolloCheck, TypeFormResponsesFabbisogniFormativiTerritoriale, \
     MONITORAGGIO_FABBISOGNI_FORMATIVI_TERRITORIALE, MONITORAGGIO_FABBISOGNI_FORMATIVI_REGIONALE, \
     TypeFormResponsesFabbisogniFormativiRegionali, TypeFormResponsesFabbisogniFormativiTerritorialeCheck, \
-    TypeFormResponsesFabbisogniFormativiRagionaleCheck, TypeFormResponsesAutocontrolloCheck
+    TypeFormResponsesFabbisogniFormativiRagionaleCheck, TypeFormResponsesAutocontrolloCheck, \
+    TypeFormResponsesTrasparenzaCheckPubblica
 from datetime import datetime
 
 
@@ -553,3 +555,41 @@ def monitora_fabb_info_regionale(request, me):
     else:
         context['regionali'] = Sede.objects.filter(estensione=REGIONALE, attiva=True)
     return 'monitora_fabb_info_regionale.html', context
+
+
+@xframe_options_exempt
+@pagina_pubblica(permetti_embed=True)
+def trasparenza_publica(request, me):
+    context = {}
+    id_regionale = request.GET.get('r', None)
+    action = request.GET.get('action', None)
+    comitato = request.GET.get('comitato', None)
+
+    if action and comitato:
+        sede = Sede.objects.get(pk=comitato)
+        delegato = sede.delegato_monitoraggio_trasparenza()
+        typeform = TypeFormResponsesTrasparenzaCheckPubblica(
+            persona=delegato, user_pk=delegato.id, comitato_id=comitato
+        )
+        typeform.get_responses_for_all_forms()
+        return typeform.print()
+
+    if id_regionale:
+        struttura = OrderedDict()
+        regionale = Sede.objects.get(pk=id_regionale)
+        locali = regionale.ottieni_discendenti(includimi=True).filter(estensione__in=[LOCALE, REGIONALE]).order_by(
+            '-estensione')
+        for locale in locali:
+            delegato = locale.delegato_monitoraggio_trasparenza()
+            if delegato:
+                typeform = TypeFormResponsesTrasparenzaCheckPubblica(
+                    persona=delegato, user_pk=delegato.id, comitato_id=locale.id
+                )
+                typeform.get_responses_for_all_forms()
+                struttura[locale] = typeform.all_forms_are_completed
+
+        context['struttura'] = struttura
+    else:
+        context['regionali'] = Sede.objects.filter(estensione=REGIONALE, attiva=True)
+
+    return 'monitora_trasparenza_pubblica.html', context
