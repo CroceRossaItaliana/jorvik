@@ -366,10 +366,7 @@ def espandi_gestione_corso(qs_corsi, al_giorno=None):
     try:
         return [
             (MODIFICA, qs_corsi),
-            (MODIFICA,
-             Persona.objects.filter(partecipazioni_corsi__corso__in=qs_corsi).exclude(aspirante__id__isnull=True)),
             (MODIFICA, PartecipazioneCorsoBase.objects.filter(corso__in=qs_corsi)),
-            (LETTURA, Persona.objects.filter(partecipazioni_corsi__corso__in=qs_corsi)),
         ]
     except (AttributeError, ValueError, KeyError, TypeError):
         return []
@@ -392,9 +389,6 @@ def espandi_gestione_evento(qs_eventi, al_giorno=None):
     try:
         return [
             (COMPLETO, qs_eventi),
-            (MODIFICA, Persona.objects.filter(
-                Appartenenza.query_attuale(membro__in=Appartenenza.MEMBRO_DIRETTO).via("appartenenze"))
-             ),
         ]
     except (AttributeError, ValueError, KeyError, TypeError):
         return []
