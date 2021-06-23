@@ -367,7 +367,6 @@ def espandi_gestione_corso(qs_corsi, al_giorno=None):
         return [
             (MODIFICA, qs_corsi),
             (MODIFICA, PartecipazioneCorsoBase.objects.filter(corso__in=qs_corsi)),
-            (LETTURA, Persona.objects.filter(partecipazioni_corsi__corso__in=qs_corsi)),
         ]
     except (AttributeError, ValueError, KeyError, TypeError):
         return []
