@@ -377,25 +377,36 @@ def monitora_trasparenza(request, me):
 
     if action and comitato:
         sede = Sede.objects.get(pk=comitato)
-        delegato = sede.delegato_monitoraggio_trasparenza()
-        typeform = TypeFormResponsesTrasparenzaCheck(
-            persona=delegato, user_pk=delegato.id, comitato_id=comitato
-        )
-        typeform.get_responses_for_all_forms()
-        return typeform.print()
+        delegati = sede.delegati_monitoraggio_trasparenza()
+        for delegato in delegati:
+            if delegato:
+                typeform = TypeFormResponsesTrasparenzaCheck(
+                    persona=delegato, user_pk=delegato.id, comitato_id=sede.id
+                )
+                typeform.get_responses_for_all_forms()
+                if typeform.all_forms_are_completed:
+                    return typeform.print()
+                else:
+                    continue
 
     if id_regionale:
         struttura = OrderedDict()
         regionale = Sede.objects.get(pk=id_regionale)
-        locali = regionale.ottieni_discendenti(includimi=True).filter(estensione__in=[LOCALE, REGIONALE]).order_by('-estensione')
+        locali = regionale.ottieni_discendenti(includimi=True).filter(estensione__in=[LOCALE, REGIONALE]).order_by(
+            '-estensione')
         for locale in locali:
-            delegato = locale.delegato_monitoraggio_trasparenza()
-            if delegato:
-                typeform = TypeFormResponsesTrasparenzaCheck(
-                    persona=delegato, user_pk=delegato.id, comitato_id=locale.id
-                )
-                typeform.get_responses_for_all_forms()
-                struttura[locale] = typeform.all_forms_are_completed
+            delegati = locale.delegati_monitoraggio_trasparenza()
+            for delegato in delegati:
+                if delegato:
+                    typeform = TypeFormResponsesTrasparenzaCheck(
+                        persona=delegato, user_pk=delegato.id, comitato_id=locale.id
+                    )
+                    typeform.get_responses_for_all_forms()
+                    if typeform.all_forms_are_completed:
+                        struttura[locale] = typeform.all_forms_are_completed
+                        break
+                    else:
+                        struttura[locale] = typeform.all_forms_are_completed
 
         context['struttura'] = struttura
     else:
@@ -567,12 +578,17 @@ def trasparenza_publica(request, me):
 
     if action and comitato:
         sede = Sede.objects.get(pk=comitato)
-        delegato = sede.delegato_monitoraggio_trasparenza()
-        typeform = TypeFormResponsesTrasparenzaCheckPubblica(
-            persona=delegato, user_pk=delegato.id, comitato_id=comitato
-        )
-        typeform.get_responses_for_all_forms()
-        return typeform.print()
+        delegati = sede.delegati_monitoraggio_trasparenza()
+        for delegato in delegati:
+            if delegato:
+                typeform = TypeFormResponsesTrasparenzaCheckPubblica(
+                    persona=delegato, user_pk=delegato.id, comitato_id=sede.id
+                )
+                typeform.get_responses_for_all_forms()
+                if typeform.all_forms_are_completed:
+                    return typeform.print()
+                else:
+                    continue
 
     if id_regionale:
         struttura = OrderedDict()
@@ -580,16 +596,18 @@ def trasparenza_publica(request, me):
         locali = regionale.ottieni_discendenti(includimi=True).filter(estensione__in=[LOCALE, REGIONALE]).order_by(
             '-estensione')
         for locale in locali:
-            delegato = locale.delegato_monitoraggio_trasparenza()
-            if delegato:
-                typeform = TypeFormResponsesTrasparenzaCheckPubblica(
-                    persona=delegato, user_pk=delegato.id, comitato_id=locale.id
-                )
-                typeform.get_responses_for_all_forms()
-                if typeform.all_forms_are_completed:
-                    struttura[locale] = typeform.all_forms_are_completed
-                else:
-                    continue
+            delegati = locale.delegati_monitoraggio_trasparenza()
+            for delegato in delegati:
+                if delegato:
+                    typeform = TypeFormResponsesTrasparenzaCheckPubblica(
+                        persona=delegato, user_pk=delegato.id, comitato_id=locale.id
+                    )
+                    typeform.get_responses_for_all_forms()
+                    if typeform.all_forms_are_completed:
+                        struttura[locale] = typeform.all_forms_are_completed
+                        break
+                    else:
+                        continue
 
         context['struttura'] = struttura
     else:
