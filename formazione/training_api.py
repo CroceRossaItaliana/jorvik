@@ -1,6 +1,7 @@
 import requests
 import logging
 from requests import PreparedRequest
+from soupsieve.util import lower
 
 from autenticazione.models import Utenza
 from jorvik.settings import MOODLE_KEY, MOODLE_DOMAIN
@@ -51,7 +52,7 @@ class TrainingApi:
                 "wstoken": self.token,
                 "wsfunction": "core_user_get_users_by_field",
                 "field": "username",
-                "values[0]": email
+                "values[0]": lower(email)
             }
         )
         return r[0] if r else r
