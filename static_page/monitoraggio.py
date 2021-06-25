@@ -859,8 +859,15 @@ class TypeFormResponsesTrasparenzaCheck(TypeFormResponsesCheck):
     ])
 
     def _render_to_string(self, to_print=False):
+
+        id_sede = None
+        resp = self.get_json_from_responses('Jo7AmkVU')['items']
+        for el in resp:
+            if int(el['hidden']['u']) == self.user_pk:
+                id_sede = el['hidden']['c']
+
         return render_to_string('monitoraggio_print.html', {
-            'comitato': self.get_json_from_responses('Jo7AmkVU')['items'][0]['hidden']['nc'],
+            'comitato': Sede.objects.get(pk=id_sede),
             'user_details': self.me,
             # 'request': self.request,
             'results': self._retrieve_data(),
@@ -880,8 +887,14 @@ class TypeFormResponsesTrasparenzaCheck(TypeFormResponsesCheck):
 
 class TypeFormResponsesTrasparenzaCheckPubblica(TypeFormResponsesTrasparenzaCheck):
     def _render_to_string(self, to_print=False):
+        id_sede = None
+        resp = self.get_json_from_responses('Jo7AmkVU')['items']
+        for el in resp:
+            if int(el['hidden']['u']) == self.user_pk:
+                id_sede = el['hidden']['c']
+
         return render_to_string('monitoraggio_print_pubblica.html', {
-            'comitato': Sede.objects.get(pk=self.get_json_from_responses('Jo7AmkVU')['items'][0]['hidden']['c']),
+            'comitato': Sede.objects.get(pk=id_sede),
             'user_details': self.me,
             # 'request': self.request,
             'results': self._retrieve_data(),
