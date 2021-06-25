@@ -611,6 +611,6 @@ def trasparenza_publica(request, me):
 
         context['struttura'] = struttura
     else:
-        context['regionali'] = Sede.objects.filter(estensione=REGIONALE, attiva=True)
+        context['regionali'] = Sede.objects.filter(estensione=REGIONALE, attiva=True).exclude(pk=1638)
 
     return 'monitora_trasparenza_pubblica.html', context
