@@ -1295,6 +1295,23 @@ class Persona(ModelloSemplice, ConMarcaTemporale, ConAllegati, ConVecchioID):
         return self.deleghe_attuali(tipo=PRESIDENTE).exists()
 
     @property
+    def is_presidente_regionale(self):
+        deleghe = self.deleghe_attuali(tipo=PRESIDENTE)
+        if deleghe:
+            for delega in deleghe:
+                if delega.oggetto.estensione == REGIONALE:
+                    return True
+
+    @property
+    def is_commissario_regionale(self):
+        deleghe = self.deleghe_attuali(tipo=COMMISSARIO)
+        if deleghe:
+            for delega in deleghe:
+                if delega.oggetto.estensione == REGIONALE:
+                    return True
+
+
+    @property
     def is_presidente_o_commissario_territoriale(self):
         deleghe = self.deleghe_attuali(tipo__in=[PRESIDENTE, COMMISSARIO])
         if deleghe:
@@ -1507,14 +1524,22 @@ class Persona(ModelloSemplice, ConMarcaTemporale, ConAllegati, ConVecchioID):
     @property
     def delega_responsabile_formazione_regionale(self):
         deleghe = []
-        if self.delega_responsabile_formazione:
-            deleghe.append(self.delega_responsabile_formazione)
+        if self.delege_responsabile_formazione:
+            for delege in self.delege_responsabile_formazione:
+                deleghe.append(delege)
         deleghe_id = []
         if deleghe:
             for delega in deleghe:
                 if delega.oggetto.estensione == REGIONALE:
                     deleghe_id.append(delega.oggetto.id)
         return deleghe_id
+
+    @property
+    def delege_responsabile_formazione(self):
+        """
+        se utenza ha piu di un delega come responsabile formazione
+        """
+        return self.deleghe_attuali(tipo=RESPONSABILE_FORMAZIONE)
 
     @property
     def delgato_ragionale_monitoraggio_fabb_info(self):

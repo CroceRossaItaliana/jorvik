@@ -219,16 +219,16 @@ def monitoraggio_fabb_info_territoriale(request, me):
 def monitoraggio_fabb_info_regionale(request, me):
     if True not in [me.is_presidente_o_commissario_regionale, me.is_responsabile_formazione]: return redirect('/')
     if not hasattr(me, 'sede_riferimento'): return redirect('/')
-
     request_comitato = request.GET.get('comitato')
     if (me.is_presidente_o_commissario_regionale or me.is_responsabile_formazione_regionale) and not request_comitato:
         # GAIA-58: Seleziona comitato
-        if me.is_presidente:
+        if me.is_presidente_regionale:
             deleghe = me.deleghe_presidente_o_commissario_regionale
-        elif me.is_comissario:
+        elif me.is_commissario_regionale:
             deleghe = me.deleghe_commissario_regionale
         else:
             deleghe = me.is_responsabile_formazione_regionale
+
         return 'monitoraggio_choose_comitato.html', {
             'deleghe': deleghe,
             # 'deleghe': deleghe.distinct('oggetto_id') if me.is_comissario else deleghe,
