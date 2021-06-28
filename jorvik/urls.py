@@ -1,4 +1,5 @@
 from gestione_file.viste import serve_protected_file
+from static_page.views import trasparenza_publica
 from .settings import MEDIA_ROOT, DEBUG
 from django.contrib import admin
 from django.conf.urls import include, url
@@ -65,6 +66,9 @@ urlpatterns = [
     url(r'^us/cerca_persona', anagrafica.viste.cerca_scheda),
     url(r'^cv/', include('curriculum.urls', namespace='cv')),
     url(r'^so/', include('sala_operativa.urls', namespace='so')),
+
+    #typeform pulici
+    url(r'^trasparenza/', trasparenza_publica, name="trasparenza_publica"),
 
     # Formazione
     url(r'^formazione/', include('formazione.urls.formazione', namespace='formazione')),
