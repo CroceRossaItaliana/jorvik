@@ -36,6 +36,16 @@
                                    {% if codice %}value="{{ codice }}"{% endif %}>
                         </div>
                         <div class="form-group">
+                            <label class="control-label">Stato</label>
+                            <select class="form-control" id="id_stato" name="stato" title="">
+                                <option value="" {% if not stato %}selected="selected"{% endif %}>----------------------------</option>
+                                <option value="P" {% if stato == 'P' %}selected="selected"{% endif %}>In preparazione</option>
+                                <option value="A" {% if stato == 'A' %}selected="selected"{% endif %}>Attivi</option>
+                                <option value="X" {% if stato == 'X' %}selected="selected"{% endif %}>Annullati</option>
+                                <option value="T" {% if stato == 'T' %}selected="selected"{% endif %}>Terminati</option>
+                            </select>
+                        </div>
+                        <div class="form-group">
                             <label class="control-label">Data inizio</label>
                             <input class="form-control selettore-data-ora"
                                    id="id_data_inizio"
@@ -62,7 +72,7 @@
 
 
 
-    {% include 'paginate.html' with url=url prev=prev next=next stato=stato %}
+    {% include 'paginate.html' with url=url prev=prev next=next stato=stato codice=codice inizio=inizio fine=fine %}
     <table class="formazione-courses__table table table-striped table-bordered">
         <thead>
         <th width="15%" class="formazione-courses__th">Stato
@@ -92,7 +102,7 @@
                         <br/>
                         <i class="fa fa-fw fa-group"></i>
                         <a href="{{ corso.url_direttori }}">
-{#                            {{ corso.deleghe.count }} direttori#}
+                            {#                            {{ corso.deleghe.count }} direttori#}
                         </a>
                     {% endif %}
                 </td>
@@ -132,7 +142,7 @@
             </tr>
         {% endfor %}
     </table>
-    {% include 'paginate.html' with url=url prev=prev next=next stato=stato %}
+    {% include 'paginate.html' with url=url prev=prev next=next stato=stato codice=codice inizio=inizio fine=fine %}
     {% if puo_pianificare %}
         <div class="alert alert-success">
             <h4><i class="fa fa-asterisk"></i> Vuoi pianificare un nuovo corso?</h4>

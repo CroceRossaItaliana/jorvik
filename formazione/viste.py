@@ -176,6 +176,8 @@ def formazione_corsi_base_elenco(request, me):
     if fine:
         c = c.filter(data_inizio__lte=datetime.strptime(fine, '%d/%m/%Y %H:%M'))
 
+
+
     corsi = Paginator(c, 4)
     page = corsi.page(num_page)
 
