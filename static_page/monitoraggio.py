@@ -735,9 +735,13 @@ class TypeFormResponsesCheck:
             return has_answers  # must return True
 
     def get_answers_from_json(self, json):
-        items = json['items'][0]
-        answers = items['answers']
-        return answers
+        for el in json['items']:
+            if int(el['hidden']['u']) == self.user_pk and int(el['hidden']['c']) == self.comitato_id:
+                return el['answers']
+        return {}
+        # items = json['items'][0]
+        # answers = items['answers']
+        # return answers
 
     def _retrieve_data(self):
         retrieved = OrderedDict()
@@ -860,7 +864,7 @@ class TypeFormResponsesTrasparenzaCheck(TypeFormResponsesCheck):
 
     def _render_to_string(self, to_print=False):
         return render_to_string('monitoraggio_print.html', {
-            'comitato': self.get_json_from_responses('Jo7AmkVU')['items'][0]['hidden']['nc'],
+            'comitato': Sede.objects.get(pk=self.comitato_id),
             'user_details': self.me,
             # 'request': self.request,
             'results': self._retrieve_data(),
@@ -869,13 +873,18 @@ class TypeFormResponsesTrasparenzaCheck(TypeFormResponsesCheck):
 
     def print(self):
         html = self._render_to_string(to_print=True)
-
-        # if hasattr(self, '_no_data_retrieved'):
-        #     messages.add_message(self.request, messages.ERROR,
-        #                          'Non ci sono i dati per generare il report.')
-        #     return redirect(reverse('pages:monitoraggio'))
-
         return HttpResponse(html)
+
+
+class TypeFormResponsesTrasparenzaCheckPubblica(TypeFormResponsesTrasparenzaCheck):
+    def _render_to_string(self, to_print=False):
+        return render_to_string('monitoraggio_print_pubblica.html', {
+            'comitato': Sede.objects.get(pk=self.comitato_id),
+            'user_details': self.me,
+            # 'request': self.request,
+            'results': self._retrieve_data(),
+            'to_print': to_print,
+        })
 
 
 class TypeFormResponsesAutocontrolloCheck(TypeFormResponsesCheck):
@@ -894,6 +903,7 @@ class TypeFormResponsesAutocontrolloCheck(TypeFormResponsesCheck):
             # questa ritorna l'id dell comitato
             # comitato = self.get_json_from_responses('ZwMX5rsG')['items'][0]['hidden']['c']
             comitato = Sede.objects.get(pk=self.get_json_from_responses('ZwMX5rsG')['items'][0]['hidden']['c'])
+
         return render_to_string('monitoraggio_print.html', {
             'comitato': comitato,
             'user_details': self.me,
@@ -904,11 +914,6 @@ class TypeFormResponsesAutocontrolloCheck(TypeFormResponsesCheck):
 
     def print(self):
         html = self._render_to_string(to_print=True)
-
-        # if hasattr(self, '_no_data_retrieved'):
-        #     messages.add_message(self.request, messages.ERROR,
-        #                          'Non ci sono i dati per generare il report.')
-        #     return redirect(reverse('pages:monitoraggio'))
 
         return HttpResponse(html)
 
@@ -977,11 +982,6 @@ class TypeFormResponsesFabbisogniFormativiTerritorialeCheck(TypeFormResponsesChe
     def print(self):
         html = self._render_to_string(to_print=True)
 
-        # if hasattr(self, '_no_data_retrieved'):
-        #     messages.add_message(self.request, messages.ERROR,
-        #                          'Non ci sono i dati per generare il report.')
-        #     return redirect(reverse('pages:monitoraggio'))
-
         return HttpResponse(html)
 
 
@@ -1049,10 +1049,5 @@ class TypeFormResponsesFabbisogniFormativiRagionaleCheck(TypeFormResponsesCheck)
 
 def print(self):
         html = self._render_to_string(to_print=True)
-
-        # if hasattr(self, '_no_data_retrieved'):
-        #     messages.add_message(self.request, messages.ERROR,
-        #                          'Non ci sono i dati per generare il report.')
-        #     return redirect(reverse('pages:monitoraggio'))
 
         return HttpResponse(html)

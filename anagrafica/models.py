@@ -2349,11 +2349,21 @@ class Sede(ModelloAlbero, ConMarcaTemporale, ConGeolocalizzazione, ConVecchioID,
     def delegato_monitoraggio_trasparenza(self):
         area = Area.objects.filter(sede=self, nome__iexact='Trasparenza')
         if area:
-            delega = Delega.objects.filter(tipo=DELEGATO_AREA, oggetto_id=area.first().id).first()
+            delega = Delega.objects.filter(tipo=DELEGATO_AREA, oggetto_id=area.first().id, fine=None).first()
             if delega:
                 return delega.persona
         presidente = self.presidente()
         return presidente
+
+    def delegati_monitoraggio_trasparenza(self):
+        delegati = []
+        area = Area.objects.filter(sede=self, nome__iexact='Trasparenza')
+        if area:
+            delega = Delega.objects.filter(tipo=DELEGATO_AREA, oggetto_id=area.first().id, fine=None).first()
+            if delega:
+                delegati.append(delega.persona)
+        delegati.append(self.presidente())
+        return delegati
 
     # def monitora_fabb_info_regionali(self):
     #     deleghe_list = []
