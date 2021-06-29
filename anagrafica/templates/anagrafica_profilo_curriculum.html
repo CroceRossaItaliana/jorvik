@@ -2,6 +2,8 @@
 {% load static %}
 
 {% load bootstrap3 %}
+{% load base_tags %}
+
 {% block profilo_corpo %}
 {% if sezione %}
     <div class="row">
@@ -77,6 +79,9 @@
                                                 <span style="background-color: #c1bbbb; border-radius: 10px 10px 10px 10px; padding: 3px">{{ skill }}</span>
                                             {% endfor %}
                                         {% endif %}
+                                    {% if t.corso_partecipazione %} <!-- and not t.is_expired_course_title -->
+                                        <br><a href="{% url 'aspirante:persona_report_schede' t.corso_partecipazione.corso.pk pk %}?scarica_uno_attestato={{t.pk}}">Scarica attestato</a>
+                                    {% endif %}
                                     </p>
 
                                     {% if t.certificato %}
@@ -107,27 +112,35 @@
                                 </td>
                                 <td class="piu-piccolo" style="width: 30% !important;">
                                     {% if t.data_ottenimento %}
-                                        <i class="fa fa-fw text-muted fa-calendar"></i>
-                                        {{ t.data_ottenimento|date:"SHORT_DATE_FORMAT" }}
-                                        <br />
+                                        <i class="fa fa-fw text-muted fa-calendar"></i>{{ t.data_ottenimento|date:"SHORT_DATE_FORMAT" }}<br />
                                     {% endif %}
 
                                     {% if t.luogo_ottenimento %}
-                                        <i class="fa fa-fw text-muted fa-map-marker"></i>
-                                        {{ t.luogo_ottenimento }}
-                                        <br />
+                                        <i class="fa fa-fw text-muted fa-map-marker"></i>{{ t.luogo_ottenimento }}<br />
+                                    {% endif %}
+
+                                    {% if t.tipo_documentazione %}
+                                        <i class="fa fa-fw text-muted fa-file"></i> {{ t.get_tipo_documentazione_display }}<br />
+                                    {% endif %}
+
+                                    {% if t.attestato_file %}
+                                        <i class="fa fa-fw text-muted fa-file"></i> <a href="{{ t.attestato_file.url }}" download>{% get_filename t.attestato_file %}</a><br />
+                                    {% endif %}
+
+                                    {% if t.direttore_corso %}
+                                        <i class="fa fa-fw text-muted fa-user"></i> {{ t.direttore_corso }}<br />
+                                    {% endif %}
+
+                                    {% if t.note %}
+                                        <i class="fa fa-fw text-muted fa-clipboard"></i> {{ t.note }}<br />
                                     {% endif %}
 
                                     {% if t.data_scadenza %}
-                                        <i class="fa fa-fw text-muted fa-clock-o"></i>
-                                        {{ t.data_scadenza|date:"SHORT_DATE_FORMAT" }}
-                                        <br />
+                                        <i class="fa fa-fw text-muted fa-clock-o"></i>{{ t.data_scadenza|date:"SHORT_DATE_FORMAT" }}<br />
                                     {% endif %}
 
                                     {% if t.codice %}
-                                        <i class="fa fa-fw text-muted fa-barcode"></i>
-                                        <span class="monospace">{{ t.codice }}</span>
-                                        <br />
+                                        <i class="fa fa-fw text-muted fa-barcode"></i><span class="monospace">{{ t.codice }}</span><br />
                                     {% endif %}
 
                                 </td>
