@@ -359,3 +359,4 @@ class StatisticheServiziForm(forms.Form):
 
     sedi = forms.ModelMultipleChoiceField(queryset=Sede.objects.filter(attiva=True))
     periodo = forms.ChoiceField(choices=SCELTE, initial=SETTIMANA)
+

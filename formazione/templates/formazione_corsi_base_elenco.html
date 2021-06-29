@@ -9,12 +9,68 @@
 {% block app_contenuto %}
     <h2 class="allinea-centro text-success">Corsi</h2>
 
+    <div class="col-md-12">
+        <div class="panel panel-primary">
+            <div class="panel-heading" data-toggle="collapse"
+                 href="#collapseFiltro"
+                 role="button"
+                 aria-expanded="false"
+                 aria-controls="collapseFiltro">
+                <h2 class="panel-title"><i class="fa fa-fw fa-search"></i>
+                    Ricerca Avanzata
+                </h2>
+            </div>
+            <div class="panel-body collapse" id="collapseFiltro">
+
+                <form method="GET" action=".">
+                    <div style="padding: 5px;">
+                        <div class="form-group">
+                            <label class="control-label">Codice Corso</label>
+                            <input class="form-control"
+                                   id="codice"
+                                   min="0"
+                                   name="codice"
+                                   placeholder="Codice corso"
+                                   step="any"
+                                   type="number"
+                                   {% if codice %}value="{{ codice }}"{% endif %}>
+                        </div>
+                        <div class="form-group">
+                            <label class="control-label">Data inizio</label>
+                            <input class="form-control selettore-data-ora"
+                                   id="id_data_inizio"
+                                   name="inizio" placeholder="Data inizio"
+                                   type="text"
+                                   {% if inizio %}value="{{ inizio }}"{% endif %}>
+                        </div>
+                        <div class="form-group">
+                            <label class="control-label">Data fine</label>
+                            <input class="form-control selettore-data-ora"
+                                   id="id_data_fine"
+                                   name="fine" placeholder="Data fine"
+                                   type="text"
+                                   {% if fine %}value="{{ fine }}"{% endif %}>
+                        </div>
+                    </div>
+                    <button type="submit" class="btn btn-block btn-primary">
+                        <i class="fa fa-fw fa-search"></i> Cerca
+                    </button>
+                </form>
+            </div>
+        </div>
+    </div>
+
+
+
+    {% include 'paginate.html' with url=url prev=prev next=next stato=stato %}
     <table class="formazione-courses__table table table-striped table-bordered">
         <thead>
-            <th width="15%" class="formazione-courses__th">Stato <div class="filter-tag">{% corsi_filter %}</div></th>
-            <th class="formazione-courses__th">Corso e Sede</th>
-            <th class="formazione-courses__th">Luogo e data</th>
-            <th class="formazione-courses__th">Iscritti</th>
+        <th width="15%" class="formazione-courses__th">Stato
+            <div class="filter-tag">{% corsi_filter %}</div>
+        </th>
+        <th class="formazione-courses__th">Corso e Sede</th>
+        <th class="formazione-courses__th">Luogo e data</th>
+        <th class="formazione-courses__th">Iscritti</th>
         </thead>
 
         {% for corso in corsi %}
@@ -29,31 +85,31 @@
                 </td>
                 <td>
                     <i class="fa fa-fw fa-pencil"></i>
-                        <strong>{{ corso.link|safe }}</strong><br />
+                    <strong>{{ corso.link|safe }}</strong><br/>
                     <i class="fa fa-fw fa-home"></i>
-                        {{ corso.sede.link|safe }}
+                    {{ corso.sede.link|safe }}
                     {% if puo_pianificare %}
-                    <br />
-                    <i class="fa fa-fw fa-group"></i>
+                        <br/>
+                        <i class="fa fa-fw fa-group"></i>
                         <a href="{{ corso.url_direttori }}">
-                            {{ corso.deleghe.count }} direttori
+{#                            {{ corso.deleghe.count }} direttori#}
                         </a>
                     {% endif %}
                 </td>
 
                 <td class="piu-piccolo">
                     <i class="fa fa-fw fa-map-marker"></i>
-                        {% if corso.locazione %}
-                            {{ corso.locazione }}
-                        {% else %}
-                            (Nessun indirizzo specificato)
-                        {% endif %}
-                        <br />
+                    {% if corso.locazione %}
+                        {{ corso.locazione }}
+                    {% else %}
+                        (Nessun indirizzo specificato)
+                    {% endif %}
+                    <br/>
                     <i class="fa fa-fw fa-calendar"></i>
-                        Inizia: {{ corso.data_inizio }}
-                        <br />
+                    Inizia: {{ corso.data_inizio }}
+                    <br/>
                     <i class="fa fa-fw fa-calendar"></i>
-                        Esami: {{ corso.data_esame }}
+                    Esami: {{ corso.data_esame }}
                 </td>
 
                 <td>
@@ -76,11 +132,13 @@
             </tr>
         {% endfor %}
     </table>
-
+    {% include 'paginate.html' with url=url prev=prev next=next stato=stato %}
     {% if puo_pianificare %}
         <div class="alert alert-success">
             <h4><i class="fa fa-asterisk"></i> Vuoi pianificare un nuovo corso?</h4>
-            <p>Se vuoi pianificare un nuovo corso, clicca su <a href='{% url "formazione:new_course" %}' class="btn btn-xs btn-success">Pianifica un Nuovo Corso</a>.</p>
+            <p>Se vuoi pianificare un nuovo corso, clicca su <a href='{% url "formazione:new_course" %}'
+                                                                class="btn btn-xs btn-success">Pianifica un Nuovo
+                Corso</a>.</p>
             <p>Potrai assegnare un Direttore del Corso che si occuper&agrave; di organizzarne i particolari.</p>
         </div>
     {% endif %}

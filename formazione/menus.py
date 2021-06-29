@@ -24,11 +24,10 @@ def formazione_menu(menu_name, me=None):
     FORMAZIONE = (
         ("Corsi", (
             ("Attiva Corso", "fa-asterisk", reverse('formazione:new_course')) if to_show(me, GESTIONE_CORSI_SEDE) else None,
-            ("Elenco Corsi", "fa-list", reverse('aspirante:corsi_base')),
-
+            ("Gestione Corsi", "fa-list", reverse('formazione:list_courses')) if to_show(me, GESTIONE_CORSI_SEDE) else None,
             ("Attiva Evento", "fa-asterisk", reverse('formazione:evento_nuovo')) if to_show(me, GESTIONE_EVENTI_SEDE) else None,
             ("Gestione Eventi", "fa-list", reverse('formazione:evento_elenco')) if to_show(me, GESTIONE_EVENTO) else None,
-
+            ("Elenco Corsi", "fa-list", reverse('aspirante:corsi_base')),
             ("Domanda formativa", "fas fa-chart-pie", reverse('formazione:domanda')) if to_show(me, GESTIONE_CORSI_SEDE) else None,
             ('Catalogo Corsi', 'fa-list-alt', reverse('courses:catalog')),
             ('Acronimi', 'fa-book', '/page/glossario-corsi/'),

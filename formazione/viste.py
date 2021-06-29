@@ -47,22 +47,20 @@ from .training_api import TrainingApi
 
 @pagina_privata
 def formazione(request, me):
-    corsi = me.oggetti_permesso(GESTIONE_CORSO)
-
-    # Filtra corsi by stato
-    if request.GET.get('stato'):
-        stato = request.GET.get('stato')
-        # Verifica che modello ha lo stato impostato in get-request
-        if stato in [i[0] for i in Corso.STATO]:
-            filtered = corsi.filter(stato=stato)
-            if not filtered.exists():  # queryset vuoto
-                # Rindirizza sulla pagina con tutti i corsi disponibili
-                return redirect('formazione:index')
-            corsi = filtered
+    # num_page = int(request.GET.get('page', "1"))
+    # stato = request.GET.get('stato', CorsoBase.PREPARAZIONE)
+    # c = me.oggetti_permesso(GESTIONE_CORSO).filter(stato=stato)
+    #
+    # corsi = Paginator(c, 4)
+    # page = corsi.page(num_page)
 
     context = {
-        "corsi": corsi,
+        # "corsi": page,
+        # 'next': num_page + 1 if page.has_next() else None,
+        # 'prev': num_page - 1 if page.has_previous() else None,
         "sedi": me.oggetti_permesso(GESTIONE_CORSI_SEDE),
+        'url': reverse('formazione:index'),
+        # 'stato': stato,
         "puo_pianificare": me.ha_permesso(GESTIONE_CORSI_SEDE),
         "me": me,
     }
@@ -153,14 +151,47 @@ def formazione_osserva_corsi(request, me):
 @pagina_privata
 def formazione_corsi_base_elenco(request, me):
     puo_modificare = me.ha_permesso(GESTIONE_CORSI_SEDE)
+
     if not puo_modificare:
         return redirect(reverse('aspirante:corsi_base'))
 
+    num_page = int(request.GET.get('page', "1"))
+
+    stato = request.GET.get('stato', None)
+    codice = request.GET.get('codice', None)
+    inizio = request.GET.get('inizio', None)
+    fine = request.GET.get('fine', None)
+
+    c = me.oggetti_permesso(GESTIONE_CORSO)
+
+    if stato:
+        c = c.filter(stato=stato)
+
+    if codice:
+        c = c.filter(progressivo=codice)
+
+    if inizio:
+        c = c.filter(data_inizio__gte=datetime.strptime(inizio, '%d/%m/%Y %H:%M'))
+
+    if fine:
+        c = c.filter(data_inizio__lte=datetime.strptime(fine, '%d/%m/%Y %H:%M'))
+
+    corsi = Paginator(c, 4)
+    page = corsi.page(num_page)
+
     context = {
-        "corsi": me.oggetti_permesso(GESTIONE_CORSO),
+        "corsi": page,
+        'next': num_page + 1 if page.has_next() else None,
+        'prev': num_page - 1 if page.has_previous() else None,
+        'url': reverse('formazione:list_courses'),
+        'stato': stato,
+        'codice': codice,
+        'inizio': inizio,
+        'fine': fine,
         "puo_pianificare": puo_modificare,
-        "posso_annullare": me.is_presidente or me.is_comissario or me.is_responsabile_formazione
+        "posso_annullare": me.is_presidente or me.is_comissario or me.is_responsabile_formazione,
     }
+
     return 'formazione_corsi_base_elenco.html', context
 
 
