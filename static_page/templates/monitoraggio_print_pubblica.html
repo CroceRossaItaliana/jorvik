@@ -1,0 +1,85 @@
+<!doctype html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport"
+          content="width=device-width, user-scalable=no, initial-scale=1.0, maximum-scale=1.0, minimum-scale=1.0">
+    <meta http-equiv="X-UA-Compatible" content="ie=edge">
+    <title>Document</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+        }
+
+        .results-table {
+            border-collapse: collapse;
+            max-width: 1024px;
+            margin: 0 auto;
+            width: 100%;
+        }
+
+        .results-form-name {
+            font-size: 24px;
+            font-weight: bold;
+            text-align: center;
+            padding-top: 25px;
+            padding-bottom: 12px;
+        }
+
+        .results-form-name {
+            border-top: 1px solid #666;
+        }
+
+        .results-form-name:first-child {
+            border-top: none;
+        }
+
+        .results-item-tr {
+            border-bottom: 1px solid #666;
+        }
+
+        .results-item-td {
+            padding: 15px 0;
+        }
+
+        {#.results-item-td div {max-width: 85%;}#}
+        .results-item-td .question-parent {
+            margin-top: 15px;
+            text-align: center;
+            padding-bottom: 10px;
+            font-weight: bold;
+        }
+    </style>
+</head>
+<body {% if to_print %}onload="window.print()"{% endif %}>
+<table class="results-table">
+    <tr>
+        <td colspan="2" align="center">
+            {{ comitato }}
+        </td>
+    </tr>
+    {% for result in results.items %}
+        <tr>
+            <td colspan="2" class="results-form-name">{{ result.1.0.form_name|default:result.0 }}</td>
+        </tr>
+        <tr>
+            <td width="70%"><strong>Domanda</strong></td>
+            <td width="30%"><strong>Risposta</strong></td>
+        </tr>
+        {% for result in result.1 %}
+            {% if result.question_title != "Indicare gli estremi e la tipologia del Documento di Identità del dichiarante" and result.question_title != "Si allega alla presente copia del documento di identità del dichiarante nella sua qualità di legale rappresentante pro tempore." %}
+                <tr class="results-item-tr">
+                    <td class="results-item-td">
+                        {% if result.question_parent %}
+                            <div class="question-parent">{{ result.question_parent.title }}</div>
+                        {% endif %}
+                        <div>{{ result.question_title }}</div>
+                    </td>
+                    <td class="results-item-td" style="font-size: 10px; text-align: center">{{ result.answer }}</td>
+                </tr>
+            {% endif %}
+        {% endfor %}
+    {% endfor %}
+</table>
+</body>
+</html>
