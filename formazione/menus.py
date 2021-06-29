@@ -57,7 +57,7 @@ def formazione_menu(menu_name, me=None):
             ("Monitora Fabbisogni Formativi Territoriali", 'fa-user',
              reverse('pages:monitora-fabb-info-territoriale')) if ( me and (
                     me.delega_presidente_e_commissario_regionale or
-                    me.is_delgato_regionale_monitoraggio_fabbisogni_informativi
+                    me.delega_responsabile_formazione_regionale
             )) else None,
             ("Monitora Fabbisogni Formativi", 'fa-user',
              reverse('pages:monitora-fabb-info-regionale')) if
