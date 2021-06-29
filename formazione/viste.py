@@ -162,21 +162,21 @@ def formazione_corsi_base_elenco(request, me):
     inizio = request.GET.get('inizio', None)
     fine = request.GET.get('fine', None)
 
-    c = me.oggetti_permesso(GESTIONE_CORSO)
+    filtri = {}
 
     if stato:
-        c = c.filter(stato=stato)
+        filtri['stato'] = stato
 
     if codice:
-        c = c.filter(progressivo=codice)
+        filtri['progressivo'] = codice
 
     if inizio:
-        c = c.filter(data_inizio__gte=datetime.strptime(inizio, '%d/%m/%Y %H:%M'))
+        filtri['data_inizio__gte'] = datetime.strptime(inizio, '%d/%m/%Y %H:%M')
 
     if fine:
-        c = c.filter(data_inizio__lte=datetime.strptime(fine, '%d/%m/%Y %H:%M'))
+        filtri['data_inizio__lte'] = datetime.strptime(fine, '%d/%m/%Y %H:%M')
 
-
+    c = me.oggetti_permesso(GESTIONE_CORSO).filter(**filtri)
 
     corsi = Paginator(c, 4)
     page = corsi.page(num_page)
