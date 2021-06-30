@@ -11,7 +11,7 @@
     <h4>Report attivit&agrave;</h4>
     <hr />
     <p>Attivit&agrave; organizzata dal {{ attivita.sede.nome_completo }} in data {{ attivita.creazione|date:"SHORT_DATE_FORMAT" }}.</p>
-    <p>Area d'intervento di riferimento: Obiettivo Strategico {{ attivita.area.obiettivo }}, {{ attivita.area.nome }}.</p>
+    <p>Area d'intervento di riferimento: {{ attivita.area.settore_display }}, {{ attivita.area.nome }}.</p>
     <p>Localit&agrave; del servizio: {{ attivita.locazione|default:"Non specificata." }}.</p>
     <hr />
     <h3>Elenco dei turni e dei partecipanti</h3>

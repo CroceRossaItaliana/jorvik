@@ -15,7 +15,9 @@ from ..permessi.applicazioni import (PRESIDENTE, DIRETTORE_CORSO,
                                      UFFICIO_SOCI, DELEGATO_AREA,
                                      RESPONSABILE_AREA, REFERENTE, REFERENTE_SERVIZI_SO,
                                      UFFICIO_SOCI_CM, UFFICIO_SOCI_IIVV, REFERENTE_OPERAZIONE_SO, REFERENTE_FUNZIONE_SO,
-                                     RESPONSABILE_EVENTO)
+                                     CONSIGLIERE_GIOVANE_COOPTATO,
+                                     UFFICIO_SOCI_CM, UFFICIO_SOCI_IIVV, REFERENTE_OPERAZIONE_SO, REFERENTE_FUNZIONE_SO,
+                                     RESPONSABILE_EVENTO, DELEGATO_OBIETTIVO_7, DELEGATO_OBIETTIVO_8)
 from ..permessi.costanti import (GESTIONE_SOCI, ELENCHI_SOCI, \
                                  GESTIONE_ATTIVITA_SEDE, GESTIONE_CORSI_SEDE, \
                                  GESTIONE_SEDE, GESTIONE_ATTIVITA_AREA,
@@ -50,7 +52,10 @@ from ..permessi.costanti import (GESTIONE_SOCI, ELENCHI_SOCI, \
                                  GESTIONE_REFERENTI_SO,
                                  GESTIONE_SOCI_CM, GESTIONE_SOCI_IIVV, GESTIONE_OPERAZIONI,
                                  GESTIONE_REFERENTI_OPERAZIONI_SO, GESTIONE_FUNZIONI, GESTIONE_REFERENTI_FUNZIONI_SO,
-                                 GESTIONE_EVENTI_SEDE, GESTIONE_EVENTO, )
+                                 GESTIONE_EVENTI_SEDE, GESTIONE_EVENTO,
+                                 GESTIONE_REFERENTI_OPERAZIONI_SO, GESTIONE_FUNZIONI, GESTIONE_REFERENTI_FUNZIONI_SO,
+                                 RUBRICA_CONSIGLIERE_GIOVANE, RUBRICA_DELEGATI_OBIETTIVO_7,
+                                 RUBRICA_DELEGATI_OBIETTIVO_8, )
 
 """
 Questo modulo contiene tutte le funzioni per testare i permessi
@@ -157,6 +162,30 @@ def permessi_consigliere(sede):
     :return: Lista di permessi.
     """
     return []
+
+
+def permessi_consigliere_giovane(sede):
+    """
+    Permessi della delega di CONSIGLIERE.
+
+    :param sede: Sede di cui si e' consigliere.
+    :return: Lista di permessi.
+    """
+    return [
+        (RUBRICA_CONSIGLIERE_GIOVANE, sede.espandi(includi_me=True, pubblici=True))
+    ]
+
+
+def permessi_consigliere_giovane_cooptato(sede):
+    """
+    Permessi della delega di CONSIGLIERE.
+
+    :param sede: Sede di cui si e' consigliere.
+    :return: Lista di permessi.
+    """
+    return [
+        (RUBRICA_CONSIGLIERE_GIOVANE, sede.espandi(includi_me=True, pubblici=True))
+    ]
 
 
 def permessi_ufficio_soci_unita(sede):
@@ -279,7 +308,7 @@ def permessi_delegato_obiettivo_5(sede):
     sede_espansa = sede.espandi(includi_me=True)
     return [
         (RUBRICA_DELEGATI_GIOVANI, sede.espandi(includi_me=True, pubblici=True)),
-           ] + permessi_delegato_area(Area.objects.filter(sede__in=sede_espansa, obiettivo=5))
+    ] + permessi_delegato_area(Area.objects.filter(sede__in=sede_espansa, obiettivo=5))
 
 
 def permessi_delegato_obiettivo_6(sede):
@@ -287,7 +316,24 @@ def permessi_delegato_obiettivo_6(sede):
     sede_espansa = sede.espandi(includi_me=True)
     return [
         (RUBRICA_DELEGATI_OBIETTIVO_6, sede.espandi(includi_me=True, pubblici=True)),
-           ] + permessi_delegato_area(Area.objects.filter(sede__in=sede_espansa, obiettivo=6))
+    ] + permessi_delegato_area(Area.objects.filter(sede__in=sede_espansa, obiettivo=6)) \
+      + permessi_responsabile_formazione(sede)
+
+
+def permessi_delegato_obiettivo_7(sede):
+    from attivita.models import Area
+    sede_espansa = sede.espandi(includi_me=True)
+    return [
+        (RUBRICA_DELEGATI_OBIETTIVO_7, sede.espandi(includi_me=True, pubblici=True)),
+           ] + permessi_delegato_area(Area.objects.filter(sede__in=sede_espansa, obiettivo=7))
+
+
+def permessi_delegato_obiettivo_8(sede):
+    from attivita.models import Area
+    sede_espansa = sede.espandi(includi_me=True)
+    return [
+        (RUBRICA_DELEGATI_OBIETTIVO_8, sede.espandi(includi_me=True, pubblici=True)),
+           ] + permessi_delegato_area(Area.objects.filter(sede__in=sede_espansa, obiettivo=8))
 
 
 def permessi_referente_gruppo(gruppo):
@@ -485,7 +531,8 @@ def permessi_responsabile_autoparco(sede):
 PERMESSI_FUNZIONI = (
     (COMMISSARIO,               permessi_presidente),
     (CONSIGLIERE,               permessi_consigliere),
-    (CONSIGLIERE_GIOVANE,       permessi_consigliere),
+    (CONSIGLIERE_GIOVANE,       permessi_consigliere_giovane),
+    (CONSIGLIERE_GIOVANE_COOPTATO,       permessi_consigliere_giovane_cooptato),
     (PRESIDENTE,                permessi_presidente),
     # (VICE_PRESIDENTE,           permessi_presidente),
     (UFFICIO_SOCI,              permessi_ufficio_soci),
@@ -510,6 +557,8 @@ PERMESSI_FUNZIONI = (
     (DELEGATO_OBIETTIVO_4,      permessi_delegato_obiettivo_4),
     (DELEGATO_OBIETTIVO_5,      permessi_delegato_obiettivo_5),
     (DELEGATO_OBIETTIVO_6,      permessi_delegato_obiettivo_6),
+    (DELEGATO_OBIETTIVO_7,      permessi_delegato_obiettivo_7),
+    (DELEGATO_OBIETTIVO_8,      permessi_delegato_obiettivo_8),
     (RESPONSABILE_FORMAZIONE,   permessi_responsabile_formazione),
 )
 

@@ -32,5 +32,5 @@ def turni_raggruppa_giorno(qs_turni):
 
 
 def valida_numero_obiettivo(numero):
-    if numero < 1 or numero > 6:
-        raise ValidationError("Inserisci un numero di obiettivo (1, 2, 3, 4, 5 o 6).")
+    if numero < 1 or numero > 8:
+        raise ValidationError("Inserisci un numero di obiettivo (1, 2, 3, 4, 5, 6, 7, 8).")

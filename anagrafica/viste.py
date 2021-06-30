@@ -54,7 +54,8 @@ from .permessi.applicazioni import (PRESIDENTE, UFFICIO_SOCI,
                                     PERMESSI_NOMI, RUBRICHE_TITOLI, CONSIGLIERE,
                                     VICE_PRESIDENTE, CONSIGLIERE_GIOVANE,
                                     DELEGATO_SO, UFFICIO_SOCI_CM,
-                                    UFFICIO_SOCI_IIVV, )
+                                    UFFICIO_SOCI_IIVV, CONSIGLIERE_GIOVANE_COOPTATO, DELEGATO_OBIETTIVO_7,
+                                    DELEGATO_OBIETTIVO_8, )
 from .permessi.costanti import (ERRORE_PERMESSI, MODIFICA, LETTURA, GESTIONE_SEDE,
                                 GESTIONE, ELENCHI_SOCI, GESTIONE_ATTIVITA, GESTIONE_ATTIVITA_AREA, GESTIONE_CORSO)
 from .permessi.incarichi import (INCARICO_GESTIONE_RISERVE, INCARICO_GESTIONE_TITOLI,
@@ -1278,18 +1279,20 @@ def _presidente_sede_ruoli(sede):
     sezioni = OrderedDict()
 
     sezioni.update({
-        "Obiettivi Strategici": [
-            (DELEGATO_OBIETTIVO_1, "Obiettivo Strategico I", sede.delegati_attuali(tipo=DELEGATO_OBIETTIVO_1).count(),
+        "Delegati": [
+            (DELEGATO_OBIETTIVO_1, "Salute", sede.delegati_attuali(tipo=DELEGATO_OBIETTIVO_1).count(),
              []),
-            (DELEGATO_OBIETTIVO_2, "Obiettivo Strategico II", sede.delegati_attuali(tipo=DELEGATO_OBIETTIVO_2).count(),
+            (DELEGATO_OBIETTIVO_2, "Inclusione Sociale", sede.delegati_attuali(tipo=DELEGATO_OBIETTIVO_2).count(),
              []),
-            (DELEGATO_OBIETTIVO_3, "Obiettivo Strategico III", sede.delegati_attuali(tipo=DELEGATO_OBIETTIVO_3).count(),
+            (DELEGATO_OBIETTIVO_3, "Operazione, Emergenza e Soccorso", sede.delegati_attuali(tipo=DELEGATO_OBIETTIVO_3).count(),
              []),
-            (DELEGATO_OBIETTIVO_4, "Obiettivo Strategico IV", sede.delegati_attuali(tipo=DELEGATO_OBIETTIVO_4).count(),
+            (DELEGATO_OBIETTIVO_4, "Principi e Valori Umanitari", sede.delegati_attuali(tipo=DELEGATO_OBIETTIVO_4).count(),
              []),
-            (DELEGATO_OBIETTIVO_5, "Obiettivo Strategico V", sede.delegati_attuali(tipo=DELEGATO_OBIETTIVO_5).count(),
+            (DELEGATO_OBIETTIVO_6, "Innovazione, Volontariato e Formazione", sede.delegati_attuali(tipo=DELEGATO_OBIETTIVO_6).count(),
              []),
-            (DELEGATO_OBIETTIVO_6, "Obiettivo Strategico VI", sede.delegati_attuali(tipo=DELEGATO_OBIETTIVO_6).count(),
+            (DELEGATO_OBIETTIVO_7, "Cooperazione internazionale decentrata", sede.delegati_attuali(tipo=DELEGATO_OBIETTIVO_7).count(),
+             []),
+            (DELEGATO_OBIETTIVO_8, "Riduzione del rischio da disastri e resilienza", sede.delegati_attuali(tipo=DELEGATO_OBIETTIVO_8).count(),
              []),
         ]
 
@@ -1307,6 +1310,9 @@ def _presidente_sede_ruoli(sede):
             (RESPONSABILE_AUTOPARCO, "Autoparco", sede.delegati_attuali(tipo=RESPONSABILE_AUTOPARCO).count(), []),
             (DELEGATO_CO, "Centrale Operativa", sede.delegati_attuali(tipo=DELEGATO_CO).count(), []),
             (DELEGATO_SO, "Sala Operativa", sede.delegati_attuali(tipo=DELEGATO_SO).count(), []),
+            (DELEGATO_OBIETTIVO_5, "Coordinatore attività per i Giovani",
+             sede.delegati_attuali(tipo=DELEGATO_OBIETTIVO_5).count(),
+             []),
         ]
     })
 
@@ -1315,8 +1321,12 @@ def _presidente_sede_ruoli(sede):
             (VICE_PRESIDENTE, "Vice Presidente", sede.delegati_attuali(tipo=VICE_PRESIDENTE).count(),
              [sede.vice_presidente()] if sede.vice_presidente() else []),
             (CONSIGLIERE, "Consigliere", sede.delegati_attuali(tipo=CONSIGLIERE).count(), sede.consiglieri()),
-            (CONSIGLIERE_GIOVANE, "Consigliere giovane", sede.delegati_attuali(tipo=CONSIGLIERE_GIOVANE).count(),
+            (CONSIGLIERE_GIOVANE, "Consigliere Rappresentante dei Giovani", sede.delegati_attuali(tipo=CONSIGLIERE_GIOVANE).count(),
              [sede.consigliere_giovane()] if sede.consigliere_giovane() else []),
+            (CONSIGLIERE_GIOVANE_COOPTATO, "Consigliere Rappresentante Giovane Cooptato",
+             sede.delegati_attuali(tipo=CONSIGLIERE_GIOVANE_COOPTATO).count(),
+             [sede.consigliere_giovane_cooptato()] if sede.consigliere_giovane_cooptato() else []
+             ),
         ]
     })
 
@@ -1860,9 +1870,44 @@ def admin_import_presidenti(request, me):
                             )
                         ]
                         continue
+                # chiudi deleghe precedenti rappresentante dei gionvani e cooptato
+                for delega in sede.deleghe_attuali(
+                    al_giorno=datetime.datetime.now(), tipo__in=[CONSIGLIERE_GIOVANE, CONSIGLIERE_GIOVANE_COOPTATO], fine=None
+                ):
+                    delega.termina(mittente=me, accoda=True, termina_at=datetime.datetime.now())
 
                 gia_consigliere = persona.deleghe_attuali(
                     al_giorno=datetime.datetime.now(), tipo=CONSIGLIERE_GIOVANE, fine=None
+                ).first()
+
+                if gia_consigliere:
+                    gia_consigliere.termina(mittente=me, accoda=True, termina_at=datetime.datetime.now())
+
+                msg = "OK, Nomina effettuata."
+            elif nomina == CONSIGLIERE_GIOVANE_COOPTATO:
+                delega_consigliere_giovane_cooptato = sede.deleghe_attuali(
+                    al_giorno=datetime.datetime.now(), tipo=CONSIGLIERE_GIOVANE_COOPTATO, fine=None
+                ).first()
+
+                if delega_consigliere_giovane_cooptato:
+                    if delega_consigliere_giovane_cooptato.persona == persona:
+                        esiti += [
+                            (
+                                persona,
+                                sede,
+                                "Saltato. E' già Consigliere giovane cooptato di questa Sede."
+                            )
+                        ]
+                        continue
+                # chiudi deleghe precedenti rappresentante dei gionvani e cooptato
+                for delega in sede.deleghe_attuali(
+                        al_giorno=datetime.datetime.now(),
+                        tipo__in=[CONSIGLIERE_GIOVANE, CONSIGLIERE_GIOVANE_COOPTATO], fine=None
+                ):
+                    delega.termina(mittente=me, accoda=True, termina_at=datetime.datetime.now())
+
+                gia_consigliere = persona.deleghe_attuali(
+                    al_giorno=datetime.datetime.now(), tipo=CONSIGLIERE_GIOVANE_COOPTATO, fine=None
                 ).first()
 
                 if gia_consigliere:

@@ -1,13 +1,16 @@
 def menu_rubrica_base(me):
     from django.core.urlresolvers import reverse
     from django.contrib.contenttypes.models import ContentType
-    from anagrafica.permessi.applicazioni import (PRESIDENTE, COMMISSARIO, UFFICIO_SOCI, RUBRICHE_TITOLI)
+    from anagrafica.permessi.applicazioni import (PRESIDENTE, COMMISSARIO, UFFICIO_SOCI, RUBRICHE_TITOLI, CONSIGLIERE_GIOVANE, CONSIGLIERE_GIOVANE_COOPTATO)
     from anagrafica.models import Sede
 
 
     RUBRICA_BASE = [
         ("Referenti", "fa-book", reverse('utente:rubrica', args=['referenti'])),
         ("Volontari", "fa-book", reverse('utente:rubrica', args=['volontari'])),
+        ("Giovani", "fa-book", reverse('utente:rubrica', args=['giovani'])) if me.deleghe_attuali(
+            tipo__in=[CONSIGLIERE_GIOVANE, CONSIGLIERE_GIOVANE_COOPTATO]
+        ) else None,
     ]
 
     deleghe_attuali = None

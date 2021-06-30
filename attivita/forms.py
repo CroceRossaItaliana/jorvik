@@ -67,9 +67,21 @@ class ModuloAggiungiPartecipanti(forms.Form):
 
 
 class ModuloCreazioneArea(ModelForm):
+
+    settore = forms.ChoiceField(choices=(
+        (1, 'Salute'),
+        (2, 'Inclusione Sociale'),
+        (3, 'Operazione, Emergenza e Soccorso'),
+        (4, 'Principi e Valori Umanitari'),
+        (5, 'Coordinatore attività per i Giovani'),
+        (6, 'Innovazione, Volontariato e Formazione'),
+        (7, 'Cooperazione internazionale decentrata'),
+        (8, 'Riduzione del rischio da disastri e resilienza'),
+    ), required=True)
+
     class Meta:
         model = Area
-        fields = ['nome', 'obiettivo',]
+        fields = ['nome',]
 
 
 class ModuloOrganizzaAttivita(ModelForm):

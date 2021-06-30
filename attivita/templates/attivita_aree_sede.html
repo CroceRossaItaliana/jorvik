@@ -31,7 +31,7 @@
 
                         <thead>
                             <tr>
-                                <th>Ob.#</th>
+                                <th>Settore</th>
                                 <th>Nome Area</th>
                                 <th>Responsabili</th>
                                 <th>Attivit&agrave;</th>
@@ -44,8 +44,8 @@
                             {% for area in aree %}
 
                                 <tr>
-                                    <td class="piu-grande">
-                                        {{ area.obiettivo }}
+                                    <td class="grassetto">
+                                        {{ area.settore_display }}
                                     </td>
                                     <td class="grassetto">
                                         {{ area.nome }}

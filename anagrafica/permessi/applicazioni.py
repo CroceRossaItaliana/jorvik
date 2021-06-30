@@ -7,6 +7,7 @@ VICE_PRESIDENTE = 'VP'
 COMMISSARIO = 'CM'
 CONSIGLIERE = 'CN'
 CONSIGLIERE_GIOVANE = 'CG'
+CONSIGLIERE_GIOVANE_COOPTATO = 'CC'
 UFFICIO_SOCI = 'US'
 UFFICIO_SOCI_CM = 'UM'
 UFFICIO_SOCI_IIVV = 'IV'
@@ -19,6 +20,8 @@ DELEGATO_OBIETTIVO_3 = 'O3'
 DELEGATO_OBIETTIVO_4 = 'O4'
 DELEGATO_OBIETTIVO_5 = 'O5'
 DELEGATO_OBIETTIVO_6 = 'O6'
+DELEGATO_OBIETTIVO_7 = 'O7'
+DELEGATO_OBIETTIVO_8 = 'O8'
 RESPONSABILE_AREA = 'RA'
 REFERENTE = 'RE'
 REFERENTE_SERVIZI_SO = 'RS'
@@ -33,6 +36,8 @@ RESPONSABILE_PATENTI = 'PA'
 RESPONSABILE_DONAZIONI = 'DO'
 DIRETTORE_CORSO = 'DC'
 RESPONSABILE_EVENTO = 'EF'
+# Non è una delega ma solo un segna posto per la rubriva
+GIOVANI = 'GO'
 
 OBIETTIVI = {
     1: DELEGATO_OBIETTIVO_1,
@@ -41,6 +46,8 @@ OBIETTIVI = {
     4: DELEGATO_OBIETTIVO_4,
     5: DELEGATO_OBIETTIVO_5,
     6: DELEGATO_OBIETTIVO_6,
+    7: DELEGATO_OBIETTIVO_7,
+    8: DELEGATO_OBIETTIVO_8,
 }
 
 # Nomi assegnati
@@ -49,18 +56,21 @@ PERMESSI_NOMI = (
     (VICE_PRESIDENTE,           "Vice Presidente"),
     (COMMISSARIO,               "Commissario"),
     (CONSIGLIERE,               "Consigliere"),
-    (CONSIGLIERE_GIOVANE,       "Consigliere giovane"),
+    (CONSIGLIERE_GIOVANE,       "Consigliere Rappresentante dei Giovani"),
+    (CONSIGLIERE_GIOVANE_COOPTATO,       "Consigliere Rappresentante dei Giovani Cooptato"),
     (UFFICIO_SOCI,              "Ufficio Soci"),
     (UFFICIO_SOCI_CM,           "Ufficio Soci corpo militare"),
     (UFFICIO_SOCI_IIVV,         "Ufficio Soci Infermiere volontarie"),
     (UFFICIO_SOCI_UNITA,        "Ufficio Soci Unità territoriali"),
     (DELEGATO_AREA,             "Delegato d'Area"),
-    (DELEGATO_OBIETTIVO_1,      "Delegato Obiettivo I (Salute)"),
-    (DELEGATO_OBIETTIVO_2,      "Delegato Obiettivo II (Sociale)"),
-    (DELEGATO_OBIETTIVO_3,      "Delegato Obiettivo III (Emergenze)"),
-    (DELEGATO_OBIETTIVO_4,      "Delegato Obiettivo IV (Principi)"),
-    (DELEGATO_OBIETTIVO_5,      "Delegato Obiettivo V (Giovani)"),
-    (DELEGATO_OBIETTIVO_6,      "Delegato Obiettivo VI (Sviluppo)"),
+    (DELEGATO_OBIETTIVO_1,      "Salute"),
+    (DELEGATO_OBIETTIVO_2,      "Inclusione Sociale"),
+    (DELEGATO_OBIETTIVO_3,      "Operazione, Emergenza e Soccorso"),
+    (DELEGATO_OBIETTIVO_4,      "Principi e Valori Umanitari"),
+    (DELEGATO_OBIETTIVO_5,      "Coordinatore attività per i Giovani"),
+    (DELEGATO_OBIETTIVO_6,      "Innovazione, Volontariato e Formazione"),
+    (DELEGATO_OBIETTIVO_7,      "Cooperazione internazionale decentrata"),
+    (DELEGATO_OBIETTIVO_8,      "Riduzione del rischio da disastri e resilienza"),
     (RESPONSABILE_AREA,         "Responsabile d'Area"),
     (REFERENTE,                 "Referente Attività"),
     (REFERENTE_SERVIZI_SO,      "Referente Servizio SO"),
@@ -78,10 +88,10 @@ PERMESSI_NOMI = (
 )
 
 DELEGHE_RUBRICA = (
-    PRESIDENTE, COMMISSARIO, CONSIGLIERE_GIOVANE, UFFICIO_SOCI, UFFICIO_SOCI_UNITA,
+    PRESIDENTE, COMMISSARIO, CONSIGLIERE_GIOVANE, CONSIGLIERE_GIOVANE_COOPTATO, UFFICIO_SOCI, UFFICIO_SOCI_UNITA,
     DELEGATO_OBIETTIVO_1, DELEGATO_OBIETTIVO_2, DELEGATO_OBIETTIVO_3,
-    DELEGATO_OBIETTIVO_4, DELEGATO_OBIETTIVO_5, DELEGATO_OBIETTIVO_6,
-    RESPONSABILE_FORMAZIONE, DELEGATO_CO, DELEGATO_SO, RESPONSABILE_AUTOPARCO,
+    DELEGATO_OBIETTIVO_4, DELEGATO_OBIETTIVO_5, DELEGATO_OBIETTIVO_6, DELEGATO_OBIETTIVO_7, DELEGATO_OBIETTIVO_8,
+    RESPONSABILE_FORMAZIONE, DELEGATO_CO, DELEGATO_SO, RESPONSABILE_AUTOPARCO, GIOVANI
 )
 
 PERMESSI_NOMI_DICT = dict(PERMESSI_NOMI)
@@ -89,17 +99,19 @@ PERMESSI_NOMI_DICT = dict(PERMESSI_NOMI)
 RUBRICHE_TITOLI = OrderedDict((
     ('presidenti', (PRESIDENTE, 'Presidenti', True)),
     ('commissari', (COMMISSARIO, 'Commissari', True)),
-    ('condigliere_giovane', (CONSIGLIERE_GIOVANE, 'Consiglieri giovani', True)),
+    ('condigliere_giovane', (CONSIGLIERE_GIOVANE, 'Consiglieri Rappresentanti dei Giovani', True)),
+    ('consigliere_giovane_cooptato', (CONSIGLIERE_GIOVANE_COOPTATO, 'Consiglieri Rappresentanti dei Giovani Cooptato', True)),
+    ('giovani', (GIOVANI, 'Giovani', True)),
     ('delegati_us', (UFFICIO_SOCI, 'Delegati Ufficio Soci', True)),
     ('delegati_us_unita', (UFFICIO_SOCI_UNITA, 'Delegati Ufficio Soci Unità territoriali', True)),
     ('delegati_us_corpo_militare', (UFFICIO_SOCI_CM, 'Delegati Ufficio Soci Corpo militare', True)),
     ('delegati_us_infermiere_volontarie', (UFFICIO_SOCI_IIVV, 'Delegati Ufficio Infermiere Volontarie', True)),
-    ('delegati_obiettivo_1', (DELEGATO_OBIETTIVO_1, 'Delegati Obiettivo I (Salute)', True)),
-    ('delegati_obiettivo_2', (DELEGATO_OBIETTIVO_2, 'Delegati Obiettivo II (Sociale)', True)),
-    ('delegati_obiettivo_3', (DELEGATO_OBIETTIVO_3, 'Delegati Obiettivo III (Emergenze)', True)),
-    ('delegati_obiettivo_4', (DELEGATO_OBIETTIVO_4, 'Delegati Obiettivo IV (Principi)', True)),
-    ('delegati_obiettivo_5', (DELEGATO_OBIETTIVO_5, 'Delegati Obiettivo V (Giovani)', True)),
-    ('delegati_obiettivo_6', (DELEGATO_OBIETTIVO_6, 'Delegati Obiettivo VI (Sviluppo)', True)),
+    ('delegati_obiettivo_1', (DELEGATO_OBIETTIVO_1, 'Salute', True)),
+    ('delegati_obiettivo_2', (DELEGATO_OBIETTIVO_2, 'Inclusione Sociale', True)),
+    ('delegati_obiettivo_3', (DELEGATO_OBIETTIVO_3, 'Operazione, Emergenza e Soccorso', True)),
+    ('delegati_obiettivo_4', (DELEGATO_OBIETTIVO_4, 'Principi e Valori Umanitari', True)),
+    ('delegati_obiettivo_5', (DELEGATO_OBIETTIVO_5, 'Coordinatore attività per i Giovani', True)),
+    ('delegati_obiettivo_6', (DELEGATO_OBIETTIVO_6, 'Innovazione, Volontariato e Formazione', True)),
     ('delegati_area', (DELEGATO_AREA, 'Delegati Area', False)),
     # ('responsabili_area', (RESPONSABILE_AREA, 'Responsabili d\'Area', False)), rimosso perché non utile al momento
     ('referenti_attivita', (REFERENTE, 'Referenti Attività', False)),

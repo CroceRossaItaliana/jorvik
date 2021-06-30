@@ -290,6 +290,7 @@ def informazioni_sede(request, me, slug):
         'vice_presidente': sede.vice_presidente(),
         'consiglieri': sede.consiglieri(),
         'consigliere_giovane': sede.consigliere_giovane(),
+        'consigliere_giovane_cooptato': sede.consigliere_giovane_cooptato(),
         'vicini_km': vicini_km,
     }
     return 'base_informazioni_sede.html', context

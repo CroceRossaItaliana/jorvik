@@ -26,7 +26,7 @@ from .models import (Sede, Persona, Appartenenza, Documento, Estensione,
                      Nominativo)
 from .validators import valida_almeno_14_anni, valida_data_nel_passato
 from .permessi.applicazioni import (PRESIDENTE, COMMISSARIO,
-                                    CONSIGLIERE, CONSIGLIERE_GIOVANE, VICE_PRESIDENTE)
+                                    CONSIGLIERE, CONSIGLIERE_GIOVANE, VICE_PRESIDENTE, CONSIGLIERE_GIOVANE_COOPTATO)
 
 
 class ModuloSpostaPersone(object):
@@ -677,7 +677,8 @@ class ModuloImportPresidenti(forms.Form):
                                        (PRESIDENTE, 'Presidente'),
                                        (COMMISSARIO, 'Commissario'),
                                        (CONSIGLIERE, 'Consigliere'),
-                                       (CONSIGLIERE_GIOVANE, 'Consigliere giovane'),
+                                       (CONSIGLIERE_GIOVANE, 'Consigliere rappresentante dei giovani'),
+                                       (CONSIGLIERE_GIOVANE_COOPTATO, 'Consigliere rappresentante dei giovani cooptato'),
                                        (VICE_PRESIDENTE, 'Vice presidente'),
                                    ]
                                ),
