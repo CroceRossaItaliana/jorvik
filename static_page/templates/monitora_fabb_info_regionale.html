@@ -9,12 +9,18 @@
                 <table class="table table-striped table-bordered">
                     <thead>
                         <th>Comitati regionali</th>
+                        <th>Download Excel</th>
                     </thead>
                     <tbody>
                         {% for regionale in regionali %}
                           <tr>
                             <td>
                                 <a href="{% url 'pages:monitora-fabb-info-regionale' %}?r={{regionale.pk}}">{{ regionale }}</a>
+                            </td>
+                            <td>
+{#                                {% if completo %}#}
+                                <a href="{% url 'pages:monitora-fabb-info-regionale' %}?action=download_tutti_comitati&comitato={{ regionale.pk }}" target="_blank"><i class="fa fa-download fa-fw"></i>Excel</a>
+{#                                {% endif %}#}
                             </td>
                           </tr>
                         {% endfor %}
@@ -26,6 +32,7 @@
                         <th>Comitato</th>
                         <th>Completamento</th>
                         <th>Questionario</th>
+                        <th>Excel</th>
                     </thead>
                     <tbody>
                         {% for locale, completo in struttura.items %}
@@ -46,10 +53,20 @@
                                         <a href="{% url 'pages:monitora-fabb-info-regionale' %}?action=print&comitato={{ locale.pk }}" target="_blank"><i class="fa fa-print fa-fw">PDF</i></a>
                                     {% endif %}
                                 </td>
+                                <td>
+                                    {% if completo %}
+                                        <a href="{% url 'pages:monitora-fabb-info-regionale' %}?action=download&comitato={{ locale.pk }}" target="_blank"><i class="fa fa-download fa-fw"></i>Excel</a>
+                                    {% endif %}
+                                </td>
                             {% else %}
                                 <td>
                                     {% if completo %}
                                         <a href="{% url 'pages:monitora-fabb-info-territoriale' %}?action=print&comitato={{ locale.pk }}" target="_blank"><i class="fa fa-print fa-fw">PDF</i></a>
+                                    {% endif %}
+                                </td>
+                                <td>
+                                    {% if completo %}
+                                        <a href="{% url 'pages:monitora-fabb-info-territoriale' %}?action=download&comitato={{ locale.pk }}" target="_blank"><i class="fa fa-download fa-fw"></i>Excel</a>
                                     {% endif %}
                                 </td>
                             {% endif %}
