@@ -491,7 +491,11 @@ def monitora_fabb_info_territoriale(request, me):
             persona=delegato, comitato_id=sede.id, users_pk=delegato
         )
         typeform.get_responses_for_all_forms()
-        return typeform.print()
+        if action == 'print':
+            return typeform.print()
+        # se non e print, e 'download' per excel
+        else:
+            return typeform.download_excel()
 
     if id_regionale:
         struttura = OrderedDict()
@@ -538,7 +542,13 @@ def monitora_fabb_info_regionale(request, me):
         )
         typeform.get_responses_for_all_forms()
 
-        return typeform.print()
+        if action == 'print':
+            return typeform.print()
+        elif action == 'download':
+            return typeform.download_excel()
+        else:
+            from .utils import donload_comitati_discendenti
+            return donload_comitati_discendenti(sede)
 
     if id_regionale:
         struttura = OrderedDict()
