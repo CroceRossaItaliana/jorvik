@@ -1295,6 +1295,23 @@ class Persona(ModelloSemplice, ConMarcaTemporale, ConAllegati, ConVecchioID):
         return self.deleghe_attuali(tipo=PRESIDENTE).exists()
 
     @property
+    def is_presidente_regionale(self):
+        deleghe = self.deleghe_attuali(tipo=PRESIDENTE)
+        if deleghe:
+            for delega in deleghe:
+                if delega.oggetto.estensione == REGIONALE:
+                    return True
+
+    @property
+    def is_commissario_regionale(self):
+        deleghe = self.deleghe_attuali(tipo=COMMISSARIO)
+        if deleghe:
+            for delega in deleghe:
+                if delega.oggetto.estensione == REGIONALE:
+                    return True
+
+
+    @property
     def is_presidente_o_commissario_territoriale(self):
         deleghe = self.deleghe_attuali(tipo__in=[PRESIDENTE, COMMISSARIO])
         if deleghe:
@@ -1367,6 +1384,10 @@ class Persona(ModelloSemplice, ConMarcaTemporale, ConAllegati, ConVecchioID):
         return self.deleghe_attuali(tipo=PRESIDENTE).first()
 
     @property
+    def delega_responsabile_formazione(self):
+        return self.deleghe_attuali(tipo=RESPONSABILE_FORMAZIONE).first()
+
+    @property
     def is_consigliere_giovane(self):
         return self.deleghe_attuali(tipo=CONSIGLIERE_GIOVANE).exists()
 
@@ -1429,10 +1450,6 @@ class Persona(ModelloSemplice, ConMarcaTemporale, ConAllegati, ConVecchioID):
                 if delega.oggetto.estensione == NAZIONALE:
                     deleghe_list.append(delega)
         return deleghe_list
-
-    @property
-    def delega_responsabile_formazione(self):
-        return self.deleghe_attuali(tipo=RESPONSABILE_FORMAZIONE).first()
 
     @property
     def delega_commissario(self):
@@ -1503,6 +1520,26 @@ class Persona(ModelloSemplice, ConMarcaTemporale, ConAllegati, ConVecchioID):
                 if delega.oggetto.estensione == REGIONALE:
                     deleghe_id.append(delega.oggetto.id)
         return deleghe_id
+
+    @property
+    def delega_responsabile_formazione_regionale(self):
+        deleghe = []
+        if self.delege_responsabile_formazione:
+            for delege in self.delege_responsabile_formazione:
+                deleghe.append(delege)
+        deleghe_id = []
+        if deleghe:
+            for delega in deleghe:
+                if delega.oggetto.estensione == REGIONALE:
+                    deleghe_id.append(delega.oggetto.id)
+        return deleghe_id
+
+    @property
+    def delege_responsabile_formazione(self):
+        """
+        se utenza ha piu di un delega come responsabile formazione
+        """
+        return self.deleghe_attuali(tipo=RESPONSABILE_FORMAZIONE)
 
     @property
     def delgato_ragionale_monitoraggio_fabb_info(self):
@@ -2349,11 +2386,21 @@ class Sede(ModelloAlbero, ConMarcaTemporale, ConGeolocalizzazione, ConVecchioID,
     def delegato_monitoraggio_trasparenza(self):
         area = Area.objects.filter(sede=self, nome__iexact='Trasparenza')
         if area:
-            delega = Delega.objects.filter(tipo=DELEGATO_AREA, oggetto_id=area.first().id).first()
+            delega = Delega.objects.filter(tipo=DELEGATO_AREA, oggetto_id=area.first().id, fine=None).first()
             if delega:
                 return delega.persona
         presidente = self.presidente()
         return presidente
+
+    def delegati_monitoraggio_trasparenza(self):
+        delegati = []
+        area = Area.objects.filter(sede=self, nome__iexact='Trasparenza')
+        if area:
+            delega = Delega.objects.filter(tipo=DELEGATO_AREA, oggetto_id=area.first().id, fine=None).first()
+            if delega:
+                delegati.append(delega.persona)
+        delegati.append(self.presidente())
+        return delegati
 
     # def monitora_fabb_info_regionali(self):
     #     deleghe_list = []

@@ -18,6 +18,7 @@ from posta.models import Messaggio
 from sangue.models import Donatore
 from .menu import FORMS, QUALIFICA_CRI, ALTRE_QIALIFICHE, TITOLI_STUDIO, COMPETENZE_LINGUISTICHE, \
     COMPETENZE_PROFESSIONALI
+from ..permessi.applicazioni import PRESIDENTE, COMMISSARIO, UFFICIO_SOCI, UFFICIO_SOCI_IIVV, UFFICIO_SOCI_CM
 from ..permessi.costanti import (ERRORE_PERMESSI, MODIFICA, LETTURA)
 from ..forms import (ModuloCreazioneDocumento, ModuloCreazioneTelefono, ModuloDonatore,
     ModuloDonazione, ModuloNuovaFototessera, ModuloProfiloModificaAnagrafica,
@@ -190,6 +191,9 @@ def _profilo_riserve(request, me, persona):
 
 def _profilo_curriculum(request, me, persona):
     from curriculum.forms import FormAddQualificaCRI, FormAddTitoloStudio, FormAddAltreQualifica
+    deleghe_list = me.deleghe_attuali(tipo__in=[PRESIDENTE, COMMISSARIO, UFFICIO_SOCI, UFFICIO_SOCI_IIVV, UFFICIO_SOCI_CM])
+    puoi_modificare = me.permessi_almeno(oggetto=persona, minimo=LETTURA)
+    non_puo_fare_niente = me.permessi_almeno(oggetto=persona, minimo=MODIFICA)
 
     reversed = reverse('profilo:profilo', args=[persona.pk, 'curriculum'])
     redirect_url = redirect(reversed)
@@ -229,6 +233,7 @@ def _profilo_curriculum(request, me, persona):
         "modulo": form,
         "pk": persona.pk,
         "sezione": "curriculum",
+        "puo_modificare": puoi_modificare if deleghe_list else non_puo_fare_niente,
         "tipo_titolo": FORMS[modifica][1] if FORMS[modifica] else None
     }
     return 'anagrafica_profilo_curriculum.html', context

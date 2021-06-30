@@ -2115,7 +2115,7 @@ def inscrizione_evento_volontari(request, me):
 def operatori_sale(request, me):
 
     stato = request.GET.get('stato', '')
-    sedi = me.oggetti_permesso(GESTIONE_SEDE)
+    sedi = me.oggetti_permesso(GESTIONE_SEDE).exclude(estensione=TERRITORIALE)
 
     form = ModuloCreaOperatoreSala(request.POST or None, locale=not sedi.filter(estensione__in=[REGIONALE, NAZIONALE]).exists())
     form.fields['sede'].choices = ModuloCreaOperatoreSala.popola_scelta(sedi)
