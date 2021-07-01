@@ -47,20 +47,11 @@ from .training_api import TrainingApi
 
 @pagina_privata
 def formazione(request, me):
-    # num_page = int(request.GET.get('page', "1"))
-    # stato = request.GET.get('stato', CorsoBase.PREPARAZIONE)
-    # c = me.oggetti_permesso(GESTIONE_CORSO).filter(stato=stato)
-    #
-    # corsi = Paginator(c, 4)
-    # page = corsi.page(num_page)
 
     context = {
-        # "corsi": page,
-        # 'next': num_page + 1 if page.has_next() else None,
-        # 'prev': num_page - 1 if page.has_previous() else None,
+        "corsi": me.oggetti_permesso(GESTIONE_CORSO),
         "sedi": me.oggetti_permesso(GESTIONE_CORSI_SEDE),
         'url': reverse('formazione:index'),
-        # 'stato': stato,
         "puo_pianificare": me.ha_permesso(GESTIONE_CORSI_SEDE),
         "me": me,
     }
