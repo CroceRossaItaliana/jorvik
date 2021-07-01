@@ -1,7 +1,7 @@
 from django.core.urlresolvers import reverse
 
 from anagrafica.permessi.costanti import GESTIONE_CORSI_SEDE, ELENCHI_SOCI, RUBRICA_DELEGATI_OBIETTIVO_ALL, \
-    GESTIONE_EVENTI_SEDE, GESTIONE_EVENTO
+    GESTIONE_EVENTI_SEDE, GESTIONE_EVENTO, GESTIONE_CORSO
 
 
 def to_show(me, permissions):
@@ -24,7 +24,7 @@ def formazione_menu(menu_name, me=None):
     FORMAZIONE = (
         ("Corsi", (
             ("Attiva Corso", "fa-asterisk", reverse('formazione:new_course')) if to_show(me, GESTIONE_CORSI_SEDE) else None,
-            ("Gestione Corsi", "fa-list", reverse('formazione:list_courses')) if to_show(me, GESTIONE_CORSI_SEDE) else None,
+            ("Gestione Corsi", "fa-list", reverse('formazione:list_courses')) if to_show(me, GESTIONE_CORSO) else None,
             ("Attiva Evento", "fa-asterisk", reverse('formazione:evento_nuovo')) if to_show(me, GESTIONE_EVENTI_SEDE) else None,
             ("Gestione Eventi", "fa-list", reverse('formazione:evento_elenco')) if to_show(me, GESTIONE_EVENTO) else None,
             ("Elenco Corsi", "fa-list", reverse('aspirante:corsi_base')),

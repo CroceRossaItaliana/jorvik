@@ -143,8 +143,8 @@ def formazione_osserva_corsi(request, me):
 def formazione_corsi_base_elenco(request, me):
     puo_modificare = me.ha_permesso(GESTIONE_CORSI_SEDE)
 
-    if not puo_modificare:
-        return redirect(reverse('aspirante:corsi_base'))
+    # if not puo_modificare:
+    #     return redirect(reverse('aspirante:corsi_base'))
 
     num_page = int(request.GET.get('page', "1"))
 
