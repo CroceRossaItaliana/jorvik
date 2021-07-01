@@ -4,8 +4,11 @@ from jorvik import settings
 import requests
 
 
-PRESIDENTE = '221170'
-COMMISSARIO = '221182'
+PRESIDENTE = '225136'
+COMMISSARIO = '225139'
+DELEGATI_TECNICI_NAZIONALI = '225211'
+RESPONSABILI_UO = '225212'
+DIRETTORICRI = '225213'
 
 CONSIGLIERE = '213305'
 
@@ -32,21 +35,46 @@ def trippus_oauth():
 
 def trippus_booking(persona=None, access_token=''):
     if persona.is_presidente:
-        delega = persona.delega_presidente
-        sede = delega.oggetto
+        _delega = persona.delega_presidente
+        sede = _delega.oggetto
+        if _delega:
+          delega = PERMESSI_NOMI_DICT[_delega.tipo]
+        else:
+          delega = None
         codice = PRESIDENTE
     elif persona.is_comissario:
-        delega = persona.delega_commissario
-        sede = delega.oggetto
+        _delega = persona.delega_commissario
+        sede = _delega.oggetto
+        if _delega:
+          delega = PERMESSI_NOMI_DICT[_delega.tipo]
+        else:
+          delega = None
         codice = COMMISSARIO
     elif persona.is_delegato_assemblea_nazionale:
-        delega = persona.delega_delegato_assemblea_nazionale
-        sede = delega.oggetto
+        _delega = persona.delega_delegato_assemblea_nazionale
+        sede = _delega.oggetto
+        if _delega:
+          delega = PERMESSI_NOMI_DICT[_delega.tipo]
+        else:
+          delega = None
         codice = PRESIDENTE
     elif persona.is_responsabile_area_delegato_assemblea_nazionale:
         delega = None
         sede = Sede.objects.get(pk=1)
         codice = PRESIDENTE
+    elif persona.is_responsabile_uo_assemblea_nazionale:
+        delega = "Responsabile U.O."
+        sede = Sede.objects.get(pk=1)
+        codice = RESPONSABILI_UO
+    elif persona.is_delegato_tecnico_assemblea_nazionale:
+        delega = "Delegato Tecnico Nazionale"
+        sede = Sede.objects.get(pk=1)
+        codice = DELEGATI_TECNICI_NAZIONALI
+    elif persona.is_direttorecri_assemblea_nazionale:
+        delega = "Direttore CRI"
+        sede = Sede.objects.get(pk=1)
+        codice = DIRETTORICRI
+        
     else:
         delega = None
         sede = None
@@ -83,7 +111,7 @@ def trippus_booking(persona=None, access_token=''):
                 },
                 {
                   "key": "Ruolo",
-                  "value": PERMESSI_NOMI_DICT[delega.tipo] if delega else 'Ispettori',
+                  "value": delega if delega else 'Ispettori',
                   "type": "Web"
                 },
                 {
