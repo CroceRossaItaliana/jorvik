@@ -16,7 +16,7 @@
         <p>I corsi annullabili sono solamente i corsi "In preparazione" o in stato "attivo" se non sono ancora iniziate le lezioni.</p>
     </div>
 
-    {% if corsi %}
+    {% if sedi %}
 
     <div class="row">
         <div class="col-md-3 allinea-centro">
@@ -38,80 +38,81 @@
             </ul>
         </div>
     </div>
-
-    <table class="formazione-courses__table table table-striped table-bordered">
-        <thead>
-            <th width="15%" class="formazione-courses__th">Stato <div class="filter-tag">{% corsi_filter %}</div></th>
-            <th class="formazione-courses__th">Corso e Sede</th>
-            <th class="formazione-courses__th">Luogo e data</th>
-            <th class="formazione-courses__th">Iscritti </th>
-        </thead>
-
-        {% for corso in corsi %}
-            <tr>
-                <td>
-                    {{ corso.get_stato_display }}<br>
-                    {% if me|posso_annullare_corso:corso %}
-                        {% if corso.annullabile %}
-                            <strong><a href="{{ corso.url_annulla }}" data-conferma="Vuoi annullare questo corso?">Annulla Corso</a></strong>
-                        {% endif %}
-                    {% endif %}
-                </td>
-                <td>
-                    <i class="fas fa-pencil-alt"></i> <strong>{{ corso.link|safe }}</strong><br />
-                    <i class="fa fa-fw fa-home"></i> {{ corso.sede.link|safe }}
-                    {% if puo_pianificare %}
-                        <br /><i class="fas fa-users"></i> <a href="{{ corso.url_direttori }}">{{ corso.deleghe.count }} direttori</a>
-                    {% endif %}
-                </td>
-
-                <td class="piu-piccolo">
-                    <i class="fa fa-fw fa-map-marker"></i>
-                        {% if corso.locazione %}
-                            {{ corso.locazione }}
-                        {% else %}
-                            (Nessun indirizzo specificato)
-                        {% endif %}
-                        <br />
-                    <i class="fa fa-fw fa-calendar"></i>
-                        Inizia: {{ corso.data_inizio }}
-                        <br />
-                    <i class="fa fa-fw fa-calendar"></i>
-                        Esami: {{ corso.data_esame }}
-
-                    <br>
-                    <br>
-                    {% if corso.online or corso.tipo == 'BO'%}
-                        <b style="color: #00ff1d;">
-                            <i class="fa fa-exclamation"></i>
-                            Corso online
-                        </b>
-                    {% endif %}
-                    {% if corso.evento %}
-                        <i class="fa fa-link"></i> <a href="{{ corso.evento.url }}">{{ corso.evento }}</a>
-                    {% endif %}
-                </td>
-
-                <td>
-                    <strong>{{ corso.partecipazioni_confermate_o_in_attesa.count }} richieste</strong>
-                    <br>
-                    <span class="piu-piccolo text-muted">
-                        <i class="fa fa-fw fa-check"></i> {{ corso.partecipazioni_confermate.count }} confermate<br>
-                        <i class="fas fa-clock"></i> {{ corso.partecipazioni_in_attesa.count }} in attesa<br>
-                        <i class="fa fa-fw fa-times"></i> {{ corso.partecipazioni_negate.count }} neg./rit.<br>
-                    </span>
-                </td>
-            </tr>
-
-        {% empty %}
-            <tr class="info">
-                <td colspan="4">
-                    <h4><i class="fa fa-fw fa-info-circle"></i> Ancora nessun corso pianificato.</h4>
-                    <p>Puoi controllare la domanda formativa della zona e valutare l'attivazione di un nuovo corso.</p>
-                </td>
-            </tr>
-        {% endfor %}
-    </table>
+{#    {% include 'paginate.html' with url=url prev=prev next=next stato=stato %}#}
+{#    <table class="formazione-courses__table table table-striped table-bordered">#}
+{#        <thead>#}
+{#            <th width="15%" class="formazione-courses__th">Stato <div class="filter-tag">{% corsi_filter %}</div></th>#}
+{#            <th class="formazione-courses__th">Corso e Sede</th>#}
+{#            <th class="formazione-courses__th">Luogo e data</th>#}
+{#            <th class="formazione-courses__th">Iscritti </th>#}
+{#        </thead>#}
+{##}
+{#        {% for corso in corsi %}#}
+{#            <tr>#}
+{#                <td>#}
+{#                    {{ corso.get_stato_display }}<br>#}
+{#                    {% if me|posso_annullare_corso:corso %}#}
+{#                        {% if corso.annullabile %}#}
+{#                            <strong><a href="{{ corso.url_annulla }}" data-conferma="Vuoi annullare questo corso?">Annulla Corso</a></strong>#}
+{#                        {% endif %}#}
+{#                    {% endif %}#}
+{#                </td>#}
+{#                <td>#}
+{#                    <i class="fas fa-pencil-alt"></i> <strong>{{ corso.link|safe }}</strong><br />#}
+{#                    <i class="fa fa-fw fa-home"></i> {{ corso.sede.link|safe }}#}
+{#                    {% if puo_pianificare %}#}
+{#                        <br /><i class="fas fa-users"></i> <a href="{{ corso.url_direttori }}">{{ corso.deleghe.count }} direttori</a>#}
+{#                    {% endif %}#}
+{#                </td>#}
+{##}
+{#                <td class="piu-piccolo">#}
+{#                    <i class="fa fa-fw fa-map-marker"></i>#}
+{#                        {% if corso.locazione %}#}
+{#                            {{ corso.locazione }}#}
+{#                        {% else %}#}
+{#                            (Nessun indirizzo specificato)#}
+{#                        {% endif %}#}
+{#                        <br />#}
+{#                    <i class="fa fa-fw fa-calendar"></i>#}
+{#                        Inizia: {{ corso.data_inizio }}#}
+{#                        <br />#}
+{#                    <i class="fa fa-fw fa-calendar"></i>#}
+{#                        Esami: {{ corso.data_esame }}#}
+{##}
+{#                    <br>#}
+{#                    <br>#}
+{#                    {% if corso.online or corso.tipo == 'BO'%}#}
+{#                        <b style="color: #00ff1d;">#}
+{#                            <i class="fa fa-exclamation"></i>#}
+{#                            Corso online#}
+{#                        </b>#}
+{#                    {% endif %}#}
+{#                    {% if corso.evento %}#}
+{#                        <i class="fa fa-link"></i> <a href="{{ corso.evento.url }}">{{ corso.evento }}</a>#}
+{#                    {% endif %}#}
+{#                </td>#}
+{##}
+{#                <td>#}
+{#                    <strong>{{ corso.partecipazioni_confermate_o_in_attesa.count }} richieste</strong>#}
+{#                    <br>#}
+{#                    <span class="piu-piccolo text-muted">#}
+{#                        <i class="fa fa-fw fa-check"></i> {{ corso.partecipazioni_confermate.count }} confermate<br>#}
+{#                        <i class="fas fa-clock"></i> {{ corso.partecipazioni_in_attesa.count }} in attesa<br>#}
+{#                        <i class="fa fa-fw fa-times"></i> {{ corso.partecipazioni_negate.count }} neg./rit.<br>#}
+{#                    </span>#}
+{#                </td>#}
+{#            </tr>#}
+{##}
+{#        {% empty %}#}
+{#            <tr class="info">#}
+{#                <td colspan="4">#}
+{#                    <h4><i class="fa fa-fw fa-info-circle"></i> Ancora nessun corso pianificato.</h4>#}
+{#                    <p>Puoi controllare la domanda formativa della zona e valutare l'attivazione di un nuovo corso.</p>#}
+{#                </td>#}
+{#            </tr>#}
+{#        {% endfor %}#}
+{#    </table>#}
+{#    {% include 'paginate.html' with url=url prev=prev next=next stato=stato %}#}
     {% endif %}
 
     {% if puo_pianificare %}
