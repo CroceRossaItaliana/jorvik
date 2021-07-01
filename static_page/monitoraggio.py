@@ -678,13 +678,6 @@ class TypeFormResponsesCheck:
 
         self.context_typeform = self._set_typeform_context()
 
-    @property
-    def comitato(self):
-        if self.comitato_id:
-            return Sede.objects.get(id=self.comitato_id)
-        else:
-            return Sede.objects.none()
-
     def _set_typeform_context(self):
         # This method generates a dict values,
         # False as default value means that form_id is not completed yet.
@@ -721,7 +714,9 @@ class TypeFormResponsesCheck:
 
     @classmethod
     def make_request(cls, form_id, path='', **kwargs):
-        url = cls.ENDPOINT % form_id + path
+        # if doesn't show the data or the page is empty, maybe it has to do with pagination
+        # https://developer.typeform.com/responses/walkthroughs/
+        url = cls.ENDPOINT % form_id + path + '?page_size=1000&before'
         if kwargs.get('completed') == True and kwargs.get('query'):
             url += '?completed=true'
             url += '&query=%s' % kwargs.get('query')
@@ -746,10 +741,8 @@ class TypeFormResponsesCheck:
         for el in json['items']:
             if int(el['hidden']['u']) == self.user_pk and int(el['hidden']['c']) == self.comitato_id:
                 return el['answers']
+        # if is empty look at pagination
         return {}
-        # items = json['items'][0]
-        # answers = items['answers']
-        # return answers
 
     def _retrieve_data(self):
         retrieved = OrderedDict()
@@ -870,8 +863,8 @@ class TypeFormResponsesCheck:
         workbook = xlsxwriter.Workbook(output)
         bold = workbook.add_format({'bold': True})
         # xlsxwriter throws an error if the mane of the sheet is more than 31 chars
-        worksheet = workbook.add_worksheet(self.comitato.nome[:31])
-        worksheet = workbook.add_worksheet(str(self.comitato))
+        comitato = Sede.objects.get(id=self.comitato_id)
+        worksheet = workbook.add_worksheet(comitato.nome[:31])
 
         # Naming the headers and making them bold
         worksheet.write('A1', 'Question', bold)
@@ -1097,8 +1090,6 @@ class TypeFormResponsesFabbisogniFormativiRagionaleCheck(TypeFormResponsesCheck)
             'to_print': to_print,
         })
 
-
-def print(self):
+    def print(self):
         html = self._render_to_string(to_print=True)
-
         return HttpResponse(html)

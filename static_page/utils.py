@@ -8,9 +8,9 @@ from .monitoraggio import TypeFormResponsesFabbisogniFormativiTerritorialeCheck,
     TypeFormResponsesFabbisogniFormativiRagionaleCheck
 
 
-def donload_comitati_discendenti(sede):
+def download_comitati_discendenti(sede, request_path):
     """
-    Scarica il comitato regionale e tutti i comitati locali ad esso collegati
+    Scarica (excel file) il comitato regionale e tutti i comitati locali ad esso collegati
     """
     comitati = sede.ottieni_discendenti(includimi=True).filter(
         estensione__in=[LOCALE, REGIONALE, PROVINCIALE]).order_by(
@@ -23,28 +23,43 @@ def donload_comitati_discendenti(sede):
     bold = workbook.add_format({'bold': True})
 
     for comitato in comitati:
-        if comitato.estensione == 'R':
-            delegato = comitato.monitora_fabb_info_regionali()
-            typeform = TypeFormResponsesFabbisogniFormativiRagionaleCheck(
-                persona=delegato, comitato_id=comitato.id, users_pk=delegato
-            )
-            typeform.get_responses_for_all_forms()
-            a = typeform.all_forms_are_completed
-            if a is 1:
-                comitati_completi_list.append(comitato)
-                typeform_completi_list.append(typeform)
+        # if the url is monitora regionali, excel must contain even comitato regionale
+        # else must contain only comitati locali discendenti
+        if 'regionale' in request_path:
+            if comitato.estensione == 'R':
+                delegato = comitato.monitora_fabb_info_regionali()
+                typeform = TypeFormResponsesFabbisogniFormativiRagionaleCheck(
+                    persona=delegato, comitato_id=comitato.id, users_pk=delegato
+                )
+                typeform.get_responses_for_all_forms()
+                completato_o_no = typeform.all_forms_are_completed
+                # se e completato e 1, se non e completato e 0
+                if completato_o_no is 1:
+                    comitati_completi_list.append(comitato)
+                    typeform_completi_list.append(typeform)
+            else:
+                delegato = comitato.monitora_fabb_info_regionali()
+                typeform = TypeFormResponsesFabbisogniFormativiTerritorialeCheck(
+                    persona=delegato, comitato_id=comitato.id, users_pk=delegato
+                )
+                typeform.get_responses_for_all_forms()
+                completato_o_no = typeform.all_forms_are_completed
+                if completato_o_no is 1:
+                    comitati_completi_list.append(comitato)
+                    typeform_completi_list.append(typeform)
         else:
             delegato = comitato.monitora_fabb_info_regionali()
             typeform = TypeFormResponsesFabbisogniFormativiTerritorialeCheck(
                 persona=delegato, comitato_id=comitato.id, users_pk=delegato
             )
             typeform.get_responses_for_all_forms()
-            a = typeform.all_forms_are_completed
-            if a is 1:
+            completato_o_no = typeform.all_forms_are_completed
+            if completato_o_no is 1:
                 comitati_completi_list.append(comitato)
                 typeform_completi_list.append(typeform)
 
     for _comitato, _typeform in zip(comitati_completi_list, typeform_completi_list):
+        # xlsxwriter throws an error if the mane of the sheet is more than 31 chars
         worksheet = workbook.add_worksheet(_comitato.nome[:31])
         # Naming the headers and making them bold
         worksheet.write('A1', 'Question', bold)

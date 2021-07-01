@@ -495,9 +495,11 @@ def monitora_fabb_info_territoriale(request, me):
         typeform.get_responses_for_all_forms()
         if action == 'print':
             return typeform.print()
-        # se non e print, e 'download' per excel
-        else:
+        elif action == 'download':
             return typeform.download_excel()
+        else:
+            from .utils import download_comitati_discendenti
+            return download_comitati_discendenti(sede, request.path)
 
     if id_regionale:
         struttura = OrderedDict()
@@ -511,6 +513,7 @@ def monitora_fabb_info_territoriale(request, me):
             typeform.get_responses_for_all_forms()
             struttura[locale] = typeform.all_forms_are_completed
         context['struttura'] = struttura
+        context['comitato_regionale'] = id_regionale
     else:
         context['regionali'] = Sede.objects.filter(estensione=REGIONALE, attiva=True)
     return 'monitora_fabb_info_territoriale.html', context
@@ -549,8 +552,8 @@ def monitora_fabb_info_regionale(request, me):
         elif action == 'download':
             return typeform.download_excel()
         else:
-            from .utils import donload_comitati_discendenti
-            return donload_comitati_discendenti(sede)
+            from .utils import download_comitati_discendenti
+            return download_comitati_discendenti(sede, request.path)
 
     if id_regionale:
         struttura = OrderedDict()
