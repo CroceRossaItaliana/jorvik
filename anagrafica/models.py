@@ -1498,6 +1498,30 @@ class Persona(ModelloSemplice, ConMarcaTemporale, ConAllegati, ConVecchioID):
             if 'IIVV'.lower() in delega.oggetto.__str__().lower():
                 delegato_area = True
         return delegato_area
+    
+    @property
+    def is_responsabile_uo_assemblea_nazionale(self):
+        delegato_area = False
+        for delega in self.deleghe_attuali(tipo=RESPONSABILE_AREA):
+            if 'RUO'.lower() in delega.oggetto.__str__().lower():
+                delegato_area = True
+        return delegato_area
+
+    @property
+    def is_delegato_tecnico_assemblea_nazionale(self):
+        delegato_area = False
+        for delega in self.deleghe_attuali(tipo=RESPONSABILE_AREA):
+            if 'DTN'.lower() in delega.oggetto.__str__().lower():
+                delegato_area = True
+        return delegato_area
+
+    @property
+    def is_direttorecri_assemblea_nazionale(self):
+        delegato_area = False
+        for delega in self.deleghe_attuali(tipo=RESPONSABILE_AREA):
+            if 'DCRI'.lower() in delega.oggetto.__str__().lower():
+                delegato_area = True
+        return delegato_area
 
     @property
     def delega_presidente_regionale(self):
