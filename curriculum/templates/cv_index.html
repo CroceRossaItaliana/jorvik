@@ -151,20 +151,20 @@
 
         <div class="col-md-4">
             {% if tipo == 'TC' %}
-            <div class="panel panel-primary">
-                <div class="panel-heading">
-                    <h4 class="panel-title">
-                        <i class="fa fa-fw fa-plus-circle"></i> Aggiungi Qualifica CRI
-                    </h4>
-                </div>
-                <div class="panel-body">
-                    <form action="{% url 'cv:add_qualifica_cri' %}" method="POST" enctype="multipart/form-data">
-                        {% csrf_token %}
-                        {% bootstrap_form form_add_qualifica %}
-                        <button type="submit" class="btn btn-sm btn-primary btn-block"><i class="fa fa-fw fa-check"></i> Aggiungi {{ tipo_display }}</button>
-                    </form>
-                </div>
-            </div>
+{#            <div class="panel panel-primary">#}
+{#                <div class="panel-heading">#}
+{#                    <h4 class="panel-title">#}
+{#                        <i class="fa fa-fw fa-plus-circle"></i> Aggiungi Qualifica CRI#}
+{#                    </h4>#}
+{#                </div>#}
+{#                <div class="panel-body">#}
+{#                    <form action="{% url 'cv:add_qualifica_cri' %}" method="POST" enctype="multipart/form-data">#}
+{#                        {% csrf_token %}#}
+{#                        {% bootstrap_form form_add_qualifica %}#}
+{#                        <button type="submit" class="btn btn-sm btn-primary btn-block"><i class="fa fa-fw fa-check"></i> Aggiungi {{ tipo_display }}</button>#}
+{#                    </form>#}
+{#                </div>#}
+{#            </div>#}
             {% endif %}
 
             {% if tipo == 'AT' %}
