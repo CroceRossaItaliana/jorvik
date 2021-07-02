@@ -4,12 +4,12 @@
             <tr>
                 <td style="text-align: left">
                     {% if prev %}
-                        <a href="{{ url }}?page={{ prev }}{% if stato %}&stato={{ stato }}{% endif %}{% if codice %}&codice={{ codice }}{% endif %}{% if inizio %}&inizio={{ inizio }}{% endif %}{% if fine %}&fine={{ fine }}{% endif %}">&laquo; precedente</a>
+                        <a href="{{ url }}?page={{ prev }}{% if stato %}&stato={{ stato }}{% endif %}{% if codice %}&codice={{ codice }}{% endif %}{% if inizio %}&inizio={{ inizio }}{% endif %}{% if fine %}&fine={{ fine }}{% endif %}{% if s %}&s={{ s }}{% endif %}">&laquo; precedente</a>
                     {% endif %}
                 </td>
                 <td style="text-align: right">
                     {% if next %}
-                        <a href="{{ url }}?page={{ next }}{% if stato %}&stato={{ stato }}{% endif %}{% if codice %}&codice={{ codice }}{% endif %}{% if inizio %}&inizio={{ inizio }}{% endif %}{% if fine %}&fine={{ fine }}{% endif %}">prossimo &raquo;</a>
+                        <a href="{{ url }}?page={{ next }}{% if stato %}&stato={{ stato }}{% endif %}{% if codice %}&codice={{ codice }}{% endif %}{% if inizio %}&inizio={{ inizio }}{% endif %}{% if fine %}&fine={{ fine }}{% endif %}{% if s %}&s={{ s }}{% endif %}">prossimo &raquo;</a>
                     {% endif %}
                 </td>
             </tr>
