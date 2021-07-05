@@ -1605,7 +1605,8 @@ class CorsoBase(Corso, ConVecchioID, ConPDF):
         oggetto = "Delibera nuovo corso: %s" % self
 
         if not sede == NAZIONALE:
-            sede_regionale = self.sede.sede_regionale
+            sede = self.sede.sede_regionale
+            sede_regionale = sede if not sede.pk == 1638 else Sede.objects.get(pk=524)
             email_to = sede_regionale.presidente()
 
             corpo = {
