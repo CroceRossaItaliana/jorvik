@@ -21,11 +21,13 @@
                     </tbody>
                 </table>
             {% else %}
-                <table class="table table-striped table-bordered">
+                <table style="border: none" class="table table-striped table-bordered">
                     <thead>
-                        <th>Comitato</th>
-                        <th>Completamento</th>
-                        <th>Questionario</th>
+                        <th style="border-top: 1px solid #ddd;">Comitato</th>
+                        <th style="border-top: 1px solid #ddd;">Completamento</th>
+                        <th style="border-top: 1px solid #ddd;">Questionario</th>
+                        <th style="border-top: 1px solid #ddd;">Excel</th>
+                        <th style="border: 0px solid #ddd;"><a href="{% url 'pages:monitora-fabb-info-territoriale' %}?action=download_tutti_comitati&comitato={{ comitato_regionale }}" target="_blank"><i class="fa fa-download fa-fw"></i>Scarica foglio unico Excel</a></th>
                     </thead>
                     <tbody>
                         {% for locale, completo in struttura.items %}
@@ -43,6 +45,11 @@
                                 <td>
                                     {% if completo %}
                                         <a href="?action=print&comitato={{ locale.pk }}" target="_blank"><i class="fa fa-print fa-fw">PDF</i>
+                                    {% endif %}
+                                </td>
+                                <td>
+                                    {% if completo %}
+                                        <a href="?action=download&comitato={{ locale.pk }}" target="_blank"><i class="fa fa-download fa-fw"></i>Excel</a>
                                     {% endif %}
                                 </td>
                             </tr>

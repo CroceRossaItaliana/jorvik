@@ -1,3 +1,4 @@
+import io
 import requests
 from io import BytesIO
 from collections import OrderedDict
@@ -713,7 +714,9 @@ class TypeFormResponsesCheck:
 
     @classmethod
     def make_request(cls, form_id, path='', **kwargs):
-        url = cls.ENDPOINT % form_id + path
+        # if doesn't show the data or the page is empty, maybe it has to do with pagination
+        # https://developer.typeform.com/responses/walkthroughs/
+        url = cls.ENDPOINT % form_id + path + '?page_size=1000&before'
         if kwargs.get('completed') == True and kwargs.get('query'):
             url += '?completed=true'
             url += '&query=%s' % kwargs.get('query')
@@ -738,10 +741,8 @@ class TypeFormResponsesCheck:
         for el in json['items']:
             if int(el['hidden']['u']) == self.user_pk and int(el['hidden']['c']) == self.comitato_id:
                 return el['answers']
+        # if is empty look at pagination
         return {}
-        # items = json['items'][0]
-        # answers = items['answers']
-        # return answers
 
     def _retrieve_data(self):
         retrieved = OrderedDict()
@@ -855,6 +856,49 @@ class TypeFormResponsesCheck:
         #     return redirect(reverse('pages:monitoraggio'))
 
         return HttpResponse(html)
+
+    def download_excel(self):
+        import xlsxwriter
+        output = io.BytesIO()
+        workbook = xlsxwriter.Workbook(output)
+        bold = workbook.add_format({'bold': True})
+        # xlsxwriter throws an error if the mane of the sheet is more than 31 chars
+        comitato = Sede.objects.get(id=self.comitato_id)
+        worksheet = workbook.add_worksheet(comitato.nome[:31])
+
+        # Naming the headers and making them bold
+        worksheet.write('A1', 'Question', bold)
+        worksheet.write('B1', 'Answer', bold)
+        # Adjust the column width.
+        worksheet.set_column('A:A', 60)
+        worksheet.set_column('B:B', 60)
+
+        # Start from the first cell below the headers.
+        row = 1
+        col = 0
+
+        for results in self._retrieve_data().items():
+            for result in results[1]:
+                if result['question_parent']:
+                    worksheet.write(row, col, result['question_parent']['title'])
+                worksheet.write(row, col, result['question_title'])
+                worksheet.write(row, col + 1, result['answer'])
+                row += 1
+
+        # Close the workbook before sending the data.
+        workbook.close()
+
+        # Rewind the buffer.
+        output.seek(0)
+
+        # Set up the Http response.
+        filename = 'Excel_data.xlsx'
+        response = HttpResponse(
+            output,
+            content_type='application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'
+        )
+        response['Content-Disposition'] = 'attachment; filename=%s' % filename
+        return response
 
 
 class TypeFormResponsesTrasparenzaCheck(TypeFormResponsesCheck):
@@ -1046,8 +1090,6 @@ class TypeFormResponsesFabbisogniFormativiRagionaleCheck(TypeFormResponsesCheck)
             'to_print': to_print,
         })
 
-
-def print(self):
+    def print(self):
         html = self._render_to_string(to_print=True)
-
         return HttpResponse(html)
