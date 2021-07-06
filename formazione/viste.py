@@ -62,6 +62,27 @@ def formazione(request, me):
 def formazione_osserva_corsi(request, me):
     context = dict()
 
+    num_page = int(request.GET.get('page', "1"))
+
+    stato = request.GET.get('stato', None)
+    codice = request.GET.get('codice', None)
+    inizio = request.GET.get('inizio', None)
+    fine = request.GET.get('fine', None)
+
+    filtri = {}
+
+    if stato:
+        filtri['stato'] = stato
+
+    if codice:
+        filtri['progressivo'] = codice
+
+    if inizio:
+        filtri['data_inizio__gte'] = datetime.strptime(inizio, '%d/%m/%Y %H:%M')
+
+    if fine:
+        filtri['data_inizio__lte'] = datetime.strptime(fine, '%d/%m/%Y %H:%M')
+
     sedi = me.oggetti_permesso(GESTIONE_CORSI_SEDE)
     puo_accedere = set((NAZIONALE, REGIONALE)) & set([sede.estensione for sede in sedi])
 
@@ -83,14 +104,25 @@ def formazione_osserva_corsi(request, me):
             return redirect(reverse('formazione:osserva_corsi'))
 
         context['sede'] = sede
-        context['corsi'] = CorsoBase.objects.filter(sede=sede)
 
-        if sede.estensione in [NAZIONALE, REGIONALE,]:
-            context['corsi'] = CorsoBase.objects.filter(sede__in=sede.comitati_sottostanti())
+        if sede.estensione in [NAZIONALE, REGIONALE, ]:
+            c = CorsoBase.objects.filter(sede__in=sede.comitati_sottostanti())
         else:
             sedi = [sede]
             sedi.extend(sede.comitati_sottostanti(territoriali=True))
-            context['corsi'] = CorsoBase.objects.filter(sede__in=sedi)
+            c = CorsoBase.objects.filter(sede__in=sedi)
+
+        corsi = Paginator(c.filter(**filtri), 4)
+        page = corsi.page(num_page)
+
+        context['corsi'] = page
+        context['next'] = num_page + 1 if page.has_next() else None
+        context['prev'] = num_page - 1 if page.has_previous() else None
+        context['stato'] = stato
+        context['codice'] = codice
+        context['inizio'] = inizio
+        context['fine'] = fine
+        context['s'] = sede_pk
 
     if not sede_pk:
 

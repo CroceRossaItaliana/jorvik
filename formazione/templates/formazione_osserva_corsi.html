@@ -6,64 +6,135 @@
 {% block pagina_titolo %}Formazione{% endblock %}
 
 {% block app_contenuto %}
-  <h2 class="text-success">Corsi sul territorio <span style="color:#444; font-size:17px">{{ sede }}</span></h2>
+    <h2 class="text-success">Corsi sul territorio <span style="color:#444; font-size:17px">{{ sede }}</span></h2>
 
     {% for sede, result in results.items %}
-      <h4>{{ sede }}</h4>
+        <h4>{{ sede }}</h4>
 
-      <table class="table table-striped table-bordered">
-        {% for comitato, count in result %}
-          <tr id="c_{{ comitato.pk }}">
-            <td>{{ comitato }} (<a href="{% url 'formazione:osserva_corsi' %}?s={{comitato.pk}}">{{ count }}</a>)</td>
-          </tr>
-        {% endfor %}
-      </table>
+        <table class="table table-striped table-bordered">
+            {% for comitato, count in result %}
+                <tr id="c_{{ comitato.pk }}">
+                    <td>{{ comitato }} (<a
+                            href="{% url 'formazione:osserva_corsi' %}?s={{ comitato.pk }}">{{ count }}</a>)
+                    </td>
+                </tr>
+            {% endfor %}
+        </table>
 
     {% empty %}
-      <p style="margin-bottom:35px;">Torna ad osservare il <a href="{% url 'formazione:osserva_corsi' %}#c_{{sede.pk}}">corsi sul territorio</a></p>
+        <p style="margin-bottom:35px;">Torna ad osservare il <a
+                href="{% url 'formazione:osserva_corsi' %}#c_{{ sede.pk }}">corsi sul territorio</a></p>
     {% endfor %}
 
+    <div class="col-md-12">
+        <div class="panel panel-primary">
+            <div class="panel-heading" data-toggle="collapse"
+                 href="#collapseFiltro"
+                 role="button"
+                 aria-expanded="false"
+                 aria-controls="collapseFiltro">
+                <h2 class="panel-title"><i class="fa fa-fw fa-search"></i>
+                    Ricerca Avanzata
+                </h2>
+            </div>
+            <div class="panel-body collapse" id="collapseFiltro">
+
+                <form method="GET" action=".">
+                    <div style="padding: 5px;">
+                        {% if s %}<input type="hidden" name="s" value="{{ s }}" />{% endif %}
+                        <div class="form-group">
+                            <label class="control-label">Codice Corso</label>
+                            <input class="form-control"
+                                   id="codice"
+                                   min="0"
+                                   name="codice"
+                                   placeholder="Codice corso"
+                                   step="any"
+                                   type="number"
+                                   {% if codice %}value="{{ codice }}"{% endif %}>
+                        </div>
+                        <div class="form-group">
+                            <label class="control-label">Stato</label>
+                            <select class="form-control" id="id_stato" name="stato" title="">
+                                <option value="" {% if not stato %}selected="selected"{% endif %}>
+                                    ----------------------------
+                                </option>
+                                <option value="P" {% if stato == 'P' %}selected="selected"{% endif %}>In preparazione
+                                </option>
+                                <option value="A" {% if stato == 'A' %}selected="selected"{% endif %}>Attivi</option>
+                                <option value="X" {% if stato == 'X' %}selected="selected"{% endif %}>Annullati</option>
+                                <option value="T" {% if stato == 'T' %}selected="selected"{% endif %}>Terminati</option>
+                            </select>
+                        </div>
+                        <div class="form-group">
+                            <label class="control-label">Data inizio</label>
+                            <input class="form-control selettore-data-ora"
+                                   id="id_data_inizio"
+                                   name="inizio" placeholder="Data inizio"
+                                   type="text"
+                                   {% if inizio %}value="{{ inizio }}"{% endif %}>
+                        </div>
+                        <div class="form-group">
+                            <label class="control-label">Data fine</label>
+                            <input class="form-control selettore-data-ora"
+                                   id="id_data_fine"
+                                   name="fine" placeholder="Data fine"
+                                   type="text"
+                                   {% if fine %}value="{{ fine }}"{% endif %}>
+                        </div>
+                    </div>
+                    <button type="submit" class="btn btn-block btn-primary">
+                        <i class="fa fa-fw fa-search"></i> Cerca
+                    </button>
+                </form>
+            </div>
+        </div>
+    </div>
+
     {% if corsi %}
-    <table class="formazione-courses__table table table-striped table-bordered">
-        <thead>
+        {% include 'paginate.html' with url=url prev=prev next=next stato=stato codice=codice inizio=inizio fine=fine s=s %}
+        <table class="formazione-courses__table table table-striped table-bordered">
+            <thead>
             <th width="15%" class="formazione-courses__th">Stato</th>
             <th class="formazione-courses__th">Corso e Sede</th>
             <th class="formazione-courses__th">Luogo e data</th>
             <th class="formazione-courses__th">Iscritti</th>
-        </thead>
+            </thead>
 
-        {% for corso in corsi %}
-            <tr>
-                <td>{{ corso.get_stato_display }}</td>
-                <td>
-                    <i class="fa fa-fw fa-pencil"></i> <strong>{{ corso.link|safe }}</strong><br />
-                    <i class="fa fa-fw fa-home"></i> {{ corso.sede.link|safe }}
-                    {% if puo_pianificare %}
-                        <br /><i class="fa fa-fw fa-group"></i> <a href="{{ corso.url_direttori }}">{{ corso.deleghe.count }} direttori</a>
-                    {% endif %}
-                </td>
-                <td class="piu-piccolo">
-                    <i class="fa fa-fw fa-map-marker"></i>
+            {% for corso in corsi %}
+                <tr>
+                    <td>{{ corso.get_stato_display }}</td>
+                    <td>
+                        <i class="fa fa-fw fa-pencil"></i> <strong>{{ corso.link|safe }}</strong><br/>
+                        <i class="fa fa-fw fa-home"></i> {{ corso.sede.link|safe }}
+                        {% if puo_pianificare %}
+                            <br/><i class="fa fa-fw fa-group"></i>
+                            <a href="{{ corso.url_direttori }}">{{ corso.deleghe.count }} direttori</a>
+                        {% endif %}
+                    </td>
+                    <td class="piu-piccolo">
+                        <i class="fa fa-fw fa-map-marker"></i>
                         {% if corso.locazione %}
                             {{ corso.locazione }}
                         {% else %}
                             (Nessun indirizzo specificato)
                         {% endif %}
-                        <br />
-                    <i class="fa fa-fw fa-calendar"></i> Inizia: {{ corso.data_inizio }} <br />
-                    <i class="fa fa-fw fa-calendar"></i> Esami: {{ corso.data_esame }}
-                </td>
-                <td>
-                    <strong>{{ corso.partecipazioni_confermate_o_in_attesa.count }} richieste</strong>
-                    <br>
-                    <span class="piu-piccolo text-muted">
+                        <br/>
+                        <i class="fa fa-fw fa-calendar"></i> Inizia: {{ corso.data_inizio }} <br/>
+                        <i class="fa fa-fw fa-calendar"></i> Esami: {{ corso.data_esame }}
+                    </td>
+                    <td>
+                        <strong>{{ corso.partecipazioni_confermate_o_in_attesa.count }} richieste</strong>
+                        <br>
+                        <span class="piu-piccolo text-muted">
                         <i class="fa fa-fw fa-check"></i> {{ corso.partecipazioni_confermate.count }} confermate<br>
                         <i class="fa fa-fw fa-clock-o"></i> {{ corso.partecipazioni_in_attesa.count }} in attesa<br>
                         <i class="fa fa-fw fa-times"></i> {{ corso.partecipazioni_negate.count }} neg./rit.<br>
                     </span>
-                </td>
-            </tr>
-        {% endfor %}
-      </table>
+                    </td>
+                </tr>
+            {% endfor %}
+        </table>
+        {% include 'paginate.html' with url=url prev=prev next=next stato=stato codice=codice inizio=inizio fine=fine s=s %}
     {% endif %}
 {% endblock %}
