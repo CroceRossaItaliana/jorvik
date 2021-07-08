@@ -2597,7 +2597,7 @@ class Sede(ModelloAlbero, ConMarcaTemporale, ConGeolocalizzazione, ConVecchioID,
         Es. Regionale -> QuerySet Provinciali
         """
         if territoriali:
-            estensioni = (REGIONALE, PROVINCIALE, LOCALE, TERRITORIALE)
+            estensioni = (REGIONALE, PROVINCIALE, LOCALE, PROVINCIALE, TERRITORIALE)
         else:
             estensioni = (REGIONALE, PROVINCIALE, LOCALE)
         return self.ottieni_figli().filter(estensione__in=estensioni)

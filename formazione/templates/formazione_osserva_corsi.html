@@ -25,7 +25,7 @@
         <p style="margin-bottom:35px;">Torna ad osservare il <a
                 href="{% url 'formazione:osserva_corsi' %}#c_{{ sede.pk }}">corsi sul territorio</a></p>
     {% endfor %}
-
+    {% if corsi %}
     <div class="col-md-12">
         <div class="panel panel-primary">
             <div class="panel-heading" data-toggle="collapse"
@@ -91,7 +91,7 @@
         </div>
     </div>
 
-    {% if corsi %}
+
         {% include 'paginate.html' with url=url prev=prev next=next stato=stato codice=codice inizio=inizio fine=fine s=s %}
         <table class="formazione-courses__table table table-striped table-bordered">
             <thead>
