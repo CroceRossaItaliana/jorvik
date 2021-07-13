@@ -4,13 +4,14 @@ from datetime import date, datetime
 from django.shortcuts import redirect, get_object_or_404
 from django.core.urlresolvers import reverse
 from django.contrib import messages
+from django.db.models import Q
 from django.views.decorators.clickjacking import xframe_options_exempt
 
 from anagrafica.costanti import REGIONALE, LOCALE, PROVINCIALE
 from anagrafica.models import Sede, Persona
 from autenticazione.funzioni import pagina_privata, pagina_pubblica
-from anagrafica.permessi.applicazioni import COMMISSARIO, PRESIDENTE, RESPONSABILE_FORMAZIONE
-from .models import Page
+from anagrafica.permessi.applicazioni import COMMISSARIO, PRESIDENTE, RESPONSABILE_FORMAZIONE, DELEGATO_AREA
+from .models import Page, TypeFormCompilati
 from .monitoraggio import TypeFormResponses, TypeFormNonSonoUnBersaglio, NONSONOUNBERSAGLIO, MONITORAGGIO, \
     MONITORAGGIOTYPE, MONITORAGGIO_TRASPARENZA, TypeFormResponsesTrasparenza, TypeFormResponsesTrasparenzaCheck, \
     TypeFormResponsesAutocontrolloCheck, TypeFormResponsesFabbisogniFormativiTerritoriale, \
@@ -77,6 +78,24 @@ def monitoraggio(request, me):
     if is_done:
         context['is_done'] = True
 
+    delegha_list = []
+    deleghe = [a for a in me.deleghe_attuali().filter(tipo__in=[PRESIDENTE, COMMISSARIO, DELEGATO_AREA])]
+    for ogni_delegha in deleghe:
+        if ogni_delegha.oggetto_id == request_comitato:
+            delegha_list.append(ogni_delegha)
+
+    if typeform.all_forms_are_completed == 1:
+        typeform_in_db = TypeFormCompilati.objects.filter(
+            Q(tipo='Monitoragio Autocontollo') |
+            Q(comitato__pk=request_comitato))
+        if not typeform_in_db:
+            TypeFormCompilati.objects.create(
+                tipo='Monitoragio Autocontollo',
+                comitato__pk=request_comitato,
+                compilatore=me,
+                delega=delegha_list[0]
+            )
+
     context['comitato'] = typeform.comitato
     context['user_comitato'] = typeform.comitato_id
     context['user_id'] = typeform.get_user_pk
@@ -142,6 +161,24 @@ def monitoraggio_trasparenza(request, me):
     if is_done:
         context['is_done'] = True
 
+    delegha_list = []
+    deleghe = [a for a in me.deleghe_attuali().filter(tipo__in=[PRESIDENTE, COMMISSARIO, DELEGATO_AREA])]
+    for ogni_delegha in deleghe:
+        if ogni_delegha.oggetto_id == request_comitato:
+            delegha_list.append(ogni_delegha)
+
+    if typeform.all_forms_are_completed == 1:
+        typeform_in_db = TypeFormCompilati.objects.filter(
+            Q(tipo='Questionario Trasparenza L. 124/2017') |
+            Q(comitato__pk=request_comitato))
+        if not typeform_in_db:
+            TypeFormCompilati.objects.create(
+                tipo='Questionario Trasparenza L. 124/2017',
+                comitato__pk=request_comitato,
+                compilatore=me,
+                delega=delegha_list[0]
+            )
+
     context['can_compile'] = datetime.now() < datetime(2021, 6, 12, 0, 0)
     context['comitato'] = typeform.comitato
     context['user_comitato'] = typeform.comitato_id
@@ -204,6 +241,24 @@ def monitoraggio_fabb_info_territoriale(request, me):
     if today > datetime.strptime(trenta_uno_luglio, '%Y-%m-%d'):
         finito_di_compilare_per_questo_anno = True
 
+    delegha_list = []
+    deleghe = [a for a in me.deleghe_attuali().filter(tipo__in=[PRESIDENTE, COMMISSARIO, RESPONSABILE_FORMAZIONE])]
+    for ogni_delegha in deleghe:
+        if ogni_delegha.oggetto_id == request_comitato:
+            delegha_list.append(ogni_delegha)
+
+    if typeform.all_forms_are_completed == 1:
+        typeform_in_db = TypeFormCompilati.objects.filter(
+            Q(tipo='Questionario Fabbisogni Formativi Territoriali') |
+            Q(comitato__pk=request_comitato))
+        if not typeform_in_db:
+            TypeFormCompilati.objects.create(
+                tipo='Questionario Fabbisogni Formativi Territoriali',
+                comitato__pk=request_comitato,
+                compilatore=me,
+                delega=delegha_list[0]
+            )
+
     context['comitato'] = typeform.comitato
     context['user_comitato'] = typeform.comitato_id
     context['user_id'] = typeform.get_user_pk
@@ -211,7 +266,6 @@ def monitoraggio_fabb_info_territoriale(request, me):
     context['nome_regionale'] = context['comitato'].sede_regionale.nome_completo
     context['all_forms_are_completed'] = typeform.all_forms_are_completed
     context['finito_di_compilare_per_questo_anno'] = finito_di_compilare_per_questo_anno
-
     context['target'] = MONITORAGGIO_FABBISOGNI_FORMATIVI_TERRITORIALE
 
     return 'monitoraggio_fabb_info_territoriale.html', context
@@ -262,12 +316,30 @@ def monitoraggio_fabb_info_regionale(request, me):
     if is_done:
         context['is_done'] = True
     today = datetime.today()
-    # print(date.today(), 'qqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqq')
+    # print(date.today())
     # data_tjeter = '2021-05-23'
     questo_anno = datetime.today().year
     trenta_setembre = '{}-09-30'.format(questo_anno)
     if today > datetime.strptime(trenta_setembre, '%Y-%m-%d'):
         finito_di_compilare_per_questo_anno = True
+
+    delegha_list = []
+    deleghe = [a for a in me.deleghe_attuali().filter(tipo__in=[PRESIDENTE, COMMISSARIO, RESPONSABILE_FORMAZIONE])]
+    for ogni_delegha in deleghe:
+        if ogni_delegha.oggetto_id == request_comitato:
+            delegha_list.append(ogni_delegha)
+
+    if typeform.all_forms_are_completed == 1:
+        typeform_in_db = TypeFormCompilati.objects.filter(
+            Q(tipo='Questionario Fabbisogni Formativi Regionali') |
+            Q(comitato__pk=request_comitato))
+        if not typeform_in_db:
+            TypeFormCompilati.objects.create(
+                tipo='Questionario Fabbisogni Formativi Regionali',
+                comitato__pk=request_comitato,
+                compilatore=me,
+                delega=delegha_list[0]
+            )
 
     context['comitato'] = typeform.comitato
     context['user_comitato'] = typeform.comitato_id
@@ -450,7 +522,6 @@ def monitora_autocontrollo(request, me):
         context['struttura'] = struttura
     else:
         context['regionali'] = Sede.objects.filter(estensione=REGIONALE, attiva=True)
-
     return 'monitora_autocontrollo.html', context
 
 

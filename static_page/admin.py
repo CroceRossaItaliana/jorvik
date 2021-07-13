@@ -6,7 +6,7 @@ from django.shortcuts import HttpResponse, redirect, render
 from django.core.urlresolvers import reverse
 from django.contrib import messages
 
-from .models import Page
+from .models import Page, TypeFormCompilati
 from .forms import ImportAndGenerateStaticPage
 
 
@@ -86,3 +86,9 @@ class StaticPageAdmin(admin.ModelAdmin):
         return render(request, 'import_and_generate_static_page.html', {
             'form': form
         })
+
+
+@admin.register(TypeFormCompilati)
+class TypeAdmin(admin.ModelAdmin):
+    list_display = ['tipo', 'comitato', 'persona', 'delega']
+    raw_id_fields = ('comitato', 'persona',)
