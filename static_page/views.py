@@ -81,19 +81,19 @@ def monitoraggio(request, me):
     delegha_list = []
     deleghe = [a for a in me.deleghe_attuali().filter(tipo__in=[PRESIDENTE, COMMISSARIO, DELEGATO_AREA])]
     for ogni_delegha in deleghe:
-        if ogni_delegha.oggetto_id == request_comitato:
+        if ogni_delegha.oggetto_id == int(request_comitato):
             delegha_list.append(ogni_delegha)
 
     if typeform.all_forms_are_completed == 1:
         typeform_in_db = TypeFormCompilati.objects.filter(
-            Q(tipo='Monitoragio Autocontollo') |
+            Q(tipo='Monitoragio Autocontollo') &
             Q(comitato__pk=request_comitato))
         if not typeform_in_db:
             TypeFormCompilati.objects.create(
                 tipo='Monitoragio Autocontollo',
-                comitato__pk=request_comitato,
-                compilatore=me,
-                delega=delegha_list[0]
+                comitato=Sede.objects.get(pk=int(request_comitato)),
+                persona=me,
+                delega=delegha_list[0].get_tipo_display()
             )
 
     context['comitato'] = typeform.comitato
@@ -164,19 +164,19 @@ def monitoraggio_trasparenza(request, me):
     delegha_list = []
     deleghe = [a for a in me.deleghe_attuali().filter(tipo__in=[PRESIDENTE, COMMISSARIO, DELEGATO_AREA])]
     for ogni_delegha in deleghe:
-        if ogni_delegha.oggetto_id == request_comitato:
+        if ogni_delegha.oggetto_id == int(request_comitato):
             delegha_list.append(ogni_delegha)
 
     if typeform.all_forms_are_completed == 1:
         typeform_in_db = TypeFormCompilati.objects.filter(
-            Q(tipo='Questionario Trasparenza L. 124/2017') |
+            Q(tipo='Questionario Trasparenza L. 124/2017') &
             Q(comitato__pk=request_comitato))
         if not typeform_in_db:
             TypeFormCompilati.objects.create(
                 tipo='Questionario Trasparenza L. 124/2017',
-                comitato__pk=request_comitato,
-                compilatore=me,
-                delega=delegha_list[0]
+                comitato=Sede.objects.get(pk=int(request_comitato)),
+                persona=me,
+                delega=delegha_list[0].get_tipo_display()
             )
 
     context['can_compile'] = datetime.now() < datetime(2021, 6, 12, 0, 0)
@@ -244,19 +244,19 @@ def monitoraggio_fabb_info_territoriale(request, me):
     delegha_list = []
     deleghe = [a for a in me.deleghe_attuali().filter(tipo__in=[PRESIDENTE, COMMISSARIO, RESPONSABILE_FORMAZIONE])]
     for ogni_delegha in deleghe:
-        if ogni_delegha.oggetto_id == request_comitato:
+        if ogni_delegha.oggetto_id == int(request_comitato):
             delegha_list.append(ogni_delegha)
 
     if typeform.all_forms_are_completed == 1:
         typeform_in_db = TypeFormCompilati.objects.filter(
-            Q(tipo='Questionario Fabbisogni Formativi Territoriali') |
+            Q(tipo='Questionario Fabbisogni Formativi Territoriali') &
             Q(comitato__pk=request_comitato))
         if not typeform_in_db:
             TypeFormCompilati.objects.create(
                 tipo='Questionario Fabbisogni Formativi Territoriali',
-                comitato__pk=request_comitato,
-                compilatore=me,
-                delega=delegha_list[0]
+                comitato=Sede.objects.get(pk=int(request_comitato)),
+                persona=me,
+                delega=delegha_list[0].get_tipo_display()
             )
 
     context['comitato'] = typeform.comitato
@@ -326,19 +326,18 @@ def monitoraggio_fabb_info_regionale(request, me):
     delegha_list = []
     deleghe = [a for a in me.deleghe_attuali().filter(tipo__in=[PRESIDENTE, COMMISSARIO, RESPONSABILE_FORMAZIONE])]
     for ogni_delegha in deleghe:
-        if ogni_delegha.oggetto_id == request_comitato:
+        if ogni_delegha.oggetto_id == int(request_comitato):
             delegha_list.append(ogni_delegha)
-
     if typeform.all_forms_are_completed == 1:
         typeform_in_db = TypeFormCompilati.objects.filter(
-            Q(tipo='Questionario Fabbisogni Formativi Regionali') |
+            Q(tipo='Questionario Fabbisogni Formativi Regionali') &
             Q(comitato__pk=request_comitato))
         if not typeform_in_db:
             TypeFormCompilati.objects.create(
                 tipo='Questionario Fabbisogni Formativi Regionali',
-                comitato__pk=request_comitato,
-                compilatore=me,
-                delega=delegha_list[0]
+                comitato=Sede.objects.get(pk=int(request_comitato)),
+                persona=me,
+                delega=delegha_list[0].get_tipo_display()
             )
 
     context['comitato'] = typeform.comitato

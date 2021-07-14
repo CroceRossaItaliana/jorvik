@@ -358,13 +358,15 @@ class TypeFormResponses(TypeForm):
 
     def _render_to_string(self, to_print=False):
         delegha_list = []
-
         comitato_da_request = Sede.objects.get(pk=int(self.comitato_id))
-        persona = Persona.objects.get(pk=self.user_pk) if self.user_pk else self.me
-        deleghe = comitato_da_request.deleghe_attuali(
-            tipo__in=[COMMISSARIO, PRESIDENTE]).filter(
-            persona=persona
-        )
+        # persona = Persona.objects.get(pk=self.user_pk) if self.user_pk else self.me
+        # deleghe = comitato_da_request.deleghe_attuali(
+        #     tipo__in=[COMMISSARIO, PRESIDENTE]).filter(
+        #     persona=persona
+        # )
+        deleghe = [a for a in
+                   self.compilatore.deleghe_attuali().filter(
+                       tipo__in=[PRESIDENTE, COMMISSARIO, DELEGATO_AREA])]
 
         for ogni_delegha in deleghe:
             if ogni_delegha.oggetto_id == int(self.comitato_id):
@@ -376,10 +378,9 @@ class TypeFormResponses(TypeForm):
             # comitato = self.get_json_from_responses('ZwMX5rsG')['items'][0]['hidden']['c']
             comitato = Sede.objects.get(pk=self.get_json_from_responses('ttOyXCJR')['items'][0]['hidden']['c'])
         return render_to_string('monitoraggio_print.html', {
-            'delegha': delegha_list[0],
+            'delegha': delegha_list[0].get_tipo_display(),
             'comitato': comitato_da_request if comitato_da_request else comitato,
             'user_details': self.me,
-            # 'delegha': delegha_list[0],
             'results': self._retrieve_data(),
             'to_print': to_print,
         })
@@ -442,22 +443,18 @@ class TypeFormResponsesTrasparenza(TypeForm):
 
     def _render_to_string(self, to_print=False):
         delegha_list = []
-
         comitato_da_request = Sede.objects.get(pk=int(self.comitato_id))
-        persona = Persona.objects.get(pk=self.user_pk) if self.user_pk else self.me
-        deleghe = comitato_da_request.deleghe_attuali(
-            tipo__in=[COMMISSARIO, PRESIDENTE, RESPONSABILE_FORMAZIONE]).filter(
-            persona=persona
-        )
-
+        deleghe = [a for a in
+                   self.compilatore.deleghe_attuali().filter(
+                       tipo__in=[PRESIDENTE, COMMISSARIO, DELEGATO_AREA])]
         for ogni_delegha in deleghe:
             if ogni_delegha.oggetto_id == int(self.comitato_id):
                 delegha_list.append(ogni_delegha)
         return render_to_string('monitoraggio_print.html', {
-            'delegha': delegha_list[0],
-            'comitato': comitato_da_request if comitato_da_request else self.get_json_from_responses('Jo7AmkVU')['items'][0]['hidden']['nc'],
-            'user_details': self.user_details,
-            'request': self.request,
+            'delegha': delegha_list[0].get_tipo_display(),
+            'comitato': comitato_da_request,
+            'user_details': self.compilatore if self.compilatore is not None else delegha_list[0].persona,
+            # 'request': self.request,
             'results': self._retrieve_data(),
             'to_print': to_print,
         })
@@ -536,23 +533,16 @@ class TypeFormResponsesFabbisogniFormativiTerritoriale(TypeForm):
         return response.json()
 
     def _render_to_string(self, to_print=False):
-
         delegha_list = []
-        # comitato = Sede.objects.get(
-        #     pk=self.get_json_from_responses('zW2FMF2Y', user_pk=self.user_pk)['items'][0]['hidden']['c'])
         comitato_da_request = Sede.objects.get(pk=int(self.comitato_id))
-        persona = Persona.objects.get(pk=self.user_pk) if self.user_pk else self.me
-
-        deleghe = comitato_da_request.deleghe_attuali(
-            tipo__in=[COMMISSARIO, PRESIDENTE, RESPONSABILE_FORMAZIONE]).filter(
-            persona=persona
-        )
+        deleghe = [a for a in
+                   self.compilatore.deleghe_attuali().filter(
+                       tipo__in=[PRESIDENTE, COMMISSARIO, RESPONSABILE_FORMAZIONE])]
         for ogni_delegha in deleghe:
             if ogni_delegha.oggetto_id == int(self.comitato_id):
                 delegha_list.append(ogni_delegha)
-
         return render_to_string('monitoraggio_print.html', {
-            'delegha': delegha_list[0],
+            'delegha': delegha_list[0].get_tipo_display(),
             'comitato': comitato_da_request,
             'user_details': self.compilatore if self.compilatore is not None else delegha_list[0].persona,
             # 'request': self.request,
@@ -645,19 +635,13 @@ class TypeFormResponsesFabbisogniFormativiRegionali(TypeForm):
 
         delegha_list = []
         comitato_da_request = Sede.objects.get(pk=int(self.comitato_id))
-        # persona = Persona.objects.get(
-        #     pk=self.get_json_from_responses('zW2FMF2Y', user_pk=self.user_pk)['items'][0]['hidden']['u'])
-        persona = Persona.objects.get(pk=self.user_pk) if self.user_pk else self.me
-        deleghe = comitato_da_request.deleghe_attuali(
-            tipo__in=[COMMISSARIO, PRESIDENTE, RESPONSABILE_FORMAZIONE]).filter(
-            persona=persona
-        )
+        deleghe = [a for a in
+                   self.compilatore.deleghe_attuali().filter(tipo__in=[PRESIDENTE, COMMISSARIO, RESPONSABILE_FORMAZIONE])]
         for ogni_delegha in deleghe:
             if ogni_delegha.oggetto_id == int(self.comitato_id):
                 delegha_list.append(ogni_delegha)
-
         return render_to_string('monitoraggio_print.html', {
-            'delegha': delegha_list[0],
+            'delegha': delegha_list[0].get_tipo_display(),
             'comitato': comitato_da_request,
             'user_details': self.compilatore if self.compilatore is not None else delegha_list[0].persona,
             # 'request': self.request,
