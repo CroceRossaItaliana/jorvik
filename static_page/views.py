@@ -39,7 +39,7 @@ def monitoraggio(request, me):
     if not hasattr(me, 'sede_riferimento'): return redirect('/')
 
     request_comitato = request.GET.get('comitato')
-    if (me.is_comissario or me.is_delega_responsabile_area_trasparenza) and not request_comitato:
+    if (me.is_comissario or me.is_presidente or me.is_delega_responsabile_area_trasparenza) and not request_comitato:
         # GAIA-58: Seleziona comitato
         if me.is_presidente:
             deleghe = me.deleghe_attuali(tipo__in=[COMMISSARIO, PRESIDENTE])
@@ -121,7 +121,7 @@ def monitoraggio_trasparenza(request, me):
     if not hasattr(me, 'sede_riferimento'): return redirect('/')
 
     request_comitato = request.GET.get('comitato')
-    if (me.is_comissario or me.is_delega_responsabile_area_trasparenza) and not request_comitato:
+    if (me.is_comissario or me.is_presidente or me.is_delega_responsabile_area_trasparenza) and not request_comitato:
         # GAIA-58: Seleziona comitato
         if me.is_presidente:
             deleghe = me.deleghe_attuali(tipo__in=[COMMISSARIO, PRESIDENTE])
