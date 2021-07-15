@@ -1022,7 +1022,7 @@ class TypeFormResponsesTrasparenzaCheckPubblica(TypeFormResponsesTrasparenzaChec
     def _render_to_string(self, to_print=False):
         return render_to_string('monitoraggio_print_pubblica.html', {
             'comitato': Sede.objects.get(pk=self.comitato_id),
-            'user_details': self.me,
+            # 'user_details': self.me,
             # 'request': self.request,
             'results': self._retrieve_data(),
             'to_print': to_print,
