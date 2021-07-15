@@ -671,12 +671,18 @@ def trasparenza_publica(request, me):
         locali = regionale.ottieni_discendenti(includimi=True).filter(estensione__in=[LOCALE, REGIONALE]).order_by(
             '-estensione')
         for locale in locali:
-            delegato = locale.delegati_monitoraggio_trasparenza()
-            typeform = TypeFormResponsesTrasparenzaCheckPubblica(
-                persona=delegato, comitato_id=locale.id, users_pk=delegato
-            )
-            typeform.get_responses_for_all_forms()
-            struttura[locale] = typeform.all_forms_are_completed
+            delegati = locale.delegati_monitoraggio_trasparenza()
+            for delegato in delegati:
+                if delegato:
+                    typeform = TypeFormResponsesTrasparenzaCheckPubblica(
+                        persona=delegato, user_pk=delegato.id, comitato_id=locale.id
+                    )
+                    typeform.get_responses_for_all_forms()
+                    if typeform.all_forms_are_completed:
+                        struttura[locale] = typeform.all_forms_are_completed
+                        break
+                    else:
+                        continue
 
         context['struttura'] = struttura
     else:

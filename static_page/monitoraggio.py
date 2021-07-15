@@ -1018,7 +1018,40 @@ class TypeFormResponsesTrasparenzaCheck(TypeFormResponsesCheck):
         return HttpResponse(html)
 
 
-class TypeFormResponsesTrasparenzaCheckPubblica(TypeFormResponsesTrasparenzaCheck):
+class TypeFormResponsesTrasparenzaCheckPubblica(TypeFormResponsesCheck):
+    form_ids = OrderedDict([
+        ('Jo7AmkVU', 'Questionario Trasparenza L. 124/2017')
+    ])
+
+    def get_responses_for_all_forms(self):
+        comitato_id = str(self.comitato_id)
+        for _id, bottone_name in self.form_ids.items():
+            json = self.get_json_from_responses(_id)
+            for item in json['items']:
+                c = item.get('hidden', OrderedDict())
+                c = c.get('c')
+                if c and c == comitato_id:
+                    self.context_typeform[_id][0] = True
+                    break  # bottone spento
+
+    def get_json_from_responses(self, form_id=None, instance=None):
+        if instance:
+            return instance.json()
+        else:
+            if form_id is not None:
+                # Make complete request
+                # return self.get_responses(form_id).json()
+                return self.get_completed_responses(form_id)
+            else:
+                raise BaseException('You must pass form_id')
+
+    def get_completed_responses(self, form_id):
+        response = self.make_request(form_id,
+                                     path='/responses',
+                                     query=self.user_pk,
+                                     completed=True)
+        return response.json()
+
     def _render_to_string(self, to_print=False):
         return render_to_string('monitoraggio_print_pubblica.html', {
             'comitato': Sede.objects.get(pk=self.comitato_id),
