@@ -358,7 +358,7 @@ class TypeFormResponses(TypeForm):
     @property
     def compilatore(self):
         typeform_in_db = TypeFormCompilati.objects.filter(
-            Q(tipo__icontains='autocontrollo') & Q(comitato__pk=self.comitato_id)).first()
+            Q(tipo__icontains='auto') & Q(comitato__pk=self.comitato_id)).first()
         return typeform_in_db
 
     def get_responses_for_all_forms(self):
@@ -1109,7 +1109,7 @@ class TypeFormResponsesTrasparenzaCheckPubblica(TypeFormResponsesCheck):
         return response.json()
 
     def _render_to_string(self, to_print=False):
-        return render_to_string('monitoraggio_print.html', {
+        return render_to_string('monitoraggio_print_pubblica.html', {
             'comitato': self.compilatore.comitato,
             'user_details': self.compilatore.persona,
             # Se la utenza che ha compilato il questionario

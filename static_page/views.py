@@ -651,19 +651,6 @@ def trasparenza_publica(request, me):
     action = request.GET.get('action', None)
     comitato = request.GET.get('comitato', None)
 
-    # if action and comitato:
-    #     sede = Sede.objects.get(pk=comitato)
-    #     delegati = sede.delegati_monitoraggio_trasparenza()
-    #     for delegato in delegati:
-    #         if delegato:
-    #             typeform = TypeFormResponsesTrasparenzaCheckPubblica(
-    #                 persona=delegato, user_pk=delegato.id, comitato_id=sede.id
-    #             )
-    #             typeform.get_responses_for_all_forms()
-    #             if typeform.all_forms_are_completed:
-    #                 return typeform.print()
-    #             else:
-    #                 continue
     if action and comitato:
         sede = Sede.objects.get(pk=comitato)
         delegato = sede.delegati_monitoraggio_trasparenza()
