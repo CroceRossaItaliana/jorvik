@@ -4,13 +4,14 @@ from datetime import date, datetime
 from django.shortcuts import redirect, get_object_or_404
 from django.core.urlresolvers import reverse
 from django.contrib import messages
+from django.db.models import Q
 from django.views.decorators.clickjacking import xframe_options_exempt
 
 from anagrafica.costanti import REGIONALE, LOCALE, PROVINCIALE
 from anagrafica.models import Sede, Persona
 from autenticazione.funzioni import pagina_privata, pagina_pubblica
-from anagrafica.permessi.applicazioni import COMMISSARIO, PRESIDENTE, RESPONSABILE_FORMAZIONE
-from .models import Page
+from anagrafica.permessi.applicazioni import COMMISSARIO, PRESIDENTE, RESPONSABILE_FORMAZIONE, DELEGATO_AREA
+from .models import Page, TypeFormCompilati
 from .monitoraggio import TypeFormResponses, TypeFormNonSonoUnBersaglio, NONSONOUNBERSAGLIO, MONITORAGGIO, \
     MONITORAGGIOTYPE, MONITORAGGIO_TRASPARENZA, TypeFormResponsesTrasparenza, TypeFormResponsesTrasparenzaCheck, \
     TypeFormResponsesAutocontrolloCheck, TypeFormResponsesFabbisogniFormativiTerritoriale, \
@@ -38,7 +39,7 @@ def monitoraggio(request, me):
     if not hasattr(me, 'sede_riferimento'): return redirect('/')
 
     request_comitato = request.GET.get('comitato')
-    if (me.is_comissario or me.is_delega_responsabile_area_trasparenza) and not request_comitato:
+    if (me.is_comissario or me.is_presidente or me.is_delega_responsabile_area_trasparenza) and not request_comitato:
         # GAIA-58: Seleziona comitato
         if me.is_presidente:
             deleghe = me.deleghe_attuali(tipo__in=[COMMISSARIO, PRESIDENTE])
@@ -77,6 +78,24 @@ def monitoraggio(request, me):
     if is_done:
         context['is_done'] = True
 
+    delegha_list = []
+    deleghe = [a for a in me.deleghe_attuali().filter(tipo__in=[PRESIDENTE, COMMISSARIO, DELEGATO_AREA])]
+    for ogni_delegha in deleghe:
+        if ogni_delegha.oggetto_id == int(request_comitato):
+            delegha_list.append(ogni_delegha)
+
+    if typeform.all_forms_are_completed == 1:
+        typeform_in_db = TypeFormCompilati.objects.filter(
+            Q(tipo='Monitoragio Autocontollo') &
+            Q(comitato__pk=request_comitato))
+        if not typeform_in_db:
+            TypeFormCompilati.objects.create(
+                tipo='Monitoragio Autocontollo',
+                comitato=Sede.objects.get(pk=int(request_comitato)),
+                persona=me,
+                delega=delegha_list[0].get_tipo_display()
+            )
+
     context['comitato'] = typeform.comitato
     context['user_comitato'] = typeform.comitato_id
     context['user_id'] = typeform.get_user_pk
@@ -102,7 +121,7 @@ def monitoraggio_trasparenza(request, me):
     if not hasattr(me, 'sede_riferimento'): return redirect('/')
 
     request_comitato = request.GET.get('comitato')
-    if (me.is_comissario or me.is_delega_responsabile_area_trasparenza) and not request_comitato:
+    if (me.is_comissario or me.is_presidente or me.is_delega_responsabile_area_trasparenza) and not request_comitato:
         # GAIA-58: Seleziona comitato
         if me.is_presidente:
             deleghe = me.deleghe_attuali(tipo__in=[COMMISSARIO, PRESIDENTE])
@@ -141,6 +160,24 @@ def monitoraggio_trasparenza(request, me):
 
     if is_done:
         context['is_done'] = True
+
+    delegha_list = []
+    deleghe = [a for a in me.deleghe_attuali().filter(tipo__in=[PRESIDENTE, COMMISSARIO, DELEGATO_AREA])]
+    for ogni_delegha in deleghe:
+        if ogni_delegha.oggetto_id == int(request_comitato):
+            delegha_list.append(ogni_delegha)
+
+    if typeform.all_forms_are_completed == 1:
+        typeform_in_db = TypeFormCompilati.objects.filter(
+            Q(tipo='Questionario Trasparenza L. 124/2017') &
+            Q(comitato__pk=request_comitato))
+        if not typeform_in_db:
+            TypeFormCompilati.objects.create(
+                tipo='Questionario Trasparenza L. 124/2017',
+                comitato=Sede.objects.get(pk=int(request_comitato)),
+                persona=me,
+                delega=delegha_list[0].get_tipo_display()
+            )
 
     context['can_compile'] = datetime.now() < datetime(2021, 6, 12, 0, 0)
     context['comitato'] = typeform.comitato
@@ -204,6 +241,24 @@ def monitoraggio_fabb_info_territoriale(request, me):
     if today > datetime.strptime(trenta_uno_luglio, '%Y-%m-%d'):
         finito_di_compilare_per_questo_anno = True
 
+    delegha_list = []
+    deleghe = [a for a in me.deleghe_attuali().filter(tipo__in=[PRESIDENTE, COMMISSARIO, RESPONSABILE_FORMAZIONE])]
+    for ogni_delegha in deleghe:
+        if ogni_delegha.oggetto_id == int(request_comitato):
+            delegha_list.append(ogni_delegha)
+
+    if typeform.all_forms_are_completed == 1:
+        typeform_in_db = TypeFormCompilati.objects.filter(
+            Q(tipo='Questionario Fabbisogni Formativi Territoriali') &
+            Q(comitato__pk=request_comitato))
+        if not typeform_in_db:
+            TypeFormCompilati.objects.create(
+                tipo='Questionario Fabbisogni Formativi Territoriali',
+                comitato=Sede.objects.get(pk=int(request_comitato)),
+                persona=me,
+                delega=delegha_list[0].get_tipo_display()
+            )
+
     context['comitato'] = typeform.comitato
     context['user_comitato'] = typeform.comitato_id
     context['user_id'] = typeform.get_user_pk
@@ -211,7 +266,6 @@ def monitoraggio_fabb_info_territoriale(request, me):
     context['nome_regionale'] = context['comitato'].sede_regionale.nome_completo
     context['all_forms_are_completed'] = typeform.all_forms_are_completed
     context['finito_di_compilare_per_questo_anno'] = finito_di_compilare_per_questo_anno
-
     context['target'] = MONITORAGGIO_FABBISOGNI_FORMATIVI_TERRITORIALE
 
     return 'monitoraggio_fabb_info_territoriale.html', context
@@ -262,12 +316,29 @@ def monitoraggio_fabb_info_regionale(request, me):
     if is_done:
         context['is_done'] = True
     today = datetime.today()
-    # print(date.today(), 'qqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqq')
+    # print(date.today())
     # data_tjeter = '2021-05-23'
     questo_anno = datetime.today().year
     trenta_setembre = '{}-09-30'.format(questo_anno)
     if today > datetime.strptime(trenta_setembre, '%Y-%m-%d'):
         finito_di_compilare_per_questo_anno = True
+
+    delegha_list = []
+    deleghe = [a for a in me.deleghe_attuali().filter(tipo__in=[PRESIDENTE, COMMISSARIO, RESPONSABILE_FORMAZIONE])]
+    for ogni_delegha in deleghe:
+        if ogni_delegha.oggetto_id == int(request_comitato):
+            delegha_list.append(ogni_delegha)
+    if typeform.all_forms_are_completed == 1:
+        typeform_in_db = TypeFormCompilati.objects.filter(
+            Q(tipo='Questionario Fabbisogni Formativi Regionali') &
+            Q(comitato__pk=request_comitato))
+        if not typeform_in_db:
+            TypeFormCompilati.objects.create(
+                tipo='Questionario Fabbisogni Formativi Regionali',
+                comitato=Sede.objects.get(pk=int(request_comitato)),
+                persona=me,
+                delega=delegha_list[0].get_tipo_display()
+            )
 
     context['comitato'] = typeform.comitato
     context['user_comitato'] = typeform.comitato_id
@@ -377,17 +448,13 @@ def monitora_trasparenza(request, me):
 
     if action and comitato:
         sede = Sede.objects.get(pk=comitato)
-        delegati = sede.delegati_monitoraggio_trasparenza()
-        for delegato in delegati:
-            if delegato:
-                typeform = TypeFormResponsesTrasparenzaCheck(
-                    persona=delegato, user_pk=delegato.id, comitato_id=sede.id
-                )
-                typeform.get_responses_for_all_forms()
-                if typeform.all_forms_are_completed:
-                    return typeform.print()
-                else:
-                    continue
+        delegato = sede.delegati_monitoraggio_trasparenza()
+        typeform = TypeFormResponsesTrasparenzaCheck(
+            persona=delegato, comitato_id=sede.id, users_pk=delegato
+        )
+        typeform.get_responses_for_all_forms()
+        if action == 'print':
+            return typeform.print()
 
     if id_regionale:
         struttura = OrderedDict()
@@ -395,18 +462,12 @@ def monitora_trasparenza(request, me):
         locali = regionale.ottieni_discendenti(includimi=True).filter(estensione__in=[LOCALE, REGIONALE]).order_by(
             '-estensione')
         for locale in locali:
-            delegati = locale.delegati_monitoraggio_trasparenza()
-            for delegato in delegati:
-                if delegato:
-                    typeform = TypeFormResponsesTrasparenzaCheck(
-                        persona=delegato, user_pk=delegato.id, comitato_id=locale.id
-                    )
-                    typeform.get_responses_for_all_forms()
-                    if typeform.all_forms_are_completed:
-                        struttura[locale] = typeform.all_forms_are_completed
-                        break
-                    else:
-                        struttura[locale] = typeform.all_forms_are_completed
+            delegato = locale.delegati_monitoraggio_trasparenza()
+            typeform = TypeFormResponsesTrasparenzaCheck(
+                persona=delegato, comitato_id=locale.id, users_pk=delegato
+            )
+            typeform.get_responses_for_all_forms()
+            struttura[locale] = typeform.all_forms_are_completed
 
         context['struttura'] = struttura
     else:
@@ -437,30 +498,29 @@ def monitora_autocontrollo(request, me):
 
     if action and comitato:
         sede = Sede.objects.get(pk=comitato)
-        delegato = sede.delegato_monitoraggio_trasparenza()
+        delegato = sede.delegati_monitoraggio_trasparenza()
         typeform = TypeFormResponsesAutocontrolloCheck(
-            persona=delegato, user_pk=delegato.id, comitato_id=comitato
+            persona=delegato, comitato_id=sede.id, users_pk=delegato
         )
         typeform.get_responses_for_all_forms()
-        return typeform.print()
+        if action == 'print':
+            return typeform.print()
 
     if id_regionale:
         struttura = OrderedDict()
         regionale = Sede.objects.get(pk=id_regionale)
         locali = regionale.ottieni_discendenti(includimi=True).filter(estensione__in=[LOCALE, REGIONALE]).order_by('-estensione')
         for locale in locali:
-            delegato = locale.delegato_monitoraggio_trasparenza()
-            if delegato:
-                typeform = TypeFormResponsesAutocontrolloCheck(
-                    persona=delegato, user_pk=delegato.id, comitato_id=locale.id
-                )
-                typeform.get_responses_for_all_forms()
-                struttura[locale] = typeform.all_forms_are_completed
+            delegato = locale.delegati_monitoraggio_trasparenza()
+            typeform = TypeFormResponsesAutocontrolloCheck(
+                persona=delegato, comitato_id=locale.id, users_pk=delegato
+            )
+            typeform.get_responses_for_all_forms()
+            struttura[locale] = typeform.all_forms_are_completed
 
         context['struttura'] = struttura
     else:
         context['regionali'] = Sede.objects.filter(estensione=REGIONALE, attiva=True)
-
     return 'monitora_autocontrollo.html', context
 
 
@@ -593,36 +653,25 @@ def trasparenza_publica(request, me):
 
     if action and comitato:
         sede = Sede.objects.get(pk=comitato)
-        delegati = sede.delegati_monitoraggio_trasparenza()
-        for delegato in delegati:
-            if delegato:
-                typeform = TypeFormResponsesTrasparenzaCheckPubblica(
-                    persona=delegato, user_pk=delegato.id, comitato_id=sede.id
-                )
-                typeform.get_responses_for_all_forms()
-                if typeform.all_forms_are_completed:
-                    return typeform.print()
-                else:
-                    continue
-
+        delegato = sede.delegati_monitoraggio_trasparenza()
+        typeform = TypeFormResponsesTrasparenzaCheckPubblica(
+            persona=delegato, comitato_id=sede.id, users_pk=delegato
+        )
+        typeform.get_responses_for_all_forms()
+        if action == 'print':
+            return typeform.print()
     if id_regionale:
         struttura = OrderedDict()
         regionale = Sede.objects.get(pk=id_regionale)
         locali = regionale.ottieni_discendenti(includimi=True).filter(estensione__in=[LOCALE, REGIONALE]).order_by(
             '-estensione')
         for locale in locali:
-            delegati = locale.delegati_monitoraggio_trasparenza()
-            for delegato in delegati:
-                if delegato:
-                    typeform = TypeFormResponsesTrasparenzaCheckPubblica(
-                        persona=delegato, user_pk=delegato.id, comitato_id=locale.id
-                    )
-                    typeform.get_responses_for_all_forms()
-                    if typeform.all_forms_are_completed:
-                        struttura[locale] = typeform.all_forms_are_completed
-                        break
-                    else:
-                        continue
+            delegato = locale.delegati_monitoraggio_trasparenza()
+            typeform = TypeFormResponsesTrasparenzaCheckPubblica(
+                persona=delegato, comitato_id=locale.id, users_pk=delegato
+            )
+            typeform.get_responses_for_all_forms()
+            struttura[locale] = typeform.all_forms_are_completed
 
         context['struttura'] = struttura
     else:

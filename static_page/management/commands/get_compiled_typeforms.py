@@ -1,0 +1,135 @@
+import datetime
+import logging
+from collections import OrderedDict
+import requests
+from django.core.management import BaseCommand
+from django.db.models import Q
+from anagrafica.permessi.applicazioni import PRESIDENTE, COMMISSARIO, RESPONSABILE_FORMAZIONE, DELEGATO_AREA
+from django.conf import settings
+from static_page.models import TypeFormCompilati
+from anagrafica.models import Persona, Sede
+
+
+class Command(BaseCommand):
+    help = 'Prendi tuti i tipi di typeform da Typeform.com API e registrarli nel database'
+
+    TYPEFORM_DOMAIN = "https://api.typeform.com"
+    TYPEFORM_TOKEN = settings.TOKEN_TYPE_FORM
+    ENDPOINT = TYPEFORM_DOMAIN + "/forms/%s"
+    HEADERS = {
+        'Authorization': "Bearer %s" % TYPEFORM_TOKEN,
+        'Content-Type': 'application/json'
+    }
+
+    form_ids_fabbisogni_territoriali = OrderedDict([
+        ('ZrgLp6bQ', 'Questionario Fabbisogni Formativi Territoriali'),
+    ])
+    form_ids_fabbisogni_regionali = OrderedDict([
+        ('zW2FMF2Y', 'Questionario Fabbisogni Formativi Regionali'),
+    ])
+    form_ids_transparenza = OrderedDict([
+        ('Jo7AmkVU', 'Questionario Trasparenza L. 124/2017')
+    ])
+
+    form_ids_autocontrollo = OrderedDict([
+        ('ttOyXCJR', 'A-GOVERNANCE'),
+        ('PZvVJIZq', 'B-Personale Dipendente e Volontario'),
+        ('p5DlUCLt', 'C-Contabilità'),
+        ('o7JfxbE5', 'D-Convenzioni e progetti'),
+        ('ZwMX5rsG', 'E-Relazioni esterne, comunicazione, trasparenza'),
+    ])
+
+    def make_request(cls, form_id, path='', **kwargs):
+        # if doesn't show the data or the page is empty, maybe it has to do with pagination
+        # https://developer.typeform.com/responses/walkthroughs/
+        url = cls.ENDPOINT % form_id + path + '?page_size=1000&before'
+        if kwargs.get('completed') == True and kwargs.get('query'):
+            url += '?completed=true'
+            url += '&query=%s' % kwargs.get('query')
+        response = requests.get(url, headers=cls.HEADERS)
+        return response
+
+    def handle(self, *args, **kwargs):
+        one = datetime.datetime.now()
+        for key, value in self.form_ids_fabbisogni_territoriali.items():
+            res = self.make_request(form_id=key, path='/responses')
+            for el in res.json()['items']:
+                typeform_in_db = TypeFormCompilati.objects.filter(Q(comitato=Sede.objects.get(pk=int(el['hidden']['c']))) & Q(tipo=value))
+                if not typeform_in_db:
+                    compilatore = Persona.objects.get(pk=int(el['hidden']['u']))
+                    delegha_list = []
+                    deleghe = [a for a in compilatore.deleghe_attuali().filter(
+                        tipo__in=[PRESIDENTE, COMMISSARIO, RESPONSABILE_FORMAZIONE])]
+                    for ogni_delegha in deleghe:
+                        if ogni_delegha.oggetto_id == int(el['hidden']['c']):
+                            delegha_list.append(ogni_delegha)
+
+                    TypeFormCompilati.objects.create(
+                        tipo=value,
+                        comitato=Sede.objects.get(pk=int(el['hidden']['c'])),
+                        persona=compilatore,
+                        delega=delegha_list[0].get_tipo_display() if len(delegha_list) else '---------------'
+                    )
+        for key, value in self.form_ids_fabbisogni_regionali.items():
+            res = self.make_request(form_id=key, path='/responses')
+            for el in res.json()['items']:
+                typeform_in_db = TypeFormCompilati.objects.filter(Q(comitato=Sede.objects.get(pk=int(el['hidden']['c']))) & Q(tipo=value))
+                if not typeform_in_db:
+                    compilatore = Persona.objects.get(pk=int(el['hidden']['u']))
+                    delegha_list = []
+                    deleghe = [a for a in compilatore.deleghe_attuali().filter(
+                        tipo__in=[PRESIDENTE, COMMISSARIO, RESPONSABILE_FORMAZIONE])]
+                    for ogni_delegha in deleghe:
+                        if ogni_delegha.oggetto_id == int(el['hidden']['c']):
+                            delegha_list.append(ogni_delegha)
+
+                    TypeFormCompilati.objects.create(
+                        tipo=value,
+                        comitato=Sede.objects.get(pk=int(el['hidden']['c'])),
+                        persona=compilatore,
+                        delega=delegha_list[0].get_tipo_display() if len(delegha_list) else '---------------'
+                    )
+        for key, value in self.form_ids_transparenza.items():
+            res = self.make_request(form_id=key, path='/responses')
+            for el in res.json()['items']:
+                typeform_in_db = TypeFormCompilati.objects.filter(Q(comitato=Sede.objects.get(pk=int(el['hidden']['c']))) & Q(tipo=value))
+                if not typeform_in_db:
+                    compilatore = Persona.objects.get(pk=int(el['hidden']['u']))
+                    delegha_list = []
+                    deleghe = [a for a in compilatore.deleghe_attuali().filter(
+                        tipo__in=[PRESIDENTE, COMMISSARIO, DELEGATO_AREA])]
+                    for ogni_delegha in deleghe:
+                        if ogni_delegha.oggetto_id == int(el['hidden']['c']):
+                            delegha_list.append(ogni_delegha)
+
+                    TypeFormCompilati.objects.create(
+                        tipo=value,
+                        comitato=Sede.objects.get(pk=int(el['hidden']['c'])),
+                        persona=compilatore,
+                        delega=delegha_list[0].get_tipo_display() if len(delegha_list) else '---------------'
+                    )
+
+        my_dict = {}
+        for key, value in self.form_ids_autocontrollo.items():
+            res = self.make_request(form_id=key, path='/responses')
+            for el in res.json()['items']:
+                typeform_in_db = TypeFormCompilati.objects.filter(Q(comitato=Sede.objects.get(pk=int(el['hidden']['c']))) & Q(tipo='Monitoragio Autocontollo'))
+                if not typeform_in_db:
+                    compilatore = Persona.objects.get(pk=int(el['hidden']['u']))
+                    my_dict[compilatore.pk] = int(el['hidden']['c'])
+                    delegha_list = []
+                    deleghe = [a for a in compilatore.deleghe_attuali().filter(
+                        tipo__in=[PRESIDENTE, COMMISSARIO, DELEGATO_AREA])]
+                    for ogni_delegha in deleghe:
+                        if ogni_delegha.oggetto_id == int(el['hidden']['c']):
+                            delegha_list.append(ogni_delegha)
+
+                    TypeFormCompilati.objects.create(
+                        tipo='Monitoragio Autocontollo',
+                        comitato=Sede.objects.get(pk=int(el['hidden']['c'])),
+                        persona=compilatore,
+                        delega=delegha_list[0].get_tipo_display() if len(delegha_list) else '---------------'
+                    )
+        # self.stdout.write(self.style.SUCCESS('dict: {}......................{}................{}..............{}'.format(my_dict, len(my_dict), len(my_dict.values()), len(my_dict.values()))))
+        finish = datetime.datetime.now()
+        self.stdout.write(self.style.SUCCESS('It took: "%s" to run this script......................' % (finish - one)))
