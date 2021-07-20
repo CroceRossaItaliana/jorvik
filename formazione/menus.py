@@ -33,7 +33,7 @@ def formazione_menu(menu_name, me=None):
             ('Acronimi', 'fa-book', '/page/glossario-corsi/'),
             ('Calendario', 'fa-calendar', reverse('formazione:formazione_calendar')),
             ('Regolamento Formazione', 'fa-file-alt', 'https://datafiles.gaia.cri.it/media/filer_public/08/59/0859cd54-ddad-4f26-8f8d-f48d2c92801d/regolamento_dei_corsi_di_formazione_per_volontari_e_dipendenti_della_croce_rossa_italiana.pdf'),
-            ('Sintesi Equipollenze', 'fa-file-alt', 'https://datafiles.gaia.cri.it/media/filer_public/9d/b0/9db097a5-0742-416b-8075-180f8a38a937/sintesi_equipollenze_per_gaia.pdf'),
+            ('Sintesi Equipollenze', 'fa-file-alt', 'https://datafiles.gaia.cri.it/media/filer_public/02/1b/021b9504-9b02-4f22-8cf5-6a83fba5f069/sintesi_equipollenze_per_gaia_15-7-21rev1.pdf'),
             # TODO: GAIA-424: commentato momentaneamente
             #("Nell'albo", "fa-search", "/formazione/cerca_persona") if to_show(
             #    me, RUBRICA_DELEGATI_OBIETTIVO_ALL + [GESTIONE_CORSI_SEDE]
