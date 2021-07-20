@@ -142,9 +142,11 @@ def formazione_osserva_corsi(request, me):
 
                 if comitato.pk == 524:  # Lazio
                     # Area Metropolitana di Roma Capitale Coordinamento
-                    roma_comitato = Sede.objects.get(pk=1638)
-                    roma_corsi = CorsoBase.objects.filter(sede__in=roma_comitato.comitati_sottostanti()).count()
-                    add_corsi_count_to_result(sede, roma_comitato, roma_corsi)
+                    roma_comitato_S = Sede.objects.get(pk=1638).comitati_sottostanti(territoriali=True)
+                    roma__S = Sede.objects.get(pk=525).comitati_sottostanti(territoriali=True)
+                    s = roma_comitato_S | roma__S
+                    roma_corsi = CorsoBase.objects.filter(sede__in=s).count()
+                    add_corsi_count_to_result(sede, roma_comitato_S[0], roma_corsi)
 
                 if comitato.pk == 1638:
                     roma = comitato.comitati_sottostanti()[0]
