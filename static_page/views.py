@@ -462,13 +462,12 @@ def monitora_trasparenza(request, me):
         locali = regionale.ottieni_discendenti(includimi=True).filter(estensione__in=[LOCALE, REGIONALE]).order_by(
             '-estensione')
         for locale in locali:
-            delegato = locale.delegati_monitoraggio_trasparenza()
-            typeform = TypeFormResponsesTrasparenzaCheck(
-                persona=delegato, comitato_id=locale.id, users_pk=delegato
-            )
-            typeform.get_responses_for_all_forms()
-            struttura[locale] = typeform.all_forms_are_completed
-
+            typeform_db = TypeFormCompilati.objects.filter(
+                Q(tipo__icontains='trasparenza') & Q(comitato__pk=locale.pk)).first()
+            if typeform_db:
+                struttura[locale] = 1
+            else:
+                struttura[locale] = 0
         context['struttura'] = struttura
     else:
         context['regionali'] = Sede.objects.filter(estensione=REGIONALE, attiva=True)
@@ -511,12 +510,19 @@ def monitora_autocontrollo(request, me):
         regionale = Sede.objects.get(pk=id_regionale)
         locali = regionale.ottieni_discendenti(includimi=True).filter(estensione__in=[LOCALE, REGIONALE]).order_by('-estensione')
         for locale in locali:
-            delegato = locale.delegati_monitoraggio_trasparenza()
-            typeform = TypeFormResponsesAutocontrolloCheck(
-                persona=delegato, comitato_id=locale.id, users_pk=delegato
-            )
-            typeform.get_responses_for_all_forms()
-            struttura[locale] = typeform.all_forms_are_completed
+            # delegato = locale.delegati_monitoraggio_trasparenza()
+            # typeform = TypeFormResponsesAutocontrolloCheck(
+            #     persona=delegato, comitato_id=locale.id, users_pk=delegato
+            # )
+            # typeform.get_responses_for_all_forms()
+            # struttura[locale] = typeform.all_forms_are_completed
+
+            typeform_db = TypeFormCompilati.objects.filter(
+                Q(tipo__icontains='auto') & Q(comitato__pk=locale.pk)).first()
+            if typeform_db:
+                struttura[locale] = 1
+            else:
+                struttura[locale] = 0
 
         context['struttura'] = struttura
     else:
@@ -553,12 +559,13 @@ def monitora_fabb_info_territoriale(request, me):
             persona=delegato, comitato_id=sede.id, users_pk=delegato
         )
         typeform.get_responses_for_all_forms()
+        from .utils import download_comitati_discendenti, download_excel
         if action == 'print':
             return typeform.print()
         elif action == 'download':
-            return typeform.download_excel()
+            # return typeform.download_excel()
+            return download_excel(sede, comitato, request.path)
         else:
-            from .utils import download_comitati_discendenti
             return download_comitati_discendenti(sede, request.path)
 
     if id_regionale:
@@ -566,12 +573,19 @@ def monitora_fabb_info_territoriale(request, me):
         regionale = Sede.objects.get(pk=id_regionale)
         locali = regionale.ottieni_discendenti(includimi=True).filter(estensione__in=[LOCALE, PROVINCIALE]).order_by('-estensione')
         for locale in locali:
-            delegato = locale.monitora_fabb_info_regionali()
-            typeform = TypeFormResponsesFabbisogniFormativiTerritorialeCheck(
-                persona=delegato, comitato_id=locale.id, users_pk=delegato
-            )
-            typeform.get_responses_for_all_forms()
-            struttura[locale] = typeform.all_forms_are_completed
+            # delegato = locale.monitora_fabb_info_regionali()
+            # typeform = TypeFormResponsesFabbisogniFormativiTerritorialeCheck(
+            #     persona=delegato, comitato_id=locale.id, users_pk=delegato
+            # )
+            # typeform.get_responses_for_all_forms()
+            # struttura[locale] = typeform.all_forms_are_completed
+            typeform_db = TypeFormCompilati.objects.filter(
+                Q(tipo__icontains='Territoriali') & Q(comitato__pk=locale.pk)).first()
+            if typeform_db:
+                struttura[locale] = 1
+            else:
+                struttura[locale] = 0
+        # context['struttura'] = struttura
         context['struttura'] = struttura
         context['comitato_regionale'] = id_regionale
     else:
@@ -607,12 +621,12 @@ def monitora_fabb_info_regionale(request, me):
         )
         typeform.get_responses_for_all_forms()
 
+        from .utils import download_comitati_discendenti, download_excel
         if action == 'print':
             return typeform.print()
         elif action == 'download':
-            return typeform.download_excel()
+            return download_excel(sede, comitato, request.path)
         else:
-            from .utils import download_comitati_discendenti
             return download_comitati_discendenti(sede, request.path)
 
     if id_regionale:
@@ -621,22 +635,20 @@ def monitora_fabb_info_regionale(request, me):
         comitati = regionale.ottieni_discendenti(includimi=True).filter(estensione__in=[LOCALE, REGIONALE, PROVINCIALE]).order_by(
             '-estensione')
         for comitato in comitati:
-            # se e comitato regionale, usi il typeform per comitati regionali
             if comitato.estensione == 'R':
-                delegato = comitato.monitora_fabb_info_regionali()
-                typeform = TypeFormResponsesFabbisogniFormativiRagionaleCheck(
-                    persona=delegato, comitato_id=comitato.id, users_pk=delegato
-                )
-                typeform.get_responses_for_all_forms()
-                struttura[comitato] = typeform.all_forms_are_completed
-
+                typeform_db = TypeFormCompilati.objects.filter(
+                    Q(tipo__icontains='Regionali') & Q(comitato__pk=comitato.pk)).first()
+                if typeform_db:
+                    struttura[comitato] = 1
+                else:
+                    struttura[comitato] = 0
             else:
-                delegato = comitato.monitora_fabb_info_regionali()
-                typeform = TypeFormResponsesFabbisogniFormativiTerritorialeCheck(
-                    persona=delegato, comitato_id=comitato.id, users_pk=delegato
-                )
-                typeform.get_responses_for_all_forms()
-                struttura[comitato] = typeform.all_forms_are_completed
+                typeform_db = TypeFormCompilati.objects.filter(
+                    Q(tipo__icontains='Territoriali') & Q(comitato__pk=comitato.pk)).first()
+                if typeform_db:
+                    struttura[comitato] = 1
+                else:
+                    struttura[comitato] = 0
         context['struttura'] = struttura
     else:
         context['regionali'] = Sede.objects.filter(estensione=REGIONALE, attiva=True)
@@ -666,12 +678,12 @@ def trasparenza_publica(request, me):
         locali = regionale.ottieni_discendenti(includimi=True).filter(estensione__in=[LOCALE, REGIONALE]).order_by(
             '-estensione')
         for locale in locali:
-            delegato = locale.delegati_monitoraggio_trasparenza()
-            typeform = TypeFormResponsesTrasparenzaCheckPubblica(
-                persona=delegato, comitato_id=locale.id, users_pk=delegato
-            )
-            typeform.get_responses_for_all_forms()
-            struttura[locale] = typeform.all_forms_are_completed
+            typeform_db = TypeFormCompilati.objects.filter(
+                Q(tipo__icontains='trasparenza') & Q(comitato__pk=locale.pk)).first()
+            if typeform_db:
+                struttura[locale] = 1
+            else:
+                struttura[locale] = 0
 
         context['struttura'] = struttura
     else:
