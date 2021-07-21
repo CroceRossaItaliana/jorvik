@@ -41,7 +41,7 @@
                                     {{ locale.link|safe }}
                                 </td>
                                 <td>
-                                    {% if completo %}
+                                    {% if completo == 1 %}
                                         <span class="glyphicon glyphicon-ok-circle" style="color: #62f862"></span>
                                     {% else %}
                                         <span class="glyphicon glyphicon-remove-circle" style="color: #ea1717"></span>
@@ -49,23 +49,23 @@
                                 </td>
                             {% if locale.estensione == 'R' %}
                                 <td>
-                                    {% if completo %}
+                                    {% if completo == 1 %}
                                         <a href="{% url 'pages:monitora-fabb-info-regionale' %}?action=print&comitato={{ locale.pk }}" target="_blank"><i class="fa fa-print fa-fw">PDF</i></a>
                                     {% endif %}
                                 </td>
                                 <td>
-                                    {% if completo %}
+                                    {% if completo == 1 %}
                                         <a href="{% url 'pages:monitora-fabb-info-regionale' %}?action=download&comitato={{ locale.pk }}" target="_blank"><i class="fa fa-download fa-fw"></i>Excel</a>
                                     {% endif %}
                                 </td>
                             {% else %}
                                 <td>
-                                    {% if completo %}
+                                    {% if completo == 1 %}
                                         <a href="{% url 'pages:monitora-fabb-info-territoriale' %}?action=print&comitato={{ locale.pk }}" target="_blank"><i class="fa fa-print fa-fw">PDF</i></a>
                                     {% endif %}
                                 </td>
                                 <td>
-                                    {% if completo %}
+                                    {% if completo == 1 %}
                                         <a href="{% url 'pages:monitora-fabb-info-territoriale' %}?action=download&comitato={{ locale.pk }}" target="_blank"><i class="fa fa-download fa-fw"></i>Excel</a>
                                     {% endif %}
                                 </td>

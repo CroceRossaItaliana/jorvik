@@ -1,3 +1,4 @@
+from django.contrib.postgres.fields import JSONField
 from django.db import models
 
 from anagrafica.models import Sede, Persona
@@ -29,6 +30,7 @@ class TypeFormCompilati(models.Model):
     delega = models.CharField(max_length=255, null=True, blank=True,
                               help_text="questa puo esere utile quando l'utente non ha piu la delega che ha avuto "
                                         "quando ha compilato il typeform")
+    results = JSONField(default=dict)
 
     def __str__(self):
         return str(self.tipo)

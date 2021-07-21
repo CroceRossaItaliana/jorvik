@@ -28,23 +28,18 @@
                     </thead>
                     <tbody>
                     {% for locale, completo in struttura.items %}
-                        {% if completo %}
+                        {% if completo == 1 %}
                         <tr>
                             <td>
                                 {{ locale.link|safe }}
                             </td>
                             <td>
-{#                                {% if completo %}#}
-                                    <span class="glyphicon glyphicon-ok-circle" style="color: #62f862"></span>
-{#                                {% else %}#}
-{#                                    <span class="glyphicon glyphicon-remove-circle" style="color: #ea1717"></span>#}
-{#                                {% endif %}#}
+                                <span class="glyphicon glyphicon-ok-circle" style="color: #62f862"></span>
                             </td>
                             <td>
-{#                                {% if completo %}#}
-                                    <a href="?action=print&comitato={{ locale.pk }}" target="_blank">
+                                <a href="?action=print&comitato={{ locale.pk }}" target="_blank">
                                     <i class="fa fa-print fa-fw">PDF</i>
-{#                                {% endif %}#}
+                                </a>
                             </td>
                         </tr>
                         {% endif %}

@@ -34,15 +34,15 @@
                                     {{ locale.link|safe }}
                                 </td>
                                 <td>
-                                    {% if completo %}
+                                    {% if completo == 1 %}
                                         <span class="glyphicon glyphicon-ok-circle" style="color: #62f862"></span>
                                     {% else %}
                                         <span class="glyphicon glyphicon-remove-circle" style="color: #ea1717"></span>
                                     {% endif %}
                                 </td>
                                 <td>
-                                    {% if completo %}
-                                        <a href="?action=print&comitato={{ locale.pk }}" target="_blank"><i class="fa fa-print fa-fw">PDF</i>
+                                    {% if completo == 1 %}
+                                        <a href="?action=print&comitato={{ locale.pk }}" target="_blank"><i class="fa fa-print fa-fw">PDF</i></a>
                                     {% endif %}
                                 </td>
                             </tr>
