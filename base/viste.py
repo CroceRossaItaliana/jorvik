@@ -309,61 +309,8 @@ def pulisci_autorizzazioni(richieste):
 def autorizzazioni(request, me, content_type_pk=None):
     """ Mostra elenco delle autorizzazioni in attesa. """
 
-    # richieste = []
-    # if me.is_responsabile_formazione_nazionale:
-    #     autorizzazioni_nazionale_in_attesa = Autorizzazione.objects.filter(destinatario_ruolo='CB-PART').exclude(oggetto_tipo_id__in=IGNORA_AUTORIZZAZIONI).order_by('-creazione')[:100]
-    #     for richiesta in autorizzazioni_nazionale_in_attesa:
-    #         corso = CorsoBase.objects.get(pk=richiesta.destinatario_oggetto_id)
-    #         if corso.sede.estensione == 'N':
-    #             richieste = autorizzazioni_nazionale_in_attesa
-    # else:
-    #     autorizzazioni_in_attesa = me.autorizzazioni().filter(necessaria=True)
-    #     richieste = autorizzazioni_in_attesa.exclude(oggetto_tipo_id__in=IGNORA_AUTORIZZAZIONI)
-    #     for richiesta in autorizzazioni_nazionale:
-    #         corso = CorsoBase.objects.get(pk=richiesta.destinatario_oggetto_id)
-    #         if corso.sede.estensione == 'N':
-    #             richieste.append(richiesta)
-    #     autorizzazioni_in_attesa_diretore = me.autorizzazioni().filter(necessaria=True)
-    #     autorizzazioni_diretore = autorizzazioni_in_attesa_diretore.exclude(oggetto_tipo_id__in=IGNORA_AUTORIZZAZIONI)
-    #     for richiesta in autorizzazioni_diretore:
-    #         richieste.append(richiesta)
-    # print(richieste)
-
-
-
-
-    tutti_autorizzazionia = Autorizzazione.objects.all().order_by('-creazione')[:30]
-    nr = 0
-    for autorizzazione in tutti_autorizzazionia:
-        print( # autorizzazione.richiedente, autorizzazione.firmatario, autorizzazione.oggetto_tipo, autorizzazione.oggetto_id,
-              # autorizzazione.oggetto, autorizzazione.destinatario_ruolo, autorizzazione.destinatario_oggetto_tipo,
-              # autorizzazione.destinatario_oggetto_id, autorizzazione.destinatario_oggetto
-        )
-        # corso = CorsoBase.objects.get(pk=autorizzazione.destinatario_oggetto_id)
-        # print(corso.sede,  ' - ', corso.sede.estensione, ' - ',  corso.tipo, ' - ', corso)
-        # if corso.sede.estensione == 'N':
-        #     nr += 1
-            # print(corso.sede.estensione, corso.creazione, '------------------------', autorizzazione)
-            # tutti_autorizzazioni.append(autorizzazione)
-    # print(nr, '==========================================')
     autorizzazioni_in_attesa = me.autorizzazioni().filter(necessaria=True)
     richieste = autorizzazioni_in_attesa.exclude(oggetto_tipo_id__in=IGNORA_AUTORIZZAZIONI)
-    # print(richieste)
-    # for autorizzazione in richieste:
-    #     print(autorizzazione.richiedente, autorizzazione.firmatario, autorizzazione.oggetto_tipo, autorizzazione.oggetto_id,
-    #           autorizzazione.oggetto, autorizzazione.destinatario_ruolo, autorizzazione.destinatario_oggetto_tipo,
-    #           # autorizzazione.destinatario_oggetto_id, autorizzazione.destinatario_oggetto
-    #     )
-    # print(richieste, type(richieste))
-    # for richiesta in richieste:
-    #     tutti_autorizzazioni.append(richiesta)
-    # print(tutti_autorizzazioni, '---------------------',  len(tutti_autorizzazioni))
-    # print('wwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwww', autorizzazioni_in_attesa,
-    #       'mmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmm', richieste)
-
-
-
-
 
     richieste_bloccate = dict()
     # richieste_bloccate['corsi'] = PartecipazioneCorsoBase.richieste_non_processabili(richieste)
@@ -376,35 +323,16 @@ def autorizzazioni(request, me, content_type_pk=None):
 
     ordine = request.session.get('autorizzazioni_ordine', default=ORDINE_DEFAULT)
 
-    # sezioni2 = ()  # Ottiene le sezioni
-    # sezs2 = richieste.values('destinatario_oggetto_tipo_id').annotate(Count('destinatario_oggetto_tipo_id'))
-    # print(sezs2, '--------------------------')
-    # for se in sezs2:
-    #     print(Sede.objects.get(pk=int(se['destinatario_oggetto_tipo_id'])))
-    #     modello = ContentType.objects.get(pk=int(se['destinatario_oggetto_tipo_id']))
-    #     print(modello, 'aaaaaaaaaaaaaaaaaaa')
-    #     modello = modello.model_class()
-    #     print(modello, 'bbbbbbbbbbbbbbbbbbbb')
-    #     # modello = modello.RICHIESTA_NOME
-    #     # print(modello, 'cccccccccccccccccccc')
-    #     sezioni2 += ((modello, se['destinatario_oggetto_tipo_id__count'], int(se['destinatario_oggetto_tipo_id'])),)
-    #     print(sezioni2, 'ddddddddddddddddddddddddd\n-----------------------------------------------------------------------------------------\n')
-
     sezioni = ()  # Ottiene le sezioni
     sezs = richieste.values('oggetto_tipo_id').annotate(Count('oggetto_tipo_id'))
-    # print(sezs, '--------------------------')
 
     for sez in sezs:
         modello = ContentType.objects.get(pk=int(sez['oggetto_tipo_id']))
-        # print(modello, 'aaaaaaaaaaaaaaaaaaa')
         modello = modello.model_class()
-        # print(modello, 'bbbbbbbbbbbbbbbbbbbb')
         modello = modello.RICHIESTA_NOME
-        # print(modello, 'cccccccccccccccccccc')
         sezioni += ((modello, sez['oggetto_tipo_id__count'], int(sez['oggetto_tipo_id'])),)
-        # print(sezioni, 'ddddddddddddddddddddddddd')
 
-    # richieste = richieste.order_by(ordine, 'id')
+    richieste = richieste.order_by(ordine, 'id')
 
     if content_type_pk is not None:
         richieste = richieste.filter(oggetto_tipo_id=int(content_type_pk))
