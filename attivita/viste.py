@@ -47,7 +47,7 @@ def attivita_aree_sede(request, me, sede_pk=None):
     modulo = ModuloCreazioneArea(request.POST or None)
     if modulo.is_valid():
         area = modulo.save(commit=False)
-        aree.obbiettivo = modulo.cleaned_data['settore']
+        area.obiettivo = int(modulo.cleaned_data['settore'])
         area.sede = sede
         area.save()
         return redirect("/attivita/aree/%d/%d/responsabili/" % (
