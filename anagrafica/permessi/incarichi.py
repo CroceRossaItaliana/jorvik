@@ -1,3 +1,4 @@
+from anagrafica.costanti import NAZIONALE, REGIONALE
 from anagrafica.permessi.applicazioni import (UFFICIO_SOCI, UFFICIO_SOCI_UNITA,
                                               DIRETTORE_CORSO, RESPONSABILE_FORMAZIONE, REFERENTE, REFERENTE_SERVIZI_SO,
                                               COMMISSARIO, VICE_PRESIDENTE, PRESIDENTE, RESPONSABILE_EVENTO, )
@@ -107,9 +108,16 @@ def espandi_incarichi_responsabile_evento(evento, al_giorno=None):
 
 def espandi_incarichi_responsabile_formazione(sede, al_giorno=None):
     from formazione.models import CorsoBase
-    return [
+    if sede.estensione == 'N':
+        return [
+        ] + espandi_incarichi_direttore_corso(CorsoBase.objects.filter(sede_id=sede.pk))
+    elif sede.estensione == 'R':
+        return [
+        ] + espandi_incarichi_direttore_corso(CorsoBase.objects.filter(sede_id=sede.pk))
+    else:
+        return [
 
-    ] + espandi_incarichi_direttore_corso(CorsoBase.objects.filter(sede__in=sede.espandi()))
+               ] + espandi_incarichi_direttore_corso(CorsoBase.objects.filter(sede__in=sede.espandi()))
 
 
 def espandi_incarichi_presidente(sede, al_giorno=None):

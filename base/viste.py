@@ -20,11 +20,11 @@ from django.views.decorators.clickjacking import xframe_options_exempt
 from jorvik import settings
 from anagrafica.costanti import LOCALE, PROVINCIALE, REGIONALE
 from anagrafica.models import Sede, Persona
-from anagrafica.permessi.applicazioni import PRESIDENTE, UFFICIO_SOCI, UFFICIO_SOCI_TEMPORANEO, UFFICIO_SOCI_UNITA
+from anagrafica.permessi.applicazioni import PRESIDENTE, UFFICIO_SOCI, UFFICIO_SOCI_TEMPORANEO, UFFICIO_SOCI_UNITA, RESPONSABILE_FORMAZIONE
 from anagrafica.permessi.costanti import ERRORE_PERMESSI, GESTIONE_SEDE
 from autenticazione.funzioni import pagina_pubblica, pagina_anonima, pagina_privata
 from autenticazione.models import Utenza
-from formazione.models import PartecipazioneCorsoBase, Aspirante
+from formazione.models import PartecipazioneCorsoBase, Aspirante, CorsoBase
 from posta.models import Messaggio
 from .errori import errore_generico, messaggio_generico
 from .forms import ModuloRecuperaPassword, ModuloLocalizzatore, ModuloLocalizzatoreItalia
