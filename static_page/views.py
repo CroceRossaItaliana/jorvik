@@ -215,7 +215,7 @@ def monitoraggio_fabb_info_territoriale(request, me):
         }
 
     context = dict()
-    context['can_compile'] = datetime.now() < datetime(2021, 7, 3, 0, 0)
+    context['can_compile'] = datetime.now() < datetime(2021, 8, 4, 0, 0)
     typeform = TypeFormResponsesFabbisogniFormativiTerritoriale(request=request, me=me)
 
     # Make test request (API/connection availability, etc)
