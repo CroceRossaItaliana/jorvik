@@ -213,12 +213,14 @@ def monitoraggio_fabb_info_territoriale(request, me):
             'titolo': 'Monitoraggio Fabbisogni Informativi Comitato Territoriale',
             'target': MONITORAGGIO_FABBISOGNI_FORMATIVI_TERRITORIALE
         }
+
     context = dict()
+    context['can_compile'] = datetime.now() < datetime(2021, 7, 3, 0, 0)
     typeform = TypeFormResponsesFabbisogniFormativiTerritoriale(request=request, me=me)
 
     # Make test request (API/connection availability, etc)
     if not typeform.make_test_request_to_api:
-        return 'monitoraggio_trasparenza.html', context
+        return 'monitoraggio_fabb_info_territoriale.html', context
 
     context['type_form'] = typeform.context_typeform
 

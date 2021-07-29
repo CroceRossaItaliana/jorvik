@@ -65,6 +65,9 @@
 {#    </div>#}
 
     {% if all_forms_are_completed %}
+        {% if not can_compile %}
+          <p class="margine-verticale-20 grassetto">Il Questionario non è più disponibile in quanto il termine ultimo è scaduto. Puoi comunque scaricare le risposte.</p>
+        {% endif %}
         <div class="typeform_widget-tools">
           <ul class="typeform_widget-tools__list">
             <li><a class="monitoraggio_action_btn" href="{% url 'pages:monitoraggio_actions' %}?action=print&target={{ target }}&comitato={{user_comitato}}" target="_blank"><i class="fa fa-print fa-fw"></i> Stampa le risposte</a></li>
@@ -74,9 +77,6 @@
             {% endif %}
           </ul>
         </div>
-        {% if not can_compile %}
-          <p class="margine-verticale-20 grassetto">Il Questionario non è più disponibile in quanto il termine ultimo è scaduto. Puoi comunque scaricare le risposte.</p>
-        {% endif %}
     {% else %}
         {% if not can_compile %}
           <p class="margine-verticale-20 grassetto">Risposte non disponibili, in quanto il questionario non è stato compilato entro il termine ultimo.</p>
