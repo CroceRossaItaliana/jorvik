@@ -6,10 +6,10 @@ from jorvik.settings import DEFAULT_FROM_EMAIL
 
 
 @shared_task(bind=True)
-def send_mail(self, request, user_pk, target):
+def send_mail(self, user_pk, target):
     from .monitoraggio import MONITORAGGIOTYPE
 
-    responses = MONITORAGGIOTYPE[target][0](request=request, user_pk=user_pk)
+    responses = MONITORAGGIOTYPE[target][0](request=self.request, user_pk=user_pk)
     pdf = responses.convert_html_to_pdf()
     presidente = responses.persona.sede_riferimento().presidente()
 
@@ -23,10 +23,10 @@ def send_mail(self, request, user_pk, target):
 
 
 @shared_task(bind=True)
-def send_mail_regionale(self, request, user_pk, target):
+def send_mail_regionale(self, user_pk, target):
     from .monitoraggio import MONITORAGGIOTYPE, MONITORAGGIO_TRASPARENZA
 
-    responses = MONITORAGGIOTYPE[target][0](request=request, user_pk=user_pk)
+    responses = MONITORAGGIOTYPE[target][0](request=self.request, user_pk=user_pk)
     pdf = responses.convert_html_to_pdf()
 
     sede_regionale = responses.comitato.sede_regionale

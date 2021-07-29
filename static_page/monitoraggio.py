@@ -302,13 +302,13 @@ class TypeForm:
         return response
 
     def send_via_mail(self, redirect_url, target):
-        task = send_mail.apply_async(args=(self.get_user_pk, self.request, target), task_id=uuid())
+        task = send_mail.apply_async(args=(self.get_user_pk, target), task_id=uuid())
 
         # messages.add_message(self.request, messages.INFO, self.CELERY_TASK_PREFIX+task.id)
         return redirect_url
 
     def send_via_mail_regionale(self, redirect_url, target):
-        task = send_mail_regionale.apply_async(args=(self.get_user_pk, self.request, target), task_id=uuid())
+        task = send_mail_regionale.apply_async(args=(self.get_user_pk, target), task_id=uuid())
 
         # messages.add_message(self.request, messages.INFO, self.CELERY_TASK_PREFIX+task.id)
         return redirect_url
