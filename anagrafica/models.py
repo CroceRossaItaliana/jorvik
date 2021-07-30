@@ -136,7 +136,7 @@ class Persona(ModelloSemplice, ConMarcaTemporale, ConAllegati, ConVecchioID):
     CONOSCENZA_MEDIAFRIENDS = "MF"
     CONOSCENZA_ALTRO = "AL"
     CONOSCENZA = (
-        (CONOSCENZA_MEDIAFRIENDS, "Pubblicità MEDIAFRIENDS"),
+        (CONOSCENZA_MEDIAFRIENDS, "Pubblicità MEDIASET"),
         (CONOSCENZA_SITI, "Siti web della Croce Rossa Italiana"),
         (CONOSCENZA_FACEBOOK, "Facebook"),
         (CONOSCENZA_TWITTER, "Twitter"),
