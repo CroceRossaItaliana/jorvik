@@ -133,6 +133,7 @@ class Persona(ModelloSemplice, ConMarcaTemporale, ConAllegati, ConVecchioID):
     CONOSCENZA_AFFISSIONI = "AF"
     CONOSCENZA_EVENTI = "EV"
     CONOSCENZA_SERVIZI = "SE"
+    CONOSCENZA_MEDIAFRIENDS = "MF"
     CONOSCENZA_ALTRO = "AL"
     CONOSCENZA = (
         (CONOSCENZA_SITI, "Siti web della Croce Rossa Italiana"),
@@ -147,6 +148,7 @@ class Persona(ModelloSemplice, ConMarcaTemporale, ConAllegati, ConVecchioID):
         (CONOSCENZA_EVENTI, "Eventi organizzati dalla CRI (es. stand informativi, manifestazioni, open day, ecc.)"),
         (CONOSCENZA_SERVIZI, "Partecipazione ad attività e/o fruizione di servizi erogati dalla CRI (es. corsi di "
                              "formazione, servizi sanitari, servizi sociali, ecc.)"),
+        (CONOSCENZA_MEDIAFRIENDS, "Pubblicità MEDIAFRIENDS"),
         (CONOSCENZA_ALTRO, "Altro"),
     )
     conoscenza = models.CharField(max_length=2, choices=CONOSCENZA, default=None, blank=False, null=True, db_index=True,
