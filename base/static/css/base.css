@@ -306,3 +306,7 @@ body, p, span, div {
     border: 3px solid #ccc;
     left: 1px;
 }
+
+select#id_conoscenza + .help-block {
+    font-weight: bold;
+}
