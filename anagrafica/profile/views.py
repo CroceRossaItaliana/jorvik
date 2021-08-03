@@ -1,3 +1,4 @@
+from collections import OrderedDict
 from django.contrib import messages
 from django.core.urlresolvers import reverse
 from django.db import transaction
@@ -34,10 +35,16 @@ def profilo(request, me, pk, sezione=None):
     persona = get_object_or_404(Persona, pk=pk)
     puo_modificare = me.permessi_almeno(oggetto=persona, minimo=MODIFICA)
     puo_leggere = me.permessi_almeno(oggetto=persona, minimo=LETTURA)
+    forced_view = []
+
+    if me.is_responsabile_formazione or me.is_direttore:
+        forced_view.append('curriculum')
 
     # Controlla permessi di visualizzazione
-    sezioni = profile_sections(puo_leggere, puo_modificare)
-    sezioni = filter_per_role(request, me, persona, sezioni)
+    sezioni = profile_sections(
+        puo_leggere, puo_modificare, forced_view=forced_view)
+    sezioni = filter_per_role(request, me, persona,
+                              sezioni, forced_to_view=len(forced_view) > 0)
 
     context = {
         "persona": persona,
