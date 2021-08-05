@@ -5,7 +5,7 @@
 {% load base_tags %}
 
 {% block profilo_corpo %}
-{% if sezione %}
+{% if sezione and puo_modificare %}
     <div class="row">
         <div class="col-lg-3" style="padding: 5px">
             <a class="btn btn-primary btn-block" href="{% url 'profilo:profilo' pk=pk sezione=sezione %}?modifica=qualificacri">
@@ -79,7 +79,7 @@
                                                 <span style="background-color: #c1bbbb; border-radius: 10px 10px 10px 10px; padding: 3px">{{ skill }}</span>
                                             {% endfor %}
                                         {% endif %}
-                                    {% if t.corso_partecipazione %} <!-- and not t.is_expired_course_title -->
+                                    {% if t.corso_partecipazione and puo_modificare %} <!-- and not t.is_expired_course_title -->
                                         <br><a href="{% url 'aspirante:persona_report_schede' t.corso_partecipazione.corso.pk pk %}?scarica_uno_attestato={{t.pk}}">Scarica attestato</a>
                                     {% endif %}
                                     </p>
