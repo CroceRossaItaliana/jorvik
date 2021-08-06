@@ -57,6 +57,7 @@ def monitoraggio(request, me):
 
     # Comitato selezionato, mostrare le form di typeform
     context = dict()
+    context['user_comitato'] = request_comitato
     typeform = TypeFormResponses(request=request, me=me)
 
     # Make test request (API/connection availability, etc)

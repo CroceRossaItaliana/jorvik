@@ -393,10 +393,10 @@ class TypeFormResponses(TypeForm):
 
     def _render_to_string(self, to_print=False):
         return render_to_string('monitoraggio_print.html', {
-            'comitato': self.compilatore.comitato,
-            'user_details': self.compilatore.persona,
+            'comitato': self.compilatore.comitato if self.compilatore else None,
+            'user_details': self.compilatore.persona if self.compilatore else None,
             # Se la utenza che ha compilato il questionario
-            'delegha': self.compilatore.delega,
+            'delegha': self.compilatore.delega if self.compilatore else None,
             'results': self._retrieve_data(),
             'to_print': to_print,
         })
@@ -567,7 +567,11 @@ class TypeFormResponsesFabbisogniFormativiTerritoriale(TypeForm):
 
     def _render_to_string(self, to_print=False):
         delegha_list = []
-        comitato_da_request = Sede.objects.get(pk=int(self.comitato_id))
+        
+        if self.comitato_id:
+            comitato_da_request = Sede.objects.get(pk=int(self.comitato_id))
+        else:
+            comitato_da_request = Sede.objects.none()
         deleghe = [a for a in
                    self.compilatore.deleghe_attuali().filter(
                        tipo__in=[PRESIDENTE, COMMISSARIO, RESPONSABILE_FORMAZIONE])]
