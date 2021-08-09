@@ -7,9 +7,9 @@ from ..models import Delega
 from ..profile import views
 
 
-def filter_per_role(request, me, persona, sezioni):
+def filter_per_role(request, me, persona, sezioni, forced_to_view=False):
     puo_leggere = me.permessi_almeno(persona, LETTURA)
-    if not puo_leggere:
+    if not puo_leggere and not forced_to_view:
         return OrderedDict()
 
     # GAIA-213 (filtro aggiuntivo per direttori)
@@ -63,7 +63,7 @@ def filter_per_role(request, me, persona, sezioni):
     return sezioni
 
 
-def profile_sections(puo_leggere, puo_modificare):
+def profile_sections(puo_leggere, puo_modificare, forced_view=[]):
     """
     :param puo_leggere:
     :param puo_modificare:
@@ -111,7 +111,7 @@ def profile_sections(puo_leggere, puo_modificare):
         )),
     )
 
-    return (x for x in r if len(x[1]) < 4 or x[1][3] == True)
+    return (x for x in r if (len(x[1]) < 4 or x[1][3] == True) or (x[0] in forced_view))
 
 
 from curriculum.forms import (

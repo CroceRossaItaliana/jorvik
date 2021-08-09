@@ -23,63 +23,63 @@
       <p style="font-size: 10pt">
           Clicca <a href="https://datafiles.gaia.cri.it/media/filer_public/42/57/4257d2b0-2b65-441a-a1fe-7ededfb42883/anteprima_territoriale.xlsx" download target="_blank">QUI</a> per scaricare l'anteprima delle domande.
       </p>
+    
+    {% if can_compile %}
+      <ul class="typeform_widget">
+        <li><a href="?comitato={{user_comitato}}&id=ZrgLp6bQ" class="{%if type_form.ZrgLp6bQ.0 %}done{%endif%} typeform_widget__btn testi-lunghi hand" title="Questionario Fabbisogni Formativi">Questionario Fabbisogni Formativi</a></li>
+      </ul>
 
-    <ul class="typeform_widget">
-      <li><a href="?comitato={{user_comitato}}&id=ZrgLp6bQ" class="{%if type_form.ZrgLp6bQ.0 %}done{%endif%} {%if finito_di_compilare_per_questo_anno %}finito{% endif %} typeform_widget__btn testi-lunghi hand" title="Questionario Fabbisogni Formativi">Questionario Fabbisogni Formativi</a></li>
-    </ul>
+      <div class="typeform_widget__wrapper">
+        {% if not is_done %}
+          {% if typeform_id and user_comitato and user_id %}
+  {#          <div class="typeform-widget" data-url="https://crocerossaitaliana.typeform.com/to/{{typeform_id}}?c={{user_comitato}}&u={{user_id}}&nc={{nome_comitato}}&nr={{nome_regionale}}" data-transparency="100" data-hide-headers=true data-hide-footer=true style="width: 100%; height: 500px;"></div>#}
+              <div id="typeform-widget" style="width: 100%; height: 550px;"></div>
 
-    <div class="typeform_widget__wrapper">
-      {% if not is_done %}
-        {% if typeform_id and user_comitato and user_id %}
-{#          <div class="typeform-widget" data-url="https://crocerossaitaliana.typeform.com/to/{{typeform_id}}?c={{user_comitato}}&u={{user_id}}&nc={{nome_comitato}}&nr={{nome_regionale}}" data-transparency="100" data-hide-headers=true data-hide-footer=true style="width: 100%; height: 500px;"></div>#}
-            <div id="typeform-widget" style="width: 100%; height: 550px;"></div>
-
-            <script>
-            {#(function() {#}
-            {#    var qs, js, q, s, d = document,#}
-            {#        gi = d.getElementById,#}
-            {#        ce = d.createElement,#}
-            {#        gt = d.getElementsByTagName,#}
-            {#        id = "type_form",#}
-            {#        b = "https://embed.typeform.com/";#}
-            {#    if (!gi.call(d, id)) {#}
-            {#        js = ce.call(d, "script");#}
-            {#        js.id = id;#}
-            {#        js.src = b + "embed.js";#}
-            {#        q = gt.call(d, "script")[0];#}
-            {#        q.parentNode.insertBefore(js, q)#}
-            {#    }#}
-            {#})()#}
+              <script>
+              {#(function() {#}
+              {#    var qs, js, q, s, d = document,#}
+              {#        gi = d.getElementById,#}
+              {#        ce = d.createElement,#}
+              {#        gt = d.getElementsByTagName,#}
+              {#        id = "type_form",#}
+              {#        b = "https://embed.typeform.com/";#}
+              {#    if (!gi.call(d, id)) {#}
+              {#        js = ce.call(d, "script");#}
+              {#        js.id = id;#}
+              {#        js.src = b + "embed.js";#}
+              {#        q = gt.call(d, "script")[0];#}
+              {#        q.parentNode.insertBefore(js, q)#}
+              {#    }#}
+              {#})()#}
 
 
-            {#Vedi qua: https://github.com/Typeform/embed/blob/main/packages/demo-html/public/popup-js.html#}
-            {#    o qua: https://medium.com/typeforms-engineering-blog/typeform-embed-sdk-is-going-open-source-997d2626cf2a#}
-            src="https://embed.typeform.com/embed.js"
-            window.typeformEmbed.makeWidget(
-                document.getElementById("typeform-widget"),
-                "https://crocerossaitaliana.typeform.com/to/{{typeform_id}}?c={{user_comitato}}&u={{user_id}}&nc={{nome_comitato}}&nr={{nome_regionale}}",
-                {
-                    hideHeaders: true,
-                    hideFooter: true
-                }
-            );
-            </script>
+              {#Vedi qua: https://github.com/Typeform/embed/blob/main/packages/demo-html/public/popup-js.html#}
+              {#    o qua: https://medium.com/typeforms-engineering-blog/typeform-embed-sdk-is-going-open-source-997d2626cf2a#}
+              src="https://embed.typeform.com/embed.js"
+              window.typeformEmbed.makeWidget(
+                  document.getElementById("typeform-widget"),
+                  "https://crocerossaitaliana.typeform.com/to/{{typeform_id}}?c={{user_comitato}}&u={{user_id}}&nc={{nome_comitato}}&nr={{nome_regionale}}",
+                  {
+                      hideHeaders: true,
+                      hideFooter: true
+                  }
+              );
+              </script>
+          {% endif %}
         {% endif %}
-      {% endif %}
 
-      <p style="text-align:center;"><strong>
-        {% if all_forms_are_completed %}
-          Complimenti! Hai compilato il questionario "Questionario Fabbisogni Formativi per i comitati Territoriali".<br>
-          Clicca su "Invia via e-mail al Regionale" per trasmettere i dati inseriti.
-        {% elif is_done %}
-          Questa sezione è già compilata.
-        {% endif %}
-      </strong></p>
-    </div>
-    <p style="font-size: 10pt;">
-        Per passare da una domanda all'altra scorrere con il mouse.
-    </p>
-
+        <p style="text-align:center;"><strong>
+          {% if all_forms_are_completed %}
+            Complimenti! Hai compilato il questionario "Questionario Fabbisogni Formativi per i comitati Territoriali".<br>
+            Clicca su "Invia via e-mail al Regionale" per trasmettere i dati inseriti.
+          {% elif is_done %}
+            Questa sezione è già compilata.
+          {% endif %}
+        </strong></p>
+      </div>
+      <p style="font-size: 10pt;">
+          Per passare da una domanda all'altra scorrere con il mouse.
+      </p>
 {#    <div>#}
 {#      <p>Prima di iniziare il questionario, puoi consultare le istruzioni per la compilazione e il glossario ai link di seguito:#}
 {#        <a href="https://datafiles.gaia.cri.it/media/filer_public/7a/6e/7a6e0fe0-a3f8-42ac-bca4-5a5873355049/allegato_2-glossario.pdf" target="_blank">glossario</a>, #}
@@ -88,14 +88,25 @@
 {#      </p>#}
 {#    </div>#}
 
+    {% endif %}
     {% if all_forms_are_completed %}
+        {% if not can_compile %}
+          <p class="margine-verticale-20 grassetto">Il Questionario non è più disponibile in quanto il termine ultimo è scaduto. Puoi comunque scaricare le risposte.</p>
+        {% endif %}
+        
         <div class="typeform_widget-tools">
           <ul class="typeform_widget-tools__list">
             <li><a class="monitoraggio_action_btn" href="{% url 'pages:monitoraggio_actions' %}?action=print&target={{ target }}&comitato={{user_comitato}}" target="_blank"><i class="fa fa-print fa-fw"></i> Stampa le risposte</a></li>
-            <li><a class="monitoraggio_action_btn" href="{% url 'pages:monitoraggio_actions' %}?action=send_via_mail&target={{ target }}&comitato={{user_comitato}}" target="_blank"><i class="fa fa-envelope fa-fw"></i> Invia via e-mail a te stesso</a></li>
-            <li><a class="monitoraggio_action_btn" href="{% url 'pages:monitoraggio_actions' %}?action=send_via_mail_regionale&target={{ target }}&comitato={{user_comitato}}" target="_blank"><i class="fa fa-envelope fa-fw"></i> Invia via e-mail al regionale</a></li>
+            {% if can_compile %}
+              <li><a class="monitoraggio_action_btn" href="{% url 'pages:monitoraggio_actions' %}?action=send_via_mail&target={{ target }}&comitato={{user_comitato}}" target="_blank"><i class="fa fa-envelope fa-fw"></i> Invia via e-mail a te stesso</a></li>
+              <li><a class="monitoraggio_action_btn" href="{% url 'pages:monitoraggio_actions' %}?action=send_via_mail_regionale&target={{ target }}&comitato={{user_comitato}}" target="_blank"><i class="fa fa-envelope fa-fw"></i> Invia via e-mail al regionale</a></li>
+            {% endif %}
           </ul>
         </div>
+    {% else %}
+        {% if not can_compile %}
+          <p class="margine-verticale-20 grassetto">Risposte non disponibili, in quanto il questionario non è stato compilato entro il termine ultimo.</p>
+        {% endif %}
     {% endif %}
 
     <script>
