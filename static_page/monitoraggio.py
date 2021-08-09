@@ -70,7 +70,14 @@ class TypeForm:
 
         deleghe = persona.deleghe_attuali(tipo__in=[COMMISSARIO, PRESIDENTE, RESPONSABILE_FORMAZIONE])
 
-        request_comitato = self.request.GET.get('comitato') if self.request else None
+        if self.request:
+            try:
+                request_comitato = self.request.GET.get('comitato')
+            except:    
+                request_comitato = self.request.get('comitato')
+        else:
+            request_comitato = None
+
         if request_comitato:
             # Check comitato_id validity
             if int(request_comitato) not in deleghe.values_list('oggetto_id', flat=True):
@@ -343,7 +350,15 @@ class TypeFormResponses(TypeForm):
             return self.request.GET.get('comitato') if self.request else None
 
         deleghe = persona.deleghe_attuali(tipo__in=[COMMISSARIO, PRESIDENTE, DELEGATO_AREA])
-        request_comitato = self.request.GET.get('comitato') if self.request else None
+        
+        if self.request:
+            try:
+                request_comitato = self.request.GET.get('comitato')
+            except:    
+                request_comitato = self.request.get('comitato')
+        else:
+            request_comitato = None
+
         for delega in deleghe:
             if delega.tipo == 'PR' or delega.tipo == 'CM' or delega.tipo == 'DA':
                 return request_comitato
@@ -432,7 +447,13 @@ class TypeFormResponsesTrasparenza(TypeForm):
 
     @property
     def comitato_id(self):
-        request_comitato = self.request.GET.get('comitato') if self.request else None
+        if self.request:
+            try:
+                request_comitato = self.request.GET.get('comitato')
+            except:    
+                request_comitato = self.request.get('comitato')
+        else:
+            request_comitato = None
 
         persona = Persona.objects.get(pk=self.user_pk) if self.user_pk else self.me
         deleghe = persona.deleghe_attuali(tipo__in=[COMMISSARIO, PRESIDENTE, DELEGATO_AREA])
@@ -520,7 +541,13 @@ class TypeFormResponsesFabbisogniFormativiTerritoriale(TypeForm):
         persona = Persona.objects.get(pk=self.user_pk) if self.user_pk else self.me
         deleghe = persona.deleghe_attuali(tipo__in=[COMMISSARIO, PRESIDENTE, RESPONSABILE_FORMAZIONE])
 
-        request_comitato = self.request.GET.get('comitato') if self.request else None
+        if self.request:
+            try:
+                request_comitato = self.request.GET.get('comitato')
+            except:    
+                request_comitato = self.request.get('comitato')
+        else:
+            request_comitato = None
 
         if request_comitato:
             # Check comitato_id validity
@@ -623,7 +650,14 @@ class TypeFormResponsesFabbisogniFormativiRegionali(TypeForm):
         persona = Persona.objects.get(pk=self.user_pk) if self.user_pk else self.me
         deleghe = persona.deleghe_attuali(tipo__in=[COMMISSARIO, PRESIDENTE, RESPONSABILE_FORMAZIONE])
 
-        request_comitato = self.request.GET.get('comitato') if self.request else None
+        if self.request:
+            try:
+                request_comitato = self.request.GET.get('comitato')
+            except:    
+                request_comitato = self.request.get('comitato')
+        else:
+            request_comitato = None
+
         if request_comitato:
             # Check comitato_id validity
             if int(request_comitato) not in deleghe.values_list('oggetto_id', flat=True):

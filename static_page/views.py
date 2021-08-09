@@ -221,6 +221,7 @@ def monitoraggio_fabb_info_territoriale(request, me):
 
     # Make test request (API/connection availability, etc)
     if not typeform.make_test_request_to_api:
+        context['user_comitato'] = request_comitato
         return 'monitoraggio_fabb_info_territoriale.html', context
 
     context['type_form'] = typeform.context_typeform
