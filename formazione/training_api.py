@@ -164,27 +164,29 @@ class TrainingApi:
 
     def ha_ottenuto_competenze(self, persona, corso):
         utente = self.core_user_get_users_by_field(self._persona_mail(persona))
-        corso = self.core_course_get_courses_by_field_shortname(corso.titolo_cri.sigla)
-        competencies_id = [
-            competencie['competency']['id'] for competencie in self.core_competency_list_course_competencies(
-                corso['id']
-            )
-        ]
         ha_ottenuto = False
-        for id in competencies_id:
-            competencie = self.tool_lp_data_for_user_competency_summary_in_course(
-                utente['id'],
-                id,
-                corso['id']
-            )
+        
+        if utente:
+            corso = self.core_course_get_courses_by_field_shortname(corso.titolo_cri.sigla)
+            competencies_id = [
+                competencie['competency']['id'] for competencie in self.core_competency_list_course_competencies(
+                    corso['id']
+                )
+            ]
+            for id in competencies_id:
+                competencie = self.tool_lp_data_for_user_competency_summary_in_course(
+                    utente['id'],
+                    id,
+                    corso['id']
+                )
 
-            if 'usercompetencysummary' in competencie and \
-                'usercompetencycourse' and competencie['usercompetencysummary'] and \
-                'grade' in competencie['usercompetencysummary']['usercompetencycourse'] and \
-                competencie['usercompetencysummary']['usercompetencycourse']['grade'] == self.CORSO_COMPLETATO:
-                ha_ottenuto = True
-            else:
-                ha_ottenuto = False
+                if 'usercompetencysummary' in competencie and \
+                    'usercompetencycourse' and competencie['usercompetencysummary'] and \
+                    'grade' in competencie['usercompetencysummary']['usercompetencycourse'] and \
+                    competencie['usercompetencysummary']['usercompetencycourse']['grade'] == self.CORSO_COMPLETATO:
+                    ha_ottenuto = True
+                else:
+                    ha_ottenuto = False
 
         return ha_ottenuto
 
