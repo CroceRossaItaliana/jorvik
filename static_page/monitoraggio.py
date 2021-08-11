@@ -207,7 +207,7 @@ class TypeForm:
         try:
             items = json['items'][0]
             has_answers = 'answers' in items and len(items['answers']) > 0
-        except IndexError:
+        except (IndexError, KeyError):
             # print('items IndexError Exception')
             return False
         else:
@@ -849,7 +849,7 @@ class TypeFormResponsesCheck:
         try:
             items = json['items'][0]
             has_answers = 'answers' in items and len(items['answers']) > 0
-        except IndexError:
+        except (IndexError, KeyError):
             # print('items IndexError Exception')
             return False
         else:
@@ -1439,7 +1439,7 @@ class TypeFormCompilatiCheck:
         try:
             items = json['items'][0]
             has_answers = 'answers' in items and len(items['answers']) > 0
-        except IndexError:
+        except (IndexError, KeyError):
             # print('items IndexError Exception')
             return False
         else:
