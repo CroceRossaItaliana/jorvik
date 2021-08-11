@@ -33,7 +33,7 @@ class TypeForm:
         self.request = request
         self.me = me
         self.user_pk = user_pk  # Celery
-
+        
         self.context_typeform = self._set_typeform_context()
 
     # python 3.5
@@ -41,12 +41,12 @@ class TypeForm:
 
     @property
     def get_user_pk(self):
-        if self.request is not None:
-            return self.request.user.persona.pk
-        elif self.me is not None:
+        if self.me is not None:
             return self.me.pk
         elif self.user_pk is not None:
             return self.user_pk
+        elif self.request is not None:
+            return self.request.user.persona.pk
 
     @property
     def persona(self):
@@ -315,7 +315,7 @@ class TypeForm:
         return redirect_url
 
     def send_via_mail_regionale(self, redirect_url, target):
-        task = send_mail_regionale.apply_async(args=(self.get_user_pk, target), task_id=uuid())
+        task = send_mail_regionale.apply_async(args=(self.get_user_pk, target, self.comitato_id), task_id=uuid())
 
         # messages.add_message(self.request, messages.INFO, self.CELERY_TASK_PREFIX+task.id)
         return redirect_url
