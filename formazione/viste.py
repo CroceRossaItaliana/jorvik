@@ -1197,12 +1197,14 @@ def aspirante_corso_base_firme(request, me, pk):
 @pagina_privata
 def aspirante_corso_base_report(request, me, pk):
     corso = get_object_or_404(CorsoBase, pk=pk)
-    if not me.permessi_almeno(corso, MODIFICA):
+    if (
+        not me.is_presidente_regionale and not me.is_responsabile_formazione_regionale
+    ) and not me.permessi_almeno(corso, MODIFICA):
         return redirect(ERRORE_PERMESSI)
 
     contesto = {
         "corso": corso,
-        "puo_modificare": True,
+        "puo_modificare": me.permessi_almeno(corso, MODIFICA),
     }
     return 'aspirante_corso_base_scheda_report.html', contesto
 
@@ -1215,7 +1217,9 @@ def aspirante_corso_base_report_schede(request, me, pk):
     if request.GET.get('download_single_attestato') and corso.partecipazioni_confermate().get(persona=me):
         can_download = True
 
-    if not can_download and not me.permessi_almeno(corso, MODIFICA):
+    if not can_download and (
+        not me.is_presidente_regionale and not me.is_responsabile_formazione_regionale
+    ) and not me.permessi_almeno(corso, MODIFICA):
         return redirect(ERRORE_PERMESSI)
 
     report = GeneraReport(request, corso)

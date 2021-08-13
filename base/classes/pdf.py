@@ -31,7 +31,8 @@ class BaseGeneraPDF:
                                        messaggio="Il link usato è scaduto.")
 
         elif not self.me.permessi_almeno(oggetto, LETTURA):
-            return redirect(ERRORE_PERMESSI)
+            if not self.me.is_presidente_regionale and not self.me.is_responsabile_formazione_regionale:
+                return redirect(ERRORE_PERMESSI)
 
         pdf = oggetto.genera_pdf(self.request, **kwargs)
 
