@@ -1,4 +1,7 @@
+import json
+
 from django.contrib.auth import authenticate, login
+from django.http import HttpResponse
 from rest_framework.views import APIView
 from rest_framework.response import Response
 from rest_framework import permissions
@@ -19,9 +22,11 @@ class MioLogin(APIView):
         user = authenticate(username=username, password=password)
 
         if user is not None:
-            return {'_id': user.persona.id}
+            data = json.dumps({'_id': user.persona.id})
+            print(data)
+            return HttpResponse(data, content_type="application/json")
         else:
-            return 'ko'
+            return HttpResponse(status=401)
 
 
 # /me/anagrafica/base/
