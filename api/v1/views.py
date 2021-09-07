@@ -1,3 +1,4 @@
+from django.contrib.auth import authenticate, login
 from rest_framework.views import APIView
 from rest_framework.response import Response
 from rest_framework import permissions
@@ -7,6 +8,21 @@ from api.settings import SCOPE_ANAGRAFICA_LETTURA_BASE, SCOPE_ANAGRAFICA_LETTURA
 
 from api.v1 import serializzatori
 from anagrafica.permessi.applicazioni import PERMESSI_NOMI_DICT
+
+
+class MioLogin(APIView):
+    permission_classes = ()
+
+    def post(self, request):
+        username = request.data.get('username')
+        password = request.data.get('password')
+        user = authenticate(username=username, password=password)
+
+        if user is not None:
+            return {'_id': user.persona.id}
+        else:
+            return 'ko'
+
 
 # /me/anagrafica/base/
 class MiaAnagraficaBase(APIView):
@@ -56,7 +72,6 @@ class MieAppartenenzeAttuali(APIView):
 
 
 class MiaAppartenenzaComplaeta(APIView):
-
     """
         ID utente, - Persona
 
@@ -131,4 +146,4 @@ class MiaAppartenenzaComplaeta(APIView):
 
         return Response(dati)
 
-#serializzatori._campo(comitato.estensione, comitato.get_estensione_display())
+# serializzatori._campo(comitato.estensione, comitato.get_estensione_display())

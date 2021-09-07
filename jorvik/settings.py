@@ -291,6 +291,7 @@ ELASTIC_CURRICULUM_INDEX = ELASTIC_CONF.get('index', 'curriculum_index', fallbac
 ELASTIC_CORSO_INDEX = ELASTIC_CONF.get('index', 'corso_index', fallback=os.environ.get("ELASTIC_CORSO_INDEX"))
 ELASTIC_PERSONA_INDEX = ELASTIC_CONF.get('index', 'persona_index', fallback=os.environ.get("ELASTIC_PERSONA_INDEX"))
 ELASTIC_COMITATO_INDEX = ELASTIC_CONF.get('index', 'comitato_index', fallback=os.environ.get("ELASTIC_COMITATO_INDEX"))
+ELASTIC_QUICKPROFILE_INDEX = ELASTIC_CONF.get('index', 'quickprofile_index', fallback=os.environ.get("ELASTIC_QUICKPROFILE_INDEX"))
 
 BETA_80_HOST = APIS_CONF.get('beta_80', 'host')
 BETA_80_BEARER = APIS_CONF.get('beta_80', 'bearer', fallback=os.environ.get("BETA_80_BEARER"))
@@ -480,4 +481,6 @@ CELERY_RESULT_BACKEND_TRANSPORT_OPTIONS = {"visibility_timeout": 43200, "master_
 
 FORMAZIONE_MASSMAIL_CHUNK = 100
 FORMAZIONE_MASSMAIL_SLEEP = 5
+
+STATIC_PROD_BASEURL = os.environ.get('STATIC_PROD_BASEURL', 'http://datafiles.gaia.cri.it')
 
