@@ -1297,6 +1297,17 @@ class Persona(ModelloSemplice, ConMarcaTemporale, ConAllegati, ConVecchioID):
         return self.deleghe_attuali(tipo=PRESIDENTE).exists()
 
     @property
+    def is_delegato_area(self):
+        return self.deleghe_attuali(tipo=RESPONSABILE_AREA).exists()
+
+    @property
+    def cri_btn(self):
+        cri = self.deleghe_attuali().first().cri_btn
+        if not cri:
+            cri="https://perlepersone.cri.it/CRI/"
+        return cri
+
+    @property
     def is_presidente_regionale(self):
         deleghe = self.deleghe_attuali(tipo=PRESIDENTE)
         if deleghe:
@@ -2742,6 +2753,7 @@ class Delega(ModelloSemplice, ConStorico, ConMarcaTemporale):
     oggetto = GenericForeignKey('oggetto_tipo', 'oggetto_id')
     firmatario = models.ForeignKey(Persona, db_index=True, null=True, default=None, related_name='deleghe_firmate',
                                    related_query_name='delega_firmata', on_delete=models.SET_NULL)
+    cri_btn = models.CharField(max_length=100, verbose_name="CRI", null=True, default=None)
 
     def __str__(self):
         return "Delega %s di %s come %s per %s" % (
