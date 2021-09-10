@@ -2753,7 +2753,7 @@ class Delega(ModelloSemplice, ConStorico, ConMarcaTemporale):
     oggetto = GenericForeignKey('oggetto_tipo', 'oggetto_id')
     firmatario = models.ForeignKey(Persona, db_index=True, null=True, default=None, related_name='deleghe_firmate',
                                    related_query_name='delega_firmata', on_delete=models.SET_NULL)
-    cri_btn = models.CharField(max_length=100, verbose_name="CRI", null=True, default=None)
+    cri_btn = models.CharField(max_length=100, verbose_name="CRI", null=True, default=None, blank=True)
 
     def __str__(self):
         return "Delega %s di %s come %s per %s" % (
