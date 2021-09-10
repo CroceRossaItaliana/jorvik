@@ -3,6 +3,9 @@ import re
 from collections import OrderedDict
 from importlib import import_module
 
+from posta.models import Messaggio
+
+from django.core.mail import send_mail
 from django.db.models import Q
 from django.apps import apps
 from django.conf import settings
@@ -1236,9 +1239,22 @@ def profilo_documenti_cancella(request, me, pk, documento_pk):
 def profilo_curriculum_cancella(request, me, pk, tp_pk):
     persona = get_object_or_404(Persona, pk=pk)
     titolo_personale = get_object_or_404(TitoloPersonale, pk=tp_pk)
+
     if (not me.permessi_almeno(persona, MODIFICA)) or not (titolo_personale.persona == persona):
         return redirect(ERRORE_PERMESSI)
+
     titolo_personale.delete()
+
+    Messaggio.costruisci_e_invia(
+        destinatari=[persona],
+        oggetto="Dati Curriculum CRI",
+        modello="email_curriculum_cancella.html",
+        corpo={
+            "titolo": titolo_personale.titolo
+        },
+        mittente= me
+    )
+
     return redirect("/profilo/%d/curriculum/" % (persona.pk,))
 
 
