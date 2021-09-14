@@ -59,6 +59,7 @@ from .permessi.applicazioni import (PRESIDENTE, UFFICIO_SOCI,
                                     DELEGATO_SO, UFFICIO_SOCI_CM,
                                     UFFICIO_SOCI_IIVV, CONSIGLIERE_GIOVANE_COOPTATO, DELEGATO_OBIETTIVO_7,
                                     DELEGATO_OBIETTIVO_8, )
+from anagrafica.permessi.costanti import GESTIONE_SOCI
 from .permessi.costanti import (ERRORE_PERMESSI, MODIFICA, LETTURA, GESTIONE_SEDE,
                                 GESTIONE, ELENCHI_SOCI, GESTIONE_ATTIVITA, GESTIONE_ATTIVITA_AREA, GESTIONE_CORSO)
 from .permessi.incarichi import (INCARICO_GESTIONE_RISERVE, INCARICO_GESTIONE_TITOLI,
@@ -1240,8 +1241,9 @@ def profilo_curriculum_cancella(request, me, pk, tp_pk):
     persona = get_object_or_404(Persona, pk=pk)
     titolo_personale = get_object_or_404(TitoloPersonale, pk=tp_pk)
 
-    if (not me.permessi_almeno(persona, MODIFICA)) or not (titolo_personale.persona == persona):
-        return redirect(ERRORE_PERMESSI)
+    if not me.ha_permessi([GESTIONE_SOCI]):
+        if (not me.permessi_almeno(persona, MODIFICA)) or not (titolo_personale.persona == persona):
+            return redirect(ERRORE_PERMESSI)
 
     titolo_personale.delete()
 
