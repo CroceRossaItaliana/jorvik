@@ -347,10 +347,18 @@ def registrati_conferma(request, tipo):
 
 @pagina_privata
 def utente(request, me):
+    see_webradio = False
     articoli = get_articoli(me)
+    for d in me.deleghe_attuali():
+        if 'webradio' in d.oggetto.nome.lower():
+            see_webradio = True
+            break
+
     contesto = {
         "articoli": articoli[:5],
+        "see_webradio": see_webradio,
     }
+
     return 'anagrafica_utente_home.html', contesto
 
 
