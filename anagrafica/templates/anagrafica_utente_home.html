@@ -184,7 +184,7 @@
             </div>
         {% endif %}
 
-        {% if see_webradio %}
+        {% if see_webradio or me.is_presidente or me.is_comissario %}
          <div class="col col-md-3" style="padding-left: 5px; padding-right: 5px;">
                     <div class="alert alert-success" role="alert" style="text-align: center; margin:0; display: grid;">
                       <span class="glyphicon glyphicon glyphicon-signal" aria-hidden="true" style="font-size:48px; margin-bottom: 0.5em;"></span>
