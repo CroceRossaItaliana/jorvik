@@ -66,6 +66,7 @@ class Donatore(ModelloSemplice, ConMarcaTemporale):
         'K+k+',
         'K+k-',
         'K-k+',
+        'K-k-',
         'Kp(a+b+)',
         'Kp(a-b+)',
     )
