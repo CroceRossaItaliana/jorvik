@@ -350,7 +350,7 @@ def utente(request, me):
     see_webradio = False
     articoli = get_articoli(me)
     for d in me.deleghe_attuali():
-        if 'webradio' in d.oggetto.nome.lower():
+        if 'telecomunicazioni' in d.oggetto.nome.lower():
             see_webradio = True
             break
 
