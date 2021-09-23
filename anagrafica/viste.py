@@ -5,6 +5,7 @@ from importlib import import_module
 
 from posta.models import Messaggio
 
+import logging
 from django.core.mail import send_mail
 from django.db.models import Q
 from django.apps import apps
@@ -32,7 +33,7 @@ from base.utils import poco_fa, oggi
 from curriculum.models import TitoloPersonale
 from formazione.forms import ModuloCreaOperatoreSala
 from formazione.forms import FormCreateResponsabileEventoDelega
-from formazione.models import Corso, CorsoBase
+from formazione.models import Corso, CorsoBase, PartecipazioneCorsoBase
 from posta.models import Messaggio
 from posta.utils import imposta_destinatari_e_scrivi_messaggio
 from sangue.models import Donazione, Sede as SedeSangue
@@ -78,6 +79,8 @@ from .forms import (ModuloStepComitato, ModuloStepCredenziali, ModuloStepFine,
 
 from .models import (Persona, Documento, Telefono, Estensione, Delega, Trasferimento,
                      Appartenenza, Sede, Riserva, Dimissione, Nominativo, )
+from formazione.models import Aspirante, PartecipazioneCorsoBase
+from datetime import datetime
 
 TIPO_VOLONTARIO = 'volontario'
 TIPO_ASPIRANTE = 'aspirante'
@@ -113,6 +116,7 @@ MODULI = {
     STEP_FINE: ModuloStepFine,
 }
 
+logger = logging.getLogger(__name__)
 
 @pagina_anonima
 def registrati(request, tipo, step=None):
@@ -2239,3 +2243,87 @@ def cerca_scheda(request, me):
     }
 
     return 'anagrafica_cerca_scheda_persona.html', contesto
+
+
+@pagina_privata
+def rimuovi_aspiranti_2014_2017(request, me):
+    start_date = datetime(2014, 1, 1, 0, 0, 0)
+    end_date = datetime(2017, 12, 31, 23, 59, 59)
+    to_delete = request.POST.get('delete')
+    dry_run = request.GET.get('dry_run')
+
+    qs_aspiranti = Aspirante.objects.filter(
+        creazione__range=(start_date, end_date)
+    ).exclude(
+        persona__in=Persona.objects.filter(appartenenze__membro=Appartenenza.SOSTENITORE)
+    ).exclude(
+        persona__in=Persona.objects.filter(Appartenenza.query_attuale(
+            membro=Appartenenza.DIPENDENTE
+        ).via("appartenenze"))
+    ).exclude(
+        persona__in=Persona.objects.filter(PartecipazioneCorsoBase.con_esito(
+            PartecipazioneCorsoBase.NON_IDONEO
+        ).via("partecipazioni_corsi"))
+    )
+
+    if to_delete:
+        for index, p in enumerate(qs_aspiranti):
+            logger.info(
+                '{}: Rimozione di {}.'.format( index, p.persona )
+            )
+            logger.info(
+                '{}: Rimozione Aspirante {}.'.format( index, p )
+            )
+            if dry_run:
+                logger.info('Rimosso')
+                
+    return 'anagrafica_aspiranti_2014_2017.html', {
+        'count': len(qs_aspiranti),
+        'to_delete': to_delete != None,
+    }
+
+@pagina_privata
+def rimuovi_aspiranti_2018_2019(request, me):
+    start_date = datetime(2018, 1, 1, 0, 0, 0)
+    end_date = datetime(2019, 12, 31, 23, 59, 59)
+    to_delete = request.POST.get('delete')
+    dry_run = request.GET.get('dry_run')
+
+    qs_aspiranti = Aspirante.objects.filter(
+        creazione__range=(start_date, end_date)
+    ).filter(
+        persona__in=Persona.objects.filter(PartecipazioneCorsoBase.con_esito(
+            PartecipazioneCorsoBase.ESITO_RITIRATA
+        ).via("partecipazioni_corsi"))
+    ).exclude(
+        persona__in=Persona.objects.filter(
+            appartenenze__membro=Appartenenza.SOSTENITORE)
+    ).exclude(
+        persona__in=Persona.objects.filter(Appartenenza.query_attuale(
+            membro=Appartenenza.DIPENDENTE
+        ).via("appartenenze"))
+    ).exclude(
+        persona__in=Persona.objects.filter(PartecipazioneCorsoBase.con_esito(
+            PartecipazioneCorsoBase.NON_IDONEO
+        ).via("partecipazioni_corsi"))
+    )
+
+    if to_delete:
+        for index, p in enumerate(qs_aspiranti):
+            logger.info(
+                '{}: Rimozione di {}.'.format(index, p.persona)
+            )
+            logger.info(
+                '{}: Rimozione Aspirante {}.'.format(index, p)
+            )
+            if dry_run:
+                logger.info('Rimosso')
+            else:
+                if (p.persona):
+                    p.persona.delete()
+                p.delete()
+
+    return 'anagrafica_aspiranti_2014_2017.html', {
+        'count': len(qs_aspiranti),
+        'to_delete': to_delete != None,
+    }
