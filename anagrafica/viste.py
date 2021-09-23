@@ -81,6 +81,8 @@ from .models import (Persona, Documento, Telefono, Estensione, Delega, Trasferim
                      Appartenenza, Sede, Riserva, Dimissione, Nominativo, )
 from formazione.models import Aspirante, PartecipazioneCorsoBase
 from datetime import datetime
+import csv
+from django.http import HttpResponse
 
 TIPO_VOLONTARIO = 'volontario'
 TIPO_ASPIRANTE = 'aspirante'
@@ -2251,6 +2253,7 @@ def rimuovi_aspiranti_2014_2017(request, me):
     end_date = datetime(2017, 12, 31, 23, 59, 59)
     to_delete = request.POST.get('delete')
     dry_run = request.GET.get('dry_run')
+    export_csv = request.GET.get('csv')
 
     qs_aspiranti = Aspirante.objects.filter(
         creazione__range=(start_date, end_date)
@@ -2265,6 +2268,17 @@ def rimuovi_aspiranti_2014_2017(request, me):
             PartecipazioneCorsoBase.NON_IDONEO
         ).via("partecipazioni_corsi"))
     )
+
+    if export_csv:
+        response = HttpResponse(content_type='text/csv')
+        response['Content-Disposition'] = 'attachment; filename="aspiranti_2014_2017.csv"'
+
+        writer = csv.writer(response)
+        writer.writerow(['Aspirante', 'Data Creazione'])
+        for p in qs_aspiranti:
+            writer.writerow([p, p.creazione])
+
+        return response
 
     if to_delete:
         for index, p in enumerate(qs_aspiranti):
@@ -2288,6 +2302,7 @@ def rimuovi_aspiranti_2018_2019(request, me):
     end_date = datetime(2019, 12, 31, 23, 59, 59)
     to_delete = request.POST.get('delete')
     dry_run = request.GET.get('dry_run')
+    export_csv = request.GET.get('csv')
 
     qs_aspiranti = Aspirante.objects.filter(
         creazione__range=(start_date, end_date)
@@ -2307,6 +2322,18 @@ def rimuovi_aspiranti_2018_2019(request, me):
             PartecipazioneCorsoBase.NON_IDONEO
         ).via("partecipazioni_corsi"))
     )
+
+    if export_csv:
+        response = HttpResponse(content_type='text/csv')
+        response['Content-Disposition'] = 'attachment; filename="aspiranti_2018_2019.csv"'
+
+        writer = csv.writer(response)
+        writer.writerow(['Aspirante', 'Data Creazione'])
+        for p in qs_aspiranti:
+            writer.writerow([p, p.creazione])
+
+        return response
+
 
     if to_delete:
         for index, p in enumerate(qs_aspiranti):

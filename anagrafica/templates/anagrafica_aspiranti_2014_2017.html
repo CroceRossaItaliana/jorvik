@@ -21,6 +21,7 @@
                     <form method="POST">
                         {% csrf_token %}
                         <p>Stai per eliminare {{count}} Aspiranti, vuoi continuare?</p>
+                        <p>Scarica il <a href="?csv=1" target="_blank">CSV</a> per verificare gli aspiranti che saranno rimossi.</p>
                         <p><input type="checkbox" onchange="document.getElementById('delete').disabled = !this.checked;" /> Conferma</p>
                         <input name="delete" type="submit" value="Rimuovi" class="btn btn-danger" disabled id="delete" />
                     </form>
