@@ -2291,9 +2291,15 @@ def rimuovi_aspiranti_2014_2017(request, me):
             if dry_run:
                 logger.info('Rimosso')
             else:
-                if (p.persona):
-                    p.persona.delete()
-                p.delete()
+                try:
+                    if (p.persona):
+                        p.persona.delete()
+                    p.delete()
+                except:
+                    logger.warning(
+                        '{}: Rimozione non possibile di {}.'.format( index, p.persona )
+                    )
+                    pass
                 
     return 'anagrafica_aspiranti_2014_2017.html', {
         'count': len(qs_aspiranti),
