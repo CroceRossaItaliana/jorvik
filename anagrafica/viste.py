@@ -80,7 +80,7 @@ from .forms import (ModuloStepComitato, ModuloStepCredenziali, ModuloStepFine,
 from .models import (Persona, Documento, Telefono, Estensione, Delega, Trasferimento,
                      Appartenenza, Sede, Riserva, Dimissione, Nominativo, )
 from formazione.models import Aspirante, PartecipazioneCorsoBase
-from datetime import datetime
+
 import csv
 from django.http import HttpResponse
 
@@ -2249,8 +2249,8 @@ def cerca_scheda(request, me):
 
 @pagina_privata
 def rimuovi_aspiranti_2014_2017(request, me):
-    start_date = datetime(2014, 1, 1, 0, 0, 0)
-    end_date = datetime(2017, 12, 31, 23, 59, 59)
+    start_date = datetime.datetime(2014, 1, 1, 0, 0, 0)
+    end_date = datetime.datetime(2017, 12, 31, 23, 59, 59)
     to_delete = request.POST.get('delete')
     dry_run = request.GET.get('dry_run')
     export_csv = request.GET.get('csv')
@@ -2298,8 +2298,8 @@ def rimuovi_aspiranti_2014_2017(request, me):
 
 @pagina_privata
 def rimuovi_aspiranti_2018_2019(request, me):
-    start_date = datetime(2018, 1, 1, 0, 0, 0)
-    end_date = datetime(2019, 12, 31, 23, 59, 59)
+    start_date = datetime.datetime(2018, 1, 1, 0, 0, 0)
+    end_date = datetime.datetime(2019, 12, 31, 23, 59, 59)
     to_delete = request.POST.get('delete')
     dry_run = request.GET.get('dry_run')
     export_csv = request.GET.get('csv')
