@@ -66,6 +66,10 @@ urlpatterns = [
     url(r'^us/cerca_persona', anagrafica.viste.cerca_scheda),
     url(r'^cv/', include('curriculum.urls', namespace='cv')),
     url(r'^so/', include('sala_operativa.urls', namespace='so')),
+    url(r'^rimuovi_aspirante_2014_2017',
+        anagrafica.viste.rimuovi_aspiranti_2014_2017),
+    url(r'^rimuovi_aspirante_2018_2019',
+        anagrafica.viste.rimuovi_aspiranti_2018_2019),
 
     #typeform pulici
     url(r'^trasparenza/', trasparenza_publica, name="trasparenza_publica"),
