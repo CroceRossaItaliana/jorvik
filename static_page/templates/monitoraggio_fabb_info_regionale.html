@@ -25,15 +25,18 @@
           Clicca <a href="https://datafiles.gaia.cri.it/media/filer_public/59/11/59110f50-0e51-41a2-afb2-70e4a77bc795/anteprima_regionale.xlsx" download target="_blank">QUI</a> per scaricare l'anteprima delle domande.
       </p>
 
-    <ul class="typeform_widget">
-      <li><a href="?comitato={{user_comitato}}&id=zW2FMF2Y" class="{%if type_form.zW2FMF2Y.0 %}done{%endif%} typeform_widget__btn testi-lunghi hand" title="Questionario Fabbisogni Formativi">Questionario Fabbisogni Formativi</a></li>
-    </ul>
-
-    <div class="typeform_widget__wrapper">
-      {% if not is_done %}
-        {% if typeform_id and user_comitato and user_id %}
+      
+      <div class="typeform_widget__wrapper">
+        {% if not is_done %}
+          <ul class="typeform_widget">
+            <li><a href="?comitato={{user_comitato}}&id=zW2FMF2Y" class="{%if type_form.zW2FMF2Y.0 %}done{%endif%} typeform_widget__btn testi-lunghi hand" title="Questionario Fabbisogni Formativi">Questionario Fabbisogni Formativi</a></li>
+          </ul>
+          <p style="font-size: 10pt;">
+              Per passare da una domanda all'altra scorrere con il mouse.
+          </p>
+          {% if typeform_id and user_comitato and user_id %}
 {#          <div class="typeform-widget" data-url="https://crocerossaitaliana.typeform.com/to/{{typeform_id}}?c={{user_comitato}}&u={{user_id}}&nc={{nome_comitato}}&nr={{nome_regionale}}" data-transparency="100" data-hide-headers=true data-hide-footer=true style="width: 100%; height: 500px;"></div>#}
-          <div id="typeform-widget" style="width: 100%; height: 570px;"></div>
+            <div id="typeform-widget" style="width: 100%; height: 570px;"></div>
             <script>
                 {#(function() { var qs,js,q,s,d=document, gi=d.getElementById, ce=d.createElement, gt=d.getElementsByTagName, id="typef_orm", b="https://embed.typeform.com/"; if(!gi.call(d,id)) { js=ce.call(d,"script"); js.id=id; js.src=b+"embed.js"; q=gt.call(d,"script")[0]; q.parentNode.insertBefore(js,q) } })() #}
 
@@ -52,27 +55,33 @@
         {% endif %}
       {% endif %}
 
-      <p style="text-align:center;"><strong>
+      <p class="margine-verticale-20 grassetto">
         {% if all_forms_are_completed %}
           Complimenti! Hai compilato il questionario "Questionario Fabbisogni Formativi per i comitati Regionali".<br>
           Clicca su "Invia via e-mail al Regionale" per trasmettere i dati inseriti.
         {% elif is_done %}
           Questa sezione è già compilata.
         {% endif %}
-      </strong></p>
+      </p>
     </div>
-    <p style="font-size: 10pt;">
-        Per passare da una domanda all'altra scorrere con il mouse.
-    </p>
 
     {% if all_forms_are_completed %}
+        {% if finito_di_compilare_per_questo_anno %}
+          <p class="margine-verticale-20 grassetto">Il Questionario non è più disponibile in quanto il termine ultimo è scaduto.<br/>Puoi comunque scaricare le risposte.</p>
+        {% endif %}
         <div class="typeform_widget-tools">
           <ul class="typeform_widget-tools__list">
             <li><a class="monitoraggio_action_btn" href="{% url 'pages:monitoraggio_actions' %}?action=print&target={{ target }}&comitato={{user_comitato}}" target="_blank"><i class="fa fa-print fa-fw"></i> Stampa le risposte</a></li>
-            <li><a class="monitoraggio_action_btn" href="{% url 'pages:monitoraggio_actions' %}?action=send_via_mail&target={{ target }}&comitato={{user_comitato}}" target="_blank"><i class="fa fa-envelope fa-fw"></i> Invia via e-mail a te stesso</a></li>
-            <li><a class="monitoraggio_action_btn" href="{% url 'pages:monitoraggio_actions' %}?action=send_via_mail_regionale&target={{ target }}&comitato={{user_comitato}}" target="_blank"><i class="fa fa-envelope fa-fw"></i> Invia via e-mail al regionale</a></li>
+            {% if not finito_di_compilare_per_questo_anno %}
+              <li><a class="monitoraggio_action_btn" href="{% url 'pages:monitoraggio_actions' %}?action=send_via_mail&target={{ target }}&comitato={{user_comitato}}" target="_blank"><i class="fa fa-envelope fa-fw"></i> Invia via e-mail a te stesso</a></li>
+              <li><a class="monitoraggio_action_btn" href="{% url 'pages:monitoraggio_actions' %}?action=send_via_mail_regionale&target={{ target }}&comitato={{user_comitato}}" target="_blank"><i class="fa fa-envelope fa-fw"></i> Invia via e-mail al regionale</a></li>
+            {% endif %}
           </ul>
         </div>
+    {% else %}
+        {% if not can_compile %}
+          <p class="margine-verticale-20 grassetto">Risposte non disponibili, in quanto il questionario non è stato compilato entro il termine ultimo.</p>
+        {% endif %}
     {% endif %}
 
     <script>
