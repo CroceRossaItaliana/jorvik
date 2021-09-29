@@ -323,7 +323,7 @@ def monitoraggio_fabb_info_regionale(request, me):
     # print(date.today())
     # data_tjeter = '2021-05-23'
     questo_anno = datetime.today().year
-    trenta_setembre = '{}-09-04'.format(questo_anno)
+    trenta_setembre = '{}-10-04'.format(questo_anno)
     if today > datetime.strptime(trenta_setembre, '%Y-%m-%d'):
         finito_di_compilare_per_questo_anno = True
 
