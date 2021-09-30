@@ -27,7 +27,7 @@
 
       
       <div class="typeform_widget__wrapper">
-        {% if not is_done %}
+        {% if not is_done and not finito_di_compilare_per_questo_anno %}
           <ul class="typeform_widget">
             <li><a href="?comitato={{user_comitato}}&id=zW2FMF2Y" class="{%if type_form.zW2FMF2Y.0 %}done{%endif%} typeform_widget__btn testi-lunghi hand" title="Questionario Fabbisogni Formativi">Questionario Fabbisogni Formativi</a></li>
           </ul>
