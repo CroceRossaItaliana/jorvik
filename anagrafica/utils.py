@@ -1,13 +1,72 @@
 # -*- coding: utf-8 -*-
 from __future__ import absolute_import, print_function, unicode_literals
 
+import requests
+from django.core.exceptions import ObjectDoesNotExist
 from django.template.loader import get_template
 from django.utils.timezone import now
 
 from anagrafica.models import Persona, Delega
 from anagrafica.permessi.applicazioni import DELEGATO_OBIETTIVO_5
 from base.utils import mezzanotte_24_ieri
+from curriculum.models import Titolo
+from jorvik.settings import ELASTIC_HOST, ELASTIC_QUICKPROFILE_INDEX, STATIC_PROD_BASEURL
 from posta.models import Messaggio
+from ufficio_soci.models import Tesserino
+
+
+def quick_profile_feeding(pp):
+    url = "{}/{}/_doc/".format(ELASTIC_HOST, ELASTIC_QUICKPROFILE_INDEX)
+
+    headers = {
+        'Content-Type': 'application/json'
+    }
+    aspirante = True if hasattr(pp, 'aspirante') else False
+
+    payload = {'_id': pp.id, 'nome': pp.nome, 'cognome': pp.cognome, 'sospeso': pp.sospeso,
+               'codice_fiscale': pp.codice_fiscale, 'data_nascita': str(pp.data_nascita),
+               'dipendente': pp.dipendente, 'volontario': pp.volontario, 'aspirante': aspirante,
+               'avatar': STATIC_PROD_BASEURL + pp.avatar.url if pp.avatar else None, 'donatore': {}}
+
+    if hasattr(pp, 'donatore'):
+        payload['donatore'] = dict(gruppo_sanguigno=pp.donatore.gruppo_sanguigno,
+                                   fattore_rh=pp.donatore.fattore_rh,
+                                   fenotipo_rh=pp.donatore.fenotipo_rh)
+
+    payload['tesserino'] = []
+    try:
+        tesserini = Tesserino.objects.filter(valido=True, persona=pp.id)
+
+        for tesserino in tesserini:
+            if tesserino.codice:
+                payload['tesserino'].append(tesserino.codice)
+
+    except ObjectDoesNotExist as e:
+        payload['tesserino'] = []
+
+    _patenti = []
+
+    for _ in pp.titoli_personali.filter(titolo__tipo=Titolo.PATENTE_CIVILE):
+        _patenti.append(dict(tipo=dict(Titolo.TIPO)[Titolo.PATENTE_CIVILE],
+                             data_ottenimento=str(_.data_ottenimento), data_scadenza=str(_.data_scadenza)))
+
+    _titoli_cri = []
+    for _ in pp.titoli_personali.filter(titolo__tipo=Titolo.TITOLO_CRI):
+        _titoli_cri.append(dict(tipo=dict(Titolo.TIPO)[Titolo.TITOLO_CRI],
+                                data_ottenimento=str(_.data_ottenimento), data_scadenza=str(_.data_scadenza)))
+
+    _altri_titoli = []
+    for _ in pp.titoli_personali.filter(titolo__tipo=Titolo.ALTRI_TITOLI):
+        _altri_titoli.append(dict(tipo=dict(Titolo.TIPO)[Titolo.ALTRI_TITOLI],
+                                  data_ottenimento=str(_.data_ottenimento), data_scadenza=str(_.data_scadenza)))
+
+    payload['patenti'] = _patenti
+    payload['titoli_cri'] = _titoli_cri
+    payload['altri_titoli'] = _altri_titoli
+
+    _id = payload.pop('_id')
+    response = requests.request("POST", url + str(_id), headers=headers, json=payload, verify=False)
+    print(response.text)
 
 
 def _richiesta_conferma_email(request, me, parametri, modulo):
