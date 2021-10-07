@@ -484,3 +484,5 @@ FORMAZIONE_MASSMAIL_SLEEP = 5
 
 STATIC_PROD_BASEURL = os.environ.get('STATIC_PROD_BASEURL', 'http://datafiles.gaia.cri.it')
 
+CRI_APP_SECRET = 'cr1.@pp.s3cr3t'
+CRI_APP_TOKEN_EXPIRE = 5

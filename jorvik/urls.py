@@ -38,6 +38,8 @@ urlpatterns = [
 
     # Login e logout
     # url(r'^login/$', base.errori.vista_ci_siamo_quasi),
+    url(r'^app_login/$', base.viste.app_login, name='app_login'),
+    url(r'^app_login_qr/$', base.viste.app_login_qr, name='app_login_qr'),
     url(r'^', include(tf_urls, 'two_factor')),   # 2FA
     url(r'^scaduta/$', base.viste.sessione_scaduta),
     url(r'^logout/$', autenticazione.viste.logout, {'template_name': 'base_logout.html'}, name='logout'),

@@ -1,5 +1,6 @@
 import json
 
+import jwt
 from django.contrib.auth import authenticate, login
 from django.http import HttpResponse
 from rest_framework.views import APIView
@@ -11,6 +12,28 @@ from api.settings import SCOPE_ANAGRAFICA_LETTURA_BASE, SCOPE_ANAGRAFICA_LETTURA
 
 from api.v1 import serializzatori
 from anagrafica.permessi.applicazioni import PERMESSI_NOMI_DICT
+from autenticazione.models import Utenza
+from jorvik.settings import CRI_APP_SECRET
+
+
+class TokenLogin(APIView):
+    permission_classes = ()
+
+    def post(self, request):
+        token = request.data.get('token')
+        try:
+            decode_token = jwt.decode(token, CRI_APP_SECRET, algorithms=['HS256'])
+            print("Token is still valid and active")
+            utenza = Utenza.objects.get(email=decode_token['email'])
+            data = json.dumps({'_id': utenza.persona.id})
+            print(data)
+            return HttpResponse(data, content_type="application/json")
+        except jwt.ExpiredSignatureError:
+            print("Token expired. Get new one")
+            return HttpResponse(status=401)
+        except jwt.InvalidTokenError:
+            print("Invalid Token")
+            return HttpResponse(status=401)
 
 
 class MioLogin(APIView):
