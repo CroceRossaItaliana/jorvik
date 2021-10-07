@@ -48,8 +48,10 @@
 
 {#        {% if not corso.online %}#}
             {% if puo_modificare %}
-                {% now "U" as today_ts %}
                 <li role="presentation"><a data-tab-id="#tabLezioni" href="{{ corso.url_lezioni }}" class="lezioni tabSelectorLink"><i class="fa fa-fw fa-calendar"></i> Lezioni</a></li>
+            {% endif %}
+            {% if puo_modificare or me.is_presidente_regionale or me.is_responsabile_formazione_regionale %}
+                {% now "U" as today_ts %}
                 {% if today_ts >= corso.data_esame|date:"U" %}<li role="presentation"><a data-tab-id="#tabEsami" href="{{ corso.url_report }}" class="esami tabSelectorLink"><i class="fa fa-fw fa-file-excel-o"></i> Documentazione Esame</a></li>{% endif %}
             {% endif %}
 {#        {% endif %}#}

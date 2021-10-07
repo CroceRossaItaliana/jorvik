@@ -1,0 +1,32 @@
+{% extends "base_vuota.html" %}
+
+{% load bootstrap3 %}
+{% load mptt_tags %}
+{% load utils %}
+
+{% block pagina_titolo %}
+    Aspiranti da rimuovere 2014 - 2017
+{% endblock %}
+
+{% block menu_laterale %}
+{% endblock %}
+
+{% block pagina_principale %}
+    <div class="container">
+        <div class="row">
+            <div class="col-sm-12">
+                {% if to_delete %}
+                    <p>Rimossi {{count}} Aspiranti</p>
+                {% else %}
+                    <form method="POST">
+                        {% csrf_token %}
+                        <p>Stai per eliminare {{count}} Aspiranti, vuoi continuare?</p>
+                        <p>Scarica il <a href="?csv=1" target="_blank">CSV</a> per verificare gli aspiranti che saranno rimossi.</p>
+                        <p><input type="checkbox" onchange="document.getElementById('delete').disabled = !this.checked;" /> Conferma</p>
+                        <input name="delete" type="submit" value="Rimuovi" class="btn btn-danger" disabled id="delete" />
+                    </form>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+{% endblock %}

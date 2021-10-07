@@ -49,7 +49,7 @@
 
         {% if me.dipendente %}
             <div class="col col-md-3" style="padding-left: 5px; padding-right: 5px;">
-                <div class="alert alert-success role="alert" style="text-align: center; margin:0; display: grid;">
+                <div class="alert alert-success" role="alert" style="text-align: center; margin:0; display: grid;">
                     <span class="glyphicon glyphicon-check" aria-hidden="true" style="font-size:48px; margin-bottom: 0.5em;"></span>
                     <a target="_blank" href="https://criwiki.cri.it:8443/pages/viewpage.action?spaceKey=DA&title=Minute+di+Riunione" class="alert-link testi-lunghi" data-toggle="tooltip" data-placement="top" title="Minute di riunione">Minute di riunione</a>
                 </div>
@@ -88,6 +88,7 @@
                 <a target="_blank" href="https://gaia.cri.it/page/portale-convenzioni/" class="alert-link testi-lunghi" data-toggle="tooltip" data-placement="top" title="Portale Convenzioni">Portale Convenzioni</a>
             </div>
         </div>
+
         <!--<div class="col col-md-3" style="padding-left: 5px; padding-right: 5px;">
             <div class="alert alert-danger" role="alert" style="text-align: center; margin:0; display: grid; ">
                 <span class="glyphicon glyphicon-inbox" aria-hidden="true" style="font-size:48px; margin-bottom: 0.5em;"></span>
@@ -159,7 +160,7 @@
         {% if me.is_presidente or me.is_comissario %}
         <div class="col col-md-3" style="padding-left: 5px; padding-right: 5px;">
             <div class="alert alert-success" role="alert" style="text-align: center; margin:0; display: grid;">
-              <span aria-hidden="true" style="font-size:48px; margin-bottom: 0.1em;"><i class="fa fa-fw fa-car"></i></span>
+              <span aria-hidden="true" style="font-size:48px; margin-bottom: 0.08em;"><i class="fa fa-fw fa-car"></i></span>
               <a target="_blank" href="https://auth2pro.cri.it/motorizzazione/auth/?sso" class="alert-link testi-lunghi" data-toggle="tooltip" data-placement="top" title="Motorizzazione">Motorizzazione</a>
             </div>
         </div>
@@ -174,7 +175,25 @@
         </div>
         {% endif %}
 
-    </div>
+        {% if me.is_delegato_area or me.is_presidente %}
+         <div class="col col-md-3" style="padding-left: 5px; padding-right: 5px;">
+                    <div class="alert alert-success" role="alert" style="text-align: center; margin:0; display: grid;">
+                      <span class="glyphicon glyphicon glyphicon-earphone" aria-hidden="true" style="font-size:48px; margin-bottom: 0.5em;"></span>
+                      <a target="_blank" href='{{ me.cri_btn }}' class="alert-link testi-lunghi" data-toggle="tooltip" data-placement="top" title="Per le persone">Per le persone</a>
+                    </div>
+            </div>
+        {% endif %}
+
+        {% if see_webradio or me.is_presidente or me.is_comissario %}
+         <div class="col col-md-3" style="padding-left: 5px; padding-right: 5px;">
+                    <div class="alert alert-success" role="alert" style="text-align: center; margin:0; display: grid;">
+                      <span class="glyphicon glyphicon glyphicon-signal" aria-hidden="true" style="font-size:48px; margin-bottom: 0.5em;"></span>
+                      <a target="_blank" href='https://webradio.cri.it/?autoGaiaLogin=1' class="alert-link testi-lunghi" data-toggle="tooltip" data-placement="top" title="WebRadio">WebRadio</a>
+                    </div>
+            </div>
+        {% endif %}
+
+        </div>
     <!--<div
             id="benvenuto"
             class="well well-lg allinea-centro" style="

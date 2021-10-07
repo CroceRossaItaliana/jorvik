@@ -11,6 +11,7 @@ from django.contrib.contenttypes.admin import GenericTabularInline
 from django.core.urlresolvers import reverse
 from django.http import HttpResponse, HttpResponseRedirect
 from django.shortcuts import render
+from django.utils.html import format_html
 from django.utils.six import text_type
 from django.utils.translation import ungettext_lazy
 
@@ -381,7 +382,6 @@ class AdminDelega(ReadonlyAdminMixin, admin.ModelAdmin):
     list_display = ("tipo", "oggetto", "persona", "inizio", "fine", "attuale")
     list_filter = ("tipo", "inizio", "fine")
     raw_id_fields = RAW_ID_FIELDS_DELEGA
-
 
 @admin.register(Documento)
 class AdminDocumento(ReadonlyAdminMixin, admin.ModelAdmin):
