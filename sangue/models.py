@@ -69,6 +69,7 @@ class Donatore(ModelloSemplice, ConMarcaTemporale):
         'K-k-',
         'Kp(a+b+)',
         'Kp(a-b+)',
+        'Kk',
     )
     KELL_OPZIONI = ((x, x) for x in KELL)
     kell = models.CharField(max_length=16, choices=KELL_OPZIONI, blank=True, null=True)
