@@ -17,7 +17,7 @@ class Command(BaseCommand):
                                                             'account1.test@cri.it',
                                                             'andrea.carmisciano@citelgroup.it'])
         """
-        persone = Persona.objects.all()
+        persone = Persona.objects.filter(id=63271)
         done = 0
         for pp in persone:
             quick_profile_feeding(pp)

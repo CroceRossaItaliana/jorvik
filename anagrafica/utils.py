@@ -35,11 +35,11 @@ def quick_profile_feeding(pp):
 
     payload['tesserino'] = []
     try:
-        tesserini = Tesserino.objects.filter(valido=True, persona=pp.id)
-
+        tesserini = pp.tesserini.filter(valido=True)  #Tesserino.objects.filter(valido=True, persona=pp.id)
         for tesserino in tesserini:
-            if tesserino.codice:
-                payload['tesserino'].append(tesserino.codice)
+            _tesserino = dict(codice=tesserino.codice, data_scadenza=str(tesserino.data_scadenza),
+                              comitato=tesserino.emesso_da.nome, comitato_indirizzo=str(tesserino.emesso_da.locazione))
+            payload['tesserino'].append(_tesserino)
 
     except ObjectDoesNotExist as e:
         payload['tesserino'] = []
