@@ -47,18 +47,18 @@ def quick_profile_feeding(pp):
     _patenti = []
 
     for _ in pp.titoli_personali.filter(titolo__tipo=Titolo.PATENTE_CIVILE):
-        _patenti.append(dict(tipo=dict(Titolo.TIPO)[Titolo.PATENTE_CIVILE],
-                             data_ottenimento=str(_.data_ottenimento), data_scadenza=str(_.data_scadenza)))
+        _patenti.append(dict(tipo=str(_.titolo), # dict(Titolo.TIPO)[Titolo.PATENTE_CIVILE],
+                             data_ottenimento=str(_.data_ottenimento), data_scadenza=str(_.data_scadenza) if _.data_scadenza else ''))
 
     _titoli_cri = []
     for _ in pp.titoli_personali.filter(titolo__tipo=Titolo.TITOLO_CRI):
-        _titoli_cri.append(dict(tipo=dict(Titolo.TIPO)[Titolo.TITOLO_CRI],
-                                data_ottenimento=str(_.data_ottenimento), data_scadenza=str(_.data_scadenza)))
+        _titoli_cri.append(dict(tipo=str(_.titolo), # dict(Titolo.TIPO)[Titolo.TITOLO_CRI],
+                                data_ottenimento=str(_.data_ottenimento), data_scadenza=str(_.data_scadenza) if _.data_scadenza else ''))
 
     _altri_titoli = []
     for _ in pp.titoli_personali.filter(titolo__tipo=Titolo.ALTRI_TITOLI):
-        _altri_titoli.append(dict(tipo=dict(Titolo.TIPO)[Titolo.ALTRI_TITOLI],
-                                  data_ottenimento=str(_.data_ottenimento), data_scadenza=str(_.data_scadenza)))
+        _altri_titoli.append(dict(tipo=str(_.titolo), # dict(Titolo.TIPO)[Titolo.ALTRI_TITOLI],
+                                  data_ottenimento=str(_.data_ottenimento), data_scadenza=str(_.data_scadenza) if _.data_scadenza else ''))
 
     payload['patenti'] = _patenti
     payload['titoli_cri'] = _titoli_cri
