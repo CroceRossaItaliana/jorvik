@@ -42,6 +42,15 @@ from posta.models import Messaggio
 
 
 class Persona(ModelloSemplice, ConMarcaTemporale, ConAllegati, ConVecchioID):
+
+    def serialize(self):
+        return {
+            'email': self.email_utenza,
+            'name': self.nome,
+            'birthday': self.data_nascita
+        }
+
+
     # Genere
     MASCHIO = 'M'
     FEMMINA = 'F'
