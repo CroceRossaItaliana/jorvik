@@ -159,10 +159,10 @@ def pagina_privata(funzione=None, pagina=LOGIN_URL, permessi=[]):
         context.update({"menu": menu_laterale.get_menu()})  # menu laterale
         context.update({"menu_applicazioni": menu_applicazioni})
 
-        if False:
-            return render(request, template, context)
-        else:
+        if request.META.get('HTTP_DAMMELIJSON') == 'true':
             return JsonResponse(json.loads(JSONGenericPage().render_to_response(context).content.decode()), safe=False)
+        else:
+            return render(request, template, context)
 
     return _pagina_privata
 
