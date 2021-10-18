@@ -575,7 +575,7 @@ class Persona(ModelloSemplice, ConMarcaTemporale, ConAllegati, ConVecchioID):
              self.ha_permesso(GESTIONE_CORSO) or self.ha_permesso(GESTIONE_CORSI_SEDE) or self.is_responsabile_area_albo_formazione != None or
              self.ha_permesso(GESTIONE_EVENTO) or self.ha_permesso(GESTIONE_EVENTI_SEDE)
              ],
-            [('/articoli/', 'Articoli', 'fa-newspaper'), True],
+            # [('/articoli/', 'Articoli', 'fa-newspaper'), True],
             [('/documenti/', 'Documenti', 'fa-folder'), True],
         ]
 

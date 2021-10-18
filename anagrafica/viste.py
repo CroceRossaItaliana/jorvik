@@ -361,7 +361,7 @@ def utente(request, me):
             break
 
     contesto = {
-        "articoli": articoli[:5],
+        "articoli": articoli[:3],
         "see_webradio": see_webradio,
     }
 
