@@ -3140,11 +3140,17 @@ class Trasferimento(ModelloSemplice, ConMarcaTemporale, ConAutorizzazioni, ConPD
 
     def genera_pdf(self, request=None, **kwargs):
         pdf = PDF(oggetto=self)
+
+        appartenenzaVecchia = Appartenenza.objects.filter(
+            Appartenenza.query_attuale().q, membro=Appartenenza.VOLONTARIO, persona=self.persona
+        ).first()
+
         pdf.genera_e_salva(
           nome="Trasferimento %s.pdf" % (self.persona.nome_completo, ),
           corpo={
             "trasferimento": self,
-            "sede_attuale": self.persona.sede_riferimento() if not self.appartenenza else self.persona.sede_riferimento_precedente(),
+            "sede_attuale": self.appartenenza.sede if self.appartenenza else appartenenzaVecchia.sede,
+            "data_inizio": self.appartenenza.inizio if self.appartenenza else appartenenzaVecchia.inizio
           },
           modello="pdf_trasferimento.html",
         )
