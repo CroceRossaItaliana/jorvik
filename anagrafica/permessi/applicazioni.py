@@ -38,6 +38,7 @@ DIRETTORE_CORSO = 'DC'
 RESPONSABILE_EVENTO = 'EF'
 # Non è una delega ma solo un segna posto per la rubriva
 GIOVANI = 'GO'
+REFERENTE_ZOOM = 'RZ'
 
 OBIETTIVI = {
     1: DELEGATO_OBIETTIVO_1,
@@ -75,7 +76,7 @@ PERMESSI_NOMI = (
     (REFERENTE,                 "Referente Attività"),
     (REFERENTE_SERVIZI_SO,      "Referente Servizio SO"),
     (REFERENTE_OPERAZIONE_SO,   "Referente Operazione SO"),
-    (REFERENTE_FUNZIONE_SO,   "Referente Operazione SO"),
+    (REFERENTE_FUNZIONE_SO,     "Referente Operazione SO"),
     (REFERENTE_GRUPPO,          "Referente Gruppo"),
     (DELEGATO_CO,               "Delegato Centrale Operativa"),
     (DELEGATO_SO,               "Delegato Sala Operativa"),
@@ -83,6 +84,7 @@ PERMESSI_NOMI = (
     (DIRETTORE_CORSO,           "Direttore Corso"),
     (RESPONSABILE_EVENTO,       "Responsabile Evento"),
     (RESPONSABILE_AUTOPARCO,    "Responsabile Autoparco"),
+    (REFERENTE_ZOOM,            "Referente Zoom")
     #(RESPONSABILE_PATENTI,      "Responsabile Patenti"),
     #(RESPONSABILE_DONAZIONI,    "Responsabile Donazioni Sangue"),
 )
