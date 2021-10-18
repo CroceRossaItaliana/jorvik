@@ -59,7 +59,8 @@ from .permessi.applicazioni import (PRESIDENTE, UFFICIO_SOCI,
                                     VICE_PRESIDENTE, CONSIGLIERE_GIOVANE,
                                     DELEGATO_SO, UFFICIO_SOCI_CM,
                                     UFFICIO_SOCI_IIVV, CONSIGLIERE_GIOVANE_COOPTATO, DELEGATO_OBIETTIVO_7,
-                                    DELEGATO_OBIETTIVO_8, )
+                                    DELEGATO_OBIETTIVO_8,
+                                    REFERENTE_ZOOM)
 from anagrafica.permessi.costanti import GESTIONE_SOCI
 from .permessi.costanti import (ERRORE_PERMESSI, MODIFICA, LETTURA, GESTIONE_SEDE,
                                 GESTIONE, ELENCHI_SOCI, GESTIONE_ATTIVITA, GESTIONE_ATTIVITA_AREA, GESTIONE_CORSO)
@@ -1345,6 +1346,7 @@ def _presidente_sede_ruoli(sede):
             (DELEGATO_OBIETTIVO_5, "Coordinatore attività per i Giovani",
              sede.delegati_attuali(tipo=DELEGATO_OBIETTIVO_5).count(),
              []),
+            (REFERENTE_ZOOM, "Referente Videoconferenze (solo a livello regionale e nazionale)", sede.delegati_attuali(tipo=REFERENTE_ZOOM).count(), []),
         ]
     })
 
