@@ -1,3 +1,4 @@
+from base64 import encode
 from html import unescape
 
 from autoslug import AutoSlugField
@@ -9,6 +10,7 @@ from django.utils import timezone
 from django.utils.html import strip_tags
 
 from ckeditor.fields import RichTextField
+from json_views.views import LazyJSONEncoder
 
 from base.models import ModelloSemplice, ModelloAlbero, ConAutorizzazioni, ConAllegati
 from base.tratti import ConMarcaTemporale
@@ -78,6 +80,15 @@ class Articolo(ModelloSemplice, ConMarcaTemporale, ConAllegati):
     def get_absolute_url(self):
         return reverse('articoli:dettaglio', kwargs={'articolo_slug': self.slug})
 
+
+    def serialize(self): 
+        serialized = LazyJSONEncoder.serialize_model(self, self)
+        allegati = []
+        for allegato in self.allegati.all():
+            allegati.append(LazyJSONEncoder.serialize_model(allegato, allegato))
+        serialized['allegati'] = allegati
+        return serialized
+        
     class Meta:
         app_label = 'articoli'
         ordering = ['-data_inizio_pubblicazione']
