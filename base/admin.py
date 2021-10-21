@@ -3,7 +3,7 @@ from django.contrib.contenttypes.admin import GenericTabularInline
 
 from gruppi.readonly_admin import ReadonlyAdminMixin
 from .geo import Locazione
-from .models import Autorizzazione, Token, Allegato, Menu
+from .models import Autorizzazione, Token, Allegato, Menu, MenuSegmento
 
 
 @admin.register(Token)
@@ -11,10 +11,19 @@ class TokenAdmin(ReadonlyAdminMixin, admin.ModelAdmin):
     pass
 
 
+class MenuSegmentoInline(ReadonlyAdminMixin, admin.TabularInline):
+    model = MenuSegmento
+    extra = 1
+    raw_id_fields = ('sede', 'titolo')
+
 @admin.register(Menu)
 class MenuAdmin(ReadonlyAdminMixin, admin.ModelAdmin):
+    inlines = (MenuSegmentoInline, )
     list_display = ['url', 'order', 'is_active', 'name', 'menu']
 
+@admin.register(MenuSegmento)
+class MenuSegmentoAdmin(ReadonlyAdminMixin, admin.ModelAdmin):
+   pass
 
 def locazione_aggiorna(modello, request, queryset):
     for locazione in queryset:
