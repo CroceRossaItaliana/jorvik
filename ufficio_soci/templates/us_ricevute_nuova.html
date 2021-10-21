@@ -12,7 +12,7 @@
     <script type="text/javascript">
         $(document).ready(function(){
             var importo = {{ tesseramento.quota_sostenitore_value|unlocalize }};
-            $(document).on('click', '[name=tipo_ricevuta]', function(event) {
+            $(document).on('change', '[name=tipo_ricevuta]', function(event) {
                 if ($('#id_tipo_ricevuta :selected').attr('value') === 'S') {
                     $('#id_importo').attr('min', importo);
                     $('#id_importo + .help-block').html('Il totale versato in euro, per un importo minimo di ' + importo + ' €.');
