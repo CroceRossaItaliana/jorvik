@@ -3,7 +3,6 @@ from django.utils import six
 
 from anagrafica.costanti import TERRITORIALE
 from anagrafica.models import Sede, Persona
-from curriculum.models import Titolo
 from .segmenti import SEGMENTI, NOMI_SEGMENTI
 
 
@@ -63,7 +62,7 @@ class BaseSegmento(six.with_metaclass(BaseSegmentoBase, models.Model)):
 
     segmento = models.CharField(max_length=256, choices=NOMI_SEGMENTI)
     titolo = models.ForeignKey(
-        Titolo, blank=True, null=True,
+        "curriculum.Titolo", blank=True, null=True,
         help_text='Usato solo con il segmento \'Volontari aventi un dato titolo\''
     )
     sede = models.ForeignKey(Sede, blank=True, null=True, limit_choices_to=LIMITED_CHOICES,)

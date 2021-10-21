@@ -2,6 +2,7 @@ import os
 from datetime import datetime, timedelta
 from dateutil.relativedelta import relativedelta
 
+
 from jorvik import settings
 from django.contrib.contenttypes.fields import GenericRelation, GenericForeignKey
 from django.contrib.contenttypes.models import ContentType
@@ -21,7 +22,6 @@ from .utils import calcola_scadenza, concept, iterabile
 from .forms import ModuloMotivoNegazione
 from .stringhe import GeneratoreNomeFile, genera_uuid_casuale
 from .tratti import ConMarcaTemporale
-
 
 
 class ModelloSemplice(models.Model):
@@ -372,7 +372,7 @@ class Autorizzazione(ModelloSemplice, ConMarcaTemporale):
 
     def automatizza(self, concedi=None, scadenza=None):
         if not self.oggetto:
-            print('Autorizzazione %s non ha oggetto collegato' % autorizzazione.pk)
+            # print('Autorizzazione %s non ha oggetto collegato' % autorizzazione.pk)
             return
 
         if concedi and not self.oggetto.ritirata:
@@ -1193,3 +1193,11 @@ class Menu(models.Model):
 
     def get_link_html(self):
         return """<a href="%s">%s</a>""" % (self.url, self.name)
+
+import segmenti.models
+class MenuSegmento(segmenti.models.BaseSegmento):
+    _oggetto_collegato = Menu
+
+    class Meta:
+        verbose_name = "Menu Segmento"
+        verbose_name_plural = "Menu Segmenti"
