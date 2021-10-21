@@ -11,14 +11,15 @@ class Command(BaseCommand):
     def handle(self, *args, **options):
         data = []
 
+        """
         persone = Persona.objects.filter(utenza__email__in=['marialetizia.vella@toscana.cri.it',
                                                             'account4.test@cri.it',
                                                             'account3.test@cri.it',
                                                             'account2.test@cri.it',
                                                             'account1.test@cri.it',
                                                             'andrea.carmisciano@citelgroup.it'])
-
-        #persone = Persona.objects.all()
+        """
+        persone = Persona.objects.all()
         done = 0
         for pp in persone:
             quick_profile_feeding(pp)
