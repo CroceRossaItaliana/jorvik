@@ -6,7 +6,7 @@ from django.core.exceptions import ObjectDoesNotExist
 from django.template.loader import get_template
 from django.utils.timezone import now
 
-from anagrafica.models import Persona, Delega
+from anagrafica.models import Persona, Delega, Fototessera
 from anagrafica.permessi.applicazioni import DELEGATO_OBIETTIVO_5
 from base.utils import mezzanotte_24_ieri
 from curriculum.models import Titolo
@@ -23,10 +23,15 @@ def quick_profile_feeding(pp):
     }
     aspirante = True if hasattr(pp, 'aspirante') else False
 
+    fototessera = Fototessera.objects.filter(persona=pp)
+    avatar = None
+    if fototessera.count() > 0:
+        avatar = fototessera.first().file.url
+
     payload = {'_id': pp.id, 'nome': pp.nome, 'cognome': pp.cognome, 'sospeso': pp.sospeso,
                'codice_fiscale': pp.codice_fiscale, 'data_nascita': str(pp.data_nascita),
                'dipendente': pp.dipendente, 'volontario': pp.volontario, 'aspirante': aspirante,
-               'avatar': STATIC_PROD_BASEURL + pp.avatar.url if pp.avatar else None, 'donatore': {}}
+               'avatar': STATIC_PROD_BASEURL + avatar if avatar else None, 'donatore': {}}
 
     if hasattr(pp, 'donatore'):
         payload['donatore'] = dict(gruppo_sanguigno=pp.donatore.gruppo_sanguigno,
@@ -37,8 +42,12 @@ def quick_profile_feeding(pp):
     try:
         tesserini = pp.tesserini.filter(valido=True)  #Tesserino.objects.filter(valido=True, persona=pp.id)
         for tesserino in tesserini:
-            _tesserino = dict(codice=tesserino.codice, data_scadenza=str(tesserino.data_scadenza),
-                              comitato=tesserino.emesso_da.nome, comitato_indirizzo=str(tesserino.emesso_da.locazione))
+            appartenenza = pp.appartenenza_volontario.first()
+            if appartenenza:
+                comitato = appartenenza.sede
+                _tesserino = dict(codice=tesserino.codice, data_scadenza=str(tesserino.data_scadenza),
+                                  comitato=str(comitato),
+                                  comitato_indirizzo=str(comitato.locazione))
             payload['tesserino'].append(_tesserino)
 
     except ObjectDoesNotExist as e:
