@@ -175,13 +175,52 @@
 			display: none;
 		}
 
+		.altra-lingua .testo-cf {
+			top : 2.55cm;
+		}
+		.altra-lingua .testo-volontario {
+			display: none;
+		}
+
+		.altra-lingua .avatar {
+			top : 2.82cm;
+			right: 0.29cm;
+			width: 2.04cm;
+			height: 2.04cm;
+		}
+
+		.altra-lingua #barcode {
+			left: 0.45cm;
+			top : 4.2cm;
+			width:  4.55cm;
+			height: 1.25cm;
+		}
+
+		.altra-lingua #barcode img {
+			width:  4.55cm;
+			height: 1.25cm;
+		}
+
+		.altra-lingua .testo-comitato {
+			top: 3.74cm;
+			left: 0.55cm;
+			width: 4.55cm;
+			text-align: left;
+			line-height: 1;
+		}
+
+		.altra-lingua .testo-scadenza {
+			top: 2.7cm;
+			left: 6.55cm;
+            font-size: 5.4pt;
+		}
 
 	</STYLE>
 </HEAD>
 <BODY LANG="it-IT">
 
 	<!-- Fronte -->
-    <div class="fronte">
+    <div class="fronte {% if sede.seconda_lingua == 'ING' %}altra-lingua{% endif %}">
         {% if sede.seconda_lingua == 'ING' %}
             <img id="fronte_img" src="{% static 'img/tesserino/FronteAttivo.jpg' %}" alt="FRONTE" />
         {% else %}
@@ -216,16 +255,20 @@
     <div style="page-break-before: always;"></div>
 
     <!-- Retro  -->
-    <div class="retro">
+    <div class="retro {% if sede.seconda_lingua == 'ING' %}altra-lingua{% endif %}">
         {% if sede.seconda_lingua == 'ING' %}
         <img id="retro_img" src="{% static 'img/tesserino/RetroAttivo.jpg' %}" alt="RETRO" />
         {% else %}
             <img id="fronte_img" src="{% static 'img/tesserino/RetroAttivo-tedesco.jpg' %}" alt="FRONTE" />
         {% endif %}
-        <span class="testo-comitato">
+        <div class="testo-comitato">
             {{ sede.locazione }}
-        </span>
-        <span class="testo-scadenza"> <i>Data di scadenza:</i> {{ tesserino.data_scadenza|date:"m/Y" }}</span>
+        </div>
+		{% if sede.seconda_lingua == 'ING' %}
+			<span class="testo-scadenza"> <i>Data di scadenza:</i> {{ tesserino.data_scadenza|date:"m/Y" }}</span>
+		{% else %}
+			<span class="testo-scadenza">{{ tesserino.data_scadenza|date:"m/Y" }}</span>
+		{% endif %}
         <div id="barcode" alt="barcode">
         	<img src="{{ codice.file.url }}" />
         </div>
