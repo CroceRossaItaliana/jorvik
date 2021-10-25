@@ -18,9 +18,9 @@ class MenuUtente:
 
     @staticmethod
     def _espandi_con_static_pege(menu, persona):
-        menu_segmenti = MenuSegmento.objects.all().filtra_per_segmenti(utente=persona)
+        menu_segmenti = MenuSegmento.objects.distinct().all().filtra_per_segmenti(utente=persona)
         return tuple((link.name, link.icon_class, link.url)
-              for link in Menu.objects.filter(is_active=True, menu=menu, segmenti__in=menu_segmenti).order_by('order'))
+              for link in Menu.objects.distinct().filter(is_active=True, menu=menu, segmenti__in=menu_segmenti).order_by('order'))
 
 
 
