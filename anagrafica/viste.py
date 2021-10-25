@@ -941,12 +941,16 @@ def trasferimenti_pending(me):
     persone[PERMESSI_NOMI_DICT[PRESIDENTE]] = set()
     persone[PERMESSI_NOMI_DICT[UFFICIO_SOCI]] = set()
     if trasferimento:
-        sedi = (me.sede_riferimento().pk, me.comitato_riferimento().pk)
-        if me.sede_riferimento().estensione == TERRITORIALE:
+        s_vol = me.sedi_attuali(membro=Appartenenza.VOLONTARIO).first()
+        if not s_vol:
+            s_vol = me.sede_riferimento()
+
+        sedi = (s_vol.pk, me.comitato_riferimento().pk)
+        if s_vol.estensione == TERRITORIALE:
             persone[PERMESSI_NOMI_DICT[UFFICIO_SOCI_UNITA]] = set()
         for autorizzazione in trasferimento.autorizzazioni:
-            delegati = autorizzazione.espandi_notifiche(me.sede_riferimento(), [], True, True)
-            if me.sede_riferimento().estensione == TERRITORIALE:
+            delegati = autorizzazione.espandi_notifiche(s_vol, [], True, True)
+            if s_vol.estensione == TERRITORIALE:
                 delegati.extend(autorizzazione.espandi_notifiche(me.comitato_riferimento(), [], True, True))
             for persona in delegati:
                 deleghe = persona.deleghe_attuali(
