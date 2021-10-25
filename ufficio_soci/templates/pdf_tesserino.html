@@ -220,7 +220,7 @@
 <BODY LANG="it-IT">
 
 	<!-- Fronte -->
-    <div class="fronte {% if sede.seconda_lingua == 'ING' %}altra-lingua{% endif %}">
+    <div class="fronte {% if sede.seconda_lingua != 'ING' %}altra-lingua{% endif %}">
         {% if sede.seconda_lingua == 'ING' %}
             <img id="fronte_img" src="{% static 'img/tesserino/FronteAttivo.jpg' %}" alt="FRONTE" />
         {% else %}
@@ -255,11 +255,11 @@
     <div style="page-break-before: always;"></div>
 
     <!-- Retro  -->
-    <div class="retro {% if sede.seconda_lingua == 'ING' %}altra-lingua{% endif %}">
+    <div class="retro {% if sede.seconda_lingua != 'ING' %}altra-lingua{% endif %}">
         {% if sede.seconda_lingua == 'ING' %}
         <img id="retro_img" src="{% static 'img/tesserino/RetroAttivo.jpg' %}" alt="RETRO" />
         {% else %}
-            <img id="fronte_img" src="{% static 'img/tesserino/RetroAttivo-tedesco.jpg' %}" alt="FRONTE" />
+            <img id="retro_img" src="{% static 'img/tesserino/RetroAttivo-tedesco.jpg' %}" alt="RETRO" />
         {% endif %}
         <div class="testo-comitato">
             {{ sede.locazione }}
