@@ -1,6 +1,8 @@
 # -*- coding: utf-8 -*-
 from __future__ import absolute_import, print_function, unicode_literals
 
+from datetime import datetime
+
 import requests
 from django.core.exceptions import ObjectDoesNotExist
 from django.template.loader import get_template
@@ -29,7 +31,7 @@ def quick_profile_feeding(pp):
         avatar = fototessera.first().file.url
 
     payload = {'_id': pp.id, 'nome': pp.nome, 'cognome': pp.cognome, 'sospeso': pp.sospeso,
-               'codice_fiscale': pp.codice_fiscale, 'data_nascita': str(pp.data_nascita),
+               'codice_fiscale': pp.codice_fiscale, 'data_nascita': '', 'data_accesso': '',
                'dipendente': pp.dipendente, 'volontario': pp.volontario, 'aspirante': aspirante,
                'avatar': STATIC_PROD_BASEURL + avatar if avatar else None, 'donatore': {}}
 
@@ -48,10 +50,15 @@ def quick_profile_feeding(pp):
                 _tesserino = dict(codice=tesserino.codice, data_scadenza=str(tesserino.data_scadenza),
                                   comitato=str(comitato),
                                   comitato_indirizzo=str(comitato.locazione))
-            payload['tesserino'].append(_tesserino)
+                payload['tesserino'].append(_tesserino)
 
     except ObjectDoesNotExist as e:
         payload['tesserino'] = []
+
+    prima_appartenenza = pp.appartenenze.first()
+    if prima_appartenenza:
+        payload['data_accesso'] = datetime.strftime(prima_appartenenza.inizio, '%Y-%m-%d')
+        payload['data_nascita'] = datetime.strftime(prima_appartenenza.inizio, '%Y-%m-%d')
 
     _patenti = []
 

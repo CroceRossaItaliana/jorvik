@@ -10,7 +10,6 @@ class Command(BaseCommand):
 
     def handle(self, *args, **options):
         data = []
-
         """
         persone = Persona.objects.filter(utenza__email__in=['marialetizia.vella@toscana.cri.it',
                                                             'account4.test@cri.it',
