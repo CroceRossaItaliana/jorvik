@@ -1399,9 +1399,10 @@ class CorsoBase(Corso, ConVecchioID, ConPDF):
 
             self.save()
 
-        partecipanti_a_chi_dare_titolo_cri = partecipanti_qs.filter(id__in=partecipazioni_idonei_list)
-        self.set_titolo_cri_to_participants(partecipanti_a_chi_dare_titolo_cri,
-                                            data_ottenimento=data_ottenimento)
+        if self.stato == Corso.TERMINATO:
+            partecipanti_a_chi_dare_titolo_cri = partecipanti_qs.filter(id__in=partecipazioni_idonei_list)
+            self.set_titolo_cri_to_participants(partecipanti_a_chi_dare_titolo_cri,
+                                                data_ottenimento=data_ottenimento)
 
     def set_titolo_cri_to_participants(self, partecipanti, **kwargs):
         """ Sets <titolo_cri> in Persona's Curriculum (TitoloPersonale) """
