@@ -33,7 +33,7 @@ def quick_profile_feeding(pp):
     payload = {'_id': pp.id, 'nome': pp.nome, 'cognome': pp.cognome, 'sospeso': pp.sospeso,
                'codice_fiscale': pp.codice_fiscale, 'data_nascita': '', 'data_accesso': '',
                'dipendente': pp.dipendente, 'volontario': pp.volontario, 'aspirante': aspirante,
-               'avatar': STATIC_PROD_BASEURL + avatar if avatar else None, 'donatore': {}}
+               'avatar': STATIC_PROD_BASEURL + avatar if avatar else None, 'donatore': {}, 'seconda_lingua': 'ING'}
 
     if hasattr(pp, 'donatore'):
         payload['donatore'] = dict(gruppo_sanguigno=pp.donatore.gruppo_sanguigno,
@@ -51,6 +51,7 @@ def quick_profile_feeding(pp):
                                   comitato=str(comitato),
                                   comitato_indirizzo=str(comitato.locazione))
                 payload['tesserino'].append(_tesserino)
+                payload['seconda_lingua'] = comitato.seconda_lingua
 
     except ObjectDoesNotExist as e:
         payload['tesserino'] = []
