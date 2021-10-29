@@ -1399,10 +1399,17 @@ class CorsoBase(Corso, ConVecchioID, ConPDF):
 
             self.save()
 
-        if self.stato == Corso.TERMINATO:
-            partecipanti_a_chi_dare_titolo_cri = partecipanti_qs.filter(id__in=partecipazioni_idonei_list)
-            self.set_titolo_cri_to_participants(partecipanti_a_chi_dare_titolo_cri,
-                                                data_ottenimento=data_ottenimento)
+        partecipanti_a_chi_dare_titolo_cri = partecipanti_qs.filter(id__in=partecipazioni_idonei_list)
+        self.set_titolo_cri_to_participants(partecipanti_a_chi_dare_titolo_cri,
+                                            data_ottenimento=data_ottenimento)
+
+    def titolo_cri_esistente(self, partecipante):
+        from curriculum.models import TitoloPersonale
+
+        return TitoloPersonale.objects.filter(
+            persona=partecipante.persona,
+            corso_partecipazione=partecipante
+        ).exists()
 
     def set_titolo_cri_to_participants(self, partecipanti, **kwargs):
         """ Sets <titolo_cri> in Persona's Curriculum (TitoloPersonale) """
@@ -1414,19 +1421,22 @@ class CorsoBase(Corso, ConVecchioID, ConPDF):
         # else:
         #     data_scadenza = timezone.now() + self.titolo_cri.expires_after_timedelta
 
-        objs = [
-            TitoloPersonale(
-                confermata=True,
-                titolo=self.titolo_cri,
-                persona=p.persona,
-                certificato_da=self.get_firmatario,
-                data_ottenimento=kwargs.get('data_ottenimento'),
-                data_scadenza=None,  # OBS: GAIA-184
-                is_course_title=True,
-                corso_partecipazione=p
-            )
-            for p in partecipanti
-        ]
+        objs = []
+
+        for p in partecipanti:
+            if not self.titolo_cri_esistente(p):
+                objs.append(
+                    TitoloPersonale(
+                        confermata=True,
+                        titolo=self.titolo_cri,
+                        persona=p.persona,
+                        certificato_da=self.get_firmatario,
+                        data_ottenimento=kwargs.get('data_ottenimento'),
+                        data_scadenza=None,  # OBS: GAIA-184
+                        is_course_title=True,
+                        corso_partecipazione=p
+                    )
+                )
         TitoloPersonale.objects.bulk_create(objs)
 
     def non_idonei(self):
