@@ -1375,8 +1375,9 @@ class CorsoBase(Corso, ConVecchioID, ConPDF):
                 if partecipante.idoneo:
                     partecipazioni_idonei_list.append(partecipante.id)
 
-                # Comunica il risultato all'aspirante/volontario
-                partecipante.notifica_esito_esame(mittente=mittente)
+                if not self.titolo_cri_esistente(partecipante):
+                    # Comunica il risultato all'aspirante/volontario
+                    partecipante.notifica_esito_esame(mittente=mittente)
 
                 # Actions required only for CorsoBase (Aspirante as participant)
                 if not self.is_nuovo_corso:
