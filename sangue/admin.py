@@ -108,7 +108,7 @@ class AdminDonatore(ReadonlyAdminMixin, admin.ModelAdmin):
 
 @admin.register(Donazione)
 class AdminDonazione(ReadonlyAdminMixin, admin.ModelAdmin):
-    search_fields = ['persona', 'tipo', 'data']
+    search_fields = ['persona__nome', 'persona__cognome', 'persona__codice_fiscale', 'tipo', 'data']
     list_display = ('persona', 'tipo', 'data', 'esito')
     list_filter = ('tipo',)
     raw_id_fields = ('persona', 'sede')
