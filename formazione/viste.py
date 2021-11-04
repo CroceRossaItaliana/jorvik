@@ -1301,7 +1301,7 @@ def aspirante_corsi(request, me):
     corsi_attivi = corsi.exclude(pk__in=corsi_frequentati.values_list('pk', flat=True))
 
     context = {
-        'corsi_attivi': corsi_attivi.order_by('data_inizio',),
+        'corsi_attivi': corsi_attivi.filter(stato=Corso.ATTIVO).order_by('data_inizio'),
         'corsi_frequentati': corsi_frequentati,
         'puo_creare': True if me.ha_permesso(GESTIONE_CORSI_SEDE) else False
     }
