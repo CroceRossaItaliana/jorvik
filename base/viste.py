@@ -340,9 +340,9 @@ def autorizzazioni(request, me, content_type_pk=None):
     ricarica = pulisci_autorizzazioni(richieste)
 
     for richiesta in richieste:
-
-        if richiesta.oggetto.autorizzazione_concedi_modulo():
-            richiesta.modulo = richiesta.oggetto.autorizzazione_concedi_modulo()
+        if richiesta.oggetto:
+            if richiesta.oggetto.autorizzazione_concedi_modulo():
+                richiesta.modulo = richiesta.oggetto.autorizzazione_concedi_modulo()
 
     if ricarica:  # Ricarica?
         return redirect(request.path)
