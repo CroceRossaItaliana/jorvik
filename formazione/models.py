@@ -2558,9 +2558,8 @@ class LezioneCorsoBase(ModelloSemplice, ConMarcaTemporale, ConGiudizio, ConStori
     def is_lezione_salute_e_sicurezza(self):
         """ GAIA-130: Questa lezione è obbligatoria peri Volontari e senza di essa
         non possono essere ammessi all' esame. """
-
-        if self.precaricata and self.corso.titolo_cri.sigla == 'CRI' and \
-                self.lezione_id_univoco.endswith("SESDV"):
+        if self.precaricata and (self.corso.titolo_cri.sigla == 'CRI' or self.corso.titolo_cri.sigla == 'CRIOL') and \
+                (self.lezione_id_univoco.endswith("SESDV") or self.lezione_id_univoco.endswith("SESD")):
             return True
         return False
 
