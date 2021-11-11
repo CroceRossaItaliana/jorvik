@@ -141,6 +141,13 @@ def errore_no_volontario(request, me=None, torna_url="/utente/"):
                             torna_url=torna_url,
                            )
 
+def errore_estensione_attivo(request, me=None, torna_url="/utente/"):
+    return errore_generico(request, me,
+                            titolo="Estensione Attiva",
+                            messaggio="Hai già un'estensione attiva. Puoi richiederne solo una.",
+                            torna_titolo="Torna indietro",
+                            torna_url=torna_url,
+                           )
 
 def ci_siamo_quasi(request, me):
     return messaggio_generico(request, me, titolo="Questa funzionalità sarà disponibile a breve",
