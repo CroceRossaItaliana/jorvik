@@ -4,7 +4,7 @@
 {% load base_tags %}
 
 {% block css_extra %}
-    body {font-family: 'Arial'; padding:0; margin:0;}
+    body {font-size: 8pt; font-family: 'Arial'; padding:0; margin:0;}
     .heading-logo-cri {display:block; margin:0 auto 20px; width:150px;}
     .heading-scheda-title {margin-bottom:50px; text-align:center; text-transform:uppercase;font-weight:bold;}
     .table-elenco {border: 1px solid #bbb; width: 100%; text-align: left; font-size: 11pt; border-collapse: collapse;}
@@ -22,10 +22,11 @@
 
   <div style="padding-bottom:15px;">
     <span>{{ persona.nome }}</span> <span>{{ persona.cognome }}</span>
+      <br><span>Codice fiscale: {{ persona.codice_fiscale }}</span>
   </div>
 
   <div style="padding-bottom:15px;">
-    Luogo e data di<br>nascita {{ persona.luogo_nascita|default:"______________" }}, {{ persona.data_nascita|date:"DATE_FORMAT" }}
+    Luogo e data di nascita {{ persona.comune_nascita|default:"______________" }}, {{ persona.data_nascita|date:"DATE_FORMAT" }}
   </div>
 
   <div>
@@ -98,20 +99,26 @@
       <span class="idoneita-btn">{{ partecipazione.get_esito_esame_display }}</span></div>
   </div>
 
-  <div>
-    <!-- <div style="margin-bottom:10px; text-align:right;">Luogo e data della valutazione:</div> -->
+<div>
+    <div style="margin-bottom:10px; text-align:left;">Luogo e data della valutazione:
+        <br>
+        {{ corso.sede }}
+                <br>
+        {{ corso.data_esame.date }}
+    </div>
     <table>
-      <tr>
-        <td style="width:50%; vertical-align: top;">
-          <div style="margin-bottom:10px;">Il Direttore del Corso</div>
-          {% for direttore in corso.direttori_corso %}
-            {{ direttore }}<br>
-          {% endfor %}
-        </td>
-        <td style="width:50%; vertical-align: top;">
-          <div style="margin-bottom:10px;">Il Presidente della Commissione</div> {{ corso.presidente_corso.nome_completo|default:"" }}
-        </td>
-      </tr>
+        <tr>
+            <td style="width:50%; vertical-align: top;">
+                <div style="margin-bottom:10px;">Il Direttore del Corso</div>
+                {% for direttore in corso.direttori_corso %}
+                {{ direttore }}<br>
+                {% endfor %}
+            </td>
+            <td style="width:50%; vertical-align: top;">
+                <div style="margin-bottom:10px;">Il Presidente della Commissione</div>
+                {{ corso.presidente_corso.nome_completo|default:"" }}
+            </td>
+        </tr>
     </table>
-  </div>
+</div>
 {% endblock %}

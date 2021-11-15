@@ -4,113 +4,101 @@
 {% load base_tags %}
 
 {% block css_extra %}
-    body {font-family: 'Arial'; padding:0; margin:0;}
-    .heading-logo-cri {display:block; margin:0 auto 20px; width:150px;}
-    .heading-scheda-title {margin-bottom:50px; text-align:center; text-transform:uppercase; font-weight:bold;}
-    .table-elenco {border: 1px solid #bbb; width: 100%; text-align: left; font-size: 11pt; border-collapse: collapse;}
-    .table-elenco td, .table-elenco th {border: 1px solid; padding: 6px 4px;}
-    .table-elenco-col-name {font-size:11px; font-weight:bold; text-align:center;}
-    .idoneita-btn {padding:8px 12px; font-size:14px; font-weight:bold; margin-right: 20px; border: 2px solid #000;}
+
+body {font-size: 8pt; font-family: 'Arial'; padding:0; margin:0;}
+.heading-logo-cri {display:block; margin:0 auto 20px; width:150px;}
+.heading-scheda-title {margin-bottom:50px; text-align:center; text-transform:uppercase; font-weight:bold;}
+.table-elenco {border: 1px solid #bbb; width: 100%; text-align: left; font-size: 11pt; border-collapse: collapse;}
+.table-elenco td, .table-elenco th {border: 1px solid; padding: 6px 4px;}
+.table-elenco-col-name {font-size:11px; font-weight:bold; text-align:center;}
+.idoneita-btn {padding:8px 12px; font-size:14px; font-weight:bold; margin-right: 20px; border: 2px solid #000;}
 {% endblock %}
 
 {% block corpo %}
-  {% get_url_for_staticfiles as SITE_URL %}
+{% get_url_for_staticfiles as SITE_URL %}
 
-  <img class="heading-logo-cri" src='{{ SITE_URL }}{% static "img/Emblema_CRI.png" %}' name="Logo CRI">
+<img class="heading-logo-cri" src='{{ SITE_URL }}{% static "img/Emblema_CRI.png" %}' name="Logo CRI">
 
-  <div class="heading-scheda-title">Corso di formazione per volontari CRI<br>Scheda di valutazione individuale</div>
+<div class="heading-scheda-title">Corso di formazione per volontari CRI<br>Scheda di valutazione individuale</div>
 
-  <div style="padding-bottom:15px;">
+<div style="padding-bottom:15px;">
     <span>{{ persona.nome }}</span> <span>{{ persona.cognome }}</span>
-  </div>
+    <br><span>Codice fiscale: {{ persona.codice_fiscale }}</span>
+</div>
 
-  <div style="padding-bottom:15px;">
-    Luogo e data di<br>nascita {{ persona.luogo_nascita|default:"______________" }}, {{ persona.data_nascita|date:"DATE_FORMAT" }}
-  </div>
+<div style="padding-bottom:15px;">
+    Luogo e data di nascita
+    <br>{{ persona.comune_nascita|default:"______________" }},
+    {{ persona.data_nascita|date:"DATE_FORMAT" }}
+</div>
 
-  <div>
+<div>
     Comitato CRI e Regione {{ corso.sede.comitato }}
-  </div>
+</div>
 
-  <div>
+<div>
     <div style="margin:15px 0; font-weight:bold; font-size:13px; text-align:center;">VALUTAZIONI CONSEGUITE</div>
     <table class="table-elenco" style="margin-bottom:30px;">
-      <thead>
-          <tr>
-              <td class="table-elenco-col-name">Tipologia di Valutazione</td>
-              <td class="table-elenco-col-name">Positivo/Negativo</td>
-          </tr>
-      </thead>
-      <tr style="font-size:10px;">
-          <td>
-            <strong><u>Esame teorico:</u></strong>
-            <span>(indicare se test scritto a risposta multipla o altra tipologia di esame)</span>
-            <div>_____________________________________________________</div>
-            <div><em>(ai sensi dell’art. 13.1 del Regolamento dei Corsi di Formazione per Volontari e
-              Dipendenti della Croce Rossa Italiana)</em></div>
-          </td>
-          <td></td>
-      </tr>
-      <tr style="font-size:10px;">
-          <td>
-            <strong><u>Modulo Salute e Sicurezza dei Volontari CRI:</u></strong>
-            <div><em>(ai sensi del D.lgs. 9 aprile 2008, n. 81 e del Regolamento per la Formazione in
-              Materia di Salute e Sicurezza in ambito CRI per i Volontari)</em></div>
-          </td>
-          <td></td>
-      </tr>
-      <tr style="font-size:10px;">
-          <td>
-            <strong><u>Prova pratica di primo soccorso o eventuale colloquio (per motivati e contingenti motivi fisici del candidato) su:</u></strong>
-            <div>_____________________________________________________</div>
-            <div>_____________________________________________________</div>
-            <div>_____________________________________________________</div>
-            <div><em>(ai sensi dell’art. 13.3 del Regolamento dei Corsi di Formazione per Volontari e Dipendenti della Croce Rossa Italiana)</em></div>
-          </td>
-          <td></td>
-      </tr>
-      <tr style="font-size:10px;">
-          <td>
-            <strong><u>Esame teorico per coloro che esercitano la professione medica o infermieristica:</u></strong>
-            <span>(indicare se test scritto a risposta multipla o altra tipologia di esame)</span>
-            <div>_____________________________________________________</div>
-            <div><em>(ai sensi dell’art. 13.4 del Regolamento sul Corso di Formazione per Volontari e Dipendenti della Croce Rossa Italiana)</em></div>
-          </td>
-          <td></td>
-      </tr>
-    </table>
-    <table class="table-elenco" style="margin-bottom:30px;">
-      <tr>
-        <td>
-          <div style="margin-bottom:50px;"><strong>Valutazione complessiva del Direttore del Corso:</strong></div>
-        </td>
-      </tr>
-    </table>
-    <table class="table-elenco" style="margin-bottom:30px;">
-      <tr>
-        <td>
-          <div style="margin-bottom:50px;"><strong>Eventuali note/osservazioni:</strong></div>
-        </td>
-      </tr>
+        <thead>
+        <tr>
+            <td class="table-elenco-col-name">Tipologia di Valutazione</td>
+            <td class="table-elenco-col-name">Positivo/Negativo</td>
+        </tr>
+        </thead>
+        <tr style="font-size:10px;">
+            <td>
+                <strong><u>Esame teorico:</u></strong>
+                <span>(indicare se test scritto a risposta multipla o altra tipologia di esame)</span>
+                <div><strong>{{ argomento_1 }}</strong></div>
+                <div><em>(ai sensi dell’art. 13.1 del Regolamento dei Corsi di Formazione per Volontari e
+                    Dipendenti della Croce Rossa Italiana)</em></div>
+            </td>
+            <td><span>{{ esito_1 }}</span></td>
+        </tr>
+        <tr style="font-size:10px;">
+            <td>
+                <strong><u>Modulo Salute e Sicurezza dei Volontari CRI:</u></strong>
+                <div><em>(ai sensi del D.lgs. 9 aprile 2008, n. 81 e del Regolamento per la Formazione in
+                    Materia di Salute e Sicurezza in ambito CRI per i Volontari)</em></div>
+            </td>
+                        <td><span>Lezione obbligatoria</span></td>
+        </tr>
+        <tr style="font-size:10px;">
+            <td>
+                <strong><u>Prova pratica di primo soccorso o eventuale colloquio (per motivati e contingenti motivi
+                    fisici del candidato) su:</u></strong>
+                <div><strong>{{ argomento_2 }}</strong></div>
+                <div><em>(ai sensi dell’art. 13.3 del Regolamento dei Corsi di Formazione per Volontari e Dipendenti
+                    della Croce Rossa Italiana)</em></div>
+            </td>
+            <td><span>{{ esito_2 }}</span></td>
+        </tr>
+        </tr>
     </table>
     <div style="margin-bottom:25px;">Alla luce della valutazione complessiva, il Partecipante risulta essere <br><br>
-      <span class="idoneita-btn">{{ partecipazione.get_esito_esame_display }}</span></div>
-  </div>
+        <span class="idoneita-btn">{{ partecipazione.get_esito_esame_display }}</span></div>
+</div>
 
-  <div>
-    <div style="margin-bottom:10px; text-align:right;">Luogo e data della valutazione:</div>
+<div>
+    <div style="margin-bottom:10px; text-align:left;">Luogo e data della valutazione:
+        <br>
+        {{ corso.sede }}
+                <br>
+        {{ corso.data_esame.date }}
+    </div>
     <table>
-      <tr>
-        <td style="width:50%; vertical-align: top;">
-          <div style="margin-bottom:10px;">Il Direttore del Corso</div>
-          {% for direttore in corso.direttori_corso %}
-            {{ direttore }}<br>
-          {% endfor %}
-        </td>
-        <td style="width:50%; vertical-align: top;">
-          <div style="margin-bottom:10px;">Il Presidente della Commissione</div> {{ corso.presidente_corso.nome_completo|default:"" }}
-        </td>
-      </tr>
+        <tr>
+            <td style="width:50%; vertical-align: top;">
+                <div style="margin-bottom:10px;">Il Direttore del Corso</div>
+                {% for direttore in corso.direttori_corso %}
+                {{ direttore }}<br>
+                {% endfor %}
+            </td>
+            <td style="width:50%; vertical-align: top;">
+                <div style="margin-bottom:10px;">Il Presidente della Commissione</div>
+                {{ corso.presidente_corso.nome_completo|default:"" }}
+            </td>
+        </tr>
     </table>
-  </div>
+</div>
 {% endblock %}

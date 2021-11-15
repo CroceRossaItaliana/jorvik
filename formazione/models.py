@@ -2302,6 +2302,17 @@ class PartecipazioneCorsoBase(ModelloSemplice, ConMarcaTemporale, ConAutorizzazi
             else:
                 pdf_template = "pdf_corso_base_scheda_valutazione_nuova.html"
 
+
+        if self.esito_parte_1=='P':
+            esito_1='POSITIVO'
+        else:
+            esito_1='NEGATIVO'
+
+        if self.esito_parte_2=='P':
+            esito_2='POSITIVO'
+        else:
+            esito_2='NEGATIVO'
+
         pdf.genera_e_salva_con_python(
             nome="Scheda Valutazione %s.pdf" % self.persona.codice_fiscale,
             corpo={
@@ -2309,6 +2320,11 @@ class PartecipazioneCorsoBase(ModelloSemplice, ConMarcaTemporale, ConAutorizzazi
                 "corso": self.corso,
                 "persona": self.persona,
                 'request': request,
+                'esito_1':esito_1,
+                'esito_2':esito_2,
+                'argomento_1':self.argomento_parte_1,
+                'argomento_2':self.argomento_parte_2
+
             },
             modello=pdf_template,
         )
