@@ -23,7 +23,8 @@ from anagrafica.permessi.costanti import (GESTIONE_SOCI, ELENCHI_SOCI,
                                           EMISSIONE_TESSERINI, GESTIONE_SOCI_CM, GESTIONE_SOCI_IIVV)
 from autenticazione.funzioni import pagina_privata, pagina_pubblica
 from base.errori import (errore_generico, errore_nessuna_appartenenza,
-                         messaggio_generico, messaggio_avvertimento)
+                         messaggio_generico, messaggio_avvertimento,
+                         errore_estensione_attivo)
 from base.utils import poco_fa, mezzanotte_24_ieri, testo_euro, oggi
 from posta.models import Messaggio
 
@@ -476,6 +477,8 @@ def us_estensione(request, me):
             return errore_nessuna_appartenenza(request, me)
         if not me.permessi_almeno(est.persona, MODIFICA):
             return redirect(ERRORE_PERMESSI)
+        if est.persona.estensioni_attuali():
+            return errore_estensione_attivo(request, me)
         if est.destinazione in est.persona.sedi_attuali():
             modulo.add_error('destinazione', 'Il volontario è già appartenente a questa sede.')
         elif est.destinazione in [x.destinazione for x in est.persona.estensioni_attuali_e_in_attesa()]:

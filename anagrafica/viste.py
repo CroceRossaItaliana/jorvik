@@ -25,7 +25,8 @@ from attivita.models import Area
 from autenticazione.funzioni import pagina_anonima, pagina_privata
 from autenticazione.models import Utenza
 from base.errori import (errore_generico, errore_nessuna_appartenenza,
-                         messaggio_generico, errore_no_volontario)
+                         messaggio_generico, errore_no_volontario,
+                         errore_estensione_attivo)
 from base.files import Zip
 from base.models import Log
 from base.stringhe import genera_uuid_casuale
@@ -852,6 +853,8 @@ def utente_estensione(request, me):
     storico = me.estensioni.all()
     form = ModuloCreazioneEstensione(request.POST or None)
     if form.is_valid():
+        if me.estensioni_attuali():
+            return errore_estensione_attivo(request, me)
         est = form.save(commit=False)
         if est.destinazione in me.sedi_attuali():
             form.add_error('destinazione', 'Sei già appartenente a questa sede.')
