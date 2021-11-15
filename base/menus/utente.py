@@ -105,6 +105,9 @@ class MenuUtente:
     def menu_links(self):
         return ("Links", self._espandi_con_static_pege(Menu.LINK, self.me))
 
+    def menu_novita(self):
+        return ("Novità", self._espandi_con_static_pege(Menu.NOVITA, self.me))
+
     def get_menu(self):
         from .utente_rubrica import menu_rubrica_base
 
@@ -125,5 +128,6 @@ class MenuUtente:
                 self.menu_donatore() if self.is_volontario else None,
                 self.menu_sicurezza(),
                 self.menu_links(),
+                self.menu_novita(),
                 menu_monitoraggio(me),
             ))

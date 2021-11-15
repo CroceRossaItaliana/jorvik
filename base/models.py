@@ -1159,6 +1159,7 @@ class Menu(models.Model):
     DONATORE = 'DO'
     SICUREZZA = 'SI'
     LINK = "LK"
+    NOVITA = "NOV"
 
     APPS = (
         (PERSONA, 'Persona'),
@@ -1169,6 +1170,7 @@ class Menu(models.Model):
         (DONATORE, 'Donatore'),
         (SICUREZZA, 'Sicurezza'),
         (LINK, "Link"),
+        (NOVITA, "Novità")
     )
 
     is_active = models.BooleanField(default=True)
