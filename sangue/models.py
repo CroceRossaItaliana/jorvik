@@ -176,8 +176,8 @@ class Donazione(ModelloSemplice, ConMarcaTemporale, ConAutorizzazioni):
         if not self.persona.sedi_attuali(membro=Appartenenza.VOLONTARIO).exists():
             return True
 
-        sede = self.persona.sedi_attuali(membro=Appartenenza.VOLONTARIO)[0].comitato
+        sede = self.persona.sedi_attuali(membro=Appartenenza.VOLONTARIO).first()
 
         self.autorizzazione_richiedi_sede_riferimento(
-            self.persona, INCARICO_GESTIONE_SANGUE
+            self.persona, INCARICO_GESTIONE_SANGUE, forza_sede_riferimento=sede
         )
