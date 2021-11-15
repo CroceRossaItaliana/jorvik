@@ -1,0 +1,10 @@
+{% extends 'email.html' %}
+
+{% block corpo %}
+    <p class="grassetto">Gentile,</p>
+    <p>
+        la informiamo che è stato attivato il Corso <a href="{{ corso.url }}">{{ corso.nome }}</a> presso il Comitato di {{ corso.sede }} con Direttore il Volontario {{ direttore }}.
+        Il Corso avrà inizio il {{ corso.data_inizio }} con data di esame il {{ corso.data_esame }}
+        In allegato la delibera di attivazione.
+    </p>
+{% endblock %}
