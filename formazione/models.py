@@ -30,7 +30,7 @@ from base.files import PDF, Zip
 from base.geo import ConGeolocalizzazione, ConGeolocalizzazioneRaggio
 from base.utils import concept, poco_fa
 from base.tratti import ConMarcaTemporale, ConDelegati, ConStorico, ConPDF
-from base.models import ConAutorizzazioni, ConVecchioID, Autorizzazione, ModelloSemplice
+from base.models import Allegato, ConAutorizzazioni, ConVecchioID, Autorizzazione, ModelloSemplice
 from base.errori import messaggio_generico
 from curriculum.models import Titolo
 from curriculum.areas import OBBIETTIVI_STRATEGICI
@@ -1072,7 +1072,8 @@ class CorsoBase(Corso, ConVecchioID, ConPDF):
         self.stato = self.ATTIVO
         self.save()
         if not self.evento:
-            task_invia_email_agli_aspiranti.apply_async(args=(self.pk, rispondi_a.pk),)
+            task_invia_email_agli_aspiranti.apply_async(
+                args=(self.pk, rispondi_a.pk),)
         else:
             self.mail_attivazione_corso_per_responsabili_evento()
 
@@ -1626,13 +1627,29 @@ class CorsoBase(Corso, ConVecchioID, ConPDF):
                 "direttore": self.direttori_corso().first()
             }
 
+            allegato_delibera = None
+            if self.delibera_file:
+                allegato_delibera = Allegato(
+                    file=self.delibera_file, nome=self.delibera_file.name)
+
             # Invia posta
             Messaggio.costruisci_e_accoda(
                 oggetto=oggetto,
                 modello='email_attivazione_corso_presidente_regionale.html',
                 corpo=corpo,
-                destinatari=[email_to,],
+                destinatari=[email_to],
                 allegati=[self.delibera_file,]
+            )
+
+            from curriculum.models import TitoloPersonale
+
+            Messaggio.invia_raw(
+                oggetto="Attivazione Corso {}".format(self),
+                corpo_html=get_template('email_attivazione_corso_formazione_regionale.html').render(corpo),
+                email_mittente=Messaggio.NOREPLY_EMAIL,
+                lista_email_destinatari=[
+                    TitoloPersonale.MAIL_FORMAZIONE[sede_regionale.pk]],
+                allegati=self.delibera_file
             )
 
             delegato_fomazione = sede_regionale.delegati_formazione()
