@@ -31,6 +31,7 @@ def carica_titolo_studio(request, me, redirect_url):
                 tipo_titolo_di_studio=tipo_titolo_studio,
                 titolo=scuola_obbligo,
                 data_ottenimento=cd['data_ottenimento'],
+                numero_brevetto=cd['numero_brevetto']
             )
             titolo_personale.save()
             logger.info("Creato titolo personale {}".format(titolo_personale))
@@ -52,6 +53,7 @@ def carica_titolo_studio(request, me, redirect_url):
                 titolo=diploma_titolo,
                 tipo_titolo_di_studio=tipo_titolo_studio,
                 data_ottenimento=cd['data_ottenimento'],
+                numero_brevetto=cd['numero_brevetto']
             )
             titolo_personale.save()
             logger.info("Creato titolo personale {}".format(titolo_personale))
@@ -73,6 +75,7 @@ def carica_titolo_studio(request, me, redirect_url):
                 titolo=laurea_titolo,
                 tipo_titolo_di_studio=tipo_titolo_studio,
                 data_ottenimento=cd['data_ottenimento'],
+                numero_brevetto=cd['numero_brevetto']
             )
             titolo_personale.save()
             logger.info("Creato titolo personale {}".format(titolo_personale))

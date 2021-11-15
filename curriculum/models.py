@@ -426,6 +426,7 @@ class TitoloPersonale(ModelloSemplice, ConMarcaTemporale, ConAutorizzazioni):
 
     specializzazione = models.ForeignKey(TitoloSpecializzazione, on_delete=models.CASCADE, null=True, blank=True,)
     skills = models.ManyToManyField(TitoloSkill, blank=True)
+    numero_brevetto = models.CharField(max_length=255, null=True, blank=True, verbose_name='N° Brevetto')
 
     class Meta:
         verbose_name = "Titolo personale"

@@ -348,7 +348,8 @@ class AdminTitoloPersonale(ReadonlyAdminMixin, admin.ModelAdmin):
             'Cognome Direttore',
             'Codice fiscale direttore',
             'Qualifica conseguita',
-            'codice'
+            'codice',
+            'Numero del brevetto'
         )
 
         reader = csv.DictReader(io.StringIO(file.read().decode('utf-8')), delimiter=';', fieldnames=fieldnames)
@@ -463,6 +464,8 @@ class AdminTitoloPersonale(ReadonlyAdminMixin, admin.ModelAdmin):
                     )
                 )
                 continue
+            print(row)
+            numero_brevetto = row['Numero del brevetto']
 
             titolo_personale = TitoloPersonale(
                 persona=persona,
@@ -471,7 +474,8 @@ class AdminTitoloPersonale(ReadonlyAdminMixin, admin.ModelAdmin):
                 data_ottenimento=data_conseguimento,
                 luogo_ottenimento=luogo_conseguimento,
                 is_course_title=True,
-                automatica=True
+                automatica=True,
+                numero_brevetto=numero_brevetto
             )
             titolo_personale.save()
             count['inserite'] += 1

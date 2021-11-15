@@ -207,7 +207,8 @@ class FormAddTitoloStudio(autocomplete_light.ModelForm):
             'no_laurea',
             'nuova_laurea',
             'data_ottenimento',
-            'attestato_file'
+            'attestato_file',
+            'numero_brevetto'
         ]
 
     def __init__(self, *args, **kwargs):

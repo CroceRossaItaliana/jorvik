@@ -124,6 +124,9 @@
                                         {% if t.codice %}
                                             <i class="fa fa-fw text-muted fa-barcode"></i> <span class="monospace">{{ t.codice }}</span><br />
                                         {% endif %}
+                                        {% if t.numero_brevetto %}
+                                           <i style="font-weight: bold">N°</i> {{ t.numero_brevetto }}
+                                        {% endif %}
                                     </td>
                                     <td>
                                         {% if t.can_delete %}
