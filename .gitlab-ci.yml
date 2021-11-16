@@ -9,6 +9,7 @@ stages:
   - restore_db
   - deploy
   - deploy_provami
+  - cleanup
 
 cache:
   key: ${CI_MERGE_REQUEST_ID}
@@ -94,9 +95,25 @@ fire_pr:
   environment:
     name: pr$CI_MERGE_REQUEST_ID
     url: https://pr$CI_MERGE_REQUEST_ID.staging.gaia.cri.it
+    on_stop: cleanup_pr
   only:
     - merge_requests
 
+cleanup_pr:
+  stage: cleanup
+  tags:
+    - staging
+  script:
+    - echo $CI_MERGE_REQUEST_ID
+    - printenv
+  when: manual
+  environment:
+    name: pr$CI_MERGE_REQUEST_ID
+    action: stop
+  only:
+    - merge_requests
+  allow_failure: true
+  
 deploy_provami:
   stage: deploy_provami
   tags:
