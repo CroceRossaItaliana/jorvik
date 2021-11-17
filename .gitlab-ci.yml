@@ -105,7 +105,8 @@ cleanup_pr:
     - staging
   script:
     - echo $CI_MERGE_REQUEST_ID
-    - printenv
+    - pwd
+    - docker stop $CI_MERGE_REQUEST_ID_web $CI_MERGE_REQUEST_ID_proxy $CI_MERGE_REQUEST_ID_redis_1 $CI_MERGE_REQUEST_ID_sentinel01_1 $CI_MERGE_REQUEST_ID_celery $CI_MERGE_REQUEST_ID_pdf $CI_MERGE_REQUEST_ID_db
   when: manual
   environment:
     name: pr$CI_MERGE_REQUEST_ID
