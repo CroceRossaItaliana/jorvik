@@ -111,10 +111,8 @@ cleanup_pr:
     - docker rm ${PR}_web ${PR}_proxy ${PR}_redis_1 ${PR}_sentinel01_1 ${PR}_celery ${PR}_pdf ${PR}_db
     - docker network rm ${PR}_default
     - docker rmi gaia:${PR} ${PR}_pdf:latest ${PR}_proxy:latest
-    - cd ..
-    - rm -Rf /home/gitlab-runner/builds/gaia/${PR}
-    - rm -Rf /home/gitlab-runner/builds/gaia/${PR}.tmp
-  when: manual
+  after_script:
+    - rm -rf $CI_MERGE_REQUEST_ID $CI_MERGE_REQUEST_ID.tmp
   environment:
     name: pr$CI_MERGE_REQUEST_ID
     action: stop
