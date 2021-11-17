@@ -106,7 +106,8 @@ cleanup_pr:
   script:
     - echo $CI_MERGE_REQUEST_ID
     - pwd
-    - docker stop $CI_MERGE_REQUEST_ID_web $CI_MERGE_REQUEST_ID_proxy $CI_MERGE_REQUEST_ID_redis_1 $CI_MERGE_REQUEST_ID_sentinel01_1 $CI_MERGE_REQUEST_ID_celery $CI_MERGE_REQUEST_ID_pdf $CI_MERGE_REQUEST_ID_db
+    - export PR=$(echo $CI_MERGE_REQUEST_ID)
+    - docker stop ${PR}_web ${PR}_proxy ${PR}_redis_1 ${PR}_sentinel01_1 ${PR}_celery ${PR}_pdf ${PR}_db
   when: manual
   environment:
     name: pr$CI_MERGE_REQUEST_ID
