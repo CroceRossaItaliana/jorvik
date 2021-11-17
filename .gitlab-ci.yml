@@ -108,6 +108,10 @@ cleanup_pr:
     - pwd
     - export PR=$(echo $CI_MERGE_REQUEST_ID)
     - docker stop ${PR}_web ${PR}_proxy ${PR}_redis_1 ${PR}_sentinel01_1 ${PR}_celery ${PR}_pdf ${PR}_db
+    - docker rm ${PR}_web ${PR}_proxy ${PR}_redis_1 ${PR}_sentinel01_1 ${PR}_celery ${PR}_pdf ${PR}_db
+    - docker network rm ${PR}_default
+    - docker rmi gaia:${PR} ${PR}_pdf:latest ${PR}_proxy:latest
+    - rm -Rf /home/gitlab-runner/builds/gaia/${PR}*
   when: manual
   environment:
     name: pr$CI_MERGE_REQUEST_ID
