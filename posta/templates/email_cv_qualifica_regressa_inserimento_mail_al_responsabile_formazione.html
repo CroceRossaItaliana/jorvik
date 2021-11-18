@@ -1,0 +1,23 @@
+{% extends 'email.html' %}
+
+{% block corpo %}
+  <p class="grassetto">Caro Responsabile della Formazione,</p>
+
+  <p>
+    il Volontario {{ volontario.nome }} {{ volontario.cognome }} ha inserito su GAIA le seguenti informazioni e documenti:
+    <ol>
+      <li>Nome del Corso di formazione frequentato</li>
+      <li>Data ottenimento qualifica</li>
+      <li>Attestato</li>
+      <li>Altri documenti (tesserino, verbale, brevetto, ecc.)</li>
+      <li>Luogo ottenimento qualifica</li>
+      <li>Nome del Direttore del Corso</li>
+      <li>Note</li>
+    </ol>
+
+  </p>
+
+  <p>Clicca <a href="{% url 'autorizzazioni:aperte' %}">il seguente link</a> per prendere visione della/le qualifica/che ottenuta/e dal Volontario. Hai un mese di tempo per prendere visione e confermare le qualifiche.</p>
+
+  <p>Grazie!</p>
+{% endblock %}

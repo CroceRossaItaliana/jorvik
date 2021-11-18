@@ -22,10 +22,15 @@
 
                             {% richiesta_autorizzazione_button 'nega' as richiesta_autorizzazione_nega_button %}
                             {% if richiesta_autorizzazione_nega_button %}
-                                <a class="btn btn-danger" href="/autorizzazioni/{{ richiesta.pk }}/nega/"><i class="fa fa-fw fa-times"></i> Nega</a>
+                                {% if richiesta.oggetto.titolo.tipo == 'TC' %}
+                                    <a class="btn btn-danger" href="/autorizzazioni/{{ richiesta.pk }}/nega/"><i class="fa fa-fw fa-times"></i> Respingi</a>
+                                {% else %}
+                                    <a class="btn btn-danger" href="/autorizzazioni/{{ richiesta.pk }}/nega/"><i class="fa fa-fw fa-times"></i> Nega</a>
+                                {% endif %}
                             {% endif %}
 
                             {# Titolo.TITOLO_CRI #}
+                            {% comment %}
                             {% if richiesta.oggetto.titolo.tipo == 'TC' %}
                                 {% if not richiesta.mail_verifica %}
                                     <p style="padding-top:6px;">
@@ -39,6 +44,7 @@
                                     </p>
                                 {% endif %}
                             {% endif %}
+                            {% endcomment %}
                         </div>
                     </div>
                 </div>

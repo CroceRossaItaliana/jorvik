@@ -21,13 +21,13 @@ from django_countries.fields import CountryField
 
 from formazione.utils import unique_signature
 from .costanti import (ESTENSIONE, TERRITORIALE, LOCALE, PROVINCIALE, REGIONALE, NAZIONALE)
-from .permessi.applicazioni import DELEGATO_AREA, DELEGATO_SO, CONSIGLIERE_GIOVANE_COOPTATO
+from .permessi.applicazioni import DELEGATO_AREA, DELEGATO_SO, CONSIGLIERE_GIOVANE_COOPTATO, CENTRO_FORMAZIONE_NAZIONALE
 from .validators import (valida_codice_fiscale, ottieni_genere_da_codice_fiscale,
     valida_dimensione_file_8mb, valida_partita_iva, valida_dimensione_file_5mb,
     valida_iban, valida_email_personale) # valida_almeno_14_anni, crea_validatore_dimensione_file)
 from .permessi.shortcuts import *
 from .permessi.costanti import RUBRICA_DELEGATI_OBIETTIVO_ALL, GESTIONE_SOCI_CM, GESTIONE_SOCI_IIVV, GESTIONE_EVENTO, \
-    GESTIONE_EVENTI_SEDE
+    GESTIONE_EVENTI_SEDE, RUBRICA_DELEGATI_GIOVANI
 from attivita.models import Turno, Partecipazione, Area
 from base.files import PDF, Excel, FoglioExcel
 from base.geo import ConGeolocalizzazione, Locazione
@@ -564,7 +564,7 @@ class Persona(ModelloSemplice, ConMarcaTemporale, ConAllegati, ConVecchioID):
             [('/centrale-operativa/', "CO", "fa-compass"), self.ha_permesso(GESTIONE_CENTRALE_OPERATIVA_SEDE)],
             [('/formazione/', 'Formazione', 'fa-graduation-cap'),
              self.ha_permesso(GESTIONE_CORSO) or self.ha_permesso(GESTIONE_CORSI_SEDE) or self.is_responsabile_area_albo_formazione != None or
-             self.ha_permesso(GESTIONE_EVENTO) or self.ha_permesso(GESTIONE_EVENTI_SEDE)
+             self.ha_permesso(GESTIONE_EVENTO) or self.ha_permesso(GESTIONE_EVENTI_SEDE) or self.deleghe_attuali(tipo=CENTRO_FORMAZIONE_NAZIONALE).count()
              ],
             # [('/articoli/', 'Articoli', 'fa-newspaper'), True],
             [('/documenti/', 'Documenti', 'fa-folder'), True],
@@ -2464,6 +2464,9 @@ class Sede(ModelloAlbero, ConMarcaTemporale, ConGeolocalizzazione, ConVecchioID,
 
     def delegati_formazione(self):
         return self.comitato.delegati_attuali(tipo=RESPONSABILE_FORMAZIONE, solo_deleghe_attive=True)
+
+    def delegati_formazione_cfn(self):
+        return self.comitato.delegati_attuali(tipo=CENTRO_FORMAZIONE_NAZIONALE, solo_deleghe_attive=True)
 
     def commissari(self):
         return self.comitato.delegati_attuali(tipo=COMMISSARIO, solo_deleghe_attive=True)

@@ -7,11 +7,13 @@
 {% block profilo_corpo %}
 {% if sezione and puo_modificare %}
     <div class="row">
+        {% if can_create_qualifica_cri %}
         <div class="col-lg-3" style="padding: 5px">
             <a class="btn btn-primary btn-block" href="{% url 'profilo:profilo' pk=pk sezione=sezione %}?modifica=qualificacri">
                 Carica Qualifica CRI
             </a>
         </div>
+        {% endif %}
         <div class="col-lg-3" style="padding: 5px">
             <a class="btn btn-primary btn-block" href="{% url 'profilo:profilo' pk=pk sezione=sezione %}?modifica=altrequalifiche">
                 Carica Altre qualifiche
@@ -104,7 +106,11 @@
 
                                     {% else %}
                                         <span class="text-danger">
-                                            {{ t.esito }}
+                                            {% if t.titolo.tipo == 'TC' %}
+                                                Respinto
+                                            {% else %}
+                                                {{ t.esito }}
+                                            {% endif %}
                                         </span>
 
                                     {% endif %}

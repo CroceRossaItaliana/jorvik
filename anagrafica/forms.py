@@ -398,6 +398,11 @@ class ModuloNegaEstensione(ModuloMotivoNegazione):
     pass
 
 
+class ModuloNegaEstensioneQualificaCRI(ModuloMotivoNegazione):
+    protocollo_numero = forms.CharField(max_length=16, required=False, label="Numero di protocollo",
+                                        help_text="Numero di protocollo con cui è stata registrata la richiesta.")
+
+
 class ModuloCreazioneTrasferimento(autocomplete_light.ModelForm):
     destinazione = autocomplete_light.ModelChoiceField("SedeTrasferimentoAutocompletamento", error_messages={
         'invalid': "Non è possibile effettuare un trasferimento verso il Comitato Nazionale, verso i Comitati Regionali"

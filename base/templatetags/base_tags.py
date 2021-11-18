@@ -120,7 +120,8 @@ def richiesta_autorizzazione_button(context, action):
 
     display = True
     if hasattr(oggetto, 'qualifica_regresso') and oggetto.qualifica_regresso == True:
-        display = False
+        if not oggetto.titolo.is_titolo_cri:
+            display = False
 
     if action == 'nega':
         return display

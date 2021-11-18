@@ -1,7 +1,7 @@
 from anagrafica.costanti import NAZIONALE, REGIONALE
 from anagrafica.permessi.applicazioni import (UFFICIO_SOCI, UFFICIO_SOCI_UNITA,
                                               DIRETTORE_CORSO, RESPONSABILE_FORMAZIONE, REFERENTE, REFERENTE_SERVIZI_SO,
-                                              COMMISSARIO, VICE_PRESIDENTE, PRESIDENTE, RESPONSABILE_EVENTO, )
+                                              COMMISSARIO, VICE_PRESIDENTE, PRESIDENTE, RESPONSABILE_EVENTO, CENTRO_FORMAZIONE_NAZIONALE)
 
 
 """
@@ -17,6 +17,7 @@ INCARICO_GESTIONE_ESTENSIONI = "US-EST"
 INCARICO_GESTIONE_FOTOTESSERE = "US-FOT"
 INCARICO_GESTIONE_RISERVE = "US-RIS"
 INCARICO_GESTIONE_TITOLI = "US-TIT"
+INCARICO_GESTIONE_TITOLI_CRI = "US-TIT-CRI"
 INCARICO_GESTIONE_APPARTENENZE = "US-APP"
 INCARICO_GESTIONE_SANGUE = "SA-SAN"
 INCARICO_GESTIONE_CORSOBASE_PARTECIPANTI = "CB-PART"
@@ -33,6 +34,7 @@ INCARICHI = (
     (INCARICO_GESTIONE_ESTENSIONI,              "Gestione delle Estensioni"),
     (INCARICO_GESTIONE_FOTOTESSERE,             "Gestione delle Fototessere"),
     (INCARICO_GESTIONE_TITOLI,                  "Gestione dei Titoli nella Sede"),
+    (INCARICO_GESTIONE_TITOLI_CRI,              "Gestione dei Titoli CRI nella Sede"),
     (INCARICO_GESTIONE_RISERVE,                 "Gestione delle Riserve"),
     (INCARICO_GESTIONE_ATTIVITA_PARTECIPANTI,   "Gestione dei Partecipanti all'Attività"),
     (INCARICO_GESTIONE_SO_SERVIZI_PARTECIPANTI, "Gestione dei Partecipanti al Servizio SO"),
@@ -52,6 +54,7 @@ INCARICHI_TIPO = (
     (INCARICO_GESTIONE_ESTENSIONI,              "anagrafica.Sede"),
     (INCARICO_GESTIONE_FOTOTESSERE,             "anagrafica.Sede"),
     (INCARICO_GESTIONE_TITOLI,                  "anagrafica.Sede"),
+    (INCARICO_GESTIONE_TITOLI_CRI,              "anagrafica.Sede"),
     (INCARICO_GESTIONE_RISERVE,                 "anagrafica.Sede"),
     (INCARICO_GESTIONE_ATTIVITA_PARTECIPANTI,   "attivita.Attivita"),
     (INCARICO_GESTIONE_SO_SERVIZI_PARTECIPANTI, "sala_operativa.ServizioSO"),
@@ -79,6 +82,7 @@ def espandi_incarichi_ufficio_soci_unita(sede, al_giorno=None):
         (INCARICO_GESTIONE_ESTENSIONI,                  sede),
         (INCARICO_GESTIONE_FOTOTESSERE,                 sede),
         (INCARICO_GESTIONE_TITOLI,                      sede),
+        (INCARICO_GESTIONE_TITOLI_CRI,                  sede),
         (INCARICO_GESTIONE_RISERVE,                     sede),
     ]
 
@@ -106,6 +110,15 @@ def espandi_incarichi_responsabile_evento(evento, al_giorno=None):
     ]
 
 
+
+def espandi_incarichi_cfn(sede, al_giorno=None):
+    if sede.estensione == 'N':
+        return [
+            (INCARICO_GESTIONE_TITOLI_CRI, sede)
+        ]
+    return []
+
+
 def espandi_incarichi_responsabile_formazione(sede, al_giorno=None):
     from formazione.models import CorsoBase
     if sede.estensione == 'N':
@@ -113,6 +126,7 @@ def espandi_incarichi_responsabile_formazione(sede, al_giorno=None):
         ] + espandi_incarichi_direttore_corso(CorsoBase.objects.filter(sede_id=sede.pk))
     elif sede.estensione == 'R':
         return [
+            (INCARICO_GESTIONE_TITOLI_CRI, sede)
         ] + espandi_incarichi_direttore_corso(CorsoBase.objects.filter(sede_id=sede.pk))
     else:
         return [
@@ -124,6 +138,7 @@ def espandi_incarichi_presidente(sede, al_giorno=None):
     return [
        (INCARICO_GESTIONE_SANGUE,                       sede),
        (INCARICO_GESTIONE_TITOLI,                       sede),
+       (INCARICO_GESTIONE_TITOLI_CRI,                   sede),
        (INCARICO_PRESIDENZA,                            sede),
 
     ] \
@@ -150,7 +165,8 @@ ESPANSIONE_DELEGHE = {
     REFERENTE_SERVIZI_SO:   espandi_incarichi_referente_servizio,
     DIRETTORE_CORSO:        espandi_incarichi_direttore_corso,
     RESPONSABILE_FORMAZIONE:espandi_incarichi_responsabile_formazione,
-    RESPONSABILE_EVENTO: espandi_incarichi_responsabile_evento
+    RESPONSABILE_EVENTO:    espandi_incarichi_responsabile_evento,
+    CENTRO_FORMAZIONE_NAZIONALE: espandi_incarichi_cfn,
 }
 
 
