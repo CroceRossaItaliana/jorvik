@@ -24,6 +24,7 @@
                     <thead>
                         <th>Data caricamento</th>
                         <th>Tipo</th>
+                        <th>Scadenza</th>
                         <th>Visualizza</th>
                         <th>Azioni</th>
                     </thead>
@@ -33,6 +34,7 @@
                         <tr>
                             <td>{{ d.creazione|date:"SHORT_DATETIME_FORMAT" }}</td>
                             <td>{{ d.get_tipo_display }}</td>
+                            <td>{{ d.expires|date:"d/m/Y"|default:"-" }}</td>
                             <td>
                                 <a href="{{ d.file.url }}" download title="Scarica il documento">
                                     <i class="fa fa-download"></i> Scarica
@@ -46,7 +48,7 @@
                                     <a href="/profilo/{{ persona.pk }}/documenti/{{ d.pk }}/cancella/"
                                        data-conferma="Vuoi davvero cancellare questo documento ({{ d.get_tipo_display }})?"
                                        title="Cancella il documento">
-                                        <i class="fa fa-remove"></i> Cancella
+                                        <i class="fa fa-trash"></i> Cancella
                                     </a>
                                 {% endif %}
                             </td>
