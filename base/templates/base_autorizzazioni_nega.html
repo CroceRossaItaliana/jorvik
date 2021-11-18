@@ -2,16 +2,28 @@
 
 {% load bootstrap3 %}
 
-{% block pagina_titolo %}Nega{% endblock %}
+{% block pagina_titolo %}
+    {% if richiesta.oggetto.titolo.is_titolo_cri %}
+        Respingi
+    {% else %}
+        Nega
+    {% endif %}
+{% endblock %}
 
-{% block avviso_titolo %}Nega{% endblock %}
+{% block avviso_titolo %}
+    {% if richiesta.oggetto.titolo.is_titolo_cri %}
+        Respingi
+    {% else %}
+        Nega
+    {% endif %}
+{% endblock %}
 
 
 {% block avviso_corpo %}
 
     {% if richiesta.necessaria %}
 
-        <p>Per negare questa richiesta, &egrave; necessario aggiungere le seguenti informazioni.</p>
+        <p>Per {% if richiesta.oggetto.titolo.is_titolo_cri %}respingere{% else %}negare{% endif %} questa richiesta, &egrave; necessario aggiungere le seguenti informazioni.</p>
 
         <form method="POST">
             {% csrf_token %}
@@ -19,7 +31,11 @@
 
             <button type="submit" class="btn btn-block btn-danger">
                 <i class="fa fa-fw fa-times">
-                    Nega richiesta
+                    {% if richiesta.oggetto.titolo.is_titolo_cri %}
+                        Respingi richiesta
+                    {% else %}
+                        Nega richiesta
+                    {% endif %}
                 </i>
             </button>
         </form>
@@ -27,8 +43,11 @@
     {% else %}
 
         <p class="text-success grassetto">
-            Richiesta negata.
-
+            {% if richiesta.oggetto.titolo.is_titolo_cri %}
+                Richiesta respinta.
+            {% else %}
+                Richiesta negata.
+            {% endif %}
         </p>
 
 

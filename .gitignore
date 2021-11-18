@@ -16,3 +16,4 @@ venv
 /ghostdriver.log
 celerybeat-schedule
 smalldump
+*/migrations/*

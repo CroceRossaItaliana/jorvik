@@ -4,12 +4,12 @@ from django.contrib.postgres.fields import JSONField
 from django.db import models
 from django.utils import timezone
 
-from anagrafica.permessi.incarichi import INCARICO_GESTIONE_TITOLI
+from anagrafica.permessi.incarichi import INCARICO_GESTIONE_TITOLI, INCARICO_GESTIONE_TITOLI_CRI
 from base.models import ModelloSemplice, ConAutorizzazioni, ConVecchioID
 from base.tratti import ConMarcaTemporale
 from posta.models import Messaggio
 
-from .areas import OBBIETTIVI_STRATEGICI
+from .areas import OBBIETTIVI_STRATEGICI, OBBIETTIVO_STRATEGICO_EMERGENZA
 from .validators import cv_attestato_file_upload_path
 
 
@@ -115,6 +115,10 @@ class Titolo(ModelloSemplice, ConVecchioID):
     @property
     def is_titolo_cri(self):
         return self.tipo == self.TITOLO_CRI
+    
+    @property
+    def is_titolo_emergenza(self):
+        return self in Titolo.objects.filter(area=OBBIETTIVO_STRATEGICO_EMERGENZA)
 
     @property
     def is_course_title(self):
@@ -426,7 +430,8 @@ class TitoloPersonale(ModelloSemplice, ConMarcaTemporale, ConAutorizzazioni):
 
     specializzazione = models.ForeignKey(TitoloSpecializzazione, on_delete=models.CASCADE, null=True, blank=True,)
     skills = models.ManyToManyField(TitoloSkill, blank=True)
-    numero_brevetto = models.CharField(max_length=255, null=True, blank=True, verbose_name='N° Brevetto')
+    numero_brevetto = models.CharField(max_length=254, null=True, blank=True, verbose_name='N° Brevetto')
+    protocollo_numero = models.CharField('Numero di protocollo', max_length=16, null=True, blank=True)
 
     class Meta:
         verbose_name = "Titolo personale"
@@ -442,9 +447,20 @@ class TitoloPersonale(ModelloSemplice, ConMarcaTemporale, ConAutorizzazioni):
         return self.data_scadenza is None or \
                today >= self.data_scadenza
 
+    def autorizzazione_nega_modulo(self):
+        from anagrafica.forms import ModuloNegaEstensioneQualificaCRI
+        return ModuloNegaEstensioneQualificaCRI
+        
+
     def autorizzazione_negata(self, modulo=None, notifiche_attive=True, data=None):
         # Alla negazione, cancella titolo personale.
-        self.delete()
+        if not self.titolo.is_titolo_cri:
+            self.delete()
+        else:
+            self.confermata = False
+            self.protocollo_numero = modulo.cleaned_data['protocollo_numero']
+            self.save()
+
 
     @property
     def is_expired_course_title(self):
@@ -500,14 +516,37 @@ class TitoloPersonale(ModelloSemplice, ConMarcaTemporale, ConAutorizzazioni):
                 sede_attuale.presidente(),
             ]
         )
+    
+    def richiedi_autorizzazione_responsabile(self, qualifica_nuova, me, sede_attuale):
 
+        qualifica_nuova.autorizzazione_richiedi_sede_riferimento(
+            me,
+            INCARICO_GESTIONE_TITOLI_CRI,
+            forza_sede_riferimento=sede_attuale
+        )
+
+        vo_nome_cognome = "%s %s" % (me.nome, me.cognome)
+
+        destinatari = sede_attuale.delegati_formazione()
+        if qualifica_nuova.titolo.is_titolo_emergenza:
+            destinatari = sede_attuale.delegati_formazione_cfn()
+        
+        Messaggio.costruisci_e_accoda(
+            oggetto="Inserimento su GAIA Qualifiche CRI: Volontario %s" % vo_nome_cognome,
+            modello="email_cv_qualifica_regressa_inserimento_mail_al_responsabile_formazione.html",
+            corpo={
+                "volontario": me,
+            },
+            mittente=None,
+            destinatari=destinatari
+        )
+    
     @classmethod
-    def crea_qualifica_regressa(cls, persona, **kwargs):
+    def crea_qualifica_regressa(cls, persona, to_responsabile=False, **kwargs):
         qualifica_nuova = TitoloPersonale(persona=persona, confermata=False, **kwargs)
         qualifica_nuova.save()
 
         titolo = kwargs['titolo']
-
         if titolo.meta and titolo.meta.get('richiede_conferma'):
             from anagrafica.models import Appartenenza
             sede_attuale = persona.sede_riferimento(membro=[Appartenenza.VOLONTARIO])
@@ -516,10 +555,44 @@ class TitoloPersonale(ModelloSemplice, ConMarcaTemporale, ConAutorizzazioni):
             if not sede_attuale:
                 qualifica_nuova.delete()
                 return None
-
-            # Richiedi autorizzazione, manda le mail
-            qualifica_nuova.richiedi_autorizzazione(qualifica_nuova, persona, sede_attuale)
+            if to_responsabile:
+                sede = sede_attuale.sede_regionale
+                if titolo.is_titolo_emergenza:
+                    from anagrafica.models import Sede
+                    sede = Sede.objects.get(pk=1)
+                qualifica_nuova.richiedi_autorizzazione_responsabile(
+                    qualifica_nuova, persona, sede
+                )
+            else:
+                # Richiedi autorizzazione, manda le mail
+                qualifica_nuova.richiedi_autorizzazione(qualifica_nuova, persona, sede_attuale)
+            
         return qualifica_nuova
+    
+    @property
+    def esito(self):
+        """
+        Ottiene l'esito. (*ConAutorizzazioni.ESITO_OK, .ESITO_NO, .ESITO_PENDING, .ESITO_RITIRATA).
+        :return:
+        """
+        if not self.titolo.is_titolo_cri:
+            return super(TitoloPersonale, self).esito
+
+        if self.confermata:  # Se confermata, okay
+            return self.ESITO_OK
+
+        elif self.ritirata:  # Ritirata?
+            return self.ESITO_RITIRATA
+
+        # Altrimenti, se almeno una negazione, esito negativo
+        elif self.autorizzazioni.filter(concessa=False).exists():
+            return self.ESITO_NO
+
+        # elif not self.autorizzazioni.exists():  # Se non vi e' nessuna richiesta, allora e' negata d'ufficio
+        #     return self.ESITO_NO
+
+        else:  # Se non confermata e nessun esito negativo, ancora pendente
+            return self.ESITO_PENDING
 
     @property
     def associated_to_a_course(self):

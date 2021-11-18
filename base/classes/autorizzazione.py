@@ -74,20 +74,23 @@ class AutorizzazioneProcess:
         #     destinatari=[i for i in delegati_formazione_regionale] + [presidente_regionale,],
         #     allegati=[qualifica.attestato_file]
         # )
-
-        Messaggio.invia_raw(
-            oggetto="Inserimento su GAIA Qualifiche CRI: %s" % volontario.nome_completo,
-            corpo_html=get_template('email_cv_qualifica_presa_visione_al_presidente.html').render(
-                {
-                    "qualifica": qualifica,
-                    "volontario": volontario,
-                    "comitato": vo_sede
-                },
-            ),
-            email_mittente=Messaggio.NOREPLY_EMAIL,
-            lista_email_destinatari=[TitoloPersonale.MAIL_FORMAZIONE[regionale_sede.pk]],
-            allegati=qualifica.attestato_file
-        )
+        
+        try:
+            Messaggio.invia_raw(
+                oggetto="Inserimento su GAIA Qualifiche CRI: %s" % volontario.nome_completo,
+                corpo_html=get_template('email_cv_qualifica_presa_visione_al_presidente.html').render(
+                    {
+                        "qualifica": qualifica,
+                        "volontario": volontario,
+                        "comitato": vo_sede
+                    },
+                ),
+                email_mittente=Messaggio.NOREPLY_EMAIL,
+                lista_email_destinatari=[TitoloPersonale.MAIL_FORMAZIONE[regionale_sede.pk]],
+                allegati=qualifica.attestato_file
+            )
+        except:
+            pass
 
         # Al Volontario
         Messaggio.costruisci_e_accoda(

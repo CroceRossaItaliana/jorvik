@@ -1,4 +1,5 @@
 from collections import OrderedDict
+from datetime import datetime
 from django.contrib import messages
 from django.core.urlresolvers import reverse
 from django.db import transaction
@@ -214,7 +215,7 @@ def _profilo_curriculum(request, me, persona):
             form = form(request.POST, request.FILES, me=persona)
             if form.is_valid():
                 cd = form.cleaned_data
-                qualifica_created = TitoloPersonale.crea_qualifica_regressa(persona=persona, **cd)
+                qualifica_created = TitoloPersonale.crea_qualifica_regressa(persona=persona, to_responsabile=True, **cd)
                 if not qualifica_created:
                     messages.error(request, 'Errore.')
                     return errore_nessuna_appartenenza(request, me, torna_url=reversed)
@@ -241,7 +242,8 @@ def _profilo_curriculum(request, me, persona):
         "pk": persona.pk,
         "sezione": "curriculum",
         "puo_modificare": puoi_modificare if deleghe_list else non_puo_fare_niente,
-        "tipo_titolo": FORMS[modifica][1] if FORMS[modifica] else None
+        "tipo_titolo": FORMS[modifica][1] if FORMS[modifica] else None,
+        "can_create_qualifica_cri": datetime.now() < datetime(2021, 12, 31, 23, 59, 59),
     }
     return 'anagrafica_profilo_curriculum.html', context
 
