@@ -111,9 +111,9 @@ cleanup_pr:
     - docker rm ${PR}_web ${PR}_proxy ${PR}_redis_1 ${PR}_sentinel01_1 ${PR}_celery ${PR}_pdf ${PR}_db
     - docker network rm ${PR}_default
     - docker rmi gaia:${PR} ${PR}_pdf:latest ${PR}_proxy:latest
-  after_script:
     - cd $CI_BUILDS_DIR
-    - rm -rf $CI_PROJECT_DIR.tmp $CI_PROJECT_DIR
+    - rm -rf $CI_PROJECT_DIR.tmp
+    - rm -rf $CI_PROJECT_DIR
   environment:
     name: pr$CI_MERGE_REQUEST_ID
     action: stop
