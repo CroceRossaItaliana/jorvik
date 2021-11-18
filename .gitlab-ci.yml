@@ -112,7 +112,8 @@ cleanup_pr:
     - docker network rm ${PR}_default
     - docker rmi gaia:${PR} ${PR}_pdf:latest ${PR}_proxy:latest
   after_script:
-    - echo "rm -rf $CI_PROJECT_DIR.tmp"
+    - cd $CI_BUILDS_DIR
+    - rm -rf $CI_PROJECT_DIR.tmp $CI_PROJECT_DIR
   environment:
     name: pr$CI_MERGE_REQUEST_ID
     action: stop
