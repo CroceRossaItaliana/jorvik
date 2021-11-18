@@ -112,12 +112,13 @@ cleanup_pr:
     - docker network rm ${PR}_default
     - docker rmi gaia:${PR} ${PR}_pdf:latest ${PR}_proxy:latest
   after_script:
-    - rm -rf $CI_MERGE_REQUEST_ID $CI_MERGE_REQUEST_ID.tmp
+    - rm -rf $CI_PROJECT_DIR $CI_PROJECT_DIR.tmp
   environment:
     name: pr$CI_MERGE_REQUEST_ID
     action: stop
   only:
     - merge_requests
+  when: manual
   allow_failure: true
   
 deploy_provami:
