@@ -79,8 +79,6 @@ INSTALLED_APPS = [
     'otp_yubikey',
     'two_factor',
     'rest_framework',
-
-    'python-magic',
 ]
 
 
