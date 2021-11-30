@@ -39,7 +39,15 @@ from base.utils import (is_list, sede_slugify, UpperCaseCharField, concept, oggi
     TitleCharField, poco_fa, mezzanotte_24_ieri, mezzanotte_00, mezzanotte_24)
 from curriculum.models import Titolo, TitoloPersonale
 from posta.models import Messaggio
-
+from anagrafica.validators import valida_dimensione_file_8mb, valida_dimensione_file_6mb
+from anagrafica.permessi.applicazioni import (DIRETTORE_CORSO, OBIETTIVI, PRESIDENTE, COMMISSARIO)
+from anagrafica.validators import (valida_dimensione_file_8mb, ValidateFileSize)
+from base.wysiwyg import WYSIWYGSemplice
+from anagrafica.validators import valida_dimensione_file_8mb, valida_dimensione_file_6mb
+from anagrafica.permessi.applicazioni import (DIRETTORE_CORSO, OBIETTIVI, PRESIDENTE, COMMISSARIO)
+from anagrafica.validators import (valida_dimensione_file_8mb, ValidateFileSize)
+from formazione.validators import (course_file_directory_path, validate_file_extension, validate_file_mime_type,
+                         delibera_file_upload_path, evento_file_directory_path)
 
 class Persona(ModelloSemplice, ConMarcaTemporale, ConAllegati, ConVecchioID):
     # Genere
@@ -94,7 +102,7 @@ class Persona(ModelloSemplice, ConMarcaTemporale, ConAllegati, ConVecchioID):
         blank=True, validators=[valida_email_personale])
     note = models.TextField("Note aggiuntive", max_length=10000, blank=True, null=True,)
     avatar = models.ImageField("Avatar", blank=True, null=True,
-        upload_to=GeneratoreNomeFile('avatar/'), validators=[valida_dimensione_file_5mb])
+        upload_to=GeneratoreNomeFile('avatar/'), validators=[valida_dimensione_file_5mb, validate_file_mime_type])
 
     # Privacy
     POLICY_PUBBLICO = 9
@@ -3021,7 +3029,8 @@ class Fototessera(ModelloSemplice, ConAutorizzazioni, ConMarcaTemporale):
 
     persona = models.ForeignKey(Persona, related_name="fototessere", db_index=True, on_delete=models.CASCADE)
     file = models.ImageField("Fototessera", upload_to=GeneratoreNomeFile('fototessere/'),
-                             validators=[valida_dimensione_file_8mb])
+                             validators=[validate_file_mime_type, validate_file_extension])
+
 
     RICHIESTA_NOME = "Fototessera"
 

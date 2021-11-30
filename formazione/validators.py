@@ -1,13 +1,23 @@
-def validate_file_extension(value):
-    import os
-    from django.core.exceptions import ValidationError
+import magic
+import os
+from django.core.exceptions import ValidationError
 
+
+def validate_file_extension(value):
     ext = os.path.splitext(value.name)[1]  # [0] returns path+filename
-    valid_extensions = ['zip', 'rar', '.pdf', '.doc', '.docx', '.jpg',
+    valid_extensions = ['zip', 'rar', '.pdf', '.doc', '.docx', '.jpg', '.jpeg','.gif',
                         '.png', '.xlsx', '.xls']
     if ext.lower() not in valid_extensions:
         raise ValidationError("Estensione <%s> di questo file non è "
                               "accettabile." % ext)
+
+
+def validate_file_mime_type(value):
+    files_supportati=['image/png', 'image/jpg', 'image/jpeg', 'image/gif']
+    mime = magic.from_buffer(value.read(), mime=True)
+    if mime not in files_supportati:
+        raise ValidationError("Estensione <%s> di questo file non è "
+                              "accettabile." % mime)
 
 
 def course_file_directory_path(instance, filename):
