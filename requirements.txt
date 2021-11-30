@@ -117,3 +117,4 @@ xlwt==1.3.0
 YubiOTP==0.2.1
 psycopg2-binary
 django-sentinel==0.1.0
+python-magic==0.4.24
