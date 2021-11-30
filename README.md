@@ -177,3 +177,5 @@ http://django-two-factor-auth.readthedocs.io/en/stable/installation.html#yubikey
  8. Il dispositivo è adesso configurato.
  
 
+
+# test push on git clone after update
