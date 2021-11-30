@@ -178,4 +178,3 @@ http://django-two-factor-auth.readthedocs.io/en/stable/installation.html#yubikey
  
 
 
-# test push on git clone after update
