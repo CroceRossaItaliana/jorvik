@@ -1580,7 +1580,8 @@ class CorsoBase(Corso, ConVecchioID, ConPDF):
         sede = self.sede.estensione
         oggetto = "Delibera nuovo corso: %s" % self
         email_destinatari = ['formazione@cri.it',]
-        if self.cdf_level=='1':
+        
+        if self.titolo_cri.is_titolo_emergenza:
             email_destinatari.append('soccorsispeciali.formazione@cri.it')
 
         if self.livello in [Titolo.CDF_LIVELLO_I, Titolo.CDF_LIVELLO_II]:
