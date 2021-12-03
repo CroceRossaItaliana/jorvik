@@ -43,15 +43,22 @@ def quick_profile_feeding(pp):
     payload['tesserino'] = []
     try:
         tesserini = pp.tesserini.filter(valido=True)  #Tesserino.objects.filter(valido=True, persona=pp.id)
-        for tesserino in tesserini:
+        if not tesserini:
+            # fake tesserino
             appartenenza = pp.appartenenza_volontario.first()
-            if appartenenza:
-                comitato = appartenenza.sede
-                _tesserino = dict(codice=tesserino.codice, data_scadenza=str(tesserino.data_scadenza),
-                                  comitato=str(comitato),
-                                  comitato_indirizzo=str(comitato.locazione))
-                payload['tesserino'].append(_tesserino)
-                payload['seconda_lingua'] = comitato.seconda_lingua
+            comitato = appartenenza.sede if appartenenza else 'n/a'
+            _tesserino = dict(codice='n/a', data_scadenza='2099-12-31', comitato=str(comitato), comitato_indirizzo='n/a')
+            payload['tesserino'].append(_tesserino)
+        else:
+            for tesserino in tesserini:
+                appartenenza = pp.appartenenza_volontario.first()
+                if appartenenza:
+                    comitato = appartenenza.sede
+                    _tesserino = dict(codice=tesserino.codice, data_scadenza=str(tesserino.data_scadenza),
+                                      comitato=str(comitato),
+                                      comitato_indirizzo=str(comitato.locazione))
+                    payload['tesserino'].append(_tesserino)
+                    payload['seconda_lingua'] = comitato.seconda_lingua
 
     except ObjectDoesNotExist as e:
         payload['tesserino'] = []
