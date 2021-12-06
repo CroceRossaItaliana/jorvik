@@ -319,6 +319,17 @@ class CorsoFile(models.Model):
         return '<%s> of %s' % (file, corso)
 
 
+class Aspiranti2014_2019(models.Model):
+    persona_id = models.ForeignKey(Persona, db_index=True)
+    nome = models.CharField('Nome aspirante',
+                                        max_length=255, blank=True, null=True)
+    cognome = models.CharField('Cognome aspirante',
+                                        max_length=255, blank=True, null=True)
+    email = models.EmailField('email di contatto',
+                                        max_length=255, blank=True, null=True)
+    conferma_lettura = models.BooleanField(default=False)
+
+
 class EventoFile(models.Model):
     is_enabled = models.BooleanField(default=True)
     evento = models.ForeignKey('Evento')

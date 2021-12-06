@@ -34,7 +34,7 @@ from .elenchi import ElencoPartecipantiCorsiBase
 from .decorators import can_access_to_course
 from .formsets import EventoFileFormSet, EventoLinkFormSet
 from .models import (Aspirante, Corso, CorsoBase, CorsoEstensione, LezioneCorsoBase,
-                     PartecipazioneCorsoBase, InvitoCorsoBase, RelazioneCorso, Evento, EventoLink, EventoFile)
+                     PartecipazioneCorsoBase, InvitoCorsoBase, RelazioneCorso, Evento, EventoLink, EventoFile, Aspiranti2014_2019)
 from .forms import (ModuloCreazioneCorsoBase, ModuloModificaLezione,
                     ModuloModificaCorsoBase, ModuloIscrittiCorsoBaseAggiungi, FormCommissioneEsame,
                     FormVerbaleCorso, FormRelazioneDelDirettoreCorso, ModuloCreazioneEvento, FiltraEvento,
@@ -1344,6 +1344,36 @@ def aspirante_impostazioni(request, me):
 
     contesto = {}
     return 'aspirante_impostazioni.html', contesto
+
+
+from django.shortcuts import render
+
+def conferma_email(request):
+    email=request.get_raw_uri().split('?email=')[-1]
+    aspiranti = Aspiranti2014_2019.objects.filter(email=email).first()
+    context = {'ok': False}
+    
+    if aspiranti:
+        aspiranti.conferma_lettura = True
+        aspiranti.save()
+        context['ok'] = True
+
+    return render(request, "messaggio_cortesia.html", context)
+
+import csv
+from django.http import HttpResponse
+def esporta_aspiranti_2014_2019(request):#esportali in csv
+    response = HttpResponse(
+        content_type='text/csv',
+    )
+    response['Content-Disposition'] = 'attachment; filename=aspiranti_2014_2019.csv'
+    writer = csv.writer(response)
+    writer.writerow(['Id persona', 'Nome', 'Cognome', 'Mail', 'Conferma lettura'])
+    aspiranti = Aspiranti2014_2019.objects.all()
+    for i in aspiranti:
+        writer.writerow([i.persona_id.id, i.nome, i.cognome, i.email, i.conferma_lettura])
+    return response
+
 
 
 @pagina_privata
