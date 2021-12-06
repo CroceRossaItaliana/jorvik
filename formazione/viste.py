@@ -2083,3 +2083,58 @@ def evento_termina(request, me, pk):
     evento = get_object_or_404(Evento, pk=pk)
 
     return redirect(evento.termina(), request=request)
+
+@pagina_privata
+def elenco_docenze(request, me, pg_ef=1, pg_in=1):
+    """
+    Mostra uno storico delle docenze CHE MI SONO STATE ASSEGNATE.
+    """
+    lista_docenze = LezioneCorsoBase.objects.filter(docente=me).order_by('-creazione')
+
+    if not lista_docenze.exists():
+        return redirect(ERRORE_PERMESSI)
+
+    pg_ef = int(pg_ef)
+    if pg_ef <= 0:
+        pg_ef = 1
+
+    pg_in = int(pg_in)
+    if pg_in <= 0:
+        pg_in = 1
+
+    p_lista_effetuata = Paginator(lista_docenze.filter(corso__stato__in=[Corso.TERMINATO]), 8)
+    if pg_ef > p_lista_effetuata.num_pages:
+        pg_ef = p_lista_effetuata.num_pages
+    pg_lista_effetuata = p_lista_effetuata.page(pg_ef)
+
+    p_lista_inprogramma = Paginator(lista_docenze.filter(corso__stato__in=[Corso.ATTIVO, Corso.PREPARAZIONE]), 8)
+    if pg_in > p_lista_inprogramma.num_pages:
+        pg_in = p_lista_inprogramma.num_pages
+    pg_lista_inprogramma = p_lista_inprogramma.page(pg_in)
+
+    contesto = {
+        "data_docenze_effetuata": {
+        "pagina": pg_ef,
+        "pagine": p_lista_effetuata.num_pages,
+        "totale": p_lista_effetuata.count,
+        "ha_precedente": pg_lista_effetuata.has_previous(),
+        "ha_successivo": pg_lista_effetuata.has_next(),
+        "pagina_precedente": pg_ef - 1,
+        "pagina_successiva": pg_ef + 1,
+        "collapse": pg_ef > 1,
+        "lista_docenze_effetuata": pg_lista_effetuata.object_list
+        },
+        "data_docenze_inprogramma": {
+            "pagina": pg_in,
+            "pagine": p_lista_inprogramma.num_pages,
+            "totale": p_lista_inprogramma.count,
+            "ha_precedente": pg_lista_inprogramma.has_previous(),
+            "ha_successivo": pg_lista_inprogramma.has_next(),
+            "pagina_precedente": pg_in - 1,
+            "pagina_successiva": pg_in + 1,
+            "collapse": pg_in > 1,
+            "lista_docenze_inprogramma": pg_lista_inprogramma.object_list
+        },
+    }
+
+    return 'elenco_docenze.html', contesto
