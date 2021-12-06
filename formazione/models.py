@@ -1580,7 +1580,7 @@ class CorsoBase(Corso, ConVecchioID, ConPDF):
         sede = self.sede.estensione
         oggetto = "Delibera nuovo corso: %s" % self
         email_destinatari = ['formazione@cri.it',]
-
+        
         if self.livello in [Titolo.CDF_LIVELLO_I, Titolo.CDF_LIVELLO_II]:
             # Se indicato, l'indirizzo invia una copia sulla mail della sede regionale
             sede_regionale = self.sede.sede_regionale
@@ -1643,12 +1643,18 @@ class CorsoBase(Corso, ConVecchioID, ConPDF):
 
             from curriculum.models import TitoloPersonale
 
+            email_destinatari = [
+                TitoloPersonale.MAIL_FORMAZIONE[sede_regionale.pk],
+            ]
+
+            if self.titolo_cri.is_titolo_emergenza:
+                email_destinatari.append('soccorsispeciali.formazione@cri.it')
+
             Messaggio.invia_raw(
                 oggetto="Attivazione Corso {}".format(self),
                 corpo_html=get_template('email_attivazione_corso_formazione_regionale.html').render(corpo),
                 email_mittente=Messaggio.NOREPLY_EMAIL,
-                lista_email_destinatari=[
-                    TitoloPersonale.MAIL_FORMAZIONE[sede_regionale.pk]],
+                lista_email_destinatari=email_destinatari,
                 allegati=self.delibera_file
             )
 
