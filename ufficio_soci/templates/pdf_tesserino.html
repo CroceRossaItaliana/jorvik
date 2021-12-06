@@ -121,11 +121,13 @@
 		}
 
         .testo-intestazione_tedesco {
-			right: 2.40cm;
+			right: 3.10cm;
 			top : 0.60cm;
 			font-weight: bold;
 			font-size: 7.056pt;
 			text-align: right;
+			z-index: 1;
+			position: absolute;
 		}
 
 		.testo-ingresso {
@@ -234,8 +236,6 @@
 {#        Questa parte e per il tedesco (italiano/tedesco)#}
         {% if sede.comitato_seconda_lingua %}
             <span class="testo-intestazione_tedesco">
-                <span style="color: red">Croce Rossa Italiana<br />
-                Italienisches Rotes Kreuz</span>
                 {{ sede.nome_completo }}<br />
                 {{ sede.comitato_seconda_lingua }}
         </span>
