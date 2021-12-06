@@ -2,6 +2,7 @@ from django.core.urlresolvers import reverse
 from anagrafica.models import Appartenenza
 from .utente_monitoraggio import menu_monitoraggio
 from ..models import Menu, MenuSegmento
+from jorvik import settings
 
 
 class MenuUtente:
@@ -76,6 +77,10 @@ class MenuUtente:
             ) else None,
             ("Contatti", "fa-envelope", "/utente/contatti/"),
             ("Fotografie", "fa-credit-card", "/utente/fotografia/"),
+            ("Le mie visite mediche", "fa-notes-medical",
+             "/utente/visite-mediche/") if settings.VISITE_ENABLED and (
+                me and me.volontario
+            ) else None,
         ) + self._espandi_con_static_pege(Menu.PERSONA, self.me))
 
     def menu_curriculum(self):

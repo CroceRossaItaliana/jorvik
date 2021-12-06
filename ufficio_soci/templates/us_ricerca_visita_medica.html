@@ -1,0 +1,124 @@
+{% extends 'us_vuota.html' %}
+
+{% load bootstrap3 %}
+{% load mptt_tags %}
+{% load utils %}
+
+{% block pagina_titolo %}
+    Ricerca visita medica
+{% endblock %}
+
+{% block pagina_css_extra %}
+<style>
+    ul.pagination li button {
+        float: left;
+        vertical-align: top;
+        padding: 4px 6px;
+    }
+    ul.pagination li.active a {
+        margin: 0 10px;
+    }
+</style>
+{% endblock %}
+
+{% block app_contenuto %}
+
+    <h2 class="allinea-centro">
+        <i class="fa fa-fw fa-users"></i>
+        Cerca visita medica
+    </h2>
+
+    {% if prenotazione_rimossa == True %}
+        <div class="alert alert-success" role="alert">
+            La prenotazione è stata rimossa con successo
+        </div>
+    {% endif %}
+
+    {% if prenotazione_rimossa == False %}
+        <div class="alert alert-danger" role="alert">
+            La prenotazione non è stata rimossa
+        </div>
+    {% endif %}
+
+    <form method="POST">
+        <div class="cerca_persona">
+            {% csrf_token %}
+            {% bootstrap_form form %}
+            <button type="submit" class="btn btn-block btn-primary">
+                <i class="fa fa-fw fa-check"></i>
+                Cerca
+            </button>
+        </div>
+        
+        {% if items %}
+            <h3>Visite mediche</h3>
+            <table class="table table-striped table-condensed">
+                <thead>
+                    <tr>
+                        <th>Paziente</th>
+                        <th>Dottore</th>
+                        <th>Tipo visita</th>
+                        <th>Stato</th>
+                        <th>Prenotazione</th>
+                        <th>Eseguita</th>
+                        {% if stato_visita == "1" %}
+                            <th>Azioni</th>
+                        {% endif %}
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for item in items %}
+                        <tr>
+                            <td>{{item.patient.cognome_nome_completo}}</td>
+                            <td>{{item.doctor.surname}} {{item.doctor.name}}<br/>{{item.doctor.officeAddress}}</td>
+                            <td>{{item.examination_type}}</td>
+                            <td>{{item.examination_status}}</td>
+                            <td>{{item.examination_start}}</td>
+                            <td>
+                                {% if item.examination_end != None %}
+                                    {{item.examination_end}}
+                                {% endif %}
+                            </td>
+                            {% if stato_visita == "1" %}
+                                <td><button name="exUuid" type="submit" class="btn btn-default" value="{{item.exUuid}}">Rimuovi</td>
+                            {% endif %}
+                        </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+
+            <div class="col-sm-12 allinea-centro">
+                <ul class="pagination piu-piccolo" style="margin-top: 0px;">
+                    <li class="prev">
+                        {% if not has_previous %}
+                            <button disabled>
+                                <i class="fa fa-arrow-left"></i>
+                            </button>
+                        {% else %}
+                            <button name="page"
+                                value="{{previous_page_number}}">
+                                <i class="fa fa-arrow-left"></i>
+                            </button>
+                        {% endif %}
+                    </li>
+                    <li class="active">
+                        <a href="#">Pag. {{ number }} di {{ totalPages }}   </a>
+                    </li>
+                    <li class="next">
+                        {% if not has_next %}
+                            <button disabled>
+                                <i class="fa fa-arrow-right"></i>
+                            </button>
+                        {% else %}
+                            <button name="page" type="submit"
+                                value="{{next_page_number}}">
+                                <i class="fa fa-arrow-right"></i>
+                            </button>
+                        {% endif %}
+                    </li>
+                </ul>
+            </div>
+
+        {% endif %}
+    </form>
+{% endblock %}

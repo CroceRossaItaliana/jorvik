@@ -22,3 +22,8 @@ password=083a7da7aead4b35a487
 
 [beta_80]
 host=https://devcrn.cri.it
+
+
+[visite_mediche]
+host=https://devam.cri.it:8243
+auth=Basic V1pCMmU5SDRHZjN6RmZDZXVYTGxuMGpyQ09NYTpZSEhsWVFSV3F6elVRSUtUcTlPWk52dTM3SWdh

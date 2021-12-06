@@ -1,0 +1,64 @@
+{% extends 'us_vuota.html' %}
+
+{% load bootstrap3 %}
+{% load mptt_tags %}
+{% load utils %}
+
+{% block pagina_css_extra %}
+<style>
+    #id_paziente-wrapper { display: block; }
+</style>
+{% endblock %}
+
+{% block pagina_titolo %}
+    Prenota visita medica
+{% endblock %}
+
+{% block app_contenuto %}
+
+    <h2 class="allinea-centro">
+        <i class="fa fa-fw fa-users"></i>
+        Prenota visita medica
+    </h2>
+
+    <div class="cerca_persona">
+        <h3>Seleziona comitato</h3>
+        <form method="POST">
+            {% csrf_token %}
+            {% bootstrap_form form_comitato %}
+            <button type="submit" name="seleziona_comitato" value="1" class="btn btn-block btn-primary">
+                <i class="fa fa-fw fa-check"></i>
+                Seleziona
+            </button>
+        </form>
+    </div>
+        
+    {% if form_comitato.is_valid %}
+        <h3>Prenota una visita</h3>
+
+        {% if esito_prenotazione == True %}
+            <div class="alert alert-success" role="alert">
+                La prenotazione è stata aggiuta con successo
+            </div>
+        {% endif %}
+
+        {% if esito_prenotazione == False %}
+            <div class="alert alert-danger" role="alert">
+                La prenotazione non è stata aggiuta
+            </div>
+        {% endif %}
+
+        <div class="cerca_persona">
+            <form method="POST">
+                {% csrf_token %}
+                {% bootstrap_form form_prenotazione %}
+                <input type="hidden" name="comitato" value="{{comitato.id}}" />
+                <button type="submit" name="prenota" value="1" class="btn btn-block btn-primary">
+                    <i class="fa fa-fw fa-check"></i>
+                    Prenota
+                </button>
+            </form>
+        </div>
+    {% endif %}
+
+{% endblock %}
