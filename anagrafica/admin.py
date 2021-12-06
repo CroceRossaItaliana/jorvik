@@ -376,6 +376,8 @@ class AdminAppartenenza(ReadonlyAdminMixin, admin.ModelAdmin):
     inlines = [InlineAutorizzazione]
 
 
+
+
 @admin.register(Delega)
 class AdminDelega(ReadonlyAdminMixin, admin.ModelAdmin):
     search_fields = ["tipo", "persona__nome", "persona__cognome", "persona__codice_fiscale", "tipo", "oggetto_id"]
