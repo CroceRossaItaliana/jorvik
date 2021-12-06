@@ -11,79 +11,152 @@
         .aspirante-corsi-table thead tr th {vertical-align:top;}
     </style>
 
-    <h2><i class="fa fa-fw fa-home"></i> Corsi {% if me.volontario %}attivi{%else%}{%endif%}</h2>
+    <!-- Corsi Attivi -->
+     <div data-toggle="collapse" href="#collapseCorsiAttivi" role="button" aria-expanded="{{ expand }}" aria-controls="collapseCorsiAttivi" style="color: black; cursor: pointer">
+        <h2><i class="fa fa-fw fa-home"></i> Corsi {% if me.volontario %}attivi{%else%}{%endif%}</h2>
+     </div>
+     <div class="collapse {% if expand %}in{% endif %}" id="collapseCorsiAttivi">
+         <form method="get">
+            <input type="hidden" name="search">
 
-    {% if me.aspirante %}
-        <div class="alert alert-info">
-            <i class="fa fa-fw fa-info-circle"></i> Questo &egrave; un elenco dei Corsi nel raggio di {{ me.aspirante.raggio|default:"0" }} km
-            da {{ me.aspirante.locazione|default:"n/a" }}. Puoi modificare la posizione dal menu "Aspirante" > "Impostazioni".
-        </div>
-    {% endif %}
+            <span>{{ form }}</span>
+            <span><button type="submit">Cerca corso</button></span>
+          </form>
+        {% if me.aspirante %}
+            <div class="alert alert-info">
+                <i class="fa fa-fw fa-info-circle"></i> Questo &egrave; un elenco dei Corsi nel raggio di {{ me.aspirante.raggio|default:"0" }} km
+                da {{ me.aspirante.locazione|default:"n/a" }}. Puoi modificare la posizione dal menu "Aspirante" > "Impostazioni".
+            </div>
+        {% endif %}
 
-    <table class="aspirante-corsi-table table table-striped table-bordered">
+        <table class="aspirante-corsi-table table table-striped table-bordered">
+            <thead>
+                <tr>
+                    <th style="width:55%;">Corso e Sede</th>
+                    <th style="width:25%;">Informazioni</th>
+                    <th style="width:15%;">Richieste di iscrizioni</th>
+                </tr>
+            </thead>
+
+            {% for corso in corsi_attivi %}
+                <tr>
+                    <td>
+                        <strong>{{ corso.link|safe }}</strong><br />
+                        <i class="fa fa-fw fa-home"></i>
+                            {{ corso.sede.link|safe }}<br />
+                        {% if corso.locazione %}
+                            <i class="fa fa-fw fa-map-marker"></i>
+                            {{ corso.locazione }}
+                        {% endif %}
+                    </td>
+                    <td>
+                        <i class="fa fa-fw fa-calendar"></i>
+                            {% if not corso.iniziato %}
+                                Inizia: {{ corso.data_inizio|date:"SHORT_DATETIME_FORMAT" }}
+                            {% else %}
+                                <span class="bg-danger">Iniziato: {{ corso.data_inizio|date:"SHORT_DATETIME_FORMAT" }}</span>
+                            {% endif %}
+                            <br />
+                        <i class="fa fa-fw fa-calendar"></i> Esami: {{ corso.data_esame|date:"SHORT_DATETIME_FORMAT" }}<br />
+                        <i class="fa fa-fw fa-user"></i> Direttore ({{ corso.deleghe.count }}):
+                            {% for d in corso.deleghe.all %}
+                                {{ d.persona.link|safe }}
+                            {% endfor %}
+                        {% if corso.online or corso.tipo == 'BO' %}
+                            <br>
+                            <b style="color: #00ff1d;">
+                                <i class="fa fa-exclamation"></i>
+                                Corso online
+                            </b>
+                        {% endif %}
+                        {% if corso.evento %}
+                            <br>
+                           <i class="fa fa-link"></i> <a href="{{ corso.evento.url }}">{{ corso.evento }}</a>
+                        {% endif %}
+                    </td>
+                    <td>{{ corso.partecipazioni.count }} richieste</td>
+                </tr>
+            {% empty %}
+                <tr class="info">
+                    <td colspan="4">
+                        <h4><i class="fa fa-fw fa-info-circle"></i> Ancora nessun corso {% if puo_creare %}pianificato{%endif%}</h4>
+                        {% if puo_creare %}
+                            <p>Puoi controllare la domanda formativa della zona e valutare l'attivazione di un nuovo corso.</p>
+                        {% else %}
+                            <p>Elenco dei corsi ai quali si è inviata la richiesta di iscrizione, elenco dei corsi che si è frequentato e ottenuto la qualifica.</p>
+                        {% endif %}
+                    </td>
+                </tr>
+            {% endfor %}
+        </table>
+    </div>
+
+    <!-- Corsi Iscritti -->
+    <div data-toggle="collapse" href="#collapseCorsiIscritti" role="button" aria-expanded="{{ expand }}" aria-controls="collapseCorsiIscritti" style="color: black; cursor: pointer">
+        <h2><i class="fa fa-fw fa-home"></i> Corsi a cui sono iscritto</h2>
+    </div>
+    <div class="collapse {% if expand %}in{% endif %}" id="collapseCorsiIscritti">
+      <table class="aspirante-corsi-table table table-striped table-bordered">
         <thead>
             <tr>
                 <th style="width:55%;">Corso e Sede</th>
                 <th style="width:25%;">Informazioni</th>
-                <th style="width:15%;">Richieste di iscrizioni</th>
             </tr>
         </thead>
 
-        {% for corso in corsi_attivi %}
-            <tr>
-                <td>
-                    <strong>{{ corso.link|safe }}</strong><br />
-                    <i class="fa fa-fw fa-home"></i>
-                        {{ corso.sede.link|safe }}<br />
-                    {% if corso.locazione %}
-                        <i class="fa fa-fw fa-map-marker"></i>
-                        {{ corso.locazione }}
-                    {% endif %}
-                </td>
-                <td>
-                    <i class="fa fa-fw fa-calendar"></i>
-                        {% if not corso.iniziato %}
-                            Inizia: {{ corso.data_inizio|date:"SHORT_DATETIME_FORMAT" }}
-                        {% else %}
-                            <span class="bg-danger">Iniziato: {{ corso.data_inizio|date:"SHORT_DATETIME_FORMAT" }}</span>
-                        {% endif %}
-                        <br />
-                    <i class="fa fa-fw fa-calendar"></i> Esami: {{ corso.data_esame|date:"SHORT_DATETIME_FORMAT" }}<br />
-                    <i class="fa fa-fw fa-user"></i> Direttore ({{ corso.deleghe.count }}):
-                        {% for d in corso.deleghe.all %}
-                            {{ d.persona.link|safe }}
-                        {% endfor %}
-                    {% if corso.online or corso.tipo == 'BO' %}
-                        <br>
-                        <b style="color: #00ff1d;">
-                            <i class="fa fa-exclamation"></i>
-                            Corso online
-                        </b>
-                    {% endif %}
-                    {% if corso.evento %}
-                        <br>
-                       <i class="fa fa-link"></i> <a href="{{ corso.evento.url }}">{{ corso.evento }}</a>
-                    {% endif %}
-                </td>
-                <td>{{ corso.partecipazioni.count }} richieste</td>
-            </tr>
-        {% empty %}
-            <tr class="info">
-                <td colspan="4">
-                    <h4><i class="fa fa-fw fa-info-circle"></i> Ancora nessun corso {% if puo_creare %}pianificato{%endif%}</h4>
-                    {% if puo_creare %}
-                        <p>Puoi controllare la domanda formativa della zona e valutare l'attivazione di un nuovo corso.</p>
+    {% for corso in corsi_iscritti %}
+        <tr>
+            <td>
+                <strong>{{ corso.link|safe }}</strong><br />
+                <i class="fa fa-fw fa-home"></i>
+                    {{ corso.sede.link|safe }}<br />
+                {% if corso.locazione %}
+                    <i class="fa fa-fw fa-map-marker"></i>
+                    {{ corso.locazione }}
+                {% endif %}
+            </td>
+            <td>
+                <i class="fa fa-fw fa-calendar"></i>
+                    {% if not corso.iniziato %}
+                        Inizia: {{ corso.data_inizio|date:"SHORT_DATETIME_FORMAT" }}
                     {% else %}
-                        <p>Elenco dei corsi ai quali si è inviata la richiesta di iscrizione, elenco dei corsi che si è frequentato e ottenuto la qualifica.</p>
+                        <span class="bg-danger">Iniziato: {{ corso.data_inizio|date:"SHORT_DATETIME_FORMAT" }}</span>
                     {% endif %}
+                    <br />
+                <i class="fa fa-fw fa-calendar"></i> Esami: {{ corso.data_esame|date:"SHORT_DATETIME_FORMAT" }}<br />
+                <i class="fa fa-fw fa-user"></i> Direttore ({{ corso.deleghe.count }}):
+                    {% for d in corso.deleghe.all %}
+                        {{ d.persona.link|safe }}
+                    {% endfor %}
+                {% if corso.online %}
+                    <br>
+                    <b style="color: #00ff1d;">
+                        <i class="fa fa-exclamation"></i>
+                        Corso online
+                    </b>
+                {% endif %}
+                {% if corso.evento %}
+                    <br>
+                    <i class="fa fa-link"></i> <a href="{{ corso.evento.url }}">{{ corso.evento }}</a>
+                {% endif %}
+            </td>
+        </tr>
+    {% empty %}
+            <tr class="info">
+                <td colspan="3">
+                    <h4><i class="fa fa-fw fa-info-circle"></i> Nessun corso iscritto</h4>
                 </td>
             </tr>
-        {% endfor %}
+    {% endfor %}
     </table>
+    </div>
 
-    {% if corsi_frequentati %}
-    <h2><i class="fa fa-fw fa-home"></i> Corsi frequentati</h2>
-    <table class="aspirante-corsi-table table table-striped table-bordered">
+    <!-- Corsi Frequentati -->
+    <div data-toggle="collapse" href="#collapseCorsiFrequentati" role="button" aria-expanded="{{ expand }}" aria-controls="collapseCorsiFrequentati" style="color: black; cursor: pointer">
+        <h2><i class="fa fa-fw fa-home"></i> Corsi Frequentati</h2>
+    </div>
+    <div class="collapse {% if expand %}in{% endif %}" id="collapseCorsiFrequentati">
+        <table class="aspirante-corsi-table table table-striped table-bordered">
         <thead>
             <tr>
                 <th style="width:55%;">Corso e Sede</th>
@@ -128,8 +201,13 @@
                     {% endif %}
                 </td>
             </tr>
+        {% empty %}
+            <tr class="info">
+                <td colspan="3">
+                    <h4><i class="fa fa-fw fa-info-circle"></i> Nessun corso frequentato</h4>
+                </td>
+            </tr>
         {% endfor %}
     </table>
-    {% endif %}
-
+    </div>
 {% endblock %}
