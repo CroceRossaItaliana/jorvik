@@ -800,6 +800,18 @@ class Persona(ModelloSemplice, ConMarcaTemporale, ConAllegati, ConVecchioID):
         return corsi.order_by('-data_esame')
 
     @property
+    def corsi_iscritti(self):
+        from formazione.models import PartecipazioneCorsoBase, CorsoBase
+
+        confirmed = PartecipazioneCorsoBase.con_esito_ok().filter(persona=self,
+                                                                  corso__stato__in=[CorsoBase.ATTIVO, CorsoBase.PREPARAZIONE])
+        if not confirmed:
+            return CorsoBase.objects.none()
+
+        corsi = CorsoBase.objects.filter(pk__in=[i.corso.pk for i in confirmed])
+        return corsi.order_by('-data_esame')
+
+    @property
     def volontario_da_meno_di_un_anno(self):
         """
         Controlla se questo utente è diventato volontario nell'anno corrente
