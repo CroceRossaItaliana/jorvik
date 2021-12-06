@@ -1,0 +1,166 @@
+{% extends "aspirante_vuota.html" %}
+
+{% load bootstrap3 %}
+{% load static %}
+{% load utils %}
+{% load social %}
+
+{% block app_contenuto %}
+    <!--  Docenze Effettuate -->
+    <div data-toggle="collapse" href="#collapseDocenzeEffettuate" role="button" aria-expanded="{{ data_docenze_effetuata.collapse }}" aria-controls="collapseDocenzeEffettuate" style="color: black; cursor: pointer">
+        <h2><i class="fa fa-fw fa-address-book"></i> Docenze Effettuate</h2>
+    </div>
+    <div class="collapse {% if data_docenze_effetuata.collapse %}in{% endif %}" id="collapseDocenzeEffettuate">
+        <table class="aspirante-corsi-table table table-striped table-bordered">
+             <thead>
+                <tr>
+                    <th style="width:55%;">Nome</th>
+                    <th style="width:35%;">Informazione</th>
+                    <th style="width:15%;">Stato</th>
+                </tr>
+            </thead>
+
+            {% for decente in data_docenze_effetuata.lista_docenze_effetuata %}
+                 <tr>
+                    <td>
+                           {{ decente.nome }} - {{ decente.corso }}
+                    </td>
+                    <td>
+                       <i class="fa fa-fw fa-calendar"></i>  Inizio:  {{ decente.corso.data_inizio|date:"SHORT_DATETIME_FORMAT" }}<br />
+                       <i class="fa fa-fw fa-percent"></i>  Progressivo: {{ decente.corso.progressivo }}<br />
+                        <i class="fa fa-fw fa-home"></i> Sede: {{ decente.corso.sede }}<br />
+                        <i class="fa fa-fw fa-map-marker"></i> Locazione: {{ decente.corso.locazione }}<br />
+                    </td>
+                    <td>
+                        {% if decente.corso.stato == 'T' %}
+                            Terminato
+                        {% endif %}
+
+                    </td>
+                </tr>
+            {% empty %}
+                <tr class="info">
+                    <td colspan="3">
+                        <h4><i class="fa fa-fw fa-info-circle"></i> Nessun docenze effettuate</h4>
+                    </td>
+                </tr>
+            {% endfor %}
+        </table>
+        {% if data_docenze_effetuata.lista_docenze_effetuata|length > 0 %}
+            <div class="allinea-centro">
+                <ul class="pagination">
+                    {% if data_docenze_effetuata.ha_precedente %}
+                        <li class="prev">
+                            <a href="/formazione/docenze/pg_ef={{ data_docenze_effetuata.pagina_precedente }}&pg_in={{ data_docenze_inprogramma.pagina }}">
+                                <i class="fa fa-arrow-left"></i>
+                            </a>
+                        </li>
+                    {% else %}
+                        <li class="prev disabled">
+                            <a href="#">
+                                <i class="fa fa-arrow-left"></i>
+                            </a>
+                        </li>
+                    {% endif %}
+
+                    <li class="active">
+                        <a href="#">Pagina {{ data_docenze_effetuata.pagina }} di {{ data_docenze_effetuata.pagine }}</a>
+                    </li>
+
+                    {% if data_docenze_effetuata.ha_successivo %}
+                        <li class="prev">
+                            <a href="/formazione/docenze/pg_ef={{ data_docenze_effetuata.pagina_successiva }}&pg_in={{ data_docenze_inprogramma.pagina }}">
+                                <i class="fa fa-arrow-right"></i>
+                            </a>
+                        </li>
+                    {% else %}
+                        <li class="prev disabled">
+                            <a href="#">
+                                <i class="fa fa-arrow-right"></i>
+                            </a>
+                        </li>
+                    {% endif %}
+                </ul>
+            </div>
+        {% endif %}
+    </div>
+
+    <!--  Docenze In Programma -->
+    <div data-toggle="collapse" href="#collapseDocenzeInProgramma" role="button" aria-expanded="{{ data_docenze_inprogramma.collapse }}" aria-controls="collapseDocenzeInProgramma" style="color: black; cursor: pointer">
+        <h2><i class="fa fa-fw fa-address-book"></i> Docenze In Programma</h2>
+    </div>
+    <div class="collapse {% if data_docenze_inprogramma.collapse %}in{% endif %}" id="collapseDocenzeInProgramma">
+        <table class="aspirante-corsi-table table table-striped table-bordered">
+        <thead>
+            <tr>
+                <th style="width:55%;">Nome</th>
+                <th style="width:35%;">Informazioni</th>
+                <th style="width:15%;">Stato</th>
+            </tr>
+        </thead>
+
+        {% for decente in data_docenze_inprogramma.lista_docenze_inprogramma %}
+            <tr>
+                <td>
+                       {{ decente.nome }} - {{ decente.corso }}
+                </td>
+                <td>
+                   <i class="fa fa-fw fa-calendar"></i>  Inizio:  {{ decente.corso.data_inizio|date:"SHORT_DATETIME_FORMAT" }}<br />
+                    <i class="fa fa-fw fa-home"></i> Sede: {{ decente.corso.sede }}<br />
+                    <i class="fa fa-fw fa-map-marker"></i> Locazione: {{ decente.corso.locazione }}<br />
+                </td>
+                <td>
+                    {% if decente.corso.stato == 'A' %}
+                        Attivo
+                    {% elif decente.corso.stato == 'P' %}
+                        In Preparazione
+                    {% endif %}
+                </td>
+            </tr>
+        {% empty %}
+            <tr class="info">
+                <td colspan="3">
+                    <h4><i class="fa fa-fw fa-info-circle"></i> Nessun docenze in programma</h4>
+                </td>
+            </tr>
+        {% endfor %}
+    </table>
+    {% if data_docenze_inprogramma.lista_docenze_inprogramma|length > 0 %}
+            <div class="allinea-centro">
+                <ul class="pagination">
+                    {% if data_docenze_inprogramma.ha_precedente %}
+                        <li class="prev">
+                            <a href="/formazione/docenze/pg_ef={{ data_docenze_effetuata.pagina }}&pg_in={{ data_docenze_inprogramma.pagina_precedente }}">
+                                <i class="fa fa-arrow-left"></i>
+                            </a>
+                        </li>
+                    {% else %}
+                        <li class="prev disabled">
+                            <a href="#">
+                                <i class="fa fa-arrow-left"></i>
+                            </a>
+                        </li>
+                    {% endif %}
+
+                    <li class="active">
+                        <a href="#">Pagina {{ data_docenze_inprogramma.pagina }} di {{ data_docenze_inprogramma.pagine }}</a>
+                    </li>
+
+                    {% if data_docenze_inprogramma.ha_successivo %}
+                        <li class="prev">
+                            <a href="/formazione/docenze/pg_ef={{ data_docenze_effetuata.pagina }}&pg_in={{ data_docenze_inprogramma.pagina_successiva }}">
+                                <i class="fa fa-arrow-right"></i>
+                            </a>
+                        </li>
+                    {% else %}
+                        <li class="prev disabled">
+                            <a href="#">
+                                <i class="fa fa-arrow-right"></i>
+                            </a>
+                        </li>
+                    {% endif %}
+                </ul>
+            </div>
+        {% endif %}
+    </div>
+{% endblock %}

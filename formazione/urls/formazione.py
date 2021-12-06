@@ -17,4 +17,5 @@ urlpatterns = [
     url(r'^evento/nuovo$', views.evento_nuovo, name='evento_nuovo'),
     url(r'^evento/elenco$', views.evento_elenco, name='evento_elenco'),
     url(r'^evento/(?P<pk>[0-9]+)/direttori/$', views.formazione_evento_resoponsabile, name='responsabile_evento'),
+    url(r'^docenze/?pg_ef=(?P<pg_ef>[0-9]+)&pg_in=(?P<pg_in>[0-9]+)', views.elenco_docenze, name='docenze'),
 ]
