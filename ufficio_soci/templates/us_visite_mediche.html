@@ -1,0 +1,112 @@
+{% extends 'anagrafica_utente_vuota.html' %}
+
+{% load bootstrap3 %}
+{% load mptt_tags %}
+{% load utils %}
+
+{% block pagina_titolo %}
+    Visite mediche di {{ me }}
+{% endblock %}
+
+{% block pagina_css_extra %}
+<style>
+    ul.pagination li button {
+        float: left;
+        vertical-align: top;
+        padding: 4px 6px;
+    }
+    ul.pagination li.active a {
+        margin: 0 10px;
+    }
+</style>
+{% endblock %}
+
+{% block app_contenuto %}
+
+    <h2 class="allinea-centro">
+        <i class="fa fa-fw fa-users"></i>
+        Visite mediche di {{ me }}
+    </h2>
+
+    {% if not items %}
+        <div class="alert alert-info" role="alert">
+            Nessuna visita medica presente
+        </div>
+    {% endif %}
+
+    
+        
+    {% if items %}
+        <table class="table table-striped table-condensed">
+            <thead>
+                <tr>
+                    <th>Dottore</th>
+                    <th>Tipo visita</th>
+                    <th>Stato</th>
+                    <th>Prenotazione</th>
+                    <th>Eseguita</th>
+                    <th>Idoniet&agrave;</th>
+                    <th>&nbsp;</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for item in items %}
+                    <tr>
+                        <td>{{item.doctor.surname}} {{item.doctor.name}}<br/>{{item.doctor.officeAddress}}</td>
+                        <td>{{item.examination_type}}</td>
+                        <td>{{item.examination_status}}</td>
+                        <td>{{item.examination_start}}</td>
+                        <td>
+                            {% if item.examination_end != None %}
+                                {{item.examination_end}}
+                            {% endif %}
+                        </td>
+                        <td>
+                            {% if item.data != None %}
+                                {{item.data}}
+                            {% endif %}
+                        </td>
+                        <td>
+                            {% if item.examination_end != None %}
+                                <a>Scarica certificato</a>
+                            {% endif %}
+                        </td>
+                    </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+
+        <div class="col-sm-12 allinea-centro">
+            <ul class="pagination piu-piccolo" style="margin-top: 0px;">
+                <li class="prev">
+                    {% if not has_previous %}
+                        <button disabled>
+                            <i class="fa fa-arrow-left"></i>
+                        </button>
+                    {% else %}
+                        <button name="page"
+                            value="{{previous_page_number}}">
+                            <i class="fa fa-arrow-left"></i>
+                        </button>
+                    {% endif %}
+                </li>
+                <li class="active">
+                    <a href="#">Pag. {{ number }} di {{ totalPages }}   </a>
+                </li>
+                <li class="next">
+                    {% if not has_next %}
+                        <button disabled>
+                            <i class="fa fa-arrow-right"></i>
+                        </button>
+                    {% else %}
+                        <button name="page" type="submit"
+                            value="{{next_page_number}}">
+                            <i class="fa fa-arrow-right"></i>
+                        </button>
+                    {% endif %}
+                </li>
+            </ul>
+        </div>
+
+    {% endif %}
+{% endblock %}

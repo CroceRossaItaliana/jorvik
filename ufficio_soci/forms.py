@@ -1,5 +1,7 @@
 import datetime
 
+import requests
+
 from autocomplete_light import shortcuts as autocomplete_light
 from django import forms
 from django.core.exceptions import ValidationError
@@ -488,3 +490,49 @@ class ModuloLavoraTesserini(forms.Form):
 class ModuloScaricaTesserini(forms.Form):
     conferma = forms.BooleanField(help_text="Confermo di voler procedere allo scaricamento "
                                              "dei tesserini associativi.")
+
+
+class RicercaVisitaMedica(forms.Form):
+    def __init__(self, *args, comitato, stato_visita, **kwargs):
+        super(RicercaVisitaMedica, self).__init__(*args, **kwargs)
+        self.fields['comitato'].queryset = comitato
+        self.fields['stato_visita'].choices = stato_visita
+    
+    comitato = forms.ModelChoiceField(queryset=None, required=True)
+    stato_visita = forms.ChoiceField(choices=[], required=True)
+    data_visita = forms.DateField(
+        required=False,
+        widget=forms.DateInput(attrs={'autocomplete': 'off'}),
+    )
+
+
+class DottoriVisitaMedica(forms.Form):
+    def __init__(self, *args, comitato, **kwargs):
+        super(DottoriVisitaMedica, self).__init__(*args, **kwargs)
+        self.fields['comitato'].queryset = comitato
+
+    comitato = forms.ModelChoiceField(queryset=None, required=True)
+
+
+class SelezionaComitato(forms.Form):
+    def __init__(self, *args, comitato, **kwargs):
+        super(SelezionaComitato, self).__init__(*args, **kwargs)
+        self.fields['comitato'].queryset = comitato
+    
+    comitato = forms.ModelChoiceField(queryset=None, required=True)
+
+
+class PrenotaVisitaMedica(forms.Form):
+    def __init__(self, *args, dottori, tipo_visita, **kwargs):
+        super(PrenotaVisitaMedica, self).__init__(*args, **kwargs)
+        self.fields['dottore'].choices = dottori
+        self.fields['tipo_visita'].choices = tipo_visita
+
+    paziente = autocomplete_light.ModelChoiceField(
+        "VolontarioSedeAutocompletamento")
+    dottore = forms.ChoiceField(choices=[], required=False)
+    tipo_visita = forms.ChoiceField(choices=[], required=True)
+    data_visita = forms.DateTimeField(
+        required=True,
+        widget=forms.DateTimeInput(attrs={'autocomplete': 'off'}),
+    )

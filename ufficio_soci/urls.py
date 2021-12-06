@@ -1,3 +1,4 @@
+from ufficio_soci import visite_mediche
 from django.conf.urls import url
 from . import viste
 
@@ -39,4 +40,8 @@ urlpatterns = [
     url(r'^elenco/(?P<elenco_id>.*)/messaggio/$', viste.us_elenco_messaggio, name='us-elenco-messaggio'),
     url(r'^elenco/(?P<elenco_id>.*)/modulo/$', viste.us_elenco_modulo),
     url(r'^elenco/(?P<elenco_id>.*)/$', viste.us_elenco),
+
+    url(r'^ricerca-visita-medica/', visite_mediche.ricerca_visite_mediche),
+    url(r'^medici-comitato/', visite_mediche.lista_dottori),
+    url(r'^prenota-visita-medica/', visite_mediche.prenota_visita),
 ]
