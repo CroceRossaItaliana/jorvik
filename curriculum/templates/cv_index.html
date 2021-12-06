@@ -8,6 +8,14 @@
 {% block pagina_titolo %}{{ tipo_display }} - Curriculum{% endblock %}
 {% block app_contenuto %}
 
+    {% if messages %}
+    <div class="alert alert-danger">
+        {% for message in messages %}
+            <p><i class="fa fa-info-circle fa-fw"></i> <span {% if message.tags %} class="{{ message.tags }}" {% endif %}>{{ message }}</span></p>
+        {% endfor %}
+    </div>
+    {% endif %}
+
     <div class="alert bg-info">
         <p>
             <i class="fa fa-info-circle fa-fw"></i> Da questa pagina potrai gestire le tue qualifiche del tipo: <strong>{{ tipo_display }}</strong>.

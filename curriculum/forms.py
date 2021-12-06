@@ -65,7 +65,7 @@ class FormAddQualificaCRI(autocomplete_light.ModelForm):
     class Meta:
         model = TitoloPersonale
         fields = ['titolo', 'data_ottenimento', 'tipo_documentazione', 'attestato_file',
-                  'luogo_ottenimento', 'direttore_corso', 'note',]
+                  'luogo_ottenimento', 'direttore_corso', 'note','numero_brevetto']
         help_texts = {
             'data_ottenimento': '',
             'luogo_ottenimento': '',
@@ -125,7 +125,7 @@ class FormAddQualificaCRI(autocomplete_light.ModelForm):
 class ModuloDettagliTitoloPersonale(forms.ModelForm):
     class Meta:
         model = TitoloPersonale
-        fields = ['data_ottenimento', 'luogo_ottenimento', 'data_scadenza', 'codice',]
+        fields = ['data_ottenimento', 'luogo_ottenimento', 'data_scadenza', 'codice']
 
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
@@ -160,7 +160,8 @@ class FormAddAltreQualifica(autocomplete_light.ModelForm):
             'no_argomento',
             'argomento_nome',
             'data_ottenimento',
-            'attestato_file'
+            'attestato_file',
+            'numero_brevetto'
         ]
 
         help_texts = {
@@ -208,7 +209,6 @@ class FormAddTitoloStudio(autocomplete_light.ModelForm):
             'nuova_laurea',
             'data_ottenimento',
             'attestato_file',
-            'numero_brevetto'
         ]
 
     def __init__(self, *args, **kwargs):

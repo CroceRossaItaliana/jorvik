@@ -28,6 +28,7 @@ from .validators import valida_almeno_14_anni, valida_data_nel_passato
 from .permessi.applicazioni import (PRESIDENTE, COMMISSARIO,
                                     CONSIGLIERE, CONSIGLIERE_GIOVANE, VICE_PRESIDENTE, CONSIGLIERE_GIOVANE_COOPTATO)
 
+from formazione.validators import validate_file_type
 
 class ModuloSpostaPersone(object):
 
@@ -335,6 +336,10 @@ class ModuloCreazioneDocumento(ModelForm):
         if type in [Documento.CARTA_IDENTITA, Documento.PATENTE_CIVILE]:
             expires_error = None
             expires = cd.get('expires')
+
+            if self.files != {} and validate_file_type(self.files['file'])==False:
+                file_error = "Il formato del filo non è valido. Tipi di file supportati: csv, zip, rar, gif, png, jpg,  jpeg, tiff, rtf, pdf, ods, odt, doc, docx, xls, xlsx."
+                raise ValidationError({'file': ValidationError(file_error)})
 
             if not expires:
                 expires_error = 'Indicare la data di scadenza del documento'

@@ -28,6 +28,7 @@ from ..forms import (ModuloCreazioneDocumento, ModuloCreazioneTelefono, ModuloDo
     ModuloUSModificaUtenza)
 from ..models import (Persona, Appartenenza, ProvvedimentoDisciplinare, Riserva)
 
+from formazione.validators import validate_file_type
 
 @pagina_privata
 def profilo(request, me, pk, sezione=None):
@@ -209,12 +210,26 @@ def _profilo_curriculum(request, me, persona):
     modifica = request.GET.get('modifica', '')
 
     form = FORMS[modifica][0] if FORMS[modifica] else None
+    not_upload_file=False
 
     if request.method == 'POST':
         if modifica == QUALIFICA_CRI:
             form = form(request.POST, request.FILES, me=persona)
             if form.is_valid():
                 cd = form.cleaned_data
+                if validate_file_type(request.FILES['attestato_file']) == False:
+                    not_upload_file = True
+                    context = {
+                        "modulo": form,
+                        "pk": persona.pk,
+                        "sezione": "curriculum",
+                        "puo_modificare": puoi_modificare if deleghe_list else non_puo_fare_niente,
+                        "tipo_titolo": FORMS[modifica][1] if FORMS[modifica] else None,
+                        "can_create_qualifica_cri": datetime.now() < datetime(2021, 12, 31, 23, 59, 59),
+                        "not_upload_file": not_upload_file,
+                    }
+                    return 'anagrafica_profilo_curriculum.html', context
+
                 qualifica_created = TitoloPersonale.crea_qualifica_regressa(persona=persona, to_responsabile=True, **cd)
                 if not qualifica_created:
                     messages.error(request, 'Errore.')
@@ -224,14 +239,14 @@ def _profilo_curriculum(request, me, persona):
                 return redirect_url
 
             messages.success(request, "La qualifica non è stata inserita.")
-        elif modifica == ALTRE_QIALIFICHE:
-            carica_altri_titoli(request, persona, redirect_url)
+        elif modifica == ALTRE_QIALIFICHE:#no
+            not_upload_file=carica_titolo_studio(request, persona, redirect_url)
         elif modifica == TITOLI_STUDIO:
-            carica_titolo_studio(request, persona, redirect_url)
+            not_upload_file=carica_titolo_studio(request, persona, redirect_url)
         elif modifica == COMPETENZE_LINGUISTICHE:
-            carica_conoscenze_linguistiche(request, persona, redirect_url)
+            not_upload_file=carica_conoscenze_linguistiche(request, persona, redirect_url)
         elif modifica == COMPETENZE_PROFESSIONALI:
-            carica_esperienza_professionale(request, persona, redirect_url)
+            not_upload_file=carica_esperienza_professionale(request, persona, redirect_url)
 
     else:
         # FORM VUOTO
@@ -244,6 +259,7 @@ def _profilo_curriculum(request, me, persona):
         "puo_modificare": puoi_modificare if deleghe_list else non_puo_fare_niente,
         "tipo_titolo": FORMS[modifica][1] if FORMS[modifica] else None,
         "can_create_qualifica_cri": datetime.now() < datetime(2021, 12, 31, 23, 59, 59),
+        "not_upload_file":not_upload_file,
     }
     return 'anagrafica_profilo_curriculum.html', context
 
