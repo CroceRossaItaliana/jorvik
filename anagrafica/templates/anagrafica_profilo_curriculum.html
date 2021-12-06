@@ -5,37 +5,50 @@
 {% load base_tags %}
 
 {% block profilo_corpo %}
+
 {% if sezione and puo_modificare %}
-    <div class="row">
-        {% if can_create_qualifica_cri %}
-        <div class="col-lg-3" style="padding: 5px">
-            <a class="btn btn-primary btn-block" href="{% url 'profilo:profilo' pk=pk sezione=sezione %}?modifica=qualificacri">
-                Carica Qualifica CRI
-            </a>
-        </div>
-        {% endif %}
-        <div class="col-lg-3" style="padding: 5px">
-            <a class="btn btn-primary btn-block" href="{% url 'profilo:profilo' pk=pk sezione=sezione %}?modifica=altrequalifiche">
-                Carica Altre qualifiche
-            </a>
-        </div>
-        <div class="col-lg-3" style="padding: 5px">
-            <a class="btn btn-primary btn-block" href="{% url 'profilo:profilo' pk=pk sezione=sezione %}?modifica=titolistudio">
-                Carica Titolo di studio
-            </a>
-        </div>
-        <div class="col-lg-3" style="padding: 5px">
-            <a class="btn btn-primary btn-block" href="{% url 'profilo:profilo' pk=pk sezione=sezione %}?modifica=competenzelinguistiche">
-                Carica Competenze Linguistiche
-            </a>
-        </div>
-        <div class="col-lg-3" style="padding: 5px">
-            <a class="btn btn-primary btn-block" href="{% url 'profilo:profilo' pk=pk sezione=sezione %}?modifica=competenzeprofessionali">
-                Carica Competenza professionali
-            </a>
-        </div>
+<div class="row">
+    {% if can_create_qualifica_cri %}
+    <div class="col-lg-3" style="padding: 5px">
+        <a class="btn btn-primary btn-block"
+           href="{% url 'profilo:profilo' pk=pk sezione=sezione %}?modifica=qualificacri">
+            Carica Qualifica CRI
+        </a>
     </div>
-    <br>
+    {% endif %}
+    <div class="col-lg-3" style="padding: 5px">
+        <a class="btn btn-primary btn-block"
+           href="{% url 'profilo:profilo' pk=pk sezione=sezione %}?modifica=altrequalifiche">
+            Carica Altre qualifiche
+        </a>
+    </div>
+    <div class="col-lg-3" style="padding: 5px">
+        <a class="btn btn-primary btn-block"
+           href="{% url 'profilo:profilo' pk=pk sezione=sezione %}?modifica=titolistudio">
+            Carica Titolo di studio
+        </a>
+    </div>
+    <div class="col-lg-3" style="padding: 5px">
+        <a class="btn btn-primary btn-block"
+           href="{% url 'profilo:profilo' pk=pk sezione=sezione %}?modifica=competenzelinguistiche">
+            Carica Competenze Linguistiche
+        </a>
+    </div>
+    <div class="col-lg-3" style="padding: 5px">
+        <a class="btn btn-primary btn-block"
+           href="{% url 'profilo:profilo' pk=pk sezione=sezione %}?modifica=competenzeprofessionali">
+            Carica Competenza professionali
+        </a>
+    </div>
+</div>
+<br>
+{% if messages %}
+    <div class="alert alert-danger">
+    {% for message in messages %}
+        <p><i class="fa fa-info-circle fa-fw"></i> <span {% if message.tags %} class="{{ message.tags }}" {% endif %}>{{message }}</span></p>
+    {% endfor %}
+    </div>
+{% endif %}
 {% endif %}
 <div class="row">
     <div class="col-lg-8">
@@ -50,62 +63,65 @@
 
                 <table class="table table-striped">
                     <thead>
-                        <th>Tipo</th>
-                        <th>Nome e Stato</th>
-                        <th>Dettagli</th>
-                        {% if puo_modificare %}
-                            <th><i class="fa fa-trash"></i></th>
-                        {% endif %}
+                    <th>Tipo</th>
+                    <th>Nome e Stato</th>
+                    <th>Dettagli</th>
+                    {% if puo_modificare %}
+                    <th><i class="fa fa-trash"></i></th>
+                    {% endif %}
                     </thead>
                     <tbody>
-                        {% for t in persona.titoli_personali.all %}
-                            <tr>
-                                <td class="grassetto piu-grande">
-                                    {{ t.titolo.get_tipo_display }}
-                                </td>
-                                <td>
-                                    <p>
-                                        <p class="grassetto">{{ t.titolo.nome }}</p>
-                                        {% if t.titolo.tipo == 'CL' %}
-                                            <span class="grassetto">Oralità:</span> {{ t.livello_linguistico_orale }}
-                                            <br>
-                                            <span class="grassetto">Lettura:</span> {{ t.livello_linguistico_lettura }}
-                                            <br>
-                                            <span class="grassetto">Scrittura:</span> {{ t.livello_linguistico_scrittura }}
-                                        {% endif %}
-                                        {% if t.titolo.tipo == 'CS' %}
-                                            <span class="grassetto">Specializzazione:</span> {{ t.specializzazione }}
-                                            <br>
-                                            <span class="grassetto">Skills:</span>
-                                            {% for skill in t.skills.all %}
-                                                <span style="background-color: #c1bbbb; border-radius: 10px 10px 10px 10px; padding: 3px">{{ skill }}</span>
-                                            {% endfor %}
-                                        {% endif %}
-                                    {% if t.corso_partecipazione and puo_modificare %} <!-- and not t.is_expired_course_title -->
-                                        <br><a href="{% url 'aspirante:persona_report_schede' t.corso_partecipazione.corso.pk pk %}?scarica_uno_attestato={{t.pk}}">Scarica attestato</a>
-                                    {% endif %}
-                                    </p>
+                    {% for t in persona.titoli_personali.all %}
+                    <tr>
+                        <td class="grassetto piu-grande">
+                            {{ t.titolo.get_tipo_display }}
+                        </td>
+                        <td>
+                            <p>
+                            <p class="grassetto">{{ t.titolo.nome }}</p>
+                            {% if t.titolo.tipo == 'CL' %}
+                            <span class="grassetto">Oralità:</span> {{ t.livello_linguistico_orale }}
+                            <br>
+                            <span class="grassetto">Lettura:</span> {{ t.livello_linguistico_lettura }}
+                            <br>
+                            <span class="grassetto">Scrittura:</span> {{ t.livello_linguistico_scrittura }}
+                            {% endif %}
+                            {% if t.titolo.tipo == 'CS' %}
+                            <span class="grassetto">Specializzazione:</span> {{ t.specializzazione }}
+                            <br>
+                            <span class="grassetto">Skills:</span>
+                            {% for skill in t.skills.all %}
+                            <span style="background-color: #c1bbbb; border-radius: 10px 10px 10px 10px; padding: 3px">{{ skill }}</span>
+                            {% endfor %}
+                            {% endif %}
+                            {% if t.corso_partecipazione and puo_modificare %}
+                            <!-- and not t.is_expired_course_title -->
+                            <br><a
+                                href="{% url 'aspirante:persona_report_schede' t.corso_partecipazione.corso.pk pk %}?scarica_uno_attestato={{t.pk}}">Scarica
+                            attestato</a>
+                            {% endif %}
+                            </p>
 
-                                    {% if t.certificato %}
-                                        <span class="text-success">
+                            {% if t.certificato %}
+                            <span class="text-success">
                                             <i class="fa fa-fw fa-asterisk"></i>
                                             Certificato
                                         </span>
 
-                                    {% elif t.esito == t.ESITO_OK %}
-                                        <span class="text-success">
+                            {% elif t.esito == t.ESITO_OK %}
+                            <span class="text-success">
                                             <i class="fa fa-fw fa-check"></i>
                                             {{ t.esito }}
                                         </span>
 
-                                    {% elif t.esito == t.ESITO_PENDING %}
-                                        <span class="alert-warning">
+                            {% elif t.esito == t.ESITO_PENDING %}
+                            <span class="alert-warning">
                                             <i class="fa fa-fw fa-clock"></i>
                                             In attesa di conferma
                                         </span>
 
-                                    {% else %}
-                                        <span class="text-danger">
+                            {% else %}
+                            <span class="text-danger">
                                             {% if t.titolo.tipo == 'TC' %}
                                                 Respinto
                                             {% else %}
@@ -113,62 +129,65 @@
                                             {% endif %}
                                         </span>
 
-                                    {% endif %}
+                            {% endif %}
 
-                                </td>
-                                <td class="piu-piccolo" style="width: 30% !important;">
-                                    {% if t.data_ottenimento %}
-                                        <i class="fa fa-fw text-muted fa-calendar"></i>{{ t.data_ottenimento|date:"SHORT_DATE_FORMAT" }}<br />
-                                    {% endif %}
+                        </td>
+                        <td class="piu-piccolo" style="width: 30% !important;">
+                            {% if t.data_ottenimento %}
+                            <i class="fa fa-fw text-muted fa-calendar"></i>
+                            {{ t.data_ottenimento|date:"SHORT_DATE_FORMAT" }}<br/>
+                            {% endif %}
 
-                                    {% if t.luogo_ottenimento %}
-                                        <i class="fa fa-fw text-muted fa-map-marker"></i>{{ t.luogo_ottenimento }}<br />
-                                    {% endif %}
+                            {% if t.luogo_ottenimento %}
+                            <i class="fa fa-fw text-muted fa-map-marker"></i>{{ t.luogo_ottenimento }}<br/>
+                            {% endif %}
 
-                                    {% if t.tipo_documentazione %}
-                                        <i class="fa fa-fw text-muted fa-file"></i> {{ t.get_tipo_documentazione_display }}<br />
-                                    {% endif %}
+                            {% if t.tipo_documentazione %}
+                            <i class="fa fa-fw text-muted fa-file"></i> {{ t.get_tipo_documentazione_display }}<br/>
+                            {% endif %}
 
-                                    {% if t.attestato_file %}
-                                        <i class="fa fa-fw text-muted fa-file"></i> <a href="{{ t.attestato_file.url }}" download>{% get_filename t.attestato_file %}</a><br />
-                                    {% endif %}
+                            {% if t.attestato_file %}
+                            <i class="fa fa-fw text-muted fa-file"></i> <a href="{{ t.attestato_file.url }}" download>
+                            {% get_filename t.attestato_file %}</a><br/>
+                            {% endif %}
 
-                                    {% if t.direttore_corso %}
-                                        <i class="fa fa-fw text-muted fa-user"></i> {{ t.direttore_corso }}<br />
-                                    {% endif %}
+                            {% if t.direttore_corso %}
+                            <i class="fa fa-fw text-muted fa-user"></i> {{ t.direttore_corso }}<br/>
+                            {% endif %}
 
-                                    {% if t.note %}
-                                        <i class="fa fa-fw text-muted fa-clipboard"></i> {{ t.note }}<br />
-                                    {% endif %}
+                            {% if t.note %}
+                            <i class="fa fa-fw text-muted fa-clipboard"></i> {{ t.note }}<br/>
+                            {% endif %}
 
-                                    {% if t.data_scadenza %}
-                                        <i class="fa fa-fw text-muted fa-clock-o"></i>{{ t.data_scadenza|date:"SHORT_DATE_FORMAT" }}<br />
-                                    {% endif %}
+                            {% if t.data_scadenza %}
+                            <i class="fa fa-fw text-muted fa-clock-o"></i>{{ t.data_scadenza|date:"SHORT_DATE_FORMAT" }}<br/>
+                            {% endif %}
 
-                                    {% if t.codice %}
-                                        <i class="fa fa-fw text-muted fa-barcode"></i><span class="monospace">{{ t.codice }}</span><br />
-                                    {% endif %}
+                            {% if t.codice %}
+                            <i class="fa fa-fw text-muted fa-barcode"></i><span
+                                class="monospace">{{ t.codice }}</span><br/>
+                            {% endif %}
 
-                                </td>
-                                {% if puo_modificare %}
-                                    <td>
-                                        <a href="/profilo/{{ persona.pk }}/curriculum/{{ t.pk }}/cancella/"
-                                           data-conferma="Sei sicuro/a di voler rimuovere {{ t.titolo.nome }} dal curriculum di {{ persona.nome }}?"
-                                           class="btn btn-xs btn-danger" title="Rimuovi dal curriculum">
-                                            <i class="fa fa-trash"></i>
-                                        </a>
-                                    </td>
-                                {% endif %}
-                            </tr>
+                        </td>
+                        {% if puo_modificare %}
+                        <td>
+                            <a href="/profilo/{{ persona.pk }}/curriculum/{{ t.pk }}/cancella/"
+                               data-conferma="Sei sicuro/a di voler rimuovere {{ t.titolo.nome }} dal curriculum di {{ persona.nome }}?"
+                               class="btn btn-xs btn-danger" title="Rimuovi dal curriculum">
+                                <i class="fa fa-trash"></i>
+                            </a>
+                        </td>
+                        {% endif %}
+                    </tr>
 
-                        {% empty %}
-                            <tr class="alert alert-warning">
-                                <td colspan="4">
-                                    <p>Nessun contenuto inserito nel curriculum.</p>
-                                </td>
-                            </tr>
+                    {% empty %}
+                    <tr class="alert alert-warning">
+                        <td colspan="4">
+                            <p>Nessun contenuto inserito nel curriculum.</p>
+                        </td>
+                    </tr>
 
-                        {% endfor %}
+                    {% endfor %}
                     </tbody>
                 </table>
             </div>
@@ -177,33 +196,40 @@
 
     <div class="col-lg-4">
         {% if puo_modificare and modulo %}
-            <form method="POST" enctype="multipart/form-data">
+        <form method="POST" enctype="multipart/form-data">
 
-                {% csrf_token %}
-                    <div class="panel panel-primary">
-                        <div class="panel-heading">
-                            <h4 class="panel-title">
-                                <i class="fa fa-plus"></i> Aggiungi {{ tipo_titolo }}
-                            </h4>
-                        </div>
+            {% csrf_token %}
+            <div class="panel panel-primary">
+                <div class="panel-heading">
+                    <h4 class="panel-title">
+                        <i class="fa fa-plus"></i> Aggiungi {{ tipo_titolo }}
+                    </h4>
+                </div>
 
-                        <div class="panel-body">
-                            {% bootstrap_form modulo %}
+                <div class="panel-body">
 
-                            <button class="btn btn-primary btn-block">
-                                <i class="fa fa-check"></i>
-                                Carica
-                            </button>
-                        </div>
-                    </div>
-            </form>
+                    {% bootstrap_form modulo %}
+
+                    <button class="btn btn-primary btn-block">
+                        <i class="fa fa-check"></i>
+                        Carica
+                    </button>
+                </div>
+            </div>
+        </form>
         {% endif %}
 
     </div>
 </div>
+
 <script>
     const url_cv_cdf_titolo_json = "{% url 'cv:argomenti_corsi_json' %}";
     const _csrf_token = "{{ csrf_token }}";
+
+
+
+
+
 </script>
 <script src="{% static 'js/curriculum/altre_qualifiche.js' %}"></script>
 <script src="{% static 'js/curriculum/titoli_studio.js' %}"></script>

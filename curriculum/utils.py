@@ -6,16 +6,19 @@ from curriculum.autocomplete_light_registry import EsperienzeProfessionaliAutoco
 from curriculum.forms import FormAddAltreQualifica, FormAddTitoloStudio, FormAddConoscenzeLinguistiche, \
     FormAddCompetenzeSkills
 from curriculum.models import TitoloPersonale, Titolo, TitoloSpecializzazione, TitoloSkill
+from formazione.validators import validate_file_type
 
 logger = logging.getLogger(__name__)
 
 
 def carica_titolo_studio(request, me, redirect_url):
-    form = FormAddTitoloStudio(request.POST)
+    form = FormAddTitoloStudio(request.POST, request.FILES)
     if form.is_valid():
         cd = form.cleaned_data
-
         tipo_titolo_studio = cd['tipo_titolo_di_studio']
+        if cd['attestato_file'] and validate_file_type(cd['attestato_file']) == False:
+            messages.error(request, 'File non supportato')
+            return redirect_url
 
         if tipo_titolo_studio == TitoloPersonale.SCUOLA_OBBLIGO:
             scuola_obbligo = Titolo.objects.filter(
@@ -31,7 +34,7 @@ def carica_titolo_studio(request, me, redirect_url):
                 tipo_titolo_di_studio=tipo_titolo_studio,
                 titolo=scuola_obbligo,
                 data_ottenimento=cd['data_ottenimento'],
-                numero_brevetto=cd['numero_brevetto']
+                #numero_brevetto=cd['numero_brevetto']
             )
             titolo_personale.save()
             logger.info("Creato titolo personale {}".format(titolo_personale))
@@ -53,7 +56,7 @@ def carica_titolo_studio(request, me, redirect_url):
                 titolo=diploma_titolo,
                 tipo_titolo_di_studio=tipo_titolo_studio,
                 data_ottenimento=cd['data_ottenimento'],
-                numero_brevetto=cd['numero_brevetto']
+                #numero_brevetto=cd['numero_brevetto']
             )
             titolo_personale.save()
             logger.info("Creato titolo personale {}".format(titolo_personale))
@@ -75,7 +78,7 @@ def carica_titolo_studio(request, me, redirect_url):
                 titolo=laurea_titolo,
                 tipo_titolo_di_studio=tipo_titolo_studio,
                 data_ottenimento=cd['data_ottenimento'],
-                numero_brevetto=cd['numero_brevetto']
+                #numero_brevetto=cd['numero_brevetto']
             )
             titolo_personale.save()
             logger.info("Creato titolo personale {}".format(titolo_personale))
@@ -96,6 +99,10 @@ def carica_altri_titoli(request, me, redirect_url):
     if form.is_valid():
         cd = form.cleaned_data
         tipo_altro = cd['tipo_altro_titolo']
+        if cd['attestato_file'] and validate_file_type(cd['attestato_file']) == False:
+            messages.error(request, "Tipo di file non supportato. Tipi di file supportati: csv, zip, rar, gif, png, jpg,  jpeg, tiff, rtf, pdf, ods, odt, doc, docx, xls, xlsx.")
+            return redirect_url
+
         if tipo_altro == TitoloPersonale.PARTNERSHIP:
             titolo = Titolo.objects.get(pk=cd['titoli_in_partnership'])
             if cd['no_argomento']:
@@ -171,6 +178,10 @@ def carica_conoscenze_linguistiche(request, me, redirect_url):
 
     if form.is_valid():
         cd = form.cleaned_data
+        if validate_file_type(cd['attestato_file']) == False:
+            messages.error(request, 'File non supportato')
+            return redirect_url
+
         if cd['no_lingua']:
             logger.info('Lingua campo libero')
             titolo = Titolo(
@@ -206,6 +217,10 @@ def carica_esperienza_professionale(request, me, redirect_url):
     form = FormAddCompetenzeSkills(request.POST, request.FILES)
     if form.is_valid():
         cd = form.cleaned_data
+        if validate_file_type(cd['attestato_file']) == False:
+            messages.error(request, 'File non supportato')
+            return redirect_url
+
         if cd['no_professione']:
             logger.info('Professione campo libero')
             professione = Titolo(

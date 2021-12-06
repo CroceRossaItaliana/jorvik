@@ -13,6 +13,7 @@ from base.stringhe import GeneratoreNomeFile
 from base.tratti import ConMarcaTemporale
 from segmenti.models import BaseSegmento
 
+from formazione.validators import validate_file_type_for_model
 
 class InterfacciaJorvik(object):
 
@@ -129,7 +130,7 @@ class DocumentoComitato(ModelloSemplice, ConMarcaTemporale):
     nome = models.CharField(max_length=50, choices=NOME)
 
     file = models.FileField("File", upload_to=GeneratoreNomeFile('documenti/'),
-                            validators=[valida_dimensione_file_8mb])
+                            validators=[valida_dimensione_file_8mb, validate_file_type_for_model])
     sede = models.ForeignKey('anagrafica.Sede', db_index=True, on_delete=models.PROTECT)
     expires = models.DateField(null=True)
 
