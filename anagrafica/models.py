@@ -1061,7 +1061,7 @@ class Persona(ModelloSemplice, ConMarcaTemporale, ConAllegati, ConVecchioID):
             trasferimento.autorizzazione_concessa(modulo=None, auto=True, notifiche_attive=False, data=data_inizio)
             return trasferimento.appartenenza
         else:
-            return 'La persone non è un volontario o è già nella sede indicata'
+            return 'La persona non è un volontario o è già nella sede indicata'
 
     def espelli(self):
         data = poco_fa()
@@ -2064,6 +2064,14 @@ class Appartenenza(ModelloSemplice, ConStorico, ConMarcaTemporale, ConAutorizzaz
 
     RICHIESTA_NOME = "Appartenenza"
 
+    def save(self, *args, **kwargs):
+        if self.membro == self.ESTESO:
+            from datetime import datetime
+            if self.fine>datetime.today():
+                self.fine=None
+        super().save(*args, **kwargs)
+
+
     def __str__(self):
         return 'Appartenenza a {}'.format(self.sede)
 
@@ -2095,6 +2103,7 @@ class Appartenenza(ModelloSemplice, ConStorico, ConMarcaTemporale, ConAutorizzaz
             return 'Sostenitore, '+self.sede.nome_completo
         elif self.membro == self.SEVIZIO_CIVILE_UNIVERSALE:
             return 'Servizio civile universale, ' + self.sede.nome_completo
+
 
     def richiedi(self, notifiche_attive=True):
         """
