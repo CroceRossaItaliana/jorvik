@@ -238,25 +238,10 @@ class UserAppartenenzaCompleta(APIView):
 
         return Response(dati)
 
+#http://localhost:8000/api/v1/search/users/
 class SearchUserAppartenenzaCompleta(APIView):
     """
-        ID utente, - Persona
-
-        nome, - Persona
-
-        cognome, - Persona
-
-        indirizzo mail di contatto - Persona
-
-        rispettiva sede di appartenenza, - Persona
-
-        ID comitato,
-
-        nome comitato,
-
-        estensione del comitato R/P/L/T,
-
-        delega
+    Una vista che ritorna una persona, o un lista di persone, in base ai criteri di ricerca
     """
 
     required_scopes = [SCOPE_ANAGRAFICA_LETTURA_BASE,
