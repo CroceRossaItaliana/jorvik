@@ -66,7 +66,9 @@ def get_user_data(persona):
         'cognome': persona.cognome,
         'data_di_nascita': persona.data_nascita,
         'codice_fiscale': persona.codice_fiscale,
+        #'email_utente': persona.utenza and persona.utenza.email or None,
     }
+
     if persona.email is not None:
         dati['email'] = persona.email
 
@@ -75,10 +77,19 @@ def get_user_data(persona):
 
     l_deleghe = []
     for delega in deleghe:
+        estensione = None
+        tipologia = None
+
+        if (isinstance(delega.oggetto, Sede)):
+            estensione = delega.oggetto.estensione
+            tipologia = delega.oggetto.tipo
+
         d_delega = {
             'id': delega.id,
             'tipo': PERMESSI_NOMI_DICT[delega.tipo],
             'appartenenza': delega.oggetto.nome,
+            'appartenenza_estensione': estensione,
+            'appartenenza_tipologia': tipologia,
         }
         l_deleghe.append(d_delega)
     dati['deleghe'] = l_deleghe
@@ -249,11 +260,11 @@ class SearchUserAppartenenzaCompleta(APIView):
                        SCOPE_APPARTENENZE_LETTURA]
 
     def get(self, request, format=None):
-        nome=request.data.get('nome')
-        cognome=request.data.get('cognome')
-        codice_fiscale=request.data.get('codice_fiscale')
-        data_nascita=request.data.get('data_nascita')
-        sede_id=request.data.get('sede')
+        nome = request.data.get('nome')
+        cognome = request.data.get('cognome')
+        codice_fiscale = request.data.get('codice_fiscale')
+        data_nascita = request.data.get('data_nascita')
+        sede_id = request.data.get('sede')
         dati = []
 
         if sede_id:

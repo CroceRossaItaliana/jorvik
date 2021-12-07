@@ -10,5 +10,6 @@ urlpatterns = [
     url(r'^user/anagrafica/base/', views.UserAnagraficaBase.as_view()),
     url(r'^user/anagrafica/completa/', views.UserAnagraficaCompleta.as_view()),
     url(r'^user/appartenenze/attuali/', views.UserAppartenenzeAttuali.as_view()),
+    url(r'^user/appartenenza/completa/', views.UserAppartenenzaCompleta.as_view()),
     url(r'^search/users/', views.SearchUserAppartenenzaCompleta.as_view()),
 ]
