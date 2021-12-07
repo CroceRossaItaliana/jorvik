@@ -58,7 +58,7 @@ class MieAppartenenzeAttuali(APIView):
         return Response(dati)
 
 
-def get_user_data(persona):
+def get_user_data(persona, filtered_for=None):
     # Persona
     dati = {
         'id_persona': persona.pk,
@@ -66,7 +66,7 @@ def get_user_data(persona):
         'cognome': persona.cognome,
         'data_di_nascita': persona.data_nascita,
         'codice_fiscale': persona.codice_fiscale,
-        #'email_utente': persona.utenza and persona.utenza.email or None,
+        'email_utente': persona.utenza and persona.utenza.email or None,
     }
 
     if persona.email is not None:
@@ -79,6 +79,7 @@ def get_user_data(persona):
     for delega in deleghe:
         estensione = None
         tipologia = None
+        toAdd = True
 
         if (isinstance(delega.oggetto, Sede)):
             estensione = delega.oggetto.estensione
@@ -87,11 +88,24 @@ def get_user_data(persona):
         d_delega = {
             'id': delega.id,
             'tipo': PERMESSI_NOMI_DICT[delega.tipo],
+            'codice_tipo': delega.tipo,
             'appartenenza': delega.oggetto.nome,
+            'appartenenza_pk': delega.oggetto.pk,
             'appartenenza_estensione': estensione,
             'appartenenza_tipologia': tipologia,
         }
-        l_deleghe.append(d_delega)
+        if filtered_for:
+            oggetto_pk = filtered_for.get('oggetto_pk')
+            deleghe = filtered_for.get('deleghe', [])
+
+            if deleghe and delega.tipo not in deleghe:
+                toAdd = False
+            if oggetto_pk and oggetto_pk != delega.oggetto.pk:
+                toAdd = False
+            
+        if toAdd:
+            l_deleghe.append(d_delega)
+
     dati['deleghe'] = l_deleghe
 
     # appartenenze
@@ -286,6 +300,41 @@ class SearchUserAppartenenzaCompleta(APIView):
 
 
 
+
+        return Response(dati)
+
+
+class SearchUserByDelegaAppartenenzaCompleta(APIView):
+    """
+    Una vista che ritorna una persona, o un lista di persone, in base ai criteri di ricerca
+    """
+
+    required_scopes = [SCOPE_ANAGRAFICA_LETTURA_BASE,
+                       SCOPE_ANAGRAFICA_LETTURA_COMPLETA,
+                       SCOPE_APPARTENENZE_LETTURA]
+
+    def get(self, request, format=None):
+        deleghe = request.data.get('deleghe')
+        soggetto = request.data.get('soggetto')
+        sede_livello = request.data.get('sede_livello')
+        
+        added = []
+        dati = []
+
+        if soggetto:
+            persona = Persona.objects.get(pk=soggetto)    
+
+            sede = persona.sede_riferimento()
+
+            for d in deleghe:
+                for p in sede.delegati_attuali(tipo=d, solo_deleghe_attive=True):
+                    if p.pk not in added:
+                        # dati.append(get_user_data(p, filtered_for={
+                        #     'oggetto_pk': sede.pk,
+                        #     'deleghe': deleghe,
+                        # }))
+                        dati.append(get_user_data(p))
+                        added.append(p.pk)
 
         return Response(dati)
 
