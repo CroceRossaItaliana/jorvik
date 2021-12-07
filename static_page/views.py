@@ -478,6 +478,7 @@ def monitora_trasparenza(request, me):
 
     return 'monitora_trasparenza.html', context
 
+from anagrafica.costanti import REGIONI_CON_SIGLE
 
 @pagina_privata
 def monitora_autocontrollo(request, me):
@@ -520,6 +521,8 @@ def monitora_autocontrollo(request, me):
             # )
             # typeform.get_responses_for_all_forms()
             # struttura[locale] = typeform.all_forms_are_completed
+            if locale.pk==1638:
+                locale=Sede.objects.get(pk=525)
 
             typeform_db = TypeFormCompilati.objects.filter(
                 Q(tipo__icontains='auto') & Q(comitato__pk=locale.pk)).first()
