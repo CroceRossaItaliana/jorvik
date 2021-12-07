@@ -20,4 +20,3 @@ class Command(BaseCommand):
             pass
         else:
             print('reindex_elastic (source_index) (dest_index)')
-

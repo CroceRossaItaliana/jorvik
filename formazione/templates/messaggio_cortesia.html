@@ -1,0 +1,31 @@
+{% extends "base_vuota.html" %}
+
+{% load bootstrap3 %}
+{% load formazione_templatetags %}
+
+{% block pagina_titolo %}
+{% if ok %}Richiesta confermata{% endif %}
+{% if not ok %}Errore{% endif %}
+{% endblock %}
+{% load static %}
+{% load base_tags %}
+
+{% block menu_laterale %}
+{% endblock %}
+
+{% block pagina_principale %}
+<div class="container">
+    {% if ok %}
+        <h1>Richiesta confermata</h1>
+        <p>Grazie per aver scelto di continuare il tuo percorso in Croce Rossa Italiana.</p>
+        <p>I prossimi passi sono semplici.</p>
+        <p>Vai su GAIA (gaia.cri.it), inserisci le tue credenziali e seleziona il corso di formazione del Comitato più vicino a te.</p>
+    {% endif %}
+    {% if not ok %}
+        <h1>Errore!</h1>
+        <p>Qualcosa &egrave; andato storto durante la procedura.</p>
+    {% endif %}
+</div>
+{% endblock %}
+
+

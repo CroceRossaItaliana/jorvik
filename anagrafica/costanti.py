@@ -47,3 +47,11 @@ REGIONI_CON_SIGLE = {
     1416: {'sigla': 'TRE', 'nome': 'Provincia Autonoma Trento',},
     1409: {'sigla': 'BOL', 'nome': 'Provincia Autonoma Bolzano',},
 }
+
+MIMETYPE_TO_CHECK = ['application/csv', 'application/zip', 'application/vnd.oasis.opendocument.text',
+                    'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
+                    'application/vnd.openxmlformats-officedocument.wordprocessingml.document', 'application/msword',
+                    'text/plain', 'application/x-rar', 'image/png', 'image/jpg', 'image/jpeg', 'image/gif',
+                    'text/rtf', 'image/tiff', 'application/pdf',
+                    'application/vnd.openxmlformats-officedocument.wordprocessingml.document',
+                    'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet', 'application/octet-stream']

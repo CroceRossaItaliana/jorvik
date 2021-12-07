@@ -903,7 +903,12 @@ def utente_estensione(request, me):
 
     in_attesa, delegati = estensioni_pending(me)
 
+    from datetime import datetime
+    tempo = datetime.now()  # datetime(datetime.today().year, datetime.today().month, datetime.today().day, 23, 59, 59, 514463)
+    tempo="{}:{}:{}".format(tempo.hour, tempo.minute, tempo.second)
+
     contesto = {
+        "adesso": tempo,
         "modulo": form,
         "storico": storico,
         "attuali": me.estensioni_attuali(),
@@ -921,7 +926,15 @@ def utente_estensione_termina(request, me, pk):
     if not estensione.persona == me:
         return redirect(ERRORE_PERMESSI)
     else:
+        from datetime import datetime
+        t=estensione.persona.appartenenze.last()
+        tempo = datetime.now()#datetime(datetime.today().year, datetime.today().month, datetime.today().day, 23, 59, 59, 514463)
+        from time import sleep
+        sleep(0.05)
+        t.fine=tempo
+        #t.save()
         estensione.termina()
+        t.save()
         return redirect('/utente/')
 
 

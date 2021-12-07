@@ -196,6 +196,7 @@ def cv_add_competenze_professionali(request, me):
 
     return redirect_url
 
+from formazione.validators import validate_file_type
 
 @pagina_privata
 def cv_add_conoscenze_linguistiche(request, me):
@@ -204,7 +205,7 @@ def cv_add_conoscenze_linguistiche(request, me):
 
     if request.method == 'POST':
         return carica_conoscenze_linguistiche(request, me, redirect_url)
-
+        
     return redirect_url
 
 

@@ -17,27 +17,38 @@ def to_show(me, permissions):
             return True
     return False
 
+def puo_vedere_docenze(me):
+    from formazione.models import LezioneCorsoBase
+    return LezioneCorsoBase.objects.filter(docente=me).exists()
 
 def formazione_menu(menu_name, me=None):
     from curriculum.models import Titolo
 
     FORMAZIONE = (
         ("Corsi", (
-            ("Attiva Corso", "fa-asterisk", reverse('formazione:new_course')) if to_show(me, GESTIONE_CORSI_SEDE) else None,
+            ("Attiva Corso", "fa-asterisk", reverse('formazione:new_course')) if to_show(me,
+                                                                                         GESTIONE_CORSI_SEDE) else None,
             ("Gestione Corsi", "fa-list", reverse('formazione:list_courses')) if to_show(me, GESTIONE_CORSO) else None,
-            ("Attiva Evento", "fa-asterisk", reverse('formazione:evento_nuovo')) if to_show(me, GESTIONE_EVENTI_SEDE) else None,
-            ("Gestione Eventi", "fa-list", reverse('formazione:evento_elenco')) if to_show(me, GESTIONE_EVENTO) else None,
+            ("Attiva Evento", "fa-asterisk", reverse('formazione:evento_nuovo')) if to_show(me,
+                                                                                            GESTIONE_EVENTI_SEDE) else None,
+            ("Gestione Eventi", "fa-list", reverse('formazione:evento_elenco')) if to_show(me,
+                                                                                           GESTIONE_EVENTO) else None,
             ("Elenco Corsi", "fa-list", reverse('aspirante:corsi_base')),
-            ("Domanda formativa", "fas fa-chart-pie", reverse('formazione:domanda')) if to_show(me, GESTIONE_CORSI_SEDE) else None,
+            ("Domanda formativa", "fas fa-chart-pie", reverse('formazione:domanda')) if to_show(me,
+                                                                                                GESTIONE_CORSI_SEDE) else None,
             ('Catalogo Corsi', 'fa-list-alt', reverse('courses:catalog')),
             ('Acronimi', 'fa-book', '/page/glossario-corsi/'),
             ('Calendario', 'fa-calendar', reverse('formazione:formazione_calendar')),
-            ('Regolamento Formazione', 'fa-file-alt', 'https://datafiles.gaia.cri.it/media/filer_public/23/48/234871cc-822f-4039-ac37-9cdcd65004fe/15121_modifica_regolamento_corsi_di_formazione_per_volontari_e_dipendenti_della_cri_1.pdf'),
-            ('Sintesi Equipollenze', 'fa-file-alt', 'https://datafiles.gaia.cri.it/media/filer_public/80/f4/80f46d62-8de9-4d24-82ce-ef1eb27c19c8/sintesi_equipollenze_per_gaia_10-11-21.pdf'),
+            ('Regolamento Formazione', 'fa-file-alt',
+             'https://datafiles.gaia.cri.it/media/filer_public/49/fe/49fe35df-4cea-423b-ab4f-5a8cd3cbf797/16921_modifica_regolamenti_corsi_di_formazione_per_volontari_e_dipendenti_cri.pdf'),
+            ('Sintesi Equipollenze', 'fa-file-alt',
+             'https://datafiles.gaia.cri.it/media/filer_public/80/f4/80f46d62-8de9-4d24-82ce-ef1eb27c19c8/sintesi_equipollenze_per_gaia_10-11-21.pdf'),
+            ('Elenco Docenze', 'fa-list',
+             reverse('formazione:docenze', kwargs={'pg_ef': 1, 'pg_in': 1}) if puo_vedere_docenze(me) else None),
             # TODO: GAIA-424: commentato momentaneamente
-            #("Nell'albo", "fa-search", "/formazione/cerca_persona") if to_show(
+            # ("Nell'albo", "fa-search", "/formazione/cerca_persona") if to_show(
             #    me, RUBRICA_DELEGATI_OBIETTIVO_ALL + [GESTIONE_CORSI_SEDE]
-            #) or (me and me.is_responsabile_area_albo_formazione) else None,
+            # ) or (me and me.is_responsabile_area_albo_formazione) else None,
             ('Albo Informatizzato', 'fa-list', reverse(
                 'formazione:albo_info')) if to_show(
                 me, RUBRICA_DELEGATI_OBIETTIVO_ALL + [GESTIONE_CORSI_SEDE]
@@ -45,21 +56,21 @@ def formazione_menu(menu_name, me=None):
         )),
         ("Monitoraggio", (
             ("Fabbisogni Formativi Comitato Territoriale", 'fa-user',
-             reverse('pages:monitoraggio-fabb-info-territoriale')) if ( me and (
+             reverse('pages:monitoraggio-fabb-info-territoriale')) if (me and (
                     me.is_presidente_o_commissario_territoriale or
                     me.is_responsabile_formazione_territoriale)) else None,
             ("Fabbisogni Formativi Comitato Regionale", 'fa-user',
-             reverse('pages:monitoraggio-fabb-info-regionale')) if ( me and (
+             reverse('pages:monitoraggio-fabb-info-regionale')) if (me and (
                     me.is_presidente_o_commissario_regionale or
                     me.is_responsabile_formazione_regionale)) else None,
             ("Monitora Fabbisogni Formativi Territoriali", 'fa-user',
-             reverse('pages:monitora-fabb-info-territoriale')) if ( me and (
+             reverse('pages:monitora-fabb-info-territoriale')) if (me and (
                     me.delega_presidente_e_commissario_regionale or
                     me.delega_responsabile_formazione_regionale
             )) else None,
             ("Monitora Fabbisogni Formativi", 'fa-user',
              reverse('pages:monitora-fabb-info-regionale')) if
-                me and me.is_responsabile_formazione_nazionale else None
+            me and me.is_responsabile_formazione_nazionale else None
 
         )),
     )
@@ -116,3 +127,4 @@ def puo_vedere_fabbisogni(me, formazione):
         return formazione
     else:
         return None
+

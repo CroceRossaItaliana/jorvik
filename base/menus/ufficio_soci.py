@@ -1,4 +1,5 @@
 from anagrafica.permessi.costanti import GESTIONE_SOCI_IIVV
+from jorvik import settings
 
 
 def menu_us(me):
@@ -10,7 +11,7 @@ def menu_us(me):
     us = me and me.ha_permessi([GESTIONE_SOCI])
     uc = me and me.ha_permessi([GESTIONE_SOCI_CM])
     iv = me and me.ha_permessi([GESTIONE_SOCI_IIVV])
-    print(iv)
+
     return (
         ("Elenchi", (
             ("Negli elenchi", "fa-search", "/us/cerca_persona") if us else None,
@@ -55,4 +56,10 @@ def menu_us(me):
         ("Tesserini", (
             ("Emissione", "fa-cogs", "/us/tesserini/emissione/"),
         )) if me and me.oggetti_permesso(EMISSIONE_TESSERINI).exists() and us else None,
+        ("Visite mediche", (
+            ("Ricerca una visita", "fa-search", "/us/ricerca-visita-medica/") if us else None,
+            ("Medici del comitato", "fa-list", "/us/medici-comitato/") if us else None,
+            ("Prenota una visita medica", "fa-plus-square",
+             "/us/prenota-visita-medica/") if us else None,
+        )) if settings.VISITE_ENABLED else None,
     )

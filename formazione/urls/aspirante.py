@@ -4,12 +4,15 @@ from .. import viste as v
 
 url_shortcut = 'corso-base/(?P<pk>[0-9]+)'
 app_label = 'aspirante'
+
 urlpatterns = [
     url(r'^$', v.aspirante_home, name='home'),
     url(r'^impostazioni/$', v.aspirante_impostazioni, name='settings'),
     url(r'^impostazioni/cancella/$', v.aspirante_impostazioni_cancella),
     url(r'^sedi/$', v.aspirante_sedi, name='sedi'),
     url(r'^corsi/$', v.aspirante_corsi, name='corsi_base'),
+    url(r'^conferma-mail/', v.conferma_email, name='conferma_email'),
+    url(r'^esporta_aspiranti/', v.esporta_aspiranti_2014_2019, name='esporta_aspiranti_2014_2019'),
     url(r'^%s/$' % url_shortcut, v.aspirante_corso_base_informazioni,
         name='info'),
     url(r'^%s/mappa/$' % url_shortcut, v.aspirante_corso_base_mappa,

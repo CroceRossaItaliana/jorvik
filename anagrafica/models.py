@@ -800,6 +800,18 @@ class Persona(ModelloSemplice, ConMarcaTemporale, ConAllegati, ConVecchioID):
         return corsi.order_by('-data_esame')
 
     @property
+    def corsi_iscritti(self):
+        from formazione.models import PartecipazioneCorsoBase, CorsoBase
+
+        confirmed = PartecipazioneCorsoBase.con_esito_ok().filter(persona=self,
+                                                                  corso__stato__in=[CorsoBase.ATTIVO, CorsoBase.PREPARAZIONE])
+        if not confirmed:
+            return CorsoBase.objects.none()
+
+        corsi = CorsoBase.objects.filter(pk__in=[i.corso.pk for i in confirmed])
+        return corsi.order_by('-data_esame')
+
+    @property
     def volontario_da_meno_di_un_anno(self):
         """
         Controlla se questo utente è diventato volontario nell'anno corrente
@@ -1049,7 +1061,7 @@ class Persona(ModelloSemplice, ConMarcaTemporale, ConAllegati, ConVecchioID):
             trasferimento.autorizzazione_concessa(modulo=None, auto=True, notifiche_attive=False, data=data_inizio)
             return trasferimento.appartenenza
         else:
-            return 'La persone non è un volontario o è già nella sede indicata'
+            return 'La persona non è un volontario o è già nella sede indicata'
 
     def espelli(self):
         data = poco_fa()
@@ -2052,6 +2064,14 @@ class Appartenenza(ModelloSemplice, ConStorico, ConMarcaTemporale, ConAutorizzaz
 
     RICHIESTA_NOME = "Appartenenza"
 
+    def save(self, *args, **kwargs):
+        if self.membro == self.ESTESO:
+            from datetime import datetime
+            if self.fine>datetime.today():
+                self.fine=None
+        super().save(*args, **kwargs)
+
+
     def __str__(self):
         return 'Appartenenza a {}'.format(self.sede)
 
@@ -2083,6 +2103,7 @@ class Appartenenza(ModelloSemplice, ConStorico, ConMarcaTemporale, ConAutorizzaz
             return 'Sostenitore, '+self.sede.nome_completo
         elif self.membro == self.SEVIZIO_CIVILE_UNIVERSALE:
             return 'Servizio civile universale, ' + self.sede.nome_completo
+
 
     def richiedi(self, notifiche_attive=True):
         """

@@ -280,6 +280,11 @@ TRIPPUS_DOMAIN = APIS_CONF.get('trippus', 'domain')
 TRIPPUS_USERNAME = APIS_CONF.get('trippus', 'username', fallback=os.environ.get("TRIPPUS_USERNAME"))
 TRIPPUS_PASSWORD = APIS_CONF.get('trippus', 'password', fallback=os.environ.get("TRIPPUS_PASSWORD"))
 
+VISITEMEDICHE_HOST = APIS_CONF.get(
+    'visite_mediche', 'host', fallback=os.environ.get("VISITEMEDICHE_HOST"))
+VISITEMEDICHE_AUTH = APIS_CONF.get(
+    'visite_mediche', 'auth', fallback=os.environ.get("VISITEMEDICHE_AUTH"))
+
 MOODLE_KEY = APIS_CONF.get('moodle', 'token', fallback=os.environ.get("MOODLE_KEY"))
 MOODLE_DOMAIN = APIS_CONF.get('moodle', 'domain', fallback=os.environ.get("MOODLE_DOMAIN"))
 
@@ -481,3 +486,4 @@ CELERY_RESULT_BACKEND_TRANSPORT_OPTIONS = {"visibility_timeout": 43200, "master_
 FORMAZIONE_MASSMAIL_CHUNK = 100
 FORMAZIONE_MASSMAIL_SLEEP = 5
 
+VISITE_ENABLED = False

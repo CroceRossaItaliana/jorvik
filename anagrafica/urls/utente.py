@@ -6,6 +6,8 @@ from anagrafica.forms import ModuloModificaPassword
 
 from anagrafica import viste as views
 from curriculum import views as cv_views
+from ufficio_soci import visite_mediche
+
 
 app_label = 'utente'
 urlpatterns = [
@@ -66,4 +68,5 @@ urlpatterns = [
     # questo url (consiglier) fa un errore con l'ultima (volontari)
     # url(r'inscrizione_evento', views.inscrizione_evento_consiglieri, name='inscrizione_evento_consiglieri'),
     url(r'inscrizione_evento_volontari', views.inscrizione_evento_volontari, name='inscrizione_evento_volontari'),
+    url(r'^visite-mediche/', visite_mediche.visite_mediche, name='visite-mediche'),
 ]
