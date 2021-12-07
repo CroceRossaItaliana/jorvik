@@ -148,7 +148,7 @@ class UserAnagraficaBase(APIView):
     required_scopes = [SCOPE_ANAGRAFICA_LETTURA_BASE]
 
     def get(self, request, format=None):
-        userid = request.GET.get('pk')
+        userid = request.data.get('pk')
         dati = {}
 
         if userid:
@@ -169,7 +169,7 @@ class UserAnagraficaCompleta(APIView):
                        SCOPE_ANAGRAFICA_LETTURA_COMPLETA]
 
     def get(self, request, format=None):
-        userid = request.GET.get('pk')
+        userid = request.data.get('pk')
         dati = {}
 
         if userid:
@@ -189,7 +189,7 @@ class UserAppartenenzeAttuali(APIView):
     required_scopes = [SCOPE_APPARTENENZE_LETTURA]
 
     def get(self, request, format=None):
-        userid = request.GET.get('pk')
+        userid = request.data.get('pk')
         dati = {}
 
         if userid:
@@ -228,7 +228,7 @@ class UserAppartenenzaCompleta(APIView):
                        SCOPE_APPARTENENZE_LETTURA]
 
     def get(self, request, format=None):
-        userid = request.GET.get('pk')
+        userid = request.data.get('pk')
         dati = {}
 
         if userid:
