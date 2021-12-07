@@ -93,3 +93,4 @@ class TypeAdmin(admin.ModelAdmin):
     list_display = ['tipo', 'comitato', 'persona', 'delega']
     raw_id_fields = ('comitato', 'persona',)
     search_fields = ['comitato__nome']
+    list_filter=['tipo']
