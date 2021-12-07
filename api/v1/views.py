@@ -326,14 +326,20 @@ class SearchUserByDelegaAppartenenzaCompleta(APIView):
 
             sede = persona.sede_riferimento()
 
+            if sede_livello == 'R':
+                sede = sede.sede_regionale()
+            
+            if sede_livello == 'N':
+                sede = Sede.objects.get(pk=1)
+
             for d in deleghe:
                 for p in sede.delegati_attuali(tipo=d, solo_deleghe_attive=True):
+                    print (p)
                     if p.pk not in added:
-                        # dati.append(get_user_data(p, filtered_for={
-                        #     'oggetto_pk': sede.pk,
-                        #     'deleghe': deleghe,
-                        # }))
-                        dati.append(get_user_data(p))
+                        dati.append(get_user_data(p, filtered_for={
+                            'oggetto_pk': sede.pk,
+                            'deleghe': deleghe,
+                        }))
                         added.append(p.pk)
 
         return Response(dati)
