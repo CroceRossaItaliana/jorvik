@@ -2123,9 +2123,9 @@ def elenco_docenze(request, me, pg_ef=1, pg_in=1):
     lista_docenze = LezioneCorsoBase.objects.filter(docente=me).order_by('-creazione')
 
     if not lista_docenze.exists():
-        contesto={'avviso':True}
-        return 'elenco_docenze.html', contesto
-        #return redirect(ERRORE_PERMESSI)
+        #contesto={'avviso':True}
+        #return 'elenco_docenze.html', contesto
+        return redirect(ERRORE_PERMESSI)
 
     pg_ef = int(pg_ef)
     if pg_ef <= 0:
