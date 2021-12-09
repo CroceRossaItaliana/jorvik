@@ -1283,7 +1283,7 @@ def aspirante_corsi(request, me):
         )
 
         # Trova corsi da partecipare
-        corsi_da_partecipare = CorsoBase.find_courses_for_volunteer(volunteer=me, sede=None, evento=True)
+        corsi_da_partecipare = CorsoBase.find_courses_for_volunteer(volunteer=me, sede=mie_sedi, evento=True)
 
         # Cirsi associati ad un avento
         corsi_eventi = CorsoBase.objects.filter(
@@ -1297,7 +1297,7 @@ def aspirante_corsi(request, me):
         )
 
         # Unisci 2 categorie di corsi
-        corsi = corsi_confermati | corsi_estensione_mia_appartenenze | corsi_eventi
+        corsi = corsi_confermati | corsi_da_partecipare | corsi_estensione_mia_appartenenze | corsi_eventi
         corsi = corsi.filter(tipo__in=[Corso.CORSO_NUOVO, Corso.CORSO_ONLINE, Corso.CORSO_EQUIPOLLENZA])
 
     corsi_frequentati = me.corsi_frequentati
