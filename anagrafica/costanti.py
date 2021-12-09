@@ -55,3 +55,6 @@ MIMETYPE_TO_CHECK = ['application/csv', 'application/zip', 'application/vnd.oasi
                     'text/rtf', 'image/tiff', 'application/pdf',
                     'application/vnd.openxmlformats-officedocument.wordprocessingml.document',
                     'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet', 'application/octet-stream']
+
+area_roma_capitale_coordinamento_pk=1638
+area_roma_capitale_pk=525
