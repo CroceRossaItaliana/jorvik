@@ -40,6 +40,13 @@ RESPONSABILE_EVENTO = 'EF'
 GIOVANI = 'GO'
 REFERENTE_ZOOM = 'RZ'
 CENTRO_FORMAZIONE_NAZIONALE = 'FN'
+# Benemerenze
+ISPETTRICE_IIVV = 'SV'
+ISPETTORE_CM = 'IC'
+OFFICER_PRESIDENZA = 'OP'
+PRESIDENTE_COMMISSIONE = 'BP'
+MEMBRO_COMMISSIONE = 'BM'
+
 
 
 OBIETTIVI = {
@@ -88,6 +95,11 @@ PERMESSI_NOMI = (
     (RESPONSABILE_AUTOPARCO,    "Responsabile Autoparco"),
     (REFERENTE_ZOOM,            "Referente Zoom"),
     (CENTRO_FORMAZIONE_NAZIONALE, "Centro Formazione Nazionale"),
+    (ISPETTRICE_IIVV, "Ispettrice IIVV"),
+    (ISPETTORE_CM, "Ispettore CM"),
+    (OFFICER_PRESIDENZA, "Officer presidenza"),
+    (PRESIDENTE_COMMISSIONE, "Presidente della Commissione"),
+    (MEMBRO_COMMISSIONE, "Membro della Commissione"),
     #(RESPONSABILE_PATENTI,      "Responsabile Patenti"),
     #(RESPONSABILE_DONAZIONI,    "Responsabile Donazioni Sangue"),
 )

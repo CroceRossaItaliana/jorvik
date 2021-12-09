@@ -22,6 +22,7 @@ from django_countries.fields import CountryField
 from formazione.utils import unique_signature
 from .costanti import (ESTENSIONE, TERRITORIALE, LOCALE, PROVINCIALE, REGIONALE, NAZIONALE)
 from .permessi.applicazioni import DELEGATO_AREA, DELEGATO_SO, CONSIGLIERE_GIOVANE_COOPTATO, CENTRO_FORMAZIONE_NAZIONALE
+from .permessi.applicazioni import OFFICER_PRESIDENZA, PRESIDENTE_COMMISSIONE, MEMBRO_COMMISSIONE
 from .validators import (valida_codice_fiscale, ottieni_genere_da_codice_fiscale,
     valida_dimensione_file_8mb, valida_partita_iva, valida_dimensione_file_5mb,
     valida_iban, valida_email_personale) # valida_almeno_14_anni, crea_validatore_dimensione_file)
@@ -2521,6 +2522,16 @@ class Sede(ModelloAlbero, ConMarcaTemporale, ConGeolocalizzazione, ConVecchioID,
     def consiglieri(self):
         delega_consiglieri = self.comitato.delegati_attuali(tipo=CONSIGLIERE, solo_deleghe_attive=True)
         return delega_consiglieri if delega_consiglieri else []
+
+    def delegati_benemerenze(self):
+        delegati = self.delegati_attuali(
+            tipo__in=[PRESIDENTE, OFFICER_PRESIDENZA], solo_deleghe_attive=True)
+        return delegati if delegati else []
+
+    def delegati_commissione(self):
+        delegati = self.delegati_attuali(
+            tipo__in=[PRESIDENTE_COMMISSIONE, MEMBRO_COMMISSIONE], solo_deleghe_attive=True)
+        return delegati if delegati else []
 
     def delegati_ufficio_soci(self):
         """
