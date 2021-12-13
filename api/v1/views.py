@@ -125,6 +125,7 @@ def get_user_data(persona, filtered_for=None):
                 'id': comitato.estensione,
                 'descrizione': comitato.get_estensione_display()
             },
+            'inizio': appartenenza.inizio.strftime("%Y-%m-%d")
         })
     dati['appartenenze'] = l_appartenenza
 
@@ -227,6 +228,13 @@ class UserAppartenenzeAttuali(APIView):
         return Response(dati)
 
 
+def get_user_data_extended(persona, filtered_for=None):
+    data = get_user_data(persona, filtered_for)
+    data.update(serializzatori.persona_anagrafica_completa(persona))
+
+    return data
+
+
 class UserAppartenenzaCompleta(APIView):
     """
         ID utente, - Persona
@@ -259,7 +267,7 @@ class UserAppartenenzaCompleta(APIView):
         if userid:
             persona = Persona.objects.get(pk=userid)
             if persona:
-                dati = get_user_data(persona)
+                dati = get_user_data_extended(persona)
 
         return Response(dati)
 
@@ -296,7 +304,7 @@ class SearchUserAppartenenzaCompleta(APIView):
             qs=qs.filter(data_nascita=data_nascita)
 
         for persona in qs:
-            dati.append(get_user_data(persona))
+            dati.append(get_user_data_extended(persona))
 
 
 
@@ -334,9 +342,8 @@ class SearchUserByDelegaAppartenenzaCompleta(APIView):
 
             for d in deleghe:
                 for p in sede.delegati_attuali(tipo=d, solo_deleghe_attive=True):
-                    print (p)
                     if p.pk not in added:
-                        dati.append(get_user_data(p, filtered_for={
+                        dati.append(get_user_data_extended(p, filtered_for={
                             'oggetto_pk': sede.pk,
                             'deleghe': deleghe,
                         }))
