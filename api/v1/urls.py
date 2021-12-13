@@ -13,4 +13,5 @@ urlpatterns = [
     url(r'^user/appartenenza/completa/', views.UserAppartenenzaCompleta.as_view()),
     url(r'^search/users/', views.SearchUserAppartenenzaCompleta.as_view()),
     url(r'^search/users_bydelega/', views.SearchUserByDelegaAppartenenzaCompleta.as_view()),
+    url(r'^posta/send_message/', views.SendMessage.as_view()),
 ]

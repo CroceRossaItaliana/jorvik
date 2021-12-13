@@ -9,6 +9,9 @@ from api.v1 import serializzatori
 from anagrafica.permessi.applicazioni import PERMESSI_NOMI_DICT
 
 from anagrafica.models import Persona, Sede
+from posta.models import Messaggio
+import base64
+from django.core.files.base import ContentFile
 
 
 # /me/anagrafica/base/
@@ -330,7 +333,7 @@ class SearchUserByDelegaAppartenenzaCompleta(APIView):
         dati = []
 
         if soggetto:
-            persona = Persona.objects.get(pk=soggetto)    
+            persona = Persona.objects.get(pk=soggetto)
 
             sede = persona.sede_riferimento()
 
@@ -350,5 +353,44 @@ class SearchUserByDelegaAppartenenzaCompleta(APIView):
                         added.append(p.pk)
 
         return Response(dati)
+
+
+class SendMessage(APIView):
+    """
+    Invia un messaggio di posta
+    """
+
+    def post(self, request, format=None):
+        modello = request.data.get('modello')
+        oggetto = request.data.get('oggetto')
+        corpo = request.data.get('corpo')
+        mittente_pk = request.data.get('mittente')
+        destinatari_pk = request.data.get('destinatari')
+        allegati_b64 = request.data.get('allegati')
+        
+        mittente = None
+        destinatari = []
+        allegati = []
+
+        if mittente_pk:
+            mittente = Persona.objects.get(pk=mittente_pk)
+        if destinatari_pk:
+            destinatari = Persona.objects.filter(pk__in=destinatari_pk).all()
+        
+        if mittente and destinatari:
+            Messaggio.costruisci_e_accoda(
+                oggetto=oggetto,
+                modello="email_benemerenza_notifica.html",
+                corpo={
+                    'testo': corpo
+                },
+                mittente=mittente,
+                destinatari=destinatari
+            )
+
+        return Response()
+        
+
+
 
 # serializzatori._campo(comitato.estensione, comitato.get_estensione_display())
