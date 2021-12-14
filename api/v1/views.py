@@ -338,7 +338,7 @@ class SearchUserByDelegaAppartenenzaCompleta(APIView):
             sede = persona.sede_riferimento()
 
             if sede_livello == 'R':
-                sede = sede.sede_regionale()
+                sede = sede.sede_regionale
             
             if sede_livello == 'N':
                 sede = Sede.objects.get(pk=1)
