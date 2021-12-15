@@ -1781,8 +1781,6 @@ def course_commissione_esame(request, me, pk):
 
             if validate_file_type(cd['commissione_esame_file']) == False:
                 messages.error(request, 'File non supportato')
-                print('File non supportato')
-                #return redirect_url
 
             else:
                 instance = form.save(commit=False)
