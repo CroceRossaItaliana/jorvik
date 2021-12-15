@@ -44,7 +44,7 @@ def formazione_menu(menu_name, me=None):
             ('Sintesi Equipollenze', 'fa-file-alt',
              'https://datafiles.gaia.cri.it/media/filer_public/80/f4/80f46d62-8de9-4d24-82ce-ef1eb27c19c8/sintesi_equipollenze_per_gaia_10-11-21.pdf'),
             ('Elenco Docenze', 'fa-list',
-             reverse('formazione:docenze', kwargs={'pg_ef': 1, 'pg_in': 1}) if puo_vedere_docenze(me) else None),
+             reverse('formazione:docenze', kwargs={'pg_ef': 1, 'pg_in': 1})),
             # TODO: GAIA-424: commentato momentaneamente
             # ("Nell'albo", "fa-search", "/formazione/cerca_persona") if to_show(
             #    me, RUBRICA_DELEGATI_OBIETTIVO_ALL + [GESTIONE_CORSI_SEDE]

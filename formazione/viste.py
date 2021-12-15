@@ -2119,10 +2119,13 @@ def elenco_docenze(request, me, pg_ef=1, pg_in=1):
     """
     Mostra uno storico delle docenze CHE MI SONO STATE ASSEGNATE.
     """
+
     lista_docenze = LezioneCorsoBase.objects.filter(docente=me).order_by('-creazione')
 
     if not lista_docenze.exists():
-        return redirect(ERRORE_PERMESSI)
+        contesto={'avviso':True}
+        return 'elenco_docenze.html', contesto
+        #return redirect(ERRORE_PERMESSI)
 
     pg_ef = int(pg_ef)
     if pg_ef <= 0:
@@ -2143,6 +2146,7 @@ def elenco_docenze(request, me, pg_ef=1, pg_in=1):
     pg_lista_inprogramma = p_lista_inprogramma.page(pg_in)
 
     contesto = {
+        'avviso': False,
         "data_docenze_effetuata": {
         "pagina": pg_ef,
         "pagine": p_lista_effetuata.num_pages,
@@ -2168,3 +2172,4 @@ def elenco_docenze(request, me, pg_ef=1, pg_in=1):
     }
 
     return 'elenco_docenze.html', contesto
+
