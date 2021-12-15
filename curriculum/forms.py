@@ -264,6 +264,7 @@ class FormAddCompetenzeSkills(autocomplete_light.ModelForm):
     skill = autocomplete_light.ModelMultipleChoiceField('SkillEsperienzeProfessionaliAutocompletamento', required=False)
     no_skill = forms.BooleanField(required=False)
     nuova_skill = forms.CharField(required=False)
+    attestato_file = forms.FileField(required=False)
 
     class Meta:
         model = TitoloPersonale
