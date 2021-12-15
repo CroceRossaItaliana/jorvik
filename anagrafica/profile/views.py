@@ -228,6 +228,8 @@ def _profilo_curriculum(request, me, persona):
                         "can_create_qualifica_cri": datetime.now() < datetime(2021, 12, 31, 23, 59, 59),
                         "not_upload_file": not_upload_file,
                     }
+                    messages.error(request,
+                                   "Tipo di file non supportato. Tipi di file supportati: csv, zip, rar, gif, png, jpg,  jpeg, tiff, rtf, pdf, ods, odt, doc, docx, xls, xlsx.")
                     return 'anagrafica_profilo_curriculum.html', context
 
                 qualifica_created = TitoloPersonale.crea_qualifica_regressa(persona=persona, to_responsabile=True, **cd)
@@ -239,8 +241,8 @@ def _profilo_curriculum(request, me, persona):
                 return redirect_url
 
             messages.success(request, "La qualifica non è stata inserita.")
-        elif modifica == ALTRE_QIALIFICHE:#no
-            not_upload_file=carica_titolo_studio(request, persona, redirect_url)
+        elif modifica == ALTRE_QIALIFICHE:
+            not_upload_file=carica_altri_titoli(request, persona, redirect_url)
         elif modifica == TITOLI_STUDIO:
             not_upload_file=carica_titolo_studio(request, persona, redirect_url)
         elif modifica == COMPETENZE_LINGUISTICHE:

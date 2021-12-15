@@ -34,6 +34,7 @@ def carica_titolo_studio(request, me, redirect_url):
                 tipo_titolo_di_studio=tipo_titolo_studio,
                 titolo=scuola_obbligo,
                 data_ottenimento=cd['data_ottenimento'],
+                attestato_file=cd['attestato_file']
                 #numero_brevetto=cd['numero_brevetto']
             )
             titolo_personale.save()
@@ -56,6 +57,7 @@ def carica_titolo_studio(request, me, redirect_url):
                 titolo=diploma_titolo,
                 tipo_titolo_di_studio=tipo_titolo_studio,
                 data_ottenimento=cd['data_ottenimento'],
+                attestato_file=cd['attestato_file']
                 #numero_brevetto=cd['numero_brevetto']
             )
             titolo_personale.save()
@@ -78,6 +80,7 @@ def carica_titolo_studio(request, me, redirect_url):
                 titolo=laurea_titolo,
                 tipo_titolo_di_studio=tipo_titolo_studio,
                 data_ottenimento=cd['data_ottenimento'],
+                attestato_file=cd['attestato_file']
                 #numero_brevetto=cd['numero_brevetto']
             )
             titolo_personale.save()
@@ -178,9 +181,10 @@ def carica_conoscenze_linguistiche(request, me, redirect_url):
 
     if form.is_valid():
         cd = form.cleaned_data
-        if validate_file_type(cd['attestato_file']) == False:
-            messages.error(request, 'File non supportato')
-            return redirect_url
+        if cd['attestato_file'] is not None:
+            if validate_file_type(cd['attestato_file']) == False:
+                messages.error(request, 'File non supportato')
+                return redirect_url
 
         if cd['no_lingua']:
             logger.info('Lingua campo libero')
@@ -217,9 +221,10 @@ def carica_esperienza_professionale(request, me, redirect_url):
     form = FormAddCompetenzeSkills(request.POST, request.FILES)
     if form.is_valid():
         cd = form.cleaned_data
-        if validate_file_type(cd['attestato_file']) == False:
-            messages.error(request, 'File non supportato')
-            return redirect_url
+        if cd['attestato_file'] is not None:
+            if validate_file_type(cd['attestato_file']) == False:
+                messages.error(request, 'File non supportato')
+                return redirect_url
 
         if cd['no_professione']:
             logger.info('Professione campo libero')
@@ -234,7 +239,7 @@ def carica_esperienza_professionale(request, me, redirect_url):
         else:
             professione = cd['professione']
 
-        if cd['no_professione']:
+        if cd['no_specializzazione']:
             logger.info('Specializzazione campo libero')
             specializzazione = TitoloSpecializzazione(
                 nome=cd['nuova_specializzazione'].capitalize(),
