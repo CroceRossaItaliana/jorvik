@@ -42,6 +42,7 @@ from .forms import (ModuloCreazioneCorsoBase, ModuloModificaLezione,
 from .classes import GeneraReport, GestioneLezioni, GeneraReportVolontari
 from .utils import costruisci_titoli, CalendarCorsi
 from .training_api import TrainingApi
+from formazione.validators import validate_file_type
 
 @pagina_privata
 def formazione(request, me):
@@ -1778,9 +1779,15 @@ def course_commissione_esame(request, me, pk):
             nominativi = [v for k, v in cd.items() if k.startswith('nominativo_') and v]
             esame_names = ', '.join(sorted(nominativi))
 
-            instance = form.save(commit=False)
-            instance.commissione_esame_names = esame_names
-            instance.save()
+            if validate_file_type(cd['commissione_esame_file']) == False:
+                messages.error(request, 'File non supportato')
+                print('File non supportato')
+                #return redirect_url
+
+            else:
+                instance = form.save(commit=False)
+                instance.commissione_esame_names = esame_names
+                instance.save()
 
             # Avvisa il presidente del comitato del corso
             nuovo_avviso = False
