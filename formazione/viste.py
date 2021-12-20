@@ -34,7 +34,8 @@ from .elenchi import ElencoPartecipantiCorsiBase
 from .decorators import can_access_to_course
 from .formsets import EventoFileFormSet, EventoLinkFormSet
 from .models import (Aspirante, Corso, CorsoBase, CorsoEstensione, LezioneCorsoBase,
-                     PartecipazioneCorsoBase, InvitoCorsoBase, RelazioneCorso, Evento, EventoLink, EventoFile, Aspiranti2014_2019)
+                     PartecipazioneCorsoBase, InvitoCorsoBase, RelazioneCorso, Evento, EventoLink, EventoFile,
+                     Aspiranti2014_2019)
 from .forms import (ModuloCreazioneCorsoBase, ModuloModificaLezione,
                     ModuloModificaCorsoBase, ModuloIscrittiCorsoBaseAggiungi, FormCommissioneEsame,
                     FormVerbaleCorso, FormRelazioneDelDirettoreCorso, ModuloCreazioneEvento, FiltraEvento,
@@ -43,9 +44,9 @@ from .classes import GeneraReport, GestioneLezioni, GeneraReportVolontari
 from .utils import costruisci_titoli, CalendarCorsi
 from .training_api import TrainingApi
 
+
 @pagina_privata
 def formazione(request, me):
-
     context = {
         "corsi": me.oggetti_permesso(GESTIONE_CORSO),
         "sedi": me.oggetti_permesso(GESTIONE_CORSI_SEDE),
@@ -1249,7 +1250,9 @@ def aspirante_home(request, me):
     if not me.ha_aspirante:
         return redirect(ERRORE_PERMESSI)
 
-    contesto = {}
+    corsi = me.aspirante.corsi().exclude(
+        tipo__in=[Corso.CORSO_NUOVO, Corso.CORSO_EQUIPOLLENZA, Corso.CORSO_ONLINE]).filter(stato=Corso.ATTIVO)
+    contesto = {'numero_corsi': len(corsi)}
     return 'aspirante_home.html', contesto
 
 
@@ -1263,6 +1266,7 @@ def aspirante_corsi(request, me):
 
     if me.ha_aspirante:
         corsi = me.aspirante.corsi().exclude(tipo__in=[Corso.CORSO_NUOVO, Corso.CORSO_EQUIPOLLENZA, Corso.CORSO_ONLINE])
+
     elif me.volontario or me.dipendente:
         mie_sedi = me.sedi_appartenenze_corsi
 
@@ -1307,9 +1311,11 @@ def aspirante_corsi(request, me):
 
     if search_query:
         corsi_attivi = corsi.filter(Q(Q(titolo_cri__nome__icontains=search_query) |
-                                      Q(titolo_cri__sigla__icontains=search_query)), stato=Corso.ATTIVO).order_by('data_inizio')
+                                      Q(titolo_cri__sigla__icontains=search_query)), stato=Corso.ATTIVO).order_by(
+            'data_inizio')
         corsi_frequentati = corsi_frequentati.filter(Q(Q(titolo_cri__nome__icontains=search_query) |
-                                                       Q(titolo_cri__sigla__icontains=search_query))).order_by('data_inizio')
+                                                       Q(titolo_cri__sigla__icontains=search_query))).order_by(
+            'data_inizio')
         corsi_iscritti = corsi_iscritti.filter(Q(Q(titolo_cri__nome__icontains=search_query) |
                                                  Q(titolo_cri__sigla__icontains=search_query))).order_by('data_inizio')
     else:
@@ -1348,11 +1354,12 @@ def aspirante_impostazioni(request, me):
 
 from django.shortcuts import render
 
+
 def conferma_email(request):
-    email=request.get_raw_uri().split('?email=')[-1]
+    email = request.get_raw_uri().split('?email=')[-1]
     aspiranti = Aspiranti2014_2019.objects.filter(email=email).first()
     context = {'ok': False}
-    
+
     if aspiranti:
         aspiranti.conferma_lettura = True
         aspiranti.save()
@@ -1360,9 +1367,12 @@ def conferma_email(request):
 
     return render(request, "messaggio_cortesia.html", context)
 
+
 import csv
 from django.http import HttpResponse
-def esporta_aspiranti_2014_2019(request):#esportali in csv
+
+
+def esporta_aspiranti_2014_2019(request):  # esportali in csv
     response = HttpResponse(
         content_type='text/csv',
     )
@@ -1373,7 +1383,6 @@ def esporta_aspiranti_2014_2019(request):#esportali in csv
     for i in aspiranti:
         writer.writerow([i.persona_id.id, i.nome, i.cognome, i.email, i.conferma_lettura])
     return response
-
 
 
 @pagina_privata
@@ -2114,6 +2123,7 @@ def evento_termina(request, me, pk):
 
     return redirect(evento.termina(), request=request)
 
+
 @pagina_privata
 def elenco_docenze(request, me, pg_ef=1, pg_in=1):
     """
@@ -2144,15 +2154,15 @@ def elenco_docenze(request, me, pg_ef=1, pg_in=1):
 
     contesto = {
         "data_docenze_effetuata": {
-        "pagina": pg_ef,
-        "pagine": p_lista_effetuata.num_pages,
-        "totale": p_lista_effetuata.count,
-        "ha_precedente": pg_lista_effetuata.has_previous(),
-        "ha_successivo": pg_lista_effetuata.has_next(),
-        "pagina_precedente": pg_ef - 1,
-        "pagina_successiva": pg_ef + 1,
-        "collapse": pg_ef > 1,
-        "lista_docenze_effetuata": pg_lista_effetuata.object_list
+            "pagina": pg_ef,
+            "pagine": p_lista_effetuata.num_pages,
+            "totale": p_lista_effetuata.count,
+            "ha_precedente": pg_lista_effetuata.has_previous(),
+            "ha_successivo": pg_lista_effetuata.has_next(),
+            "pagina_precedente": pg_ef - 1,
+            "pagina_successiva": pg_ef + 1,
+            "collapse": pg_ef > 1,
+            "lista_docenze_effetuata": pg_lista_effetuata.object_list
         },
         "data_docenze_inprogramma": {
             "pagina": pg_in,
