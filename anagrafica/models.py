@@ -2069,8 +2069,9 @@ class Appartenenza(ModelloSemplice, ConStorico, ConMarcaTemporale, ConAutorizzaz
     def save(self, *args, **kwargs):
         if self.membro == self.ESTESO:
             from datetime import datetime
-            if self.fine>datetime.today():
-                self.fine=None
+            if self.fine is not None:
+                if self.fine>datetime.today():
+                    self.fine=None
         super().save(*args, **kwargs)
 
 
