@@ -67,11 +67,10 @@
                                                     <span style="background-color: #c1bbbb; border-radius: 10px 10px 10px 10px; padding: 3px">{{ skill }}</span>
                                                 {% endfor %}
                                             {% endif %}
-                                                {% if t.attestato_file %}
-                                                <i class="fa fa-fw text-muted fa-file"></i> <a href="{{ t.attestato_file.url }}" download>
-                                                {% get_filename t.attestato_file %}</a><br/>
-                                                {% endif %}                                        </p>
-
+                                            {% if t.associated_to_a_course and t.is_course_title %} <!-- and not t.is_expired_course_title -->
+                                                <br><a href="{% url 'aspirante:report_schede' t.corso_partecipazione.corso.pk %}?download_single_attestato={{t.pk}}">Scarica attestato</a>
+                                            {% endif %}
+                                        </p>
                                         {% if t.certificato %}
                                             <span class="text-success">
                                                 <i class="fa fa-fw fa-asterisk"></i> Certificato
