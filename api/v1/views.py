@@ -69,8 +69,13 @@ def get_user_data(persona, filtered_for=None):
         'cognome': persona.cognome,
         'data_di_nascita': persona.data_nascita,
         'codice_fiscale': persona.codice_fiscale,
-        'email_utente': persona.utenza and persona.utenza.email or None,
+        'email_utente':  None,
     }
+
+    try:
+        dati['email_utente'] = persona.utenza.email
+    except:
+        pass
 
     if persona.email is not None:
         dati['email'] = persona.email
