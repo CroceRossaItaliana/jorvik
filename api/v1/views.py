@@ -50,7 +50,6 @@ class MioLogin(APIView):
         if user is not None:
             data = json.dumps(
                 {'_id': user.persona.id, 'token': user.qr_login_token()})
-            print(data)
             return HttpResponse(data, content_type="application/json")
         else:
             return HttpResponse(status=401)
