@@ -46,7 +46,9 @@ ISPETTORE_CM = 'IC'
 OFFICER_PRESIDENZA = 'OP'
 PRESIDENTE_COMMISSIONE = 'BP'
 MEMBRO_COMMISSIONE = 'BM'
-
+# Croci
+SEGRETARIO_GENERALE = 'SG'
+ISPETTORE = 'IS'
 
 
 OBIETTIVI = {
@@ -100,6 +102,8 @@ PERMESSI_NOMI = (
     (OFFICER_PRESIDENZA, "Officer presidenza"),
     (PRESIDENTE_COMMISSIONE, "Presidente della Commissione"),
     (MEMBRO_COMMISSIONE, "Membro della Commissione"),
+    (SEGRETARIO_GENERALE, "Segretario Generale"),
+    (ISPETTORE, "Ispettore"),
     #(RESPONSABILE_PATENTI,      "Responsabile Patenti"),
     #(RESPONSABILE_DONAZIONI,    "Responsabile Donazioni Sangue"),
 )
