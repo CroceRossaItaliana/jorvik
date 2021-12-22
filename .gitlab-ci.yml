@@ -106,7 +106,7 @@ deploy_provami:
   script:
     - docker-compose -f docker-compose-staging.yml -f docker-compose-provami.yml down -v
     - docker-compose -f docker-compose-staging.yml -f docker-compose-provami.yml up -d
-    - sleep 180
+    - sleep 600
     - docker-compose -f docker-compose-staging.yml -f docker-compose-provami.yml exec -T web python scramble.py --dati-di-esempio
     - docker-compose -f docker-compose-staging.yml -f docker-compose-provami.yml exec -T web python manage.py loaddata fixtures_data/formazione_titoli_cri_con_sigle.json
     - docker-compose -f docker-compose-staging.yml -f docker-compose-provami.yml restart proxy

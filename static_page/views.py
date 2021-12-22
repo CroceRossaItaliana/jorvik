@@ -20,6 +20,7 @@ from .monitoraggio import TypeFormResponses, TypeFormNonSonoUnBersaglio, NONSONO
     TypeFormResponsesFabbisogniFormativiRagionaleCheck, TypeFormResponsesAutocontrolloCheck, \
     TypeFormResponsesTrasparenzaCheckPubblica
 from datetime import datetime
+from anagrafica.costanti import area_roma_capitale_pk, area_roma_capitale_coordinamento_pk
 
 
 @pagina_privata
@@ -520,6 +521,8 @@ def monitora_autocontrollo(request, me):
             # )
             # typeform.get_responses_for_all_forms()
             # struttura[locale] = typeform.all_forms_are_completed
+            if locale.pk==area_roma_capitale_coordinamento_pk:
+                locale=Sede.objects.get(pk=area_roma_capitale_pk)
 
             typeform_db = TypeFormCompilati.objects.filter(
                 Q(tipo__icontains='auto') & Q(comitato__pk=locale.pk)).first()

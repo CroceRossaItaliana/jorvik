@@ -558,7 +558,9 @@ class Persona(ModelloSemplice, ConMarcaTemporale, ConAllegati, ConVecchioID):
             if self.dipendente:
                 utente_label = 'Utente'
             else:
-                num_corsi_base = self.aspirante.corsi().exclude(tipo=CorsoBase.CORSO_NUOVO).count()
+                num_corsi_base = self.aspirante.corsi().exclude(
+                    tipo__in = [CorsoBase.CORSO_NUOVO, CorsoBase.CORSO_EQUIPOLLENZA, CorsoBase.CORSO_ONLINE]
+                ).count()
                 utente_url, utente_label, utente_count = ('/aspirante/', 'Aspirante', num_corsi_base)
 
         all_menus = [
@@ -2068,8 +2070,9 @@ class Appartenenza(ModelloSemplice, ConStorico, ConMarcaTemporale, ConAutorizzaz
     def save(self, *args, **kwargs):
         if self.membro == self.ESTESO:
             from datetime import datetime
-            if self.fine>datetime.today():
-                self.fine=None
+            if self.fine is not None:
+                if self.fine>datetime.today():
+                    self.fine=None
         super().save(*args, **kwargs)
 
 
