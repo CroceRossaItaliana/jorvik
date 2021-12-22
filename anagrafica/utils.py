@@ -1,13 +1,96 @@
 # -*- coding: utf-8 -*-
 from __future__ import absolute_import, print_function, unicode_literals
 
+from datetime import datetime
+
+import requests
+from django.core.exceptions import ObjectDoesNotExist
 from django.template.loader import get_template
 from django.utils.timezone import now
 
-from anagrafica.models import Persona, Delega
+from anagrafica.models import Persona, Delega, Fototessera
 from anagrafica.permessi.applicazioni import DELEGATO_OBIETTIVO_5
 from base.utils import mezzanotte_24_ieri
+from curriculum.models import Titolo
+from jorvik.settings import ELASTIC_HOST, ELASTIC_QUICKPROFILE_INDEX, STATIC_PROD_BASEURL
 from posta.models import Messaggio
+from ufficio_soci.models import Tesserino
+
+
+def quick_profile_feeding(pp):
+    url = "{}/{}/_doc/".format(ELASTIC_HOST, ELASTIC_QUICKPROFILE_INDEX)
+
+    headers = {
+        'Content-Type': 'application/json'
+    }
+    aspirante = True if hasattr(pp, 'aspirante') else False
+
+    fototessera = Fototessera.objects.filter(persona=pp)
+    avatar = None
+    if fototessera.count() > 0:
+        avatar = fototessera.first().file.url
+
+    payload = {'_id': pp.id, 'nome': pp.nome, 'cognome': pp.cognome, 'sospeso': pp.sospeso,
+               'codice_fiscale': pp.codice_fiscale, 'data_nascita': '', 'data_accesso': '',
+               'dipendente': pp.dipendente, 'volontario': pp.volontario, 'aspirante': aspirante,
+               'avatar': STATIC_PROD_BASEURL + avatar if avatar else None, 'donatore': {}, 'seconda_lingua': 'ING'}
+
+    if hasattr(pp, 'donatore'):
+        payload['donatore'] = dict(gruppo_sanguigno=pp.donatore.gruppo_sanguigno,
+                                   fattore_rh=pp.donatore.fattore_rh,
+                                   fenotipo_rh=pp.donatore.fenotipo_rh)
+
+    payload['tesserino'] = []
+    try:
+        tesserini = pp.tesserini.filter(valido=True)  #Tesserino.objects.filter(valido=True, persona=pp.id)
+        if not tesserini:
+            # fake tesserino
+            appartenenza = pp.appartenenza_volontario.first()
+            comitato = appartenenza.sede if appartenenza else 'n/a'
+            _tesserino = dict(codice='n/a', data_scadenza='2099-12-31', comitato=str(comitato), comitato_indirizzo='n/a')
+            payload['tesserino'].append(_tesserino)
+        else:
+            for tesserino in tesserini:
+                appartenenza = pp.appartenenza_volontario.first()
+                if appartenenza:
+                    comitato = appartenenza.sede
+                    _tesserino = dict(codice=tesserino.codice, data_scadenza=str(tesserino.data_scadenza),
+                                      comitato=str(comitato),
+                                      comitato_indirizzo=str(comitato.locazione))
+                    payload['tesserino'].append(_tesserino)
+                    payload['seconda_lingua'] = comitato.seconda_lingua
+
+    except ObjectDoesNotExist as e:
+        payload['tesserino'] = []
+
+    prima_appartenenza = pp.appartenenze.first()
+    if prima_appartenenza:
+        payload['data_accesso'] = datetime.strftime(prima_appartenenza.inizio, '%Y-%m-%d')
+        payload['data_nascita'] = datetime.strftime(prima_appartenenza.inizio, '%Y-%m-%d')
+
+    _patenti = []
+
+    for _ in pp.titoli_personali.filter(titolo__tipo=Titolo.PATENTE_CIVILE):
+        _patenti.append(dict(tipo=str(_.titolo), # dict(Titolo.TIPO)[Titolo.PATENTE_CIVILE],
+                             data_ottenimento=str(_.data_ottenimento), data_scadenza=str(_.data_scadenza) if _.data_scadenza else ''))
+
+    _titoli_cri = []
+    for _ in pp.titoli_personali.filter(titolo__tipo=Titolo.TITOLO_CRI):
+        _titoli_cri.append(dict(tipo=str(_.titolo), # dict(Titolo.TIPO)[Titolo.TITOLO_CRI],
+                                data_ottenimento=str(_.data_ottenimento), data_scadenza=str(_.data_scadenza) if _.data_scadenza else ''))
+
+    _altri_titoli = []
+    for _ in pp.titoli_personali.filter(titolo__tipo=Titolo.ALTRI_TITOLI):
+        _altri_titoli.append(dict(tipo=str(_.titolo), # dict(Titolo.TIPO)[Titolo.ALTRI_TITOLI],
+                                  data_ottenimento=str(_.data_ottenimento), data_scadenza=str(_.data_scadenza) if _.data_scadenza else ''))
+
+    payload['patenti'] = _patenti
+    payload['titoli_cri'] = _titoli_cri
+    payload['altri_titoli'] = _altri_titoli
+
+    _id = payload.pop('_id')
+    response = requests.request("POST", url + str(_id), headers=headers, json=payload, verify=False)
+    print(response.text)
 
 
 def _richiesta_conferma_email(request, me, parametri, modulo):

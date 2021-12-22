@@ -51,6 +51,15 @@ from formazione.validators import (course_file_directory_path, validate_file_ext
                          delibera_file_upload_path, evento_file_directory_path)
 
 class Persona(ModelloSemplice, ConMarcaTemporale, ConAllegati, ConVecchioID):
+
+    def serialize(self):
+        return {
+            'email': self.email_utenza,
+            'name': self.nome,
+            'birthday': self.data_nascita
+        }
+
+
     # Genere
     MASCHIO = 'M'
     FEMMINA = 'F'

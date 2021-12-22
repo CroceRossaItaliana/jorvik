@@ -1,3 +1,8 @@
+import json
+
+import jwt
+from django.contrib.auth import authenticate, login
+from django.http import HttpResponse
 from rest_framework.views import APIView
 from rest_framework.response import Response
 from rest_framework import permissions
@@ -7,6 +12,49 @@ from api.settings import SCOPE_ANAGRAFICA_LETTURA_BASE, SCOPE_ANAGRAFICA_LETTURA
 
 from api.v1 import serializzatori
 from anagrafica.permessi.applicazioni import PERMESSI_NOMI_DICT
+from autenticazione.models import Utenza
+from jorvik.settings import CRI_APP_SECRET
+
+
+def validate_token(request):
+    token = request.data.get('token')
+    decode_token = jwt.decode(token, CRI_APP_SECRET, algorithms=['HS256'])
+    print("Token is still valid and active")
+    utenza = Utenza.objects.get(email=decode_token['email'])
+    data = json.dumps(
+        {'_id': utenza.persona.id, 'username': decode_token['email']})
+    return data
+
+class TokenLogin(APIView):
+    permission_classes = ()
+
+    def post(self, request):
+        try:
+            data = validate_token(request)
+            return HttpResponse(data, content_type="application/json")
+        except jwt.ExpiredSignatureError:
+            print("Token expired. Get new one")
+            return HttpResponse(status=401)
+        except jwt.InvalidTokenError:
+            print("Invalid Token")
+            return HttpResponse(status=401)
+
+class MioLogin(APIView):
+    permission_classes = ()
+
+    def post(self, request):
+        username = request.data.get('username')
+        password = request.data.get('password')
+        user = authenticate(username=username, password=password)
+
+        if user is not None:
+            data = json.dumps(
+                {'_id': user.persona.id, 'token': user.qr_login_token()})
+            print(data)
+            return HttpResponse(data, content_type="application/json")
+        else:
+            return HttpResponse(status=401)
+
 
 from anagrafica.models import Persona, Sede
 from posta.models import Messaggio

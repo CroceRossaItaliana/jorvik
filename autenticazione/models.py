@@ -1,5 +1,8 @@
 # coding=utf-8
+import calendar
+from datetime import datetime
 
+import jwt
 from django.contrib.auth.models import PermissionsMixin, BaseUserManager, AbstractBaseUser
 from django.contrib.contenttypes.models import ContentType
 from django.core import urlresolvers
@@ -8,11 +11,13 @@ from django.db import models
 from django.db.models import OneToOneField
 from django.utils.http import urlquote
 from django_otp import devices_for_user
+from future.backports.datetime import timedelta
 
 from anagrafica.validators import valida_email_personale
 from base.models import ModelloSemplice
 from base.stringhe import genera_uuid_casuale
 from base.tratti import ConMarcaTemporale
+from jorvik.settings import CRI_APP_SECRET, CRI_APP_TOKEN_EXPIRE
 from posta.models import Messaggio
 
 
@@ -133,3 +138,20 @@ class Utenza(PermissionsMixin, AbstractBaseUser, ConMarcaTemporale):
     @property
     def richiedi_attivazione_2fa(self):
         return self.richiedi_2fa and not list(devices_for_user(self))
+ 
+    def qr_login_token(self):
+        current_datetime = datetime.utcnow()
+
+        future_datetime = current_datetime + timedelta(minutes=CRI_APP_TOKEN_EXPIRE)
+        future_timetuple = future_datetime.timetuple()
+
+        exp = calendar.timegm(future_timetuple)
+
+        token = jwt.encode({"email": self.email, "exp": exp}, CRI_APP_SECRET, algorithm="HS256")
+
+        return token.decode('utf-8')
+
+    @property
+    def qr_login(self):
+        token = self.qr_login_token()
+        return 'gaiapp://login/' + token
