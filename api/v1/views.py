@@ -23,6 +23,9 @@ def validate_token(token, withAnagrafica=False):
     data =  {'_id': utenza.persona.id, 'username': decode_token['email']}
     if withAnagrafica:
         data.update(serializzatori.persona_anagrafica_completa(utenza.persona))
+        sedi = utenza.persona.sedi_deleghe_attuali()
+        if sedi:
+            data['sede_pk'] = sedi[0].pk
 
     return json.dumps(data)
 
