@@ -113,7 +113,7 @@ def pagina_privata(funzione=None, pagina=LOGIN_URL, permessi=[]):
         token_type, _, credentials = auth_header.partition(' ')
 
         if token_type == 'Bearer':
-            data = validate_token(request)
+            data = json.loads(validate_token(credentials))
             username = data['username']
             try:
                 user = Utenza.objects.get(email=username)

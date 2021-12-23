@@ -16,8 +16,7 @@ from autenticazione.models import Utenza
 from jorvik.settings import CRI_APP_SECRET
 
 
-def validate_token(request):
-    token = request.data.get('token')
+def validate_token(token):
     decode_token = jwt.decode(token, CRI_APP_SECRET, algorithms=['HS256'])
     print("Token is still valid and active")
     utenza = Utenza.objects.get(email=decode_token['email'])
@@ -30,7 +29,7 @@ class TokenLogin(APIView):
 
     def post(self, request):
         try:
-            data = validate_token(request)
+            data = validate_token(request.data.get('token'))
             return HttpResponse(data, content_type="application/json")
         except jwt.ExpiredSignatureError:
             print("Token expired. Get new one")
