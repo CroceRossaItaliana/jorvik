@@ -27,13 +27,6 @@ urlpatterns = [
     url(r'^documenti/zip/$', views.utente_documenti_zip, name='documenti_zip'),
     url(r'^documenti/cancella/(?P<pk>.*)/$', views.utente_documenti_cancella, name='remove_document'),
 
-    #Benemerenze
-    url(r'^benemerenze/$', views.utente_benemerenze, name='benemerenze'),
-
-    #Benemerenze
-    url(r'^croci/$', views.utente_croci, name='croci'),
-
-
     # Rubrica
     url(r'^rubrica/referenti/$', views.utente_rubrica_referenti),
     url(r'^rubrica/volontari/$', views.utente_rubrica_volontari),

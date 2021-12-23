@@ -2391,12 +2391,16 @@ def rimuovi_aspiranti_2018_2019(request, me):
 @pagina_privata
 def utente_benemerenze(request, me):
     return 'benemerenze_iframe.html', {
-        'url': ""
+        'titolo': 'Benemerenze',
+        'url': "http://localhost:8000",
+        'token': me.utenza.qr_login_token()
     }
 
 
 @pagina_privata
 def utente_croci(request, me):
     return 'benemerenze_iframe.html', {
-        'url': ""
+        'titolo': 'Croci',
+        'url': "http://localhost:8000",
+        'token': me.utenza.qr_login_token()
     }

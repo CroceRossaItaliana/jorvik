@@ -126,6 +126,12 @@ urlpatterns = [
 
     # REST api
     url(r'^api/', include('api.urls', namespace='api')),
+
+
+    # Benemerenze
+    url(r'^benemerenze/$', anagrafica.viste.utente_benemerenze, name='benemerenze'),
+    # Croci
+    url(r'^croci/$', anagrafica.viste.utente_croci, name='croci'),
 ]
 
 if DEBUG:

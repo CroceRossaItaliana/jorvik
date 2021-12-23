@@ -1,0 +1,33 @@
+{% extends "anagrafica_utente_vuota.html" %}
+
+{% load bootstrap3 %}
+{% load static %}
+{% load utils %}
+
+{% block pagina_titolo %}{{titolo}}{% endblock %}
+
+{% block pagina_css_extra %}
+    <style>
+        iframe {
+            width: 100%;
+            height: 100%;
+            border: none;
+        }
+    </style>
+    <script>
+        function resizeIframe(obj) {
+            obj.style.height = obj.contentWindow.document.documentElement.scrollHeight + 'px';
+        }
+    </script>
+{% endblock %}
+
+{% block menu_laterale %}
+{% endblock %}
+
+{% block app_contenuto %}
+    <iframe src="{{url}}?token={{token}}" 
+            frameborder="0" scrolling="no"
+            onload="resizeIframe(this)" />
+{% endblock %}
+
+{% block app_contenuto_col %}col-md-12{% endblock %}
