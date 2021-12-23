@@ -16,20 +16,24 @@ from autenticazione.models import Utenza
 from jorvik.settings import CRI_APP_SECRET
 
 
-def validate_token(token):
+def validate_token(token, withAnagrafica=False):
     decode_token = jwt.decode(token, CRI_APP_SECRET, algorithms=['HS256'])
     print("Token is still valid and active")
     utenza = Utenza.objects.get(email=decode_token['email'])
-    data = json.dumps(
-        {'_id': utenza.persona.id, 'username': decode_token['email']})
-    return data
+    data =  {'_id': utenza.persona.id, 'username': decode_token['email']}
+    if withAnagrafica:
+        data.update(serializzatori.persona_anagrafica_completa(utenza.persona))
+
+    return json.dumps(data)
+
 
 class TokenLogin(APIView):
     permission_classes = ()
 
     def post(self, request):
         try:
-            data = validate_token(request.data.get('token'))
+            withAnagrafica = request.data.get('withAnagrafica')
+            data = validate_token(request.data.get('token'), withAnagrafica)
             return HttpResponse(data, content_type="application/json")
         except jwt.ExpiredSignatureError:
             print("Token expired. Get new one")
@@ -37,6 +41,7 @@ class TokenLogin(APIView):
         except jwt.InvalidTokenError:
             print("Invalid Token")
             return HttpResponse(status=401)
+
 
 class MioLogin(APIView):
     permission_classes = ()
