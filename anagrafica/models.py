@@ -23,6 +23,7 @@ from formazione.utils import unique_signature
 from .costanti import (ESTENSIONE, TERRITORIALE, LOCALE, PROVINCIALE, REGIONALE, NAZIONALE)
 from .permessi.applicazioni import DELEGATO_AREA, DELEGATO_SO, CONSIGLIERE_GIOVANE_COOPTATO, CENTRO_FORMAZIONE_NAZIONALE
 from .permessi.applicazioni import OFFICER_PRESIDENZA, PRESIDENTE_COMMISSIONE, MEMBRO_COMMISSIONE
+from .permessi.applicazioni import PERMESSI_CROCI, PERMESSI_BENEMERENZE
 from .validators import (valida_codice_fiscale, ottieni_genere_da_codice_fiscale,
     valida_dimensione_file_8mb, valida_partita_iva, valida_dimensione_file_5mb,
     valida_iban, valida_email_personale) # valida_almeno_14_anni, crea_validatore_dimensione_file)
@@ -588,6 +589,8 @@ class Persona(ModelloSemplice, ConMarcaTemporale, ConAllegati, ConVecchioID):
              ],
             # [('/articoli/', 'Articoli', 'fa-newspaper'), True],
             [('/documenti/', 'Documenti', 'fa-folder'), True],
+            [('/benemerenze/', 'Benemerenze', 'fa-medal'), self.show_benemerenze],
+            [('/croci/', 'Croci', 'fa-medal'), self.show_croci],
         ]
 
         filter_items_to_display = filter(lambda x: x[1] == True, all_menus)
@@ -1346,7 +1349,19 @@ class Persona(ModelloSemplice, ConMarcaTemporale, ConAllegati, ConVecchioID):
             for delega in deleghe:
                 if delega.oggetto.estensione == REGIONALE:
                     return True
-
+    
+    @property
+    def show_benemerenze(self):
+        deleghe = self.deleghe_attuali(tipo__in=PERMESSI_BENEMERENZE)
+        if deleghe:
+            return True
+    
+    @property
+    def show_croci(self):
+        deleghe = self.deleghe_attuali(tipo__in=PERMESSI_CROCI)
+        if deleghe:
+            return True
+            
     @property
     def is_commissario_regionale(self):
         deleghe = self.deleghe_attuali(tipo=COMMISSARIO)
