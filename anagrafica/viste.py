@@ -2386,3 +2386,17 @@ def rimuovi_aspiranti_2018_2019(request, me):
         'count': len(qs_aspiranti),
         'to_delete': to_delete != None,
     }
+
+
+@pagina_privata
+def utente_benemerenze(request, me):
+    return 'benemerenze_iframe.html', {
+        'url': ""
+    }
+
+
+@pagina_privata
+def utente_croci(request, me):
+    return 'benemerenze_iframe.html', {
+        'url': ""
+    }
