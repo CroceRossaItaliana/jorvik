@@ -229,7 +229,7 @@ class UserAnagraficaBase(APIView):
 
     required_scopes = [SCOPE_ANAGRAFICA_LETTURA_BASE]
 
-    def get(self, request, format=None):
+    def post(self, request, format=None):
         userid = request.data.get('pk')
         dati = {}
 
@@ -250,7 +250,7 @@ class UserAnagraficaCompleta(APIView):
     required_scopes = [SCOPE_ANAGRAFICA_LETTURA_BASE,
                        SCOPE_ANAGRAFICA_LETTURA_COMPLETA]
 
-    def get(self, request, format=None):
+    def post(self, request, format=None):
         userid = request.data.get('pk')
         dati = {}
 
@@ -270,7 +270,7 @@ class UserAppartenenzeAttuali(APIView):
 
     required_scopes = [SCOPE_APPARTENENZE_LETTURA]
 
-    def get(self, request, format=None):
+    def post(self, request, format=None):
         userid = request.data.get('pk')
         dati = {}
 
@@ -316,7 +316,7 @@ class UserAppartenenzaCompleta(APIView):
                        SCOPE_ANAGRAFICA_LETTURA_COMPLETA,
                        SCOPE_APPARTENENZE_LETTURA]
 
-    def get(self, request, format=None):
+    def post(self, request, format=None):
         userid = request.data.get('pk')
         dati = {}
 
@@ -337,7 +337,7 @@ class SearchUserAppartenenzaCompleta(APIView):
                        SCOPE_ANAGRAFICA_LETTURA_COMPLETA,
                        SCOPE_APPARTENENZE_LETTURA]
 
-    def get(self, request, format=None):
+    def post(self, request, format=None):
         nome = request.data.get('nome')
         cognome = request.data.get('cognome')
         codice_fiscale = request.data.get('codice_fiscale')
@@ -377,7 +377,7 @@ class SearchUserByDelegaAppartenenzaCompleta(APIView):
                        SCOPE_ANAGRAFICA_LETTURA_COMPLETA,
                        SCOPE_APPARTENENZE_LETTURA]
 
-    def get(self, request, format=None):
+    def post(self, request, format=None):
         deleghe = request.data.get('deleghe')
         soggetto = request.data.get('soggetto')
         sede_livello = request.data.get('sede_livello')
