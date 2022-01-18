@@ -678,7 +678,7 @@ class Area(ModelloSemplice, ConMarcaTemporale, ConDelegati):
     SETTORI = (
         (1, 'Salute'),
         (2, 'Inclusione Sociale'),
-        (3, 'Operazione, Emergenza e Soccorso'),
+        (3, 'Operazioni, Emergenza e Soccorsi'),
         (4, 'Principi e Valori Umanitari'),
         (5, 'Coordinatore attività per i Giovani'),
         (6, 'Innovazione, Volontariato e Formazione'),
