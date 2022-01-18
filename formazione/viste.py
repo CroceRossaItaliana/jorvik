@@ -1891,6 +1891,8 @@ def aspirante_corso_base_annulla(request, me, pk):
         return redirect(ERRORE_PERMESSI)
 
     corso.annulla(me)
+    corso.docenti_corso().first()
+    #prendiamo tutte le partecipazioni ed mettiamo lo stato su annullato
 
     return redirect(reverse('formazione:index'))
 
