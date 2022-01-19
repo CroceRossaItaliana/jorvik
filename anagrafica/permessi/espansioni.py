@@ -310,7 +310,8 @@ def espandi_gestione_attivita(qs_attivita, al_giorno=None):
     try:
         return [
             (MODIFICA, qs_attivita),
-            (LETTURA, Persona.objects.filter(partecipazioni__turno__attivita__in=qs_attivita))
+            # GAIA-684
+            # (LETTURA, Persona.objects.filter(partecipazioni__turno__attivita__in=qs_attivita))
         ]
     except (AttributeError, ValueError, KeyError, TypeError):
         return []
