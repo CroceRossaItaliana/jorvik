@@ -9,6 +9,7 @@ stages:
   - restore_db
   - deploy
   - deploy_provami
+  - cleanup
 
 cache:
   key: ${CI_MERGE_REQUEST_ID}
@@ -94,9 +95,33 @@ fire_pr:
   environment:
     name: pr$CI_MERGE_REQUEST_ID
     url: https://pr$CI_MERGE_REQUEST_ID.staging.gaia.cri.it
+    on_stop: cleanup_pr
   only:
     - merge_requests
 
+cleanup_pr:
+  stage: cleanup
+  tags:
+    - staging
+  script:
+    - echo $CI_MERGE_REQUEST_ID
+    - pwd
+    - export PR=$(echo $CI_MERGE_REQUEST_ID)
+    - docker stop ${PR}_web ${PR}_proxy ${PR}_redis_1 ${PR}_sentinel01_1 ${PR}_celery ${PR}_pdf ${PR}_db
+    - docker rm ${PR}_web ${PR}_proxy ${PR}_redis_1 ${PR}_sentinel01_1 ${PR}_celery ${PR}_pdf ${PR}_db
+    - docker network rm ${PR}_default
+    - docker rmi gaia:${PR} ${PR}_pdf:latest ${PR}_proxy:latest
+    - cd $CI_BUILDS_DIR
+    - rm -rf $CI_PROJECT_DIR.tmp
+    - rm -rf $CI_PROJECT_DIR
+  environment:
+    name: pr$CI_MERGE_REQUEST_ID
+    action: stop
+  only:
+    - merge_requests
+  when: manual
+  allow_failure: true
+  
 deploy_provami:
   stage: deploy_provami
   tags:
@@ -106,7 +131,7 @@ deploy_provami:
   script:
     - docker-compose -f docker-compose-staging.yml -f docker-compose-provami.yml down -v
     - docker-compose -f docker-compose-staging.yml -f docker-compose-provami.yml up -d
-    - sleep 180
+    - sleep 600
     - docker-compose -f docker-compose-staging.yml -f docker-compose-provami.yml exec -T web python scramble.py --dati-di-esempio
     - docker-compose -f docker-compose-staging.yml -f docker-compose-provami.yml exec -T web python manage.py loaddata fixtures_data/formazione_titoli_cri_con_sigle.json
     - docker-compose -f docker-compose-staging.yml -f docker-compose-provami.yml restart proxy
