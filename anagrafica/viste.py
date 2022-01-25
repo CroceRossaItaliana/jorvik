@@ -2392,7 +2392,7 @@ def rimuovi_aspiranti_2018_2019(request, me):
 def utente_benemerenze(request, me):
     return 'benemerenze_iframe.html', {
         'titolo': 'Benemerenze',
-        'url': "http://localhost:8000",
+        'url': "https://ui-staging-gaia.cri.it/benemerenze",
         'token': me.utenza.qr_login_token()
     }
 
@@ -2401,6 +2401,6 @@ def utente_benemerenze(request, me):
 def utente_croci(request, me):
     return 'benemerenze_iframe.html', {
         'titolo': 'Croci',
-        'url': "http://localhost:8000",
+        'url': "https://ui-staging-gaia.cri.it/croci",
         'token': me.utenza.qr_login_token()
     }
