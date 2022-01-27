@@ -905,10 +905,9 @@ def utente_estensione(request, me):
 
     from datetime import datetime
     tempo = datetime.now()  # datetime(datetime.today().year, datetime.today().month, datetime.today().day, 23, 59, 59, 514463)
-    tempo="{}:{}:{}".format(tempo.hour, tempo.minute, tempo.second)
-
+    
     contesto = {
-        "adesso": tempo,
+        "adesso": tempo.strftime("%H:%M:%S"),
         "modulo": form,
         "storico": storico,
         "attuali": me.estensioni_attuali(),
@@ -927,14 +926,10 @@ def utente_estensione_termina(request, me, pk):
         return redirect(ERRORE_PERMESSI)
     else:
         from datetime import datetime
-        t=estensione.persona.appartenenze.last()
         tempo = datetime.now()#datetime(datetime.today().year, datetime.today().month, datetime.today().day, 23, 59, 59, 514463)
-        from time import sleep
-        sleep(0.05)
-        t.fine=tempo
-        #t.save()
         estensione.termina()
-        t.save()
+        estensione.appartenenza.fine=tempo
+        estensione.appartenenza.save()
         return redirect('/utente/')
 
 

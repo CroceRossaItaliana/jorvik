@@ -138,7 +138,7 @@
                                         <a href="{{ estensione.url_pdf }}" target="_blank">Scarica PDF</a>
                                         {% if estensione.attuale %}
                                         <a href="/utente/estensione/{{ estensione.pk }}/termina/"
-                                           data-conferma="L'estensione terminerà alle {{ adesso }}. Subito dopo potrai chiederne una nuova. Continuare?">
+                                           data-conferma="L'estensione terminerà alle {% now "H:i:s" %}. Subito dopo potrai chiederne una nuova. Continuare?">
                                             Termina
                                         </a>
                                         {% endif %}
