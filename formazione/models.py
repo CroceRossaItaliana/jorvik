@@ -26,6 +26,7 @@ from anagrafica.validators import (valida_dimensione_file_8mb, ValidateFileSize)
 from anagrafica.permessi.applicazioni import (DIRETTORE_CORSO, OBIETTIVI, PRESIDENTE, COMMISSARIO, RESPONSABILE_EVENTO)
 from anagrafica.permessi.incarichi import (INCARICO_ASPIRANTE, INCARICO_GESTIONE_CORSOBASE_PARTECIPANTI)
 from anagrafica.permessi.costanti import MODIFICA
+from attivita.models import Turno
 from base.files import PDF, Zip
 from base.geo import ConGeolocalizzazione, ConGeolocalizzazioneRaggio
 from base.utils import concept, poco_fa
@@ -1137,6 +1138,15 @@ class CorsoBase(Corso, ConVecchioID, ConPDF):
                 },
                 destinatari=[docente, ]
             )
+        
+        # rimozione turni
+        lezioni = self.lezioni.all()
+        for lezione in lezioni:
+            nome_turno = 'Docenza - {} - {}'.format(lezione.corso.nome, lezione.nome)
+            turno = Turno.objects.filter(nome=nome_turno).first()
+            if turno:
+                turno.delete()
+
 
         self.notifica_annullamento_corso()
 
