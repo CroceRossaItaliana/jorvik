@@ -1107,15 +1107,18 @@ def utente_riserva_ritira(request, me, pk):
     if not riserva.persona == me:
         return redirect(ERRORE_PERMESSI)
     riserva.autorizzazioni_ritira()
+    if riserva.persona.volontario==True:
+        destinatari=riserva.persona.deleghe.last().sede.last().presidente()
+    elif riserva.persona.volontario==False:
+        destinatari=riserva.persona.sede_riferimento().presidente()
     Messaggio.costruisci_e_invia(
-        oggetto="Riserva terminata",
+        oggetto="Riserva annullata",
         modello="email_richiesta_riserva_terminata.html",
         corpo={
             "riserva": riserva,
         },
         mittente=riserva.persona,
-        destinatari=[
-            riserva.persona.sede_riferimento().presidente()
+        destinatari=[destinatari
         ]
     )
     return redirect("/utente/")

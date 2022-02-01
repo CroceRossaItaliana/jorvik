@@ -39,7 +39,7 @@
                                 >
                                     <td>{{ r.inizio|date:"SHORT_DATE_FORMAT" }}</td>
                                     <td>{{ r.fine|date:"SHORT_DATE_FORMAT" }}</td>
-                                    <td>{{ r.esito}}</td>
+                                    <td>{{ r.esito }}</td>
                                     <td>
                                         <a href="{{ r.url_pdf }}" target="_blank">Scarica PDF</a>
                                         {% if r.esito == r.ESITO_PENDING %} -
