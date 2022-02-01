@@ -95,6 +95,7 @@ CRON_CLASSES = [
     "base.cron.CronRichiesteInAttesa",
     "base.cron.CronRichiesteTitoliRegressoInAttesa",
     "base.cron.PulisciAspirantiVolontari",
+    "base.cron.EmailAutomaticaFineRiserva",
     "anagrafica.cron.CronReportComitati",
     "centrale_operativa.cron.CronCancellaCoturniInvalidi",
     # 'curriculum.cron.CronCheckExpiredCourseTitles',
