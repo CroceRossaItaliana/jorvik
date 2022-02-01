@@ -1335,7 +1335,7 @@ def _presidente_sede_ruoli(sede):
              []),
             (DELEGATO_OBIETTIVO_2, "Inclusione Sociale", sede.delegati_attuali(tipo=DELEGATO_OBIETTIVO_2).count(),
              []),
-            (DELEGATO_OBIETTIVO_3, "Operazione, Emergenza e Soccorso", sede.delegati_attuali(tipo=DELEGATO_OBIETTIVO_3).count(),
+            (DELEGATO_OBIETTIVO_3, "Operazioni, Emergenza e Soccorsi", sede.delegati_attuali(tipo=DELEGATO_OBIETTIVO_3).count(),
              []),
             (DELEGATO_OBIETTIVO_4, "Principi e Valori Umanitari", sede.delegati_attuali(tipo=DELEGATO_OBIETTIVO_4).count(),
              []),
