@@ -139,10 +139,10 @@ class Utenza(PermissionsMixin, AbstractBaseUser, ConMarcaTemporale):
     def richiedi_attivazione_2fa(self):
         return self.richiedi_2fa and not list(devices_for_user(self))
  
-    def qr_login_token(self):
+    def qr_login_token(self, minutes=CRI_APP_TOKEN_EXPIRE):
         current_datetime = datetime.utcnow()
 
-        future_datetime = current_datetime + timedelta(minutes=CRI_APP_TOKEN_EXPIRE)
+        future_datetime = current_datetime + timedelta(minutes)
         future_timetuple = future_datetime.timetuple()
 
         exp = calendar.timegm(future_timetuple)

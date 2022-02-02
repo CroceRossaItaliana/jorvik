@@ -2393,7 +2393,7 @@ def utente_benemerenze(request, me):
     return 'benemerenze_iframe.html', {
         'titolo': 'Benemerenze',
         'url': "https://ui-staging-gaia.cri.it/benemerenze",
-        'token': me.utenza.qr_login_token()
+        'token': me.utenza.qr_login_token(120)
     }
 
 
@@ -2402,5 +2402,5 @@ def utente_croci(request, me):
     return 'benemerenze_iframe.html', {
         'titolo': 'Croci',
         'url': "https://ui-staging-gaia.cri.it/croci",
-        'token': me.utenza.qr_login_token()
+        'token': me.utenza.qr_login_token(120)
     }
