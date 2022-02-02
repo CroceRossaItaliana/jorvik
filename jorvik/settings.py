@@ -491,4 +491,4 @@ VISITE_ENABLED = False
 STATIC_PROD_BASEURL = os.environ.get('STATIC_PROD_BASEURL', 'https://datafiles.gaia.cri.it')
 
 CRI_APP_SECRET = 'cr1.@pp.s3cr3t'
-CRI_APP_TOKEN_EXPIRE = 5
+CRI_APP_TOKEN_EXPIRE = 120
