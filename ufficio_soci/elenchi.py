@@ -427,10 +427,14 @@ class ElencoEstesi(ElencoVistaSoci):
                     'creazione').first().destinazione
             else:
                 return p.appartenenze_attuali().filter(fine=None).first().sede
+        
+        def _data_inizio(p):
+            est = Estensione.objects.filter(persona=p.pk, ritirata=False).order_by(
+                'creazione').first()
+            return est.protocollo_data if est else ''
 
         return super(ElencoEstesi, self).excel_colonne() + (
-            ('Data inizio estensione', lambda p: Estensione.objects.filter(persona=p.pk, ritirata=False).order_by(
-                'creazione').first().protocollo_data),
+            ('Data inizio estensione', lambda p: _data_inizio(p)),
             ('Comitato di estensione', lambda p: _comitato(p)),
         )
 
@@ -467,18 +471,46 @@ class ElencoDimessi(ElencoVistaAnagrafica):
         ).distinct('cognome', 'nome', 'codice_fiscale')
 
     def excel_colonne(self):
+        qs_sedi = self.args[0]
+
+        def _dimissione(p):
+            return Dimissione.objects.filter(
+                persona=p.pk,
+                appartenenza__sede__in=qs_sedi
+            ).order_by('ultima_modifica').first()
+
+        def _appartenenza(p):
+            dim = _dimissione(p)
+            return dim.appartenenza if dim else None
+        
+        def _appartenenza_sede(p):
+            a = _appartenenza(p)
+            return a.sede if a else ''
+        
+        def _appartenenza_dimessa(p):
+            a = _appartenenza(p)
+            tipo = dict(Appartenenza.MEMBRO)
+            return tipo.get(a.membro, '') if a else ''
+
+        def _data_inizio_appartenenza(p):
+            a = _appartenenza(p)
+            return a.inizio if a else ''
+
         def _data(p):
-            dim = Dimissione.objects.filter(persona=p.pk).order_by('ultima_modifica').first()
+            dim = _dimissione(p)
             return dim.creazione if dim else ''
 
         def _motivo(p):
-            dim = Dimissione.objects.filter(persona=p.pk).order_by('ultima_modifica').first()
+            dim = _dimissione(p)
             motivi = dict(Dimissione.MOTIVI)
             return motivi[dim.motivo] if dim else ''
 
         return super(ElencoDimessi, self).excel_colonne() + (
+            ('Comitato di appartenenza', lambda p: _appartenenza_sede(p)),
+            ('Data inizio appartenenza', lambda p: _data_inizio_appartenenza(p)),
             ('Data dimissioni', lambda p: _data(p)),
-            ('Motivazioni', lambda p: _motivo(p))
+            ('Motivazioni', lambda p: _motivo(p)),
+            ('Appartenenza dimessa', lambda p: _appartenenza_dimessa(p))
         )
 
 
@@ -506,6 +538,7 @@ class ElencoTrasferiti(ElencoVistaAnagrafica):
         ).distinct('cognome', 'nome', 'codice_fiscale')
 
     def excel_colonne(self):
+
         def _data(p):
             d = Trasferimento.objects.filter(persona=p.id, ritirata=False).order_by('-id')
             return d.first().protocollo_data if d else ''
@@ -517,8 +550,27 @@ class ElencoTrasferiti(ElencoVistaAnagrafica):
         def _destinazione(p):
             d = Trasferimento.objects.filter(persona=p.id, ritirata=False).order_by('-id')
             return d.first().destinazione if d else ''
+        
+        def _appartenenza(p):
+            d = Trasferimento.objects.filter(persona=p.id, ritirata=False).order_by('-id')
+            a = None
+            if d:
+                a = d.first().appartenenza
+                if a and a.precedente:
+                    a = a.precedente
+            return a
+        
+        def _appartenenza_sede(p):
+            a = _appartenenza(p)
+            return a.sede if a else ''
+
+        def _data_inizio_appartenenza(p):
+            a = _appartenenza(p)
+            return a.inizio if a else ''
 
         return super(ElencoTrasferiti, self).excel_colonne() + (
+            ('Comitato di appartenenza', lambda p: _appartenenza_sede(p)),
+            ('Data inizio appartenenza', lambda p: _data_inizio_appartenenza(p)),
             ('Data del trasferimento', lambda p: _data(p)),
             ('Comitato di destinazione', lambda p: _destinazione(p)),
             ('Motivazione', lambda p: _motivo(p)),
