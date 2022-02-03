@@ -18,14 +18,17 @@
                     </div>
                     <div class="col-md-3">
                         <div class=" btn-group-vertical btn-group-sm btn-block">
-                            <a class="btn btn-success" href="{% autorizzazione_concedi_url richiesta %}"><i class="fa fa-fw fa-check"></i> {% richiesta_autorizzazione_button_text %}</a>
+                            <a class="btn btn-success" href="{% autorizzazione_concedi_url richiesta %}"
+                               onclick="return confirm('Sei sicuro di voler confermare la richiesta?')"><i class="fa fa-fw fa-check"></i> {% richiesta_autorizzazione_button_text %}</a>
 
                             {% richiesta_autorizzazione_button 'nega' as richiesta_autorizzazione_nega_button %}
                             {% if richiesta_autorizzazione_nega_button %}
                                 {% if richiesta.oggetto.titolo.tipo == 'TC' %}
-                                    <a class="btn btn-danger" href="/autorizzazioni/{{ richiesta.pk }}/nega/"><i class="fa fa-fw fa-times"></i> Respingi</a>
+                                    <a class="btn btn-danger" href="/autorizzazioni/{{ richiesta.pk }}/nega/"
+                                       onclick="return confirm('Sei sicuro di voler respingere la richiesta?')"><i class="fa fa-fw fa-times"></i> Respingi</a>
                                 {% else %}
-                                    <a class="btn btn-danger" href="/autorizzazioni/{{ richiesta.pk }}/nega/"><i class="fa fa-fw fa-times"></i> Nega</a>
+                                    <a class="btn btn-danger" href="/autorizzazioni/{{ richiesta.pk }}/nega/"
+                                       onclick="return confirm('Sei sicuro di voler negare la richiesta?')"><i class="fa fa-fw fa-times"></i> Nega</a>
                                 {% endif %}
                             {% endif %}
 

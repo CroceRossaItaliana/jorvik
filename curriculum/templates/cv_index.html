@@ -185,7 +185,7 @@
                         </h4>
                     </div>
                     <div class="panel-body">
-                        <form action="{% url 'cv:add_qualifica_altre' %}" method="POST" enctype="multipart/form-data">
+                        <form action="{% url 'cv:add_qualifica_altre' %}" method="POST" enctype="multipart/form-data" onsubmit="return confirm('Sei sicuro di voler confermare?')">
                             {% csrf_token %}
                             {% bootstrap_form form_add_altra_qualifica %}
                             <button type="submit" class="btn btn-sm btn-primary btn-block"><i class="fa fa-fw fa-check"></i> Aggiungi {{ tipo_display }}</button>
