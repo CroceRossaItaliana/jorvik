@@ -30,11 +30,13 @@ class Command(BaseCommand):
             s_sede = ComitatoSerializer(sede)
             data = s_sede.data
 
-            url = "{}/{}/_doc/{}?op_type=create".format(ELASTIC_HOST, ELASTIC_COMITATO_INDEX, data['id_comitato'])
+            url = "{}/{}/_doc/{}".format(ELASTIC_HOST, ELASTIC_COMITATO_INDEX, data['id_comitato'])
             headers = {
                 'Content-Type': 'application/json'
             }
-            response = requests.put(url, headers=headers, data=json.dumps(data), auth=HTTPBasicAuth(settings.ELASTIC_USER, settings.ELASTIC_PASSWORD))
+            response = requests.put(url, headers=headers, data=json.dumps(data),
+                                    auth=HTTPBasicAuth(settings.ELASTIC_USER, settings.ELASTIC_PASSWORD),
+                                    verify=False)
             if response.status_code == HTTPStatus.CREATED:
                 count_sedi += 1
             else:

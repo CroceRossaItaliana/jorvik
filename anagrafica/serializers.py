@@ -8,6 +8,22 @@ from curriculum.serializers import TitoloSerializer
 class SediSottostantiSerializer(serializers.ModelSerializer):
     id_comitato = serializers.SerializerMethodField('get_id')
     estensione = serializers.SerializerMethodField()
+    sede_legale = serializers.SerializerMethodField()
+    cf_piva = serializers.SerializerMethodField()
+    email = serializers.SerializerMethodField()
+    telefono = serializers.SerializerMethodField()
+
+    def get_sede_legale(self, instance):
+        return instance.locazione.indirizzo if instance.locazione else None
+
+    def get_cf_piva(self, instance):
+        return '{} {}'.format(instance.partita_iva, instance.codice_fiscale)
+
+    def get_email(self, instance):
+        return instance.email
+
+    def get_telefono(self, instance):
+        return instance.telefono
 
     def get_estensione(self, instance):
         return dict(ESTENSIONE)[instance.estensione]
@@ -17,7 +33,8 @@ class SediSottostantiSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = Sede
-        fields = ['id_comitato', 'nome', 'estensione', ]
+        fields = ['id_comitato', 'nome', 'estensione', 'sede_legale', 'cf_piva',
+                  'email', 'telefono']
 
 
 class ComitatoSerializer(serializers.ModelSerializer):
@@ -25,16 +42,33 @@ class ComitatoSerializer(serializers.ModelSerializer):
     estensione = serializers.SerializerMethodField()
     comitati_ids = serializers.ListField()
     comitati = SediSottostantiSerializer(read_only=True, many=True)
+    sede_legale = serializers.SerializerMethodField()
+    cf_piva = serializers.SerializerMethodField()
+    email = serializers.SerializerMethodField()
+    telefono = serializers.SerializerMethodField()
 
     def get_estensione(self, instance):
         return dict(ESTENSIONE)[instance.estensione]
+
+    def get_sede_legale(self, instance):
+        return instance.locazione.indirizzo if instance.locazione else None
+
+    def get_cf_piva(self, instance):
+        return '{} {}'.format(instance.partita_iva, instance.codice_fiscale)
+
+    def get_email(self, instance):
+        return instance.email
+
+    def get_telefono(self, instance):
+        return instance.telefono
 
     def get_id(self, instance):
         return instance.signature
 
     class Meta:
         model = Sede
-        fields = ['id_comitato', 'nome', 'estensione', 'comitati_ids', 'comitati']
+        fields = ['id_comitato', 'nome', 'estensione', 'comitati_ids', 'comitati', 'sede_legale', 'cf_piva',
+                  'email', 'telefono']
 
 
 class SedeSerializer(serializers.ModelSerializer):
