@@ -310,6 +310,8 @@ def attivita_storico(request, me):
     """
     Mostra uno storico delle attivita' a cui ho chiesto di partecipare/partecipato.
     """
+    from formazione.models import PartecipazioneCorsoBase
+
     storico = Partecipazione.objects.filter(persona=me).order_by('-turno__inizio')
     modulo = ModuloStatisticheAttivitaPersona(request.POST or None)
     statistiche = statistiche_attivita_persona(me, modulo)

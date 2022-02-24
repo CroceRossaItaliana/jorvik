@@ -2,9 +2,9 @@
 
 {% block corpo %}
 
-<p>Gentilissimi</p>
+<p class="grassetto">Ciao</p>
 <p>La richiesta di riserva del volontario <strong>{{ riserva.persona.nome_completo }}</strong> dal <strong> {{ riserva.inizio|date:"SHORT_DATETIME_FORMAT" }} </strong> al <strong> {{ riserva.fine|date:"SHORT_DATETIME_FORMAT" }} </strong> è stata <srong>annullata</srong> dal volontario stesso.</p>
 
-
+<p>Se pensi che ci sia stato un errore, ti invitiamo a rispondere a questa email indicandoci cosa c'è da correggere.</p>
 
 {% endblock %}

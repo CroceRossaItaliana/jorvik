@@ -123,7 +123,8 @@ class TrainingApi:
         utente = self.core_user_get_users_by_field(self._persona_mail(persona))
         corso = self.core_course_get_courses_by_field_shortname(corso.titolo_cri.sigla)
 
-        return self.enrol_manual_unenrol_users(utente['id'], corso['id'], self.DISCENTE)
+        if utente and corso:
+            return self.enrol_manual_unenrol_users(utente['id'], corso['id'], self.DISCENTE)
 
     def aggiugi_ruolo(self, persona, corso, ruolo):
         utente = self.core_user_get_users_by_field(self._persona_mail(persona))

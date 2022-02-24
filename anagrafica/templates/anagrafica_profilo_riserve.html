@@ -27,22 +27,18 @@
                     <th>Motivo</th>
                     <th>Azioni</th>
                 </thead>
+
                 <tbody>
 
                     {% for r in riserve %}
                         <tr>
-                            <td>{{ r|stato_riserva }}</td>
+                            <td>{{ r.esito }}</td>
                             <td>{{ r.inizio|date:"SHORT_DATE_FORMAT" }}</td>
                             <td>{{ r.fine|date:"SHORT_DATE_FORMAT" }}</td>
                             <td>{{ r.motivo }}</td>
-                            <td>
-                                {% if r.esito == r.ESITO_OK  and r.attuale and puo_modificare %}
-                                    <a href="/us/riserva/{{ r.pk }}/termina/"
-                                   data-conferma="Vuoi veramente terminare riserva?">
-                                    Termina Riserva
-                                    </a>
-                                {% endif %}
-                            </td>
+                                    <td>
+                                        <a href="{{ r.url_pdf }}" target="_blank">Scarica PDF</a>
+                                    </td>
                         </tr>
 
                     {% empty %}

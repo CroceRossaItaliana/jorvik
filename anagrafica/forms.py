@@ -333,7 +333,8 @@ class ModuloCreazioneDocumento(ModelForm):
         cd = self.cleaned_data
         type = cd['tipo']
 
-        if type in [Documento.CARTA_IDENTITA, Documento.PATENTE_CIVILE]:
+
+        if type in [Documento.CARTA_IDENTITA, Documento.PATENTE_CIVILE, Documento.PATENTE_CRI, Documento.PASSAPORTO, Documento.CODICE_FISCALE]:
             expires_error = None
             expires = cd.get('expires')
 

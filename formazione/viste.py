@@ -43,6 +43,7 @@ from .forms import (ModuloCreazioneCorsoBase, ModuloModificaLezione,
 from .classes import GeneraReport, GestioneLezioni, GeneraReportVolontari
 from .utils import costruisci_titoli, CalendarCorsi
 from .training_api import TrainingApi
+from formazione.validators import validate_file_type
 
 
 @pagina_privata
@@ -237,6 +238,7 @@ def formazione_corsi_base_domanda(request, me):
 def formazione_corsi_base_nuovo(request, me):
     if not me.ha_permesso(GESTIONE_CORSI_SEDE):
         return redirect(ERRORE_PERMESSI)
+
 
     now = datetime.now() + timedelta(days=14)
     form = ModuloCreazioneCorsoBase(
@@ -1786,61 +1788,65 @@ def course_commissione_esame(request, me, pk):
             nominativi = [v for k, v in cd.items() if k.startswith('nominativo_') and v]
             esame_names = ', '.join(sorted(nominativi))
 
-            instance = form.save(commit=False)
-            instance.commissione_esame_names = esame_names
-            instance.save()
+            if validate_file_type(cd['commissione_esame_file']) == False:
+                messages.error(request, 'File non supportato')
 
-            # Avvisa il presidente del comitato del corso
-            nuovo_avviso = False
-
-            oggetto = 'Inserimento della commissione di esame del corso %s' % corso.nome
-            modello = 'email_corso_avvisa_presidente_inserimento_commissione_esame.html'
-            corpo = {'corso': corso}
-
-            # Verifica se stesso messaggio non è stato ancora inviato
-            avvisi = Messaggio.objects.filter(oggetto=oggetto)
-            if not avvisi:
-                nuovo_avviso = True
             else:
-                email_body = get_template(modello).render(corpo)
-                ultimo_avviso_corpo = avvisi.last().corpo
-                ultimo_avviso_corpo = ultimo_avviso_corpo[
-                                      ultimo_avviso_corpo.find('|||') + 3:ultimo_avviso_corpo.find('===')]
+                instance = form.save(commit=False)
+                instance.commissione_esame_names = esame_names
+                instance.save()
 
-                if len(ultimo_avviso_corpo) != len(esame_names):
+                # Avvisa il presidente del comitato del corso
+                nuovo_avviso = False
+
+                oggetto = 'Inserimento della commissione di esame del corso %s' % corso.nome
+                modello = 'email_corso_avvisa_presidente_inserimento_commissione_esame.html'
+                corpo = {'corso': corso}
+
+                # Verifica se stesso messaggio non è stato ancora inviato
+                avvisi = Messaggio.objects.filter(oggetto=oggetto)
+                if not avvisi:
                     nuovo_avviso = True
+                else:
+                    email_body = get_template(modello).render(corpo)
+                    ultimo_avviso_corpo = avvisi.last().corpo
+                    ultimo_avviso_corpo = ultimo_avviso_corpo[
+                                          ultimo_avviso_corpo.find('|||') + 3:ultimo_avviso_corpo.find('===')]
 
-            if nuovo_avviso and me != corso.sede.presidente():
-                delegati_formazione = corso.sede.delegati_formazione()
-                Messaggio.costruisci_e_invia(
-                    oggetto=oggetto,
-                    modello=modello,
-                    corpo=corpo,
-                    destinatari=[corso.sede.presidente(), ]
-                )
+                    if len(ultimo_avviso_corpo) != len(esame_names):
+                        nuovo_avviso = True
 
-                # Notifica delegato formazione e presidente (Regionale)
-                destinatari = [
-                    corso.sede.sede_regionale.presidente(),  # Presidente Regionale
-                ]
-                Messaggio.costruisci_e_invia(
-                    oggetto=oggetto,
-                    modello=modello,
-                    corpo=corpo,
-                    destinatari=destinatari.extend(delegati_formazione)  # aggiunge delegati formazione regionale
-                )
+                if nuovo_avviso and me != corso.sede.presidente():
+                    delegati_formazione = corso.sede.delegati_formazione()
+                    Messaggio.costruisci_e_invia(
+                        oggetto=oggetto,
+                        modello=modello,
+                        corpo=corpo,
+                        destinatari=[corso.sede.presidente(), ]
+                    )
 
-                # MAIL delegato formazione
-                Messaggio.invia_raw(
-                    oggetto=oggetto,
-                    corpo_html=get_template(modello).render(corpo),
-                    email_mittente=Messaggio.NOREPLY_EMAIL,
-                    lista_email_destinatari=[destinatario.email for destinatario in delegati_formazione]
-                )
+                    # Notifica delegato formazione e presidente (Regionale)
+                    destinatari = [
+                        corso.sede.sede_regionale.presidente(),  # Presidente Regionale
+                    ]
+                    Messaggio.costruisci_e_invia(
+                        oggetto=oggetto,
+                        modello=modello,
+                        corpo=corpo,
+                        destinatari=destinatari.extend(delegati_formazione)  # aggiunge delegati formazione regionale
+                    )
 
-                messages.success(request, 'La commissione di esame è stata inserita correttamente.')
-                messages.success(request,
-                                 'Il presidente del comitato è stato avvisato del inserimento della commissione esame.')
+                    # MAIL delegato formazione
+                    Messaggio.invia_raw(
+                        oggetto=oggetto,
+                        corpo_html=get_template(modello).render(corpo),
+                        email_mittente=Messaggio.NOREPLY_EMAIL,
+                        lista_email_destinatari=[destinatario.email for destinatario in delegati_formazione]
+                    )
+
+                    messages.success(request, 'La commissione di esame è stata inserita correttamente.')
+                    messages.success(request,
+                                     'Il presidente del comitato è stato avvisato del inserimento della commissione esame.')
 
             return redirect(reverse('courses:commissione_esame', args=[pk]))
     else:
@@ -1891,6 +1897,8 @@ def aspirante_corso_base_annulla(request, me, pk):
         return redirect(ERRORE_PERMESSI)
 
     corso.annulla(me)
+    corso.docenti_corso().first()
+    #prendiamo tutte le partecipazioni ed mettiamo lo stato su annullato
 
     return redirect(reverse('formazione:index'))
 

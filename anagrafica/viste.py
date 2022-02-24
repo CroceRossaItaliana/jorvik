@@ -905,10 +905,9 @@ def utente_estensione(request, me):
 
     from datetime import datetime
     tempo = datetime.now()  # datetime(datetime.today().year, datetime.today().month, datetime.today().day, 23, 59, 59, 514463)
-    tempo="{}:{}:{}".format(tempo.hour, tempo.minute, tempo.second)
-
+    
     contesto = {
-        "adesso": tempo,
+        "adesso": tempo.strftime("%H:%M:%S"),
         "modulo": form,
         "storico": storico,
         "attuali": me.estensioni_attuali(),
@@ -927,14 +926,10 @@ def utente_estensione_termina(request, me, pk):
         return redirect(ERRORE_PERMESSI)
     else:
         from datetime import datetime
-        t=estensione.persona.appartenenze.last()
         tempo = datetime.now()#datetime(datetime.today().year, datetime.today().month, datetime.today().day, 23, 59, 59, 514463)
-        from time import sleep
-        sleep(0.05)
-        t.fine=tempo
-        #t.save()
         estensione.termina()
-        t.save()
+        estensione.appartenenza.fine=tempo
+        estensione.appartenenza.save()
         return redirect('/utente/')
 
 
@@ -1107,15 +1102,18 @@ def utente_riserva_ritira(request, me, pk):
     if not riserva.persona == me:
         return redirect(ERRORE_PERMESSI)
     riserva.autorizzazioni_ritira()
+    if riserva.persona.volontario==True:
+        destinatari=riserva.persona.deleghe.last().sede.last().presidente()
+    elif riserva.persona.volontario==False:
+        destinatari=riserva.persona.sede_riferimento().presidente()
     Messaggio.costruisci_e_invia(
-        oggetto="Riserva terminata",
+        oggetto="Riserva annullata",
         modello="email_richiesta_riserva_terminata.html",
         corpo={
             "riserva": riserva,
         },
         mittente=riserva.persona,
-        destinatari=[
-            riserva.persona.sede_riferimento().presidente()
+        destinatari=[destinatari
         ]
     )
     return redirect("/utente/")
@@ -1337,7 +1335,7 @@ def _presidente_sede_ruoli(sede):
              []),
             (DELEGATO_OBIETTIVO_2, "Inclusione Sociale", sede.delegati_attuali(tipo=DELEGATO_OBIETTIVO_2).count(),
              []),
-            (DELEGATO_OBIETTIVO_3, "Operazione, Emergenza e Soccorso", sede.delegati_attuali(tipo=DELEGATO_OBIETTIVO_3).count(),
+            (DELEGATO_OBIETTIVO_3, "Operazioni, Emergenza e Soccorsi", sede.delegati_attuali(tipo=DELEGATO_OBIETTIVO_3).count(),
              []),
             (DELEGATO_OBIETTIVO_4, "Principi e Valori Umanitari", sede.delegati_attuali(tipo=DELEGATO_OBIETTIVO_4).count(),
              []),
