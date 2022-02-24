@@ -1696,8 +1696,31 @@ class Persona(ModelloSemplice, ConMarcaTemporale, ConAllegati, ConVecchioID):
         return self.is_presidente or self.is_comissario or obbiettivi or itdg_meds
 
     @property
+    def is_ufficio_soci_regionale(self):
+        deleghe = self.deleghe_attuali(tipo__in=[UFFICIO_SOCI])
+        if deleghe:
+            for delega in deleghe:
+                if delega.oggetto.estensione == REGIONALE:
+                    return True
+        return False
+
+    @property
+    def is_delegato_dtr(self):
+        for delega in self.deleghe_attuali(tipo=DELEGATO_AREA):
+            if 'DTR'.lower() in delega.oggetto.__str__().lower():
+                return True
+        return False
+
+    @property
     def is_responsabile_formazione(self):
         return self.deleghe_attuali(tipo=RESPONSABILE_FORMAZIONE).exists()
+
+    @property
+    def can_create_qualifica_cri(self):
+        return self.is_presidente_o_commissario_regionale or \
+            self.is_ufficio_soci_regionale or \
+            self.is_delegato_dtr or \
+            self.is_responsabile_formazione_regionale
 
     @property
     def is_direttore(self):
