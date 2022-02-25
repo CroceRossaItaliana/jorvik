@@ -488,3 +488,15 @@ FORMAZIONE_MASSMAIL_CHUNK = 100
 FORMAZIONE_MASSMAIL_SLEEP = 5
 
 VISITE_ENABLED = False
+
+AUTH_PASSWORD_VALIDATORS = [
+    {
+        'NAME': 'django.contrib.auth.password_validation.UserAttributeSimilarityValidator',
+    },
+    {
+        'NAME': 'base.security.MaximumLengthValidator',
+        'OPTIONS': {
+            'max_length': 128
+        }
+    }
+]
