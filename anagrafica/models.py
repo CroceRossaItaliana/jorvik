@@ -21,7 +21,7 @@ from django_countries.fields import CountryField
 
 from formazione.utils import unique_signature
 from .costanti import (ESTENSIONE, TERRITORIALE, LOCALE, PROVINCIALE, REGIONALE, NAZIONALE)
-from .permessi.applicazioni import DELEGATO_AREA, DELEGATO_SO, CONSIGLIERE_GIOVANE_COOPTATO, CENTRO_FORMAZIONE_NAZIONALE
+from .permessi.applicazioni import DELEGATO_AREA, DELEGATO_SO, CONSIGLIERE_GIOVANE_COOPTATO, CENTRO_FORMAZIONE_NAZIONALE, UO_FORMAZIONE
 from .validators import (valida_codice_fiscale, ottieni_genere_da_codice_fiscale,
     valida_dimensione_file_8mb, valida_partita_iva, valida_dimensione_file_5mb,
     valida_iban, valida_email_personale) # valida_almeno_14_anni, crea_validatore_dimensione_file)
@@ -2522,6 +2522,9 @@ class Sede(ModelloAlbero, ConMarcaTemporale, ConGeolocalizzazione, ConVecchioID,
 
     def delegati_formazione_cfn(self):
         return self.comitato.delegati_attuali(tipo=CENTRO_FORMAZIONE_NAZIONALE, solo_deleghe_attive=True)
+
+    def delegati_uo_formazione(self):
+        return self.comitato.delegati_attuali(tipo=UO_FORMAZIONE, solo_deleghe_attive=True)
 
     def commissari(self):
         return self.comitato.delegati_attuali(tipo=COMMISSARIO, solo_deleghe_attive=True)

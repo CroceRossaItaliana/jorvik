@@ -535,9 +535,9 @@ class TitoloPersonale(ModelloSemplice, ConMarcaTemporale, ConAutorizzazioni):
         destinatari = sede_attuale.delegati_formazione()
         if qualifica_nuova.titolo.is_titolo_emergenza:
             destinatari = sede_attuale.delegati_formazione_cfn()
-        elif self.cdf_livello == Titolo.CDF_LIVELLO_IV:
-            # TODO destinatari = uo_formazione
-            pass
+        elif qualifica_nuova.titolo.cdf_livello == Titolo.CDF_LIVELLO_IV:
+            destinatari = sede_attuale.delegati_uo_formazione()
+        
         
         Messaggio.costruisci_e_accoda(
             oggetto="Inserimento su GAIA Qualifiche CRI: Volontario %s" % vo_nome_cognome,
