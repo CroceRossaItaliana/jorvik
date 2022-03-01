@@ -47,8 +47,10 @@ OFFICER_PRESIDENZA = 'OP'
 PRESIDENTE_COMMISSIONE = 'BP'
 MEMBRO_COMMISSIONE = 'BM'
 # Croci
-SEGRETARIO_GENERALE = 'SG'
+SEGRETARIO = 'SG'
 ISPETTORE = 'IS'
+# Sovvenzioni
+SUPERVISORE_MONITORAGGIO = 'SM'
 
 PERMESSI_BENEMERENZE = (
     ISPETTRICE_IIVV,
@@ -60,7 +62,7 @@ PERMESSI_BENEMERENZE = (
 )
 
 PERMESSI_CROCI = (
-    SEGRETARIO_GENERALE,
+    SEGRETARIO,
     ISPETTORE,
     OFFICER_PRESIDENZA,
     PRESIDENTE,
@@ -117,8 +119,9 @@ PERMESSI_NOMI = (
     (OFFICER_PRESIDENZA, "Officer presidenza"),
     (PRESIDENTE_COMMISSIONE, "Presidente della Commissione"),
     (MEMBRO_COMMISSIONE, "Membro della Commissione"),
-    (SEGRETARIO_GENERALE, "Segretario Generale"),
+    (SEGRETARIO, "Segretario"),
     (ISPETTORE, "Ispettore"),
+    (SUPERVISORE_MONITORAGGIO, "Supervisore monitoraggio"),
     #(RESPONSABILE_PATENTI,      "Responsabile Patenti"),
     #(RESPONSABILE_DONAZIONI,    "Responsabile Donazioni Sangue"),
 )

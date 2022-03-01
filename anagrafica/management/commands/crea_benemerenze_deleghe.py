@@ -5,7 +5,7 @@ from anagrafica.models import Persona
 from anagrafica.models import Delega
 from anagrafica.permessi.applicazioni import ISPETTRICE_IIVV, ISPETTORE_CM, OFFICER_PRESIDENZA
 from anagrafica.permessi.applicazioni import PRESIDENTE_COMMISSIONE, MEMBRO_COMMISSIONE
-from anagrafica.permessi.applicazioni import SEGRETARIO_GENERALE, ISPETTORE
+from anagrafica.permessi.applicazioni import SEGRETARIO, ISPETTORE, SUPERVISORE_MONITORAGGIO
 from base.utils import poco_fa
 
 
@@ -30,7 +30,11 @@ class Command(BaseCommand):
             {'userid': 23119, 'sede': 1, 'tipo': PRESIDENTE_COMMISSIONE, 'firma': 82741},
             {'userid': 82728, 'sede': 1, 'tipo': MEMBRO_COMMISSIONE, 'firma': 82741},
             {'userid': 55920, 'sede': 1, 'tipo': MEMBRO_COMMISSIONE, 'firma': 82741},
-            {'userid': 2937, 'sede': 1, 'tipo': SEGRETARIO_GENERALE, 'firma': 82741},
+            {'userid': 55920, 'sede': 1,
+                'tipo': SUPERVISORE_MONITORAGGIO, 'firma': 82741},
+            {'userid': 82728, 'sede': 1,
+                'tipo': SUPERVISORE_MONITORAGGIO, 'firma': 82741},
+            {'userid': 2937, 'sede': 1, 'tipo': SEGRETARIO, 'firma': 82741},
             {'userid': 320303, 'sede': 1, 'tipo': OFFICER_PRESIDENZA, 'firma': 82741},
             {'userid': 266562, 'sede': 1, 'tipo': ISPETTORE, 'firma': 82741},
             {'userid': 3254, 'sede': 1, 'tipo': ISPETTRICE_IIVV, 'firma': 82741},
