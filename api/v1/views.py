@@ -142,11 +142,15 @@ def get_user_data(persona, filtered_for=None):
     for delega in deleghe:
         estensione = None
         tipologia = None
+        appartenente_a = None
+        appartenente_a_pk = None
         toAdd = True
 
         if (isinstance(delega.oggetto, Sede)):
             estensione = delega.oggetto.estensione
             tipologia = delega.oggetto.tipo
+            appartenente_a = delega.oggetto.sede_regionale
+            appartenente_a_pk = delega.oggetto.sede_regionale.pk
 
         d_delega = {
             'id': delega.id,
@@ -156,6 +160,8 @@ def get_user_data(persona, filtered_for=None):
             'appartenenza_pk': delega.oggetto.pk,
             'appartenenza_estensione': estensione,
             'appartenenza_tipologia': tipologia,
+            'appartenente_a': appartenente_a,
+            'appartenente_a_pk': appartenente_a_pk,
         }
         if filtered_for:
             oggetto_pk = filtered_for.get('oggetto_pk')
