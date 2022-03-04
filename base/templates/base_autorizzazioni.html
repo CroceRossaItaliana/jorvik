@@ -31,21 +31,22 @@
                                        onclick="return confirm('Sei sicuro di voler negare la richiesta?')"><i class="fa fa-fw fa-times"></i> Nega</a>
                                 {% endif %}
                             {% endif %}
-
-                            {# Titolo.TITOLO_CRI #}
-                            {% if richiesta.oggetto.titolo.tipo == 'TC' %}
-                                {% if not richiesta.mail_verifica %}
-                                    <p style="padding-top:6px;">
-                                        <a href="{% url 'cv:notifica_comitato_regionale_dati_errati' richiesta.pk %}"><i class="fas fa-exclamation-circle"></i>
-                                            Comunicare al Comitato Regionale che i dati inseriti sono errati</a>
-                                    </p>
-                                {% else %}
-                                    <p style="padding-top:6px;">
-                                        <i class="fas fa-exclamation-circle"></i>
-                                        Comunicare al Comitato Regionale che i dati inseriti sono errati
-                                    </p>
+                            {% comment %}
+                                {# Titolo.TITOLO_CRI #}
+                                {% if richiesta.oggetto.titolo.tipo == 'TC' %}
+                                    {% if not richiesta.mail_verifica %}
+                                        <p style="padding-top:6px;">
+                                            <a href="{% url 'cv:notifica_comitato_regionale_dati_errati' richiesta.pk %}"><i class="fas fa-exclamation-circle"></i>
+                                                Comunicare al Comitato Regionale che i dati inseriti sono errati</a>
+                                        </p>
+                                    {% else %}
+                                        <p style="padding-top:6px;">
+                                            <i class="fas fa-exclamation-circle"></i>
+                                            Comunicare al Comitato Regionale che i dati inseriti sono errati
+                                        </p>
+                                    {% endif %}
                                 {% endif %}
-                            {% endif %}
+                            {% endcomment %}
                         </div>
                     </div>
                 </div>

@@ -4,7 +4,7 @@
   <p class="grassetto">Caro Responsabile della Formazione,</p>
 
   <p>
-    il Volontario {{ volontario.nome }} {{ volontario.cognome }} ha inserito su GAIA le seguenti informazioni e documenti:
+    per il Volontario {{ volontario.nome }} {{ volontario.cognome }}{% if creatore %}, {{ creatore }} ha inserito {% else %} sono state inserite {% endif %}su GAIA le seguenti informazioni e documenti:
     <ol>
       <li>Nome del Corso di formazione frequentato</li>
       <li>Data ottenimento qualifica</li>

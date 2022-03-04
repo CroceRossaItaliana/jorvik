@@ -963,6 +963,16 @@ class Persona(ModelloSemplice, ConMarcaTemporale, ConAllegati, ConVecchioID):
                     creazione__gte=delega_data_inizio)
 
         a = a.distinct('progressivo', 'oggetto_tipo_id', 'oggetto_id')
+
+        qualifiche_CRI_LIV_IV_to_remove = []
+        for richiesta in a.all():
+            if isinstance(richiesta.oggetto,TitoloPersonale):
+                if richiesta.oggetto.titolo.is_titolo_cri and richiesta.oggetto.titolo.cdf_livello==Titolo.CDF_LIVELLO_IV:
+                    if not self in richiesta.destinatario_oggetto.delegati_uo_formazione():
+                        qualifiche_CRI_LIV_IV_to_remove.append(richiesta.id)
+        if len(qualifiche_CRI_LIV_IV_to_remove)>0:
+            a = a.exclude(id__in=qualifiche_CRI_LIV_IV_to_remove)
+
         return Autorizzazione.objects.filter(pk__in=a.values_list('id', flat=True))
 
     def autorizzazioni_in_attesa(self):

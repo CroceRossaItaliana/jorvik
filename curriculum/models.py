@@ -538,12 +538,15 @@ class TitoloPersonale(ModelloSemplice, ConMarcaTemporale, ConAutorizzazioni):
         elif qualifica_nuova.titolo.cdf_livello == Titolo.CDF_LIVELLO_IV:
             destinatari = sede_attuale.delegati_uo_formazione()
         
-        
+        creatore = ''
+        if qualifica_nuova.creatore:
+            creatore = "%s %s" % (qualifica_nuova.creatore.nome, qualifica_nuova.creatore.cognome)
         Messaggio.costruisci_e_accoda(
             oggetto="Inserimento su GAIA Qualifiche CRI: Volontario %s" % vo_nome_cognome,
             modello="email_cv_qualifica_regressa_inserimento_mail_al_responsabile_formazione.html",
             corpo={
                 "volontario": me,
+                "creatore": creatore
             },
             mittente=None,
             destinatari=destinatari
