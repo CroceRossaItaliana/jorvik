@@ -149,7 +149,7 @@ def get_user_data(persona, filtered_for=None):
         if (isinstance(delega.oggetto, Sede)):
             estensione = delega.oggetto.estensione
             tipologia = delega.oggetto.tipo
-            appartenente_a = delega.oggetto.sede_regionale
+            appartenente_a = delega.oggetto.sede_regionale.nome
             appartenente_a_pk = delega.oggetto.sede_regionale.pk
 
         d_delega = {
