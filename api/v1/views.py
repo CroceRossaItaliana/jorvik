@@ -1,3 +1,7 @@
+from django.core.files.base import ContentFile
+import base64
+from posta.models import Messaggio
+from anagrafica.models import Persona, Sede
 import json
 
 import jwt
@@ -20,7 +24,7 @@ def validate_token(token, withAnagrafica=False):
     decode_token = jwt.decode(token, CRI_APP_SECRET, algorithms=['HS256'])
     print("Token is still valid and active")
     utenza = Utenza.objects.get(email=decode_token['email'])
-    data =  {'_id': utenza.persona.id, 'username': decode_token['email']}
+    data = {'_id': utenza.persona.id, 'username': decode_token['email']}
     if withAnagrafica:
         data.update(serializzatori.persona_anagrafica_completa(utenza.persona))
         sedi = utenza.persona.sedi_deleghe_attuali()
@@ -57,16 +61,10 @@ class MioLogin(APIView):
         if user is not None:
             data = json.dumps(
                 {'_id': user.persona.id, 'token': user.qr_login_token()})
-            
+
             return HttpResponse(data, content_type="application/json")
         else:
             return HttpResponse(status=401)
-
-
-from anagrafica.models import Persona, Sede
-from posta.models import Messaggio
-import base64
-from django.core.files.base import ContentFile
 
 
 # /me/anagrafica/base/
@@ -147,10 +145,11 @@ def get_user_data(persona, filtered_for=None):
         toAdd = True
 
         if (isinstance(delega.oggetto, Sede)):
+            sede_regionale = delega.oggetto.sede_regionale
             estensione = delega.oggetto.estensione
             tipologia = delega.oggetto.tipo
-            appartenente_a = delega.oggetto.sede_regionale.nome
-            appartenente_a_pk = delega.oggetto.sede_regionale.pk
+            appartenente_a = sede_regionale.nome if sede_regionale else appartenente_a
+            appartenente_a_pk = sede_regionale.pk if sede_regionale else appartenente_a_pk
 
         d_delega = {
             'id': delega.id,
@@ -171,7 +170,7 @@ def get_user_data(persona, filtered_for=None):
                 toAdd = False
             if oggetto_pk and oggetto_pk != delega.oggetto.pk:
                 toAdd = False
-            
+
         if toAdd:
             l_deleghe.append(d_delega)
 
@@ -291,7 +290,8 @@ class UserAppartenenzeAttuali(APIView):
             persona = Persona.objects.get(pk=userid)
             if persona:
                 appartenenze = persona.appartenenze_attuali()
-                appartenenze = [serializzatori.appartenenza(i) for i in appartenenze]
+                appartenenze = [serializzatori.appartenenza(
+                    i) for i in appartenenze]
                 dati = {"appartenenze": appartenenze}
 
         return Response(dati)
@@ -340,7 +340,9 @@ class UserAppartenenzaCompleta(APIView):
 
         return Response(dati)
 
-#http://localhost:8000/api/v1/search/users/
+# http://localhost:8000/api/v1/search/users/
+
+
 class SearchUserAppartenenzaCompleta(APIView):
     """
     Una vista che ritorna una persona, o un lista di persone, in base ai criteri di ricerca
@@ -359,24 +361,21 @@ class SearchUserAppartenenzaCompleta(APIView):
         dati = []
 
         if sede_id:
-            qs=Sede.objects.get(pk=sede_id).membri_attuali(figli=True)
+            qs = Sede.objects.get(pk=sede_id).membri_attuali(figli=True)
         else:
-            qs= Persona.objects.all()
+            qs = Persona.objects.all()
 
         if nome:
-            qs=qs.filter(nome__icontains=nome)
+            qs = qs.filter(nome__icontains=nome)
         if cognome:
-            qs=qs.filter(cognome__icontains=cognome)
+            qs = qs.filter(cognome__icontains=cognome)
         if codice_fiscale:
-            qs=qs.filter(codice_fiscale__iexact=codice_fiscale)
+            qs = qs.filter(codice_fiscale__iexact=codice_fiscale)
         if data_nascita:
-            qs=qs.filter(data_nascita=data_nascita)
+            qs = qs.filter(data_nascita=data_nascita)
 
         for persona in qs:
             dati.append(get_user_data_extended(persona))
-
-
-
 
         return Response(dati)
 
@@ -394,7 +393,7 @@ class SearchUserByDelegaAppartenenzaCompleta(APIView):
         deleghe = request.data.get('deleghe')
         soggetto = request.data.get('soggetto')
         sede_livello = request.data.get('sede_livello')
-        
+
         added = []
         dati = []
 
@@ -405,7 +404,7 @@ class SearchUserByDelegaAppartenenzaCompleta(APIView):
 
             if sede_livello == 'R':
                 sede = sede.sede_regionale
-            
+
             if sede_livello == 'N':
                 sede = Sede.objects.get(pk=1)
 
@@ -433,7 +432,7 @@ class SendMessage(APIView):
         mittente_pk = request.data.get('mittente')
         destinatari_pk = request.data.get('destinatari')
         allegati_b64 = request.data.get('allegati')
-        
+
         mittente = None
         destinatari = []
         allegati = []
@@ -442,7 +441,7 @@ class SendMessage(APIView):
             mittente = Persona.objects.get(pk=mittente_pk)
         if destinatari_pk:
             destinatari = Persona.objects.filter(pk__in=destinatari_pk).all()
-        
+
         if mittente and destinatari:
             Messaggio.costruisci_e_accoda(
                 oggetto=oggetto,
@@ -455,8 +454,6 @@ class SendMessage(APIView):
             )
 
         return Response()
-        
-
 
 
 # serializzatori._campo(comitato.estensione, comitato.get_estensione_display())
