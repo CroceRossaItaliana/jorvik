@@ -2548,7 +2548,7 @@ class LezioneCorsoBase(ModelloSemplice, ConMarcaTemporale, ConGiudizio, ConStori
                         destinatari.append(sede.sede_regionale.presidente())
 
                     if destinatari:
-                        oggetto = "%s è nominato come direttore/docente del corso %s" % (docente, self.nome)
+                        oggetto = "%s è nominato come docente del corso %s" % (docente, self.nome)
                         msg_already_sent = Messaggio.objects.filter(
                             oggetti_destinatario__persona__in=destinatari,
                             oggetto = oggetto).count()
