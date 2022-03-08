@@ -122,76 +122,82 @@ def monitoraggio_trasparenza(request, me):
     if True not in [me.is_comissario, me.is_presidente, me.is_delega_responsabile_area_trasparenza]: return redirect('/')
     if not hasattr(me, 'sede_riferimento'): return redirect('/')
 
-    request_comitato = request.GET.get('comitato')
-    if (me.is_comissario or me.is_presidente or me.is_delega_responsabile_area_trasparenza) and not request_comitato:
-        # GAIA-58: Seleziona comitato
-        if me.is_presidente:
-            deleghe = me.deleghe_attuali(tipo__in=[COMMISSARIO, PRESIDENTE])
-        elif me.is_comissario:
-            deleghe = me.deleghe_attuali(tipo__in=[COMMISSARIO])
-        else:
-            deleghe = [Sede.objects.get(pk=area.oggetto.sede.pk) for area in me.delege_responsabile_area_trasparenza]
+    return 'benemerenze_iframe.html', {
+        'titolo': 'Questionario L. 124/2017',
+        'url': "https://ui-staging-gaia.cri.it/sovvenzioni",
+        'token': me.utenza.qr_login_token(120)
+    }
 
-        return 'monitoraggio_choose_comitato.html', {
-            'deleghe': deleghe.distinct('oggetto_id') if me.is_comissario else deleghe,
-            'url': 'monitoraggio-trasparenza',
-            'titolo': 'Monitoraggio Trasparenza',
-            'target': MONITORAGGIO_TRASPARENZA
-        }
+    # request_comitato = request.GET.get('comitato')
+    # if (me.is_comissario or me.is_presidente or me.is_delega_responsabile_area_trasparenza) and not request_comitato:
+    #     # GAIA-58: Seleziona comitato
+    #     if me.is_presidente:
+    #         deleghe = me.deleghe_attuali(tipo__in=[COMMISSARIO, PRESIDENTE])
+    #     elif me.is_comissario:
+    #         deleghe = me.deleghe_attuali(tipo__in=[COMMISSARIO])
+    #     else:
+    #         deleghe = [Sede.objects.get(pk=area.oggetto.sede.pk) for area in me.delege_responsabile_area_trasparenza]
 
-    # Comitato selezionato, mostrare le form di typeform
-    context = dict()
-    typeform = TypeFormResponsesTrasparenza(request=request, me=me)
+    #     return 'monitoraggio_choose_comitato.html', {
+    #         'deleghe': deleghe.distinct('oggetto_id') if me.is_comissario else deleghe,
+    #         'url': 'monitoraggio-trasparenza',
+    #         'titolo': 'Monitoraggio Trasparenza',
+    #         'target': MONITORAGGIO_TRASPARENZA
+    #     }
 
-    # Make test request (API/connection availability, etc)
-    if not typeform.make_test_request_to_api:
-        context['can_compile'] = datetime.now() < datetime(2021, 6, 12, 0, 0)
-        return 'monitoraggio_trasparenza.html', context
+    # # Comitato selezionato, mostrare le form di typeform
+    # context = dict()
+    # typeform = TypeFormResponsesTrasparenza(request=request, me=me)
 
-    context['type_form'] = typeform.context_typeform
+    # # Make test request (API/connection availability, etc)
+    # if not typeform.make_test_request_to_api:
+    #     context['can_compile'] = datetime.now() < datetime(2021, 6, 12, 0, 0)
+    #     return 'monitoraggio_trasparenza.html', context
 
-    typeform.get_responses_for_all_forms()  # checks for already compiled forms
+    # context['type_form'] = typeform.context_typeform
 
-    is_done = False
-    typeform_id = request.GET.get('id', False)
-    if typeform_id:
-        typeform_ctx = context['type_form'][typeform_id]
-        is_done = typeform_ctx[0]
-        context['section'] = typeform_ctx
-        context['typeform_id'] = typeform_id
+    # typeform.get_responses_for_all_forms()  # checks for already compiled forms
 
-    if is_done:
-        context['is_done'] = True
+    # is_done = False
+    # typeform_id = request.GET.get('id', False)
+    # if typeform_id:
+    #     typeform_ctx = context['type_form'][typeform_id]
+    #     is_done = typeform_ctx[0]
+    #     context['section'] = typeform_ctx
+    #     context['typeform_id'] = typeform_id
 
-    delegha_list = []
-    deleghe = [a for a in me.deleghe_attuali().filter(tipo__in=[PRESIDENTE, COMMISSARIO, DELEGATO_AREA])]
-    for ogni_delegha in deleghe:
-        if ogni_delegha.oggetto_id == int(request_comitato):
-            delegha_list.append(ogni_delegha)
+    # if is_done:
+    #     context['is_done'] = True
 
-    if typeform.all_forms_are_completed == 1:
-        typeform_in_db = TypeFormCompilati.objects.filter(
-            Q(tipo='Questionario Trasparenza L. 124/2017') &
-            Q(comitato__pk=request_comitato))
-        if not typeform_in_db:
-            TypeFormCompilati.objects.create(
-                tipo='Questionario Trasparenza L. 124/2017',
-                comitato=Sede.objects.get(pk=int(request_comitato)),
-                persona=me,
-                delega=delegha_list[0].get_tipo_display()
-            )
+    # delegha_list = []
+    # deleghe = [a for a in me.deleghe_attuali().filter(tipo__in=[PRESIDENTE, COMMISSARIO, DELEGATO_AREA])]
+    # for ogni_delegha in deleghe:
+    #     if ogni_delegha.oggetto_id == int(request_comitato):
+    #         delegha_list.append(ogni_delegha)
 
-    context['can_compile'] = datetime.now() < datetime(2021, 6, 12, 0, 0)
-    context['comitato'] = typeform.comitato
-    context['user_comitato'] = typeform.comitato_id
-    context['user_id'] = typeform.get_user_pk
-    context['nome_comitato'] = context['comitato'].nome_completo
-    context['nome_regionale'] = context['comitato'].sede_regionale.nome_completo
-    context['all_forms_are_completed'] = typeform.all_forms_are_completed
+    # if typeform.all_forms_are_completed == 1:
+    #     typeform_in_db = TypeFormCompilati.objects.filter(
+    #         Q(tipo='Questionario Trasparenza L. 124/2017') &
+    #         Q(comitato__pk=request_comitato))
+    #     if not typeform_in_db:
+    #         TypeFormCompilati.objects.create(
+    #             tipo='Questionario Trasparenza L. 124/2017',
+    #             comitato=Sede.objects.get(pk=int(request_comitato)),
+    #             persona=me,
+    #             delega=delegha_list[0].get_tipo_display()
+    #         )
 
-    context['target'] = MONITORAGGIO_TRASPARENZA
+    # context['can_compile'] = datetime.now() < datetime(2021, 6, 12, 0, 0)
+    # context['comitato'] = typeform.comitato
+    # context['user_comitato'] = typeform.comitato_id
+    # context['user_id'] = typeform.get_user_pk
+    # context['nome_comitato'] = context['comitato'].nome_completo
+    # context['nome_regionale'] = context['comitato'].sede_regionale.nome_completo
+    # context['all_forms_are_completed'] = typeform.all_forms_are_completed
 
-    return 'monitoraggio_trasparenza.html', context
+    # context['target'] = MONITORAGGIO_TRASPARENZA
+
+    # return 'monitoraggio_trasparenza.html', context
 
 
 @pagina_privata
