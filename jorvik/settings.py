@@ -505,3 +505,6 @@ AUTH_PASSWORD_VALIDATORS = [
         }
     }
 ]
+
+ENABLE_BENEMERENZE = False
+ENABLE_CROCI = False
