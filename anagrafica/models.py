@@ -20,6 +20,7 @@ from django.utils.functional import cached_property
 from django_countries.fields import CountryField
 
 from formazione.utils import unique_signature
+from jorvik.settings import ENABLE_BENEMERENZE, ENABLE_CROCI
 from .costanti import (ESTENSIONE, TERRITORIALE, LOCALE, PROVINCIALE, REGIONALE, NAZIONALE)
 from .permessi.applicazioni import DELEGATO_AREA, DELEGATO_SO, CONSIGLIERE_GIOVANE_COOPTATO, CENTRO_FORMAZIONE_NAZIONALE
 from .permessi.applicazioni import OFFICER_PRESIDENZA, PRESIDENTE_COMMISSIONE, MEMBRO_COMMISSIONE
@@ -1352,15 +1353,17 @@ class Persona(ModelloSemplice, ConMarcaTemporale, ConAllegati, ConVecchioID):
     
     @property
     def show_benemerenze(self):
-        deleghe = self.deleghe_attuali(tipo__in=PERMESSI_BENEMERENZE)
-        if deleghe:
-            return True
+        if ENABLE_BENEMERENZE:
+            deleghe = self.deleghe_attuali(tipo__in=PERMESSI_BENEMERENZE)
+            if deleghe:
+                return True
     
     @property
     def show_croci(self):
-        deleghe = self.deleghe_attuali(tipo__in=PERMESSI_CROCI)
-        if deleghe:
-            return True
+        if ENABLE_CROCI:
+            deleghe = self.deleghe_attuali(tipo__in=PERMESSI_CROCI)
+            if deleghe:
+                return True
             
     @property
     def is_commissario_regionale(self):
