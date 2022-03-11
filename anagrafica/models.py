@@ -1669,7 +1669,7 @@ class Persona(ModelloSemplice, ConMarcaTemporale, ConAllegati, ConVecchioID):
         return delegato_area
     
     @property
-    def is_delegato_supervisore_monitoraggio(self):
+    def delegato_supervisore_monitoraggio(self):
         return self.deleghe_attuali(tipo=SUPERVISORE_MONITORAGGIO).first()
 
     @property
