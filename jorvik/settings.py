@@ -509,11 +509,13 @@ AUTH_PASSWORD_VALIDATORS = [
     }
 ]
 
-ENABLE_BENEMERENZE = False
-ENABLE_CROCI = False
 # REACT UI
 REACTUI_CONF = configparser.ConfigParser()
 REACTUI_CONF.read(REACTUI_CONF_FILE)
 
 REACT_UI_BASE_URL = REACTUI_CONF.get(
     'reactui', 'ui_url', fallback=os.environ.get("REACT_UI_BASE_URL"))
+ENABLE_BENEMERENZE = REACTUI_CONF.get(
+    'reactui', 'enable_benemerenze', fallback=os.environ.get("ENABLE_BENEMERENZE")) == 'True'
+ENABLE_CROCI = REACTUI_CONF.get(
+    'reactui', 'enable_croci', fallback=os.environ.get("ENABLE_CROCI")) == 'True'
