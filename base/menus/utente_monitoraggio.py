@@ -31,7 +31,7 @@ def menu_monitoraggio(me):
         ) else None,
         # ("Monitora Trasparenza L. 124/2017", 'fa-user', reverse('pages:monitora-trasparenza')) if
         ("Monitora Trasparenza L. 124/2017", 'fa-user', reverse('pages:monitoraggio-trasparenza')) if
-                me.delega_presidente_e_commissario_regionale or me.is_responsabile_area_monitoraggio_trasparenza or me.is_delgato_regionale_monitoraggio_trasparenza else None,
+        me.delega_presidente_e_commissario_regionale or me.is_responsabile_area_monitoraggio_trasparenza or me.is_delgato_regionale_monitoraggio_trasparenza or me.delegato_supervisore_monitoraggio else None,
         # ("Monitoraggio NON SONO UN BERSAGLIO", 'fa-user', link_bersaglio) if link_bersaglio else None,
     ))
 

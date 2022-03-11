@@ -22,7 +22,7 @@ from django_countries.fields import CountryField
 from formazione.utils import unique_signature
 from jorvik.settings import ENABLE_BENEMERENZE, ENABLE_CROCI
 from .costanti import (ESTENSIONE, TERRITORIALE, LOCALE, PROVINCIALE, REGIONALE, NAZIONALE)
-from .permessi.applicazioni import DELEGATO_AREA, DELEGATO_SO, CONSIGLIERE_GIOVANE_COOPTATO, CENTRO_FORMAZIONE_NAZIONALE
+from .permessi.applicazioni import DELEGATO_AREA, DELEGATO_SO, CONSIGLIERE_GIOVANE_COOPTATO, CENTRO_FORMAZIONE_NAZIONALE, SUPERVISORE_MONITORAGGIO
 from .permessi.applicazioni import OFFICER_PRESIDENZA, PRESIDENTE_COMMISSIONE, MEMBRO_COMMISSIONE
 from .permessi.applicazioni import PERMESSI_CROCI, PERMESSI_BENEMERENZE
 from .validators import (valida_codice_fiscale, ottieni_genere_da_codice_fiscale,
@@ -1667,6 +1667,10 @@ class Persona(ModelloSemplice, ConMarcaTemporale, ConAllegati, ConVecchioID):
             if 'Fabbisogni'.lower() in delega.oggetto.__str__().lower():
                 delegato_area = True
         return delegato_area
+    
+    @property
+    def is_delegato_supervisore_monitoraggio(self):
+        return self.deleghe_attuali(tipo=SUPERVISORE_MONITORAGGIO).first()
 
     @property
     def delega_responsabile_area_monitoraggio_trasparenza(self):
