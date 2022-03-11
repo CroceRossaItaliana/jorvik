@@ -1333,6 +1333,10 @@ class Persona(ModelloSemplice, ConMarcaTemporale, ConAllegati, ConVecchioID):
         return self.deleghe_attuali(tipo=PRESIDENTE).exists()
 
     @property
+    def is_supervisore_monitoraggio(self):
+        return self.deleghe_attuali(tipo=SUPERVISORE_MONITORAGGIO).exists()
+
+    @property
     def is_delegato_area(self):
         return self.deleghe_attuali(tipo=RESPONSABILE_AREA).exists()
 

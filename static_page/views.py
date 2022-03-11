@@ -120,7 +120,8 @@ def monitoraggio(request, me):
 
 @pagina_privata
 def monitoraggio_trasparenza(request, me):
-    if True not in [me.is_comissario, me.is_presidente, me.is_delega_responsabile_area_trasparenza]: return redirect('/')
+    if True not in [me.is_comissario, me.is_presidente, me.is_delega_responsabile_area_trasparenza, me.is_supervisore_monitoraggio]:
+        return redirect('/')
     if not hasattr(me, 'sede_riferimento'): return redirect('/')
 
     return 'benemerenze_iframe.html', {
