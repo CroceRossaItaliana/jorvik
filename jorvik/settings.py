@@ -139,7 +139,10 @@ DEBUG_CONF_FILE = 'config/debug.cnf' if os.path.isfile('config/debug.cnf') else 
 APIS_CONF_FILE = 'config/apis.cnf' if os.path.isfile('config/apis.cnf') else 'config/apis.cnf.sample'
 GENERAL_CONF_FILE = 'config/general.cnf' if os.path.isfile('config/general.cnf') else 'config/general.cnf.sample'
 CELERY_CONF_FILE = 'config/celery.cnf' if os.path.isfile('config/celery.cnf') else 'config/celery.cnf.sample'
-ELASTIC_CONF_FILE = 'config/elastic.cnf' if os.path.isfile('config/elastic.cnf') else 'config/elastic.cnf.sample'
+ELASTIC_CONF_FILE = 'config/elastic.cnf' if os.path.isfile(
+    'config/elastic.cnf') else 'config/elastic.cnf.sample'
+REACTUI_CONF_FILE = 'config/reactui.cnf' if os.path.isfile(
+    'config/reactui.cnf') else 'config/reactui.cnf.sample'
 
 # MySQL
 MYSQL_CONF = configparser.ConfigParser()
@@ -508,3 +511,9 @@ AUTH_PASSWORD_VALIDATORS = [
 
 ENABLE_BENEMERENZE = False
 ENABLE_CROCI = False
+# REACT UI
+REACTUI_CONF = configparser.ConfigParser()
+REACTUI_CONF.read(REACTUI_CONF_FILE)
+
+REACT_UI_BASE_URL = REACTUI_CONF.get(
+    'reactui', 'ui_url', fallback=os.environ.get("REACT_UI_BASE_URL"))

@@ -11,6 +11,7 @@ from anagrafica.costanti import REGIONALE, LOCALE, PROVINCIALE
 from anagrafica.models import Sede, Persona
 from autenticazione.funzioni import pagina_privata, pagina_pubblica
 from anagrafica.permessi.applicazioni import COMMISSARIO, PRESIDENTE, RESPONSABILE_FORMAZIONE, DELEGATO_AREA
+from jorvik.settings import REACT_UI_BASE_URL
 from .models import Page, TypeFormCompilati
 from .monitoraggio import TypeFormResponses, TypeFormNonSonoUnBersaglio, NONSONOUNBERSAGLIO, MONITORAGGIO, \
     MONITORAGGIOTYPE, MONITORAGGIO_TRASPARENZA, TypeFormResponsesTrasparenza, TypeFormResponsesTrasparenzaCheck, \
@@ -124,7 +125,7 @@ def monitoraggio_trasparenza(request, me):
 
     return 'benemerenze_iframe.html', {
         'titolo': 'Questionario L. 124/2017',
-        'url': "https://ui-staging-gaia.cri.it/sovvenzioni",
+        'url': "{}/sovvenzioni".format(REACT_UI_BASE_URL),
         'token': me.utenza.qr_login_token(120)
     }
 

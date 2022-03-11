@@ -2,6 +2,7 @@ import codecs, csv, datetime
 import re
 from collections import OrderedDict
 from importlib import import_module
+from jorvik.settings import REACT_UI_BASE_URL
 
 from posta.models import Messaggio
 
@@ -2390,7 +2391,7 @@ def rimuovi_aspiranti_2018_2019(request, me):
 def utente_benemerenze(request, me):
     return 'benemerenze_iframe.html', {
         'titolo': 'Benemerenze',
-        'url': "https://ui-staging-gaia.cri.it/benemerenze",
+        'url': "{}/benemerenze".format(REACT_UI_BASE_URL),
         'token': me.utenza.qr_login_token(120)
     }
 
@@ -2399,6 +2400,6 @@ def utente_benemerenze(request, me):
 def utente_croci(request, me):
     return 'benemerenze_iframe.html', {
         'titolo': 'Croci',
-        'url': "https://ui-staging-gaia.cri.it/croci",
+        'url': "{}/croci".format(REACT_UI_BASE_URL),
         'token': me.utenza.qr_login_token(120)
     }
