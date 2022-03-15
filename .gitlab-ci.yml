@@ -157,6 +157,7 @@ dump_db:
   script:
     - sudo service jorvik stop
     - sudo service nginx stop
+    - /home/appserver/venv/bin/pip install -r /home/appserver/jorvik/requirements.txt
   only:
     - release
   allow_failure: false
