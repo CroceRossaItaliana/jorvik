@@ -968,7 +968,8 @@ class Persona(ModelloSemplice, ConMarcaTemporale, ConAllegati, ConVecchioID):
         for richiesta in a.all():
             if isinstance(richiesta.oggetto,TitoloPersonale):
                 if richiesta.oggetto.titolo.is_titolo_cri and richiesta.oggetto.titolo.cdf_livello==Titolo.CDF_LIVELLO_IV:
-                    if not self in richiesta.destinatario_oggetto.delegati_uo_formazione():
+                    delegati_uo_formazione=richiesta.destinatario_oggetto.delegati_uo_formazione(genitori=True)
+                    if not self in delegati_uo_formazione:
                         qualifiche_CRI_LIV_IV_to_remove.append(richiesta.id)
         if len(qualifiche_CRI_LIV_IV_to_remove)>0:
             a = a.exclude(id__in=qualifiche_CRI_LIV_IV_to_remove)
@@ -2533,8 +2534,14 @@ class Sede(ModelloAlbero, ConMarcaTemporale, ConGeolocalizzazione, ConVecchioID,
     def delegati_formazione_cfn(self):
         return self.comitato.delegati_attuali(tipo=CENTRO_FORMAZIONE_NAZIONALE, solo_deleghe_attive=True)
 
-    def delegati_uo_formazione(self):
-        return self.comitato.delegati_attuali(tipo=UO_FORMAZIONE, solo_deleghe_attive=True)
+    def delegati_uo_formazione(self,genitori=False):
+        qs = self.comitato.delegati_attuali(tipo=UO_FORMAZIONE, solo_deleghe_attive=True)
+        if genitori:
+            qs = Q(id__in=qs)
+            for comitato in self.comitato.ottieni_superiori(solo_attivi=True).all():
+                qs = qs | Q(id__in=comitato.delegati_attuali(tipo=UO_FORMAZIONE, solo_deleghe_attive=True))
+            qs = Persona.objects.filter(qs)
+        return qs
 
     def commissari(self):
         return self.comitato.delegati_attuali(tipo=COMMISSARIO, solo_deleghe_attive=True)

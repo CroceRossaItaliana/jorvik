@@ -1,10 +1,8 @@
 {% extends 'email.html' %}
 
 {% block corpo %}
-  <p class="grassetto">Caro Responsabile della Formazione,</p>
-
   <p>
-    per il Volontario {{ volontario.nome }} {{ volontario.cognome }}{% if creatore %}, {{ creatore }} ha inserito {% else %} sono state inserite {% endif %}su GAIA le seguenti informazioni e documenti:
+    Per il Volontario {{ volontario.nome }} {{ volontario.cognome }}{% if creatore %}, {{ creatore }} ha inserito {% else %} sono state inserite {% endif %}su GAIA le seguenti informazioni e documenti:
     <ol>
       <li>Nome del Corso di formazione frequentato</li>
       <li>Data ottenimento qualifica</li>

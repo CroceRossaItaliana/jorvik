@@ -1,7 +1,7 @@
 from anagrafica.costanti import NAZIONALE, REGIONALE
 from anagrafica.permessi.applicazioni import (UFFICIO_SOCI, UFFICIO_SOCI_UNITA,
                                               DIRETTORE_CORSO, RESPONSABILE_FORMAZIONE, REFERENTE, REFERENTE_SERVIZI_SO,
-                                              COMMISSARIO, VICE_PRESIDENTE, PRESIDENTE, RESPONSABILE_EVENTO, CENTRO_FORMAZIONE_NAZIONALE)
+                                              COMMISSARIO, UO_FORMAZIONE, VICE_PRESIDENTE, PRESIDENTE, RESPONSABILE_EVENTO, CENTRO_FORMAZIONE_NAZIONALE)
 
 
 """
@@ -119,6 +119,12 @@ def espandi_incarichi_cfn(sede, al_giorno=None):
     return []
 
 
+def espandi_incarichi_uo_formazione(sede, al_giorno=None):
+    return [
+        (INCARICO_GESTIONE_TITOLI_CRI, sede.espandi(includi_me=True,pubblici=True))
+    ]
+
+
 def espandi_incarichi_responsabile_formazione(sede, al_giorno=None):
     from formazione.models import CorsoBase
     if sede.estensione == 'N':
@@ -164,6 +170,7 @@ ESPANSIONE_DELEGHE = {
     REFERENTE:              espandi_incarichi_referente_attivita,
     REFERENTE_SERVIZI_SO:   espandi_incarichi_referente_servizio,
     DIRETTORE_CORSO:        espandi_incarichi_direttore_corso,
+    UO_FORMAZIONE:          espandi_incarichi_uo_formazione,
     RESPONSABILE_FORMAZIONE:espandi_incarichi_responsabile_formazione,
     RESPONSABILE_EVENTO:    espandi_incarichi_responsabile_evento,
     CENTRO_FORMAZIONE_NAZIONALE: espandi_incarichi_cfn,

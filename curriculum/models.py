@@ -527,7 +527,7 @@ class TitoloPersonale(ModelloSemplice, ConMarcaTemporale, ConAutorizzazioni):
         qualifica_nuova.autorizzazione_richiedi_sede_riferimento(
             me,
             INCARICO_GESTIONE_TITOLI_CRI,
-            forza_sede_riferimento=sede_attuale
+            forza_sede_riferimento = sede_attuale
         )
 
         vo_nome_cognome = "%s %s" % (me.nome, me.cognome)
@@ -536,7 +536,7 @@ class TitoloPersonale(ModelloSemplice, ConMarcaTemporale, ConAutorizzazioni):
         if qualifica_nuova.titolo.is_titolo_emergenza:
             destinatari = sede_attuale.delegati_formazione_cfn()
         elif qualifica_nuova.titolo.cdf_livello == Titolo.CDF_LIVELLO_IV:
-            destinatari = sede_attuale.delegati_uo_formazione()
+            destinatari = sede_attuale.delegati_uo_formazione(genitori=True)
         
         creatore = ''
         if qualifica_nuova.creatore:
