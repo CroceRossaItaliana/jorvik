@@ -20,8 +20,11 @@ from django.utils.functional import cached_property
 from django_countries.fields import CountryField
 
 from formazione.utils import unique_signature
+from jorvik.settings import ENABLE_BENEMERENZE, ENABLE_CROCI
 from .costanti import (ESTENSIONE, TERRITORIALE, LOCALE, PROVINCIALE, REGIONALE, NAZIONALE)
-from .permessi.applicazioni import DELEGATO_AREA, DELEGATO_SO, CONSIGLIERE_GIOVANE_COOPTATO, CENTRO_FORMAZIONE_NAZIONALE
+from .permessi.applicazioni import DELEGATO_AREA, DELEGATO_SO, CONSIGLIERE_GIOVANE_COOPTATO, CENTRO_FORMAZIONE_NAZIONALE, SUPERVISORE_MONITORAGGIO
+from .permessi.applicazioni import OFFICER_PRESIDENZA, PRESIDENTE_COMMISSIONE, MEMBRO_COMMISSIONE
+from .permessi.applicazioni import PERMESSI_CROCI, PERMESSI_BENEMERENZE
 from .validators import (valida_codice_fiscale, ottieni_genere_da_codice_fiscale,
     valida_dimensione_file_8mb, valida_partita_iva, valida_dimensione_file_5mb,
     valida_iban, valida_email_personale) # valida_almeno_14_anni, crea_validatore_dimensione_file)
@@ -50,6 +53,15 @@ from formazione.validators import (course_file_directory_path, validate_file_ext
                          delibera_file_upload_path, evento_file_directory_path)
 
 class Persona(ModelloSemplice, ConMarcaTemporale, ConAllegati, ConVecchioID):
+
+    def serialize(self):
+        return {
+            'email': self.email_utenza,
+            'name': self.nome,
+            'birthday': self.data_nascita
+        }
+
+
     # Genere
     MASCHIO = 'M'
     FEMMINA = 'F'
@@ -578,6 +590,8 @@ class Persona(ModelloSemplice, ConMarcaTemporale, ConAllegati, ConVecchioID):
              ],
             # [('/articoli/', 'Articoli', 'fa-newspaper'), True],
             [('/documenti/', 'Documenti', 'fa-folder'), True],
+            [('/benemerenze/', 'Benemerenze', 'fa-medal'), self.show_benemerenze],
+            [('/croci/', 'Croci', 'fa-medal'), self.show_croci],
         ]
 
         filter_items_to_display = filter(lambda x: x[1] == True, all_menus)
@@ -1319,6 +1333,10 @@ class Persona(ModelloSemplice, ConMarcaTemporale, ConAllegati, ConVecchioID):
         return self.deleghe_attuali(tipo=PRESIDENTE).exists()
 
     @property
+    def is_supervisore_monitoraggio(self):
+        return self.deleghe_attuali(tipo=SUPERVISORE_MONITORAGGIO).exists()
+
+    @property
     def is_delegato_area(self):
         return self.deleghe_attuali(tipo=RESPONSABILE_AREA).exists()
 
@@ -1336,7 +1354,21 @@ class Persona(ModelloSemplice, ConMarcaTemporale, ConAllegati, ConVecchioID):
             for delega in deleghe:
                 if delega.oggetto.estensione == REGIONALE:
                     return True
-
+    
+    @property
+    def show_benemerenze(self):
+        if ENABLE_BENEMERENZE:
+            deleghe = self.deleghe_attuali(tipo__in=PERMESSI_BENEMERENZE)
+            if deleghe:
+                return True
+    
+    @property
+    def show_croci(self):
+        if ENABLE_CROCI:
+            deleghe = self.deleghe_attuali(tipo__in=PERMESSI_CROCI)
+            if deleghe:
+                return True
+            
     @property
     def is_commissario_regionale(self):
         deleghe = self.deleghe_attuali(tipo=COMMISSARIO)
@@ -1639,6 +1671,10 @@ class Persona(ModelloSemplice, ConMarcaTemporale, ConAllegati, ConVecchioID):
             if 'Fabbisogni'.lower() in delega.oggetto.__str__().lower():
                 delegato_area = True
         return delegato_area
+    
+    @property
+    def delegato_supervisore_monitoraggio(self):
+        return self.deleghe_attuali(tipo=SUPERVISORE_MONITORAGGIO).first()
 
     @property
     def delega_responsabile_area_monitoraggio_trasparenza(self):
@@ -2525,6 +2561,16 @@ class Sede(ModelloAlbero, ConMarcaTemporale, ConGeolocalizzazione, ConVecchioID,
     def consiglieri(self):
         delega_consiglieri = self.comitato.delegati_attuali(tipo=CONSIGLIERE, solo_deleghe_attive=True)
         return delega_consiglieri if delega_consiglieri else []
+
+    def delegati_benemerenze(self):
+        delegati = self.delegati_attuali(
+            tipo__in=[PRESIDENTE, OFFICER_PRESIDENZA], solo_deleghe_attive=True)
+        return delegati if delegati else []
+
+    def delegati_commissione(self):
+        delegati = self.delegati_attuali(
+            tipo__in=[PRESIDENTE_COMMISSIONE, MEMBRO_COMMISSIONE], solo_deleghe_attive=True)
+        return delegati if delegati else []
 
     def delegati_ufficio_soci(self):
         """

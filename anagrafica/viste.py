@@ -2,6 +2,7 @@ import codecs, csv, datetime
 import re
 from collections import OrderedDict
 from importlib import import_module
+from jorvik.settings import REACT_UI_BASE_URL
 
 from posta.models import Messaggio
 
@@ -2383,4 +2384,22 @@ def rimuovi_aspiranti_2018_2019(request, me):
     return 'anagrafica_aspiranti_2014_2017.html', {
         'count': len(qs_aspiranti),
         'to_delete': to_delete != None,
+    }
+
+
+@pagina_privata
+def utente_benemerenze(request, me):
+    return 'benemerenze_iframe.html', {
+        'titolo': 'Benemerenze',
+        'url': "{}/benemerenze".format(REACT_UI_BASE_URL),
+        'token': me.utenza.qr_login_token(120)
+    }
+
+
+@pagina_privata
+def utente_croci(request, me):
+    return 'benemerenze_iframe.html', {
+        'titolo': 'Croci',
+        'url': "{}/croci".format(REACT_UI_BASE_URL),
+        'token': me.utenza.qr_login_token(120)
     }

@@ -22,7 +22,7 @@ from .utils import calcola_scadenza, concept, iterabile
 from .forms import ModuloMotivoNegazione
 from .stringhe import GeneratoreNomeFile, genera_uuid_casuale
 from .tratti import ConMarcaTemporale
-
+from json_views.views import LazyJSONEncoder
 
 class ModelloSemplice(models.Model):
     """ Questa classe astratta rappresenta un Modello generico. """
@@ -1127,6 +1127,14 @@ class ConAllegati(models.Model):
         content_type_field='oggetto_tipo',
         object_id_field='oggetto_id'
     )
+
+    def serialize(self): 
+        serialized = LazyJSONEncoder.serialize_model(self, self)
+        allegati = []
+        for allegato in self.allegati.all():
+            allegati.append(LazyJSONEncoder.serialize_model(allegato, allegato))
+        serialized['allegati'] = allegati
+        return serialized
 
     class Meta:
         abstract = True
