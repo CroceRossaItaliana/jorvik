@@ -2897,6 +2897,27 @@ class Delega(ModelloSemplice, ConStorico, ConMarcaTemporale):
                     email_mittente=Messaggio.NOREPLY_EMAIL,
                     lista_email_destinatari=[destinatario.email, ]
                 )
+            #GAIA-685 : manda_al_presidente_regionale
+            if corso.cdf_level == Titolo.CDF_LIVELLO_IV:
+                oggetto = "%s è nominato come direttore di %s" % (self.persona.nome_completo, corso)
+                destinatario = sede.sede_regionale.presidente()
+                corpo = {
+                    "delega": self,
+                    "persona": self.persona,
+                    'corso': corso,
+                }
+                messaggi += [Messaggio.costruisci_e_invia(
+                    oggetto=oggetto,
+                    modello="email_delega_notifica_presidente_regionale_creazione_per_formazione.html",
+                    corpo=corpo,
+                    destinatari=[destinatario],
+                )]
+                Messaggio.invia_raw(
+                    oggetto=oggetto,
+                    corpo_html=get_template('email_delega_notifica_presidente_regionale_creazione_per_formazione.html').render(corpo),
+                    email_mittente=Messaggio.NOREPLY_EMAIL,
+                    lista_email_destinatari=[destinatario.email, ]
+                )
 
         return messaggi
 

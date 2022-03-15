@@ -2503,7 +2503,6 @@ class LezioneCorsoBase(ModelloSemplice, ConMarcaTemporale, ConGiudizio, ConStori
             if not esito:
                 destinatari = list()
                 for sede in docente.sedi_attuali(membro__in=[Appartenenza.VOLONTARIO]):
-
                     destinatari.append(sede.presidente())
 
                 if destinatari:
@@ -2541,6 +2540,41 @@ class LezioneCorsoBase(ModelloSemplice, ConMarcaTemporale, ConGiudizio, ConStori
                             email_mittente=Messaggio.NOREPLY_EMAIL,
                             lista_email_destinatari=[destinatario.email for destinatario in destinatari]
                         )
+                #GAIA-685 : manda_al_presidente_regionale
+                if self.corso.cdf_level == Titolo.CDF_LIVELLO_IV:
+
+                    destinatari = list()
+                    for sede in docente.sedi_attuali(membro__in=[Appartenenza.VOLONTARIO]):
+                        destinatari.append(sede.sede_regionale.presidente())
+
+                    if destinatari:
+                        oggetto = "%s è nominato come docente del corso %s" % (docente, self.nome)
+                        msg_already_sent = Messaggio.objects.filter(
+                            oggetti_destinatario__persona__in=destinatari,
+                            oggetto = oggetto).count()
+
+                        if not msg_already_sent:
+                            corpo = {
+                                "persona": docente,
+                                "corso": self.corso,
+                                'lezione': self,
+                            }
+                            # NOTIFICA
+                            Messaggio.costruisci_e_accoda(
+                                oggetto=oggetto,
+                                modello="email_corso_avvisa_presidente_regionale_docente_nominato_a_lezione.html",
+                                corpo=corpo,
+                                destinatari=destinatari
+                            )
+                            # MAIL
+                            Messaggio.invia_raw(
+                                oggetto=oggetto,
+                                corpo_html=get_template(
+                                    "email_corso_avvisa_presidente_regionale_docente_nominato_a_lezione.html"
+                                ).render(corpo),
+                                email_mittente=Messaggio.NOREPLY_EMAIL,
+                                lista_email_destinatari=[destinatario.email for destinatario in destinatari]
+                            )
 
     def get_full_scheda_lezioni(self):
         if hasattr(self, 'corso') and self.corso.titolo_cri and self.corso.titolo_cri.scheda_lezioni:
