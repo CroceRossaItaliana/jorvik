@@ -966,17 +966,16 @@ class Persona(ModelloSemplice, ConMarcaTemporale, ConAllegati, ConVecchioID):
 
         qualifiche_CRI_to_remove = []
         cache_delegati_uo_formazione = {}
-        for richiesta in a.all():
-            if isinstance(richiesta.oggetto,TitoloPersonale):
-                if richiesta.oggetto.titolo.is_titolo_cri:
-                    if richiesta.destinatario_oggetto.id in cache_delegati_uo_formazione:
-                        delegati_uo_formazione = cache_delegati_uo_formazione[richiesta.destinatario_oggetto.id]
-                    else:
-                        delegati_uo_formazione=richiesta.destinatario_oggetto.delegati_uo_formazione(genitori=True)
-                        cache_delegati_uo_formazione[richiesta.destinatario_oggetto.id] = delegati_uo_formazione
-                    if (richiesta.oggetto.titolo.cdf_livello==Titolo.CDF_LIVELLO_IV and not self in delegati_uo_formazione) or \
-                       (richiesta.oggetto.titolo.cdf_livello!=Titolo.CDF_LIVELLO_IV and self in delegati_uo_formazione):
-                        qualifiche_CRI_to_remove.append(richiesta.id)
+        for richiesta in a.filter(oggetto_tipo=ContentType.objects.get_for_model(TitoloPersonale)).all():
+            if richiesta.oggetto.titolo.is_titolo_cri:
+                if richiesta.destinatario_oggetto.id in cache_delegati_uo_formazione:
+                    delegati_uo_formazione = cache_delegati_uo_formazione[richiesta.destinatario_oggetto.id]
+                else:
+                    delegati_uo_formazione=richiesta.destinatario_oggetto.delegati_uo_formazione(genitori=True)
+                    cache_delegati_uo_formazione[richiesta.destinatario_oggetto.id] = delegati_uo_formazione
+                if (richiesta.oggetto.titolo.cdf_livello==Titolo.CDF_LIVELLO_IV and not self in delegati_uo_formazione) or \
+                    (richiesta.oggetto.titolo.cdf_livello!=Titolo.CDF_LIVELLO_IV and self in delegati_uo_formazione):
+                    qualifiche_CRI_to_remove.append(richiesta.id)
         if len(qualifiche_CRI_to_remove)>0:
             a = a.exclude(id__in=qualifiche_CRI_to_remove)
 
