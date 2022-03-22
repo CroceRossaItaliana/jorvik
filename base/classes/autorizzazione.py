@@ -92,6 +92,21 @@ class AutorizzazioneProcess:
         except:
             pass
 
+        creatore = qualifica.creatore
+        if creatore:
+            Messaggio.costruisci_e_accoda(
+                oggetto="Inserimento su GAIA Qualifiche CRI: %s" % volontario.nome_completo,
+                modello='email_cv_qualifica_presa_visione_al_presidente.html',
+                corpo = {
+                        "qualifica": qualifica,
+                        "volontario": volontario,
+                        "comitato": vo_sede
+                },
+                mittente=None,
+                destinatari=[creatore]
+            )
+
+
         # Al Volontario
         Messaggio.costruisci_e_accoda(
             oggetto="Inserimento negli Albi della Formazione CRI",

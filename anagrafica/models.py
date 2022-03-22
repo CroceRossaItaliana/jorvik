@@ -22,8 +22,8 @@ from django_countries.fields import CountryField
 from formazione.utils import unique_signature
 from jorvik.settings import ENABLE_BENEMERENZE, ENABLE_CROCI
 from .costanti import (ESTENSIONE, TERRITORIALE, LOCALE, PROVINCIALE, REGIONALE, NAZIONALE)
-from .permessi.applicazioni import DELEGATO_AREA, DELEGATO_SO, CONSIGLIERE_GIOVANE_COOPTATO, CENTRO_FORMAZIONE_NAZIONALE, SUPERVISORE_MONITORAGGIO
-from .permessi.applicazioni import OFFICER_PRESIDENZA, PRESIDENTE_COMMISSIONE, MEMBRO_COMMISSIONE
+from .permessi.applicazioni import DELEGATO_AREA, DELEGATO_SO, CONSIGLIERE_GIOVANE_COOPTATO, CENTRO_FORMAZIONE_NAZIONALE, UO_FORMAZIONE
+from .permessi.applicazioni import OFFICER_PRESIDENZA, PRESIDENTE_COMMISSIONE, MEMBRO_COMMISSIONE, SUPERVISORE_MONITORAGGIO
 from .permessi.applicazioni import PERMESSI_CROCI, PERMESSI_BENEMERENZE
 from .validators import (valida_codice_fiscale, ottieni_genere_da_codice_fiscale,
     valida_dimensione_file_8mb, valida_partita_iva, valida_dimensione_file_5mb,
@@ -977,6 +977,23 @@ class Persona(ModelloSemplice, ConMarcaTemporale, ConAllegati, ConVecchioID):
                     creazione__gte=delega_data_inizio)
 
         a = a.distinct('progressivo', 'oggetto_tipo_id', 'oggetto_id')
+
+        qualifiche_CRI_to_remove = []
+        cache_delegati_uo_formazione = {}
+        for richiesta in a.filter(oggetto_tipo=ContentType.objects.get_for_model(TitoloPersonale)).all():
+            if richiesta.oggetto:
+                if richiesta.oggetto.titolo.is_titolo_cri:
+                    if richiesta.destinatario_oggetto.id in cache_delegati_uo_formazione:
+                        delegati_uo_formazione = cache_delegati_uo_formazione[richiesta.destinatario_oggetto.id]
+                    else:
+                        delegati_uo_formazione=richiesta.destinatario_oggetto.delegati_uo_formazione(genitori=True)
+                        cache_delegati_uo_formazione[richiesta.destinatario_oggetto.id] = delegati_uo_formazione
+                    if (richiesta.oggetto.titolo.cdf_livello==Titolo.CDF_LIVELLO_IV and not self in delegati_uo_formazione) or \
+                        (richiesta.oggetto.titolo.cdf_livello!=Titolo.CDF_LIVELLO_IV and self in delegati_uo_formazione):
+                        qualifiche_CRI_to_remove.append(richiesta.id)
+        if len(qualifiche_CRI_to_remove)>0:
+            a = a.exclude(id__in=qualifiche_CRI_to_remove)
+
         return Autorizzazione.objects.filter(pk__in=a.values_list('id', flat=True))
 
     def autorizzazioni_in_attesa(self):
@@ -1732,8 +1749,31 @@ class Persona(ModelloSemplice, ConMarcaTemporale, ConAllegati, ConVecchioID):
         return self.is_presidente or self.is_comissario or obbiettivi or itdg_meds
 
     @property
+    def is_ufficio_soci_regionale(self):
+        deleghe = self.deleghe_attuali(tipo__in=[UFFICIO_SOCI])
+        if deleghe:
+            for delega in deleghe:
+                if delega.oggetto.estensione == REGIONALE:
+                    return True
+        return False
+
+    @property
+    def is_delegato_dtr(self):
+        for delega in self.deleghe_attuali(tipo=DELEGATO_AREA):
+            if 'DTR'.lower() in delega.oggetto.__str__().lower():
+                return True
+        return False
+
+    @property
     def is_responsabile_formazione(self):
         return self.deleghe_attuali(tipo=RESPONSABILE_FORMAZIONE).exists()
+
+    @property
+    def can_create_qualifica_cri(self):
+        return self.is_presidente_o_commissario_regionale or \
+            self.is_ufficio_soci_regionale or \
+            self.is_delegato_dtr or \
+            self.is_responsabile_formazione_regionale
 
     @property
     def is_direttore(self):
@@ -2536,6 +2576,15 @@ class Sede(ModelloAlbero, ConMarcaTemporale, ConGeolocalizzazione, ConVecchioID,
 
     def delegati_formazione_cfn(self):
         return self.comitato.delegati_attuali(tipo=CENTRO_FORMAZIONE_NAZIONALE, solo_deleghe_attive=True)
+
+    def delegati_uo_formazione(self,genitori=False):
+        qs = self.comitato.delegati_attuali(tipo=UO_FORMAZIONE, solo_deleghe_attive=True)
+        if genitori:
+            qs = Q(id__in=qs)
+            for comitato in self.comitato.ottieni_superiori(solo_attivi=True).all():
+                qs = qs | Q(id__in=comitato.delegati_attuali(tipo=UO_FORMAZIONE, solo_deleghe_attive=True))
+            qs = Persona.objects.filter(qs)
+        return qs
 
     def commissari(self):
         return self.comitato.delegati_attuali(tipo=COMMISSARIO, solo_deleghe_attive=True)

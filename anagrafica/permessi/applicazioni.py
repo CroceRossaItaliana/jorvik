@@ -8,6 +8,7 @@ COMMISSARIO = 'CM'
 CONSIGLIERE = 'CN'
 CONSIGLIERE_GIOVANE = 'CG'
 CONSIGLIERE_GIOVANE_COOPTATO = 'CC'
+UO_FORMAZIONE = 'UF'
 UFFICIO_SOCI = 'US'
 UFFICIO_SOCI_CM = 'UM'
 UFFICIO_SOCI_IIVV = 'IV'
@@ -87,6 +88,7 @@ PERMESSI_NOMI = (
     (CONSIGLIERE,               "Consigliere"),
     (CONSIGLIERE_GIOVANE,       "Consigliere Rappresentante dei Giovani"),
     (CONSIGLIERE_GIOVANE_COOPTATO,       "Consigliere Rappresentante dei Giovani Cooptato"),
+    (UO_FORMAZIONE,             "UO Formazione"),
     (UFFICIO_SOCI,              "Ufficio Soci"),
     (UFFICIO_SOCI_CM,           "Ufficio Soci corpo militare"),
     (UFFICIO_SOCI_IIVV,         "Ufficio Soci Infermiere volontarie"),

@@ -13,7 +13,7 @@ from attivita.stats import statistiche_attivita_persona
 from base.errori import (errore_generico, messaggio_generico,
                          errore_nessuna_appartenenza)
 from base.models import Log
-from curriculum.models import TitoloPersonale
+from curriculum.models import Titolo, TitoloPersonale
 from curriculum.utils import carica_altri_titoli, carica_titolo_studio, carica_conoscenze_linguistiche, \
     carica_esperienza_professionale
 from posta.models import Messaggio
@@ -201,6 +201,7 @@ def _profilo_riserve(request, me, persona):
 def _profilo_curriculum(request, me, persona):
     from curriculum.forms import FormAddQualificaCRI, FormAddTitoloStudio, FormAddAltreQualifica
     deleghe_list = me.deleghe_attuali(tipo__in=[PRESIDENTE, COMMISSARIO, UFFICIO_SOCI, UFFICIO_SOCI_IIVV, UFFICIO_SOCI_CM])
+    delega_crea_qualifica_cri = me.can_create_qualifica_cri
     puoi_modificare = me.permessi_almeno(oggetto=persona, minimo=LETTURA)
     non_puo_fare_niente = me.permessi_almeno(oggetto=persona, minimo=MODIFICA)
 
@@ -217,6 +218,7 @@ def _profilo_curriculum(request, me, persona):
             form = form(request.POST, request.FILES, me=persona)
             if form.is_valid():
                 cd = form.cleaned_data
+                cd['creatore']=me
                 if validate_file_type(request.FILES['attestato_file']) == False:
                     not_upload_file = True
                     context = {
@@ -225,7 +227,7 @@ def _profilo_curriculum(request, me, persona):
                         "sezione": "curriculum",
                         "puo_modificare": puoi_modificare if deleghe_list else non_puo_fare_niente,
                         "tipo_titolo": FORMS[modifica][1] if FORMS[modifica] else None,
-                        "can_create_qualifica_cri": datetime.now() < datetime(2021, 12, 31, 23, 59, 59),
+                        "can_create_qualifica_cri": delega_crea_qualifica_cri,
                         "not_upload_file": not_upload_file,
                     }
                     messages.error(request,
@@ -260,7 +262,7 @@ def _profilo_curriculum(request, me, persona):
         "sezione": "curriculum",
         "puo_modificare": puoi_modificare if deleghe_list else non_puo_fare_niente,
         "tipo_titolo": FORMS[modifica][1] if FORMS[modifica] else None,
-        "can_create_qualifica_cri": datetime.now() < datetime(2021, 12, 31, 23, 59, 59),
+        "can_create_qualifica_cri": delega_crea_qualifica_cri,
         "not_upload_file":not_upload_file,
     }
     return 'anagrafica_profilo_curriculum.html', context

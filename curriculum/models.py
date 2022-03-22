@@ -369,6 +369,11 @@ class TitoloPersonale(ModelloSemplice, ConMarcaTemporale, ConAutorizzazioni):
                                 related_name="titoli_personali",
                                 on_delete=models.CASCADE)
 
+    creatore = models.ForeignKey("anagrafica.Persona",
+                                related_name="titoli_personali_creati",
+                                blank=True, null=True,
+                                on_delete=models.CASCADE)
+
     NO = 'NO'
     INFERIORE_A_3 = 'I3'
     CUMULATIVO_3_6 = 'C6'
@@ -522,7 +527,7 @@ class TitoloPersonale(ModelloSemplice, ConMarcaTemporale, ConAutorizzazioni):
         qualifica_nuova.autorizzazione_richiedi_sede_riferimento(
             me,
             INCARICO_GESTIONE_TITOLI_CRI,
-            forza_sede_riferimento=sede_attuale
+            forza_sede_riferimento = sede_attuale
         )
 
         vo_nome_cognome = "%s %s" % (me.nome, me.cognome)
@@ -530,12 +535,18 @@ class TitoloPersonale(ModelloSemplice, ConMarcaTemporale, ConAutorizzazioni):
         destinatari = sede_attuale.delegati_formazione()
         if qualifica_nuova.titolo.is_titolo_emergenza:
             destinatari = sede_attuale.delegati_formazione_cfn()
+        elif qualifica_nuova.titolo.cdf_livello == Titolo.CDF_LIVELLO_IV:
+            destinatari = sede_attuale.delegati_uo_formazione(genitori=True)
         
+        creatore = ''
+        if qualifica_nuova.creatore:
+            creatore = "%s %s" % (qualifica_nuova.creatore.nome, qualifica_nuova.creatore.cognome)
         Messaggio.costruisci_e_accoda(
             oggetto="Inserimento su GAIA Qualifiche CRI: Volontario %s" % vo_nome_cognome,
             modello="email_cv_qualifica_regressa_inserimento_mail_al_responsabile_formazione.html",
             corpo={
                 "volontario": me,
+                "creatore": creatore
             },
             mittente=None,
             destinatari=destinatari

@@ -2,7 +2,6 @@ import os
 from datetime import datetime, timedelta
 from dateutil.relativedelta import relativedelta
 
-
 from jorvik import settings
 from django.contrib.contenttypes.fields import GenericRelation, GenericForeignKey
 from django.contrib.contenttypes.models import ContentType
@@ -303,11 +302,14 @@ class Autorizzazione(ModelloSemplice, ConMarcaTemporale):
                 self.oggetto.save()
             else:
                 destinatari = [self.richiedente]
+        if self.oggetto.titolo.tipo==self.oggetto.titolo.TITOLO_CRI:
+            #destinatari = [self.richiedente]
+            if self.oggetto.creatore:
+                destinatari.append(self.oggetto.creatore)
         corpo = {
             "richiesta": self,
             "firmatario": self.firmatario,
             "giorni": self.giorni_automatici,
-            
         }
         if aggiunte_corpo:
             corpo.update(aggiunte_corpo)
