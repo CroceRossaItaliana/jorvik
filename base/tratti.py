@@ -15,6 +15,7 @@ from django.contrib.contenttypes.models import ContentType
 from django.db import models
 from django.db.models import Q
 from django.utils import timezone
+from json_views.views import LazyJSONEncoder
 
 from anagrafica.costanti import ESTENSIONE, ESTENSIONE_MINORE
 from .utils import concept, poco_fa
@@ -197,6 +198,14 @@ class ConDelegati(models.Model):
         content_type_field='oggetto_tipo',
         object_id_field='oggetto_id'
     )
+
+    def serialize(self): 
+        serialized = LazyJSONEncoder.serialize_model(self, self)
+        deleghe = []
+        for delega in self.deleghe.all():
+            deleghe.append(LazyJSONEncoder.serialize_model(delega, delega))
+        serialized['deleghe'] = deleghe
+        return serialized
 
     def deleghe_attuali(self, al_giorno=None, solo_attive=False, **kwargs):
         """

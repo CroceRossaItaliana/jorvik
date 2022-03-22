@@ -1,3 +1,4 @@
+from base64 import encode
 from html import unescape
 
 from autoslug import AutoSlugField
@@ -77,7 +78,8 @@ class Articolo(ModelloSemplice, ConMarcaTemporale, ConAllegati):
 
     def get_absolute_url(self):
         return reverse('articoli:dettaglio', kwargs={'articolo_slug': self.slug})
-
+        
+        
     class Meta:
         app_label = 'articoli'
         ordering = ['-data_inizio_pubblicazione']

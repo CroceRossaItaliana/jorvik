@@ -1,0 +1,4 @@
+[reactui]
+ui_url = https://ui-staging-gaia.cri.it
+enable_benemerenze = False
+enable_croci = False

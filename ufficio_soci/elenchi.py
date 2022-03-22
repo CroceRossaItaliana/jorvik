@@ -833,7 +833,7 @@ class ElencoPerTitoli(ElencoVistaAnagrafica):
 
         base = Persona.objects.filter(
             Appartenenza.query_attuale(
-                sede__in=qs_sedi, membro__in=Appartenenza.MEMBRO_SOCIO,
+                sede__in=qs_sedi, membro__in=Appartenenza.MEMBRO_SOCIO_DIPENDENTE,
             ).via("appartenenze")
         ).prefetch_related(
             'appartenenze', 'appartenenze__sede',

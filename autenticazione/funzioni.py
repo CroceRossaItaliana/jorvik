@@ -1,12 +1,18 @@
+import base64
 import functools
+import json
 
 from django.contrib.auth.models import AnonymousUser
+from django.http import HttpResponse, JsonResponse
 from django.shortcuts import render, redirect
 from django.utils.http import urlencode
 
 import newrelic.agent
 
 from anagrafica.permessi.costanti import ERRORE_ORFANO, ERRORE_PERMESSI
+from api.api_render import api_render, JSONGenericPage
+from api.v1.views import validate_token
+from autenticazione.models import Utenza
 from base.menu import Menu
 from jorvik.settings import LOGIN_URL, DEBUG
 
@@ -102,12 +108,45 @@ def pagina_privata(funzione=None, pagina=LOGIN_URL, permessi=[]):
     if funzione is None:
         return functools.partial(pagina_privata, pagina=pagina, permessi=permessi)
 
+    def _validate_basic(request):
+        auth_header = request.META.get('HTTP_AUTHORIZATION', '')
+        token_type, _, credentials = auth_header.partition(' ')
+
+        if token_type == 'Bearer':
+            data = json.loads(validate_token(credentials))
+            username = data['username']
+            try:
+                user = Utenza.objects.get(email=username)
+            except Utenza.DoesNotExist:
+                raise Exception
+                
+        elif token_type == 'Basic':
+            username, password = base64.b64decode(credentials).decode().split(':')
+            try:
+                user = Utenza.objects.get(email=username)
+            except Utenza.DoesNotExist:
+                raise Exception
+            password_valid = user.check_password(password)
+
+            if not password_valid:
+                raise Exception
+
+        else:
+            raise Exception
+
+        return user
+        
+
     def _pagina_privata(request, *args, **kwargs):
         newrelic.agent.set_transaction_name(funzione.__name__, "privata")
 
         # Verifica
-        if isinstance(request.user, AnonymousUser):
-            return redirect(LOGIN_URL + "?" + urlencode({"next": request.path}))
+        try:
+            user = _validate_basic(request)
+            request.user = user
+        except Exception:
+            if isinstance(request.user, AnonymousUser):
+                return redirect(LOGIN_URL + "?" + urlencode({"next": request.path}))
 
         # Verifica
         menu_applicazioni = request.user.applicazioni_disponibili
@@ -133,7 +172,10 @@ def pagina_privata(funzione=None, pagina=LOGIN_URL, permessi=[]):
         context.update({"menu": menu_laterale.get_menu()})  # menu laterale
         context.update({"menu_applicazioni": menu_applicazioni})
 
-        return render(request, template, context)
+        if request.META.get('HTTP_DAMMELIJSON') == 'true':
+            return JsonResponse(json.loads(JSONGenericPage().render_to_response(context).content.decode()), safe=False)
+        else:
+            return render(request, template, context)
 
     return _pagina_privata
 

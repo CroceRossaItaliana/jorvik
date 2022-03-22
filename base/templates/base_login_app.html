@@ -1,0 +1,22 @@
+{% extends "base_vuota.html" %}
+
+{% block pagina_titolo %}Avviso{% endblock %}
+
+{% block pagina_principale %}
+    <div class="container">
+        <div class="row">
+            <div class="col-md-8 col-md-offset-2 sfondo-bianco bordi-arrotondati-5
+                        padding-15 box-ombreggiato-2 margine-verticale-20
+                         {% block avviso_classe %}allinea-centro{% endblock %}">
+                <h2 class="{% block avviso_titolo_classe %}{% endblock %}">
+                    Login Gaia App
+                </h2>
+                <p>Inquadra il QR dall'app di Gaia</p>
+
+                <p><img src="{% url 'app_login_qr' %}" width="200" height="200"/></p>
+
+                <p><pre>{{ login_url }}</pre></p>
+            </div>
+        </div>
+    </div>
+{% endblock %}

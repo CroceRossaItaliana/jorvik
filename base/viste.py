@@ -1,6 +1,9 @@
+import base64
 import json
 from datetime import date, timedelta, datetime, time
 
+import qrcode
+from PIL import Image
 from django.apps import apps
 from django.conf import settings as django_settings
 from django.contrib.auth import get_user_model, load_backend, login
@@ -16,6 +19,7 @@ from django.template.response import TemplateResponse
 from django.utils.encoding import force_bytes, force_text
 from django.utils.http import urlsafe_base64_encode, urlsafe_base64_decode
 from django.views.decorators.clickjacking import xframe_options_exempt
+from pygments import StringIO
 
 from jorvik import settings
 from anagrafica.costanti import LOCALE, PROVINCIALE, REGIONALE
@@ -78,6 +82,24 @@ def manutenzione(request, me):
     """
     return 'base_manutenzione.html'
 
+
+@pagina_privata
+def app_login_qr(request, me):
+    qr_login = me.utenza.qr_login
+    img = qrcode.make(qr_login)
+    resp = HttpResponse(content_type='image/png')
+    img.save(resp)
+    return resp
+
+
+@pagina_privata
+def app_login(request, me):
+    qr_login = me.utenza.qr_login
+    contesto = {
+        'login_url': qr_login,
+    }
+
+    return 'base_login_app.html', contesto
 
 @pagina_pubblica
 def sessione_scaduta(request, me):

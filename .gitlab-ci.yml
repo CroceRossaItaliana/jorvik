@@ -227,6 +227,7 @@ start_celery:
     - git status
   script:
     - git pull --rebase origin release
+    - /home/appserver/venv/bin/pip install -r /home/appserver/jorvik/requirements.txt
   after_script:
     - sudo service jorvik restart
     - sudo service nginx restart

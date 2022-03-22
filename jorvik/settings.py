@@ -139,7 +139,10 @@ DEBUG_CONF_FILE = 'config/debug.cnf' if os.path.isfile('config/debug.cnf') else 
 APIS_CONF_FILE = 'config/apis.cnf' if os.path.isfile('config/apis.cnf') else 'config/apis.cnf.sample'
 GENERAL_CONF_FILE = 'config/general.cnf' if os.path.isfile('config/general.cnf') else 'config/general.cnf.sample'
 CELERY_CONF_FILE = 'config/celery.cnf' if os.path.isfile('config/celery.cnf') else 'config/celery.cnf.sample'
-ELASTIC_CONF_FILE = 'config/elastic.cnf' if os.path.isfile('config/elastic.cnf') else 'config/elastic.cnf.sample'
+ELASTIC_CONF_FILE = 'config/elastic.cnf' if os.path.isfile(
+    'config/elastic.cnf') else 'config/elastic.cnf.sample'
+REACTUI_CONF_FILE = 'config/reactui.cnf' if os.path.isfile(
+    'config/reactui.cnf') else 'config/reactui.cnf.sample'
 
 # MySQL
 MYSQL_CONF = configparser.ConfigParser()
@@ -297,6 +300,7 @@ ELASTIC_CURRICULUM_INDEX = ELASTIC_CONF.get('index', 'curriculum_index', fallbac
 ELASTIC_CORSO_INDEX = ELASTIC_CONF.get('index', 'corso_index', fallback=os.environ.get("ELASTIC_CORSO_INDEX"))
 ELASTIC_PERSONA_INDEX = ELASTIC_CONF.get('index', 'persona_index', fallback=os.environ.get("ELASTIC_PERSONA_INDEX"))
 ELASTIC_COMITATO_INDEX = ELASTIC_CONF.get('index', 'comitato_index', fallback=os.environ.get("ELASTIC_COMITATO_INDEX"))
+ELASTIC_QUICKPROFILE_INDEX = ELASTIC_CONF.get('index', 'quickprofile_index', fallback=os.environ.get("ELASTIC_QUICKPROFILE_INDEX"))
 
 BETA_80_HOST = APIS_CONF.get('beta_80', 'host')
 BETA_80_BEARER = APIS_CONF.get('beta_80', 'bearer', fallback=os.environ.get("BETA_80_BEARER"))
@@ -488,3 +492,30 @@ FORMAZIONE_MASSMAIL_CHUNK = 100
 FORMAZIONE_MASSMAIL_SLEEP = 5
 
 VISITE_ENABLED = False
+STATIC_PROD_BASEURL = os.environ.get('STATIC_PROD_BASEURL', 'https://datafiles.gaia.cri.it')
+
+CRI_APP_SECRET = 'cr1.@pp.s3cr3t'
+CRI_APP_TOKEN_EXPIRE = 5
+
+AUTH_PASSWORD_VALIDATORS = [
+    {
+        'NAME': 'django.contrib.auth.password_validation.UserAttributeSimilarityValidator',
+    },
+    {
+        'NAME': 'base.security.MaximumLengthValidator',
+        'OPTIONS': {
+            'max_length': 128
+        }
+    }
+]
+
+# REACT UI
+REACTUI_CONF = configparser.ConfigParser()
+REACTUI_CONF.read(REACTUI_CONF_FILE)
+
+REACT_UI_BASE_URL = REACTUI_CONF.get(
+    'reactui', 'ui_url', fallback=os.environ.get("REACT_UI_BASE_URL"))
+ENABLE_BENEMERENZE = REACTUI_CONF.get(
+    'reactui', 'enable_benemerenze', fallback=os.environ.get("ENABLE_BENEMERENZE")) == 'True'
+ENABLE_CROCI = REACTUI_CONF.get(
+    'reactui', 'enable_croci', fallback=os.environ.get("ENABLE_CROCI")) == 'True'
