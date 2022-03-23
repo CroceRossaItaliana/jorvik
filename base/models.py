@@ -302,10 +302,15 @@ class Autorizzazione(ModelloSemplice, ConMarcaTemporale):
                 self.oggetto.save()
             else:
                 destinatari = [self.richiedente]
-        if self.oggetto.titolo.tipo==self.oggetto.titolo.TITOLO_CRI:
-            #destinatari = [self.richiedente]
-            if self.oggetto.creatore:
-                destinatari.append(self.oggetto.creatore)
+        
+        try:
+            if self.oggetto.titolo.tipo==self.oggetto.titolo.TITOLO_CRI:
+                #destinatari = [self.richiedente]
+                if self.oggetto.creatore:
+                    destinatari.append(self.oggetto.creatore)
+        except:
+            pass
+
         corpo = {
             "richiesta": self,
             "firmatario": self.firmatario,
