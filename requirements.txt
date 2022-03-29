@@ -93,7 +93,7 @@ pytz==2018.3
 qrcode==4.0.4
 rcssmin==1.0.6
 redis==3.2.1
-reportlab==3.5.13
+reportlab==3.5.55
 requests==2.18.4
 rjsmin==1.0.12
 selenium==3.8.1
