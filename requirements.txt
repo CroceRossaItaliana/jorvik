@@ -111,7 +111,7 @@ tokenlib==2.0.0
 traitlets==4.3.2
 unicodecsv==0.14.1
 Unidecode==0.4.21
-urllib3==1.22
+urllib3==1.26.5
 uWSGI==2.0.15
 uwsgitop==0.10
 vine==1.1.4
