@@ -382,8 +382,11 @@ class ElencoEstesi(ElencoVistaSoci):
             else:
                 return p.appartenenze_attuali().filter(fine=None).first().sede
 
+        def _data_estensione(p):
+            return Estensione.objects.filter(persona=p.pk, ritirata=False).order_by('-id').first().protocollo_data
+
         return super(ElencoEstesi, self).excel_colonne() + (
-            ('Data inizio estensione', lambda p: Estensione.objects.filter(persona=p.pk, ritirata=False).order_by('creazione').first().protocollo_data),
+            ('Data inizio estensione', lambda p: _data_estensione(p)),
             ('Comitato di estensione', lambda p: _comitato(p)),
         )
 
