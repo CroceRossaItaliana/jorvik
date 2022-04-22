@@ -84,7 +84,7 @@ pycryptodomex==3.7.3
 Pygments==2.2.0
 pyjwkest==1.4.0
 PyJWT==1.7.1
-PyPDF2==1.26.0
+PyPDF2==1.27.5
 Pyphen==0.9.5
 python-barcode==0.10.0
 python-dateutil==2.6.1
