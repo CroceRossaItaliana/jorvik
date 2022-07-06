@@ -63,7 +63,7 @@ ipython==6.5.0
 ipython-genutils==0.2.0
 jedi==0.12.1
 kombu==4.4.0
-lxml==4.1.1
+lxml==4.9.1
 Markdown==2.6
 names==0.3.0
 newrelic==2.60.0.46
